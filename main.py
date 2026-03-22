@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import readline  # enables up-arrow history in the input prompt
 from datetime import datetime
 
 import parser as dice_parser
