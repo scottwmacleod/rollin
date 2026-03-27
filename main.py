@@ -145,6 +145,9 @@ def cmd_help() -> None:
     4d6dl1                   Four d6s, drop lowest 1
     4d6dh1                   Four d6s, drop highest 1
     dl / dh without number   Defaults to dropping 1
+    4d6kh3                   Four d6s, keep highest 3
+    4d6kl2                   Four d6s, keep lowest 2
+    kh / kl without number   Defaults to keeping 1
     Dropped dice shown as (n) in the breakdown
 """)
 
