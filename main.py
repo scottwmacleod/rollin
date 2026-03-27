@@ -1,10 +1,42 @@
 #!/usr/bin/env python3
-import readline  # enables up-arrow history in the input prompt
+import readline
 from datetime import datetime
 
 import parser as dice_parser
 import presets as preset_store
 import roller
+
+
+# ── Tab completion ──────────────────────────────────────────────────────────
+
+COMMANDS = ["roll", "save", "presets", "delete", "history", "help", "quit"]
+PRESET_COMMANDS = {"roll", "delete"}
+
+
+def _completer(text, state):
+    buf = readline.get_line_buffer()
+    tokens = buf.lstrip().split()
+
+    # Complete command names at the start of the line
+    if not tokens or (len(tokens) == 1 and not buf.endswith(" ")):
+        matches = [c for c in COMMANDS if c.startswith(text)]
+        return matches[state] if state < len(matches) else None
+
+    cmd = tokens[0].lower()
+    if cmd in PRESET_COMMANDS and (len(tokens) == 1 or (len(tokens) == 2 and not buf.endswith(" "))):
+        preset_names = list(preset_store.load_presets().keys())
+        matches = [n for n in preset_names if n.startswith(text)]
+        return matches[state] if state < len(matches) else None
+
+    return None
+
+
+readline.set_completer(_completer)
+readline.set_completer_delims(" \t\n")  # keep hyphens as part of words
+if "libedit" in readline.__doc__:
+    readline.parse_and_bind("bind ^I rl_complete")
+else:
+    readline.parse_and_bind("tab: complete")
 
 
 # ── Formatting ─────────────────────────────────────────────────────────────
@@ -41,6 +73,9 @@ def do_roll(formula_text: str, history: list) -> None:
 
     results = []
     for pf in parsed_list:
+        if pf.fixed_value is not None:
+            print(f"  {pf.raw:<18} →  {pf.fixed_value}")
+            continue
         result = roller.roll(
             formula=pf.raw,
             count=pf.count,
@@ -63,15 +98,12 @@ def cmd_roll(args: str, history: list) -> None:
         print("Usage: roll <formula> [, formula2, ...]  or  roll <preset-name>")
         return
 
-    # Check if it's a preset name (single word, no dice notation)
-    if "d" not in args.lower() and "," not in args:
+    # Check if it's a preset name (single token, no spaces or commas)
+    if " " not in args and "," not in args:
         formula = preset_store.get_preset(args.strip())
         if formula:
             print(f"  (preset '{args.strip()}': {formula})")
             do_roll(formula, history)
-            return
-        else:
-            print(f"No preset named '{args.strip()}'. Did you mean a formula?")
             return
 
     do_roll(args, history)

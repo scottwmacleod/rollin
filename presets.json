@@ -1,4 +1,12 @@
 {
-  "fireball": "8d6",
-  "stats": "4d6dl,4d6dl,4d6dl,4d6dl,4d6dl,4d6dl"
+  "stats": "4d6dl,4d6dl,4d6dl,4d6dl,4d6dl,4d6dl",
+  "attack": "d20+8, d10+5, d20+8, d10+5",
+  "adv-attack": "2d20kh+8, 1d10+5, 2d20kh+8, 1d10+5",
+  "dis-attack": "2d20kl+8, 1d10+5, 2d20kl+8, 1d10+5",
+  "haymaker": "d20, 15, d20, 15",
+  "adv-haymaker": "2d20kh+8, 15, 2d20kh+8, 15",
+  "dis-haymaker": "2d20kl+8, 15, 2d20kl+8, 15",
+  "braceup": "d10+9",
+  "crosscounter": "d10+10",
+  "regularround": "d20+8, d10+5, 2d20kh+8, d10+5, 2d20kh+8, d10+5"
 }
