@@ -5,7 +5,7 @@ from dataclasses import dataclass
 # Examples: 2d6, d20, 4d6dl1, 3d8+5, 2d10dh-2
 FORMULA_RE = re.compile(
     r'^(\d*)d(\d+)'           # [count]d<sides>
-    r'(?:(dl|dh)(\d*))?'      # optional drop: dl or dh, optional count
+    r'(?:(dl|dh|kh|kl)(\d*))?'  # optional drop/keep: dl, dh, kh, kl, optional count
     r'([+-]\d+)?$',           # optional modifier
     re.IGNORECASE,
 )
@@ -42,9 +42,31 @@ def parse_formula(raw: str) -> ParsedFormula:
     if sides < 2:
         raise FormulaError(f"Sides must be at least 2: '{raw}'")
 
-    drop_n = int(drop_n_str) if drop_n_str else 1
-    drop_lowest = drop_n if drop_type == "dl" else 0
-    drop_highest = drop_n if drop_type == "dh" else 0
+    raw_n = int(drop_n_str) if drop_n_str else 1
+
+    if drop_type == "dl":
+        drop_lowest = raw_n
+        drop_highest = 0
+    elif drop_type == "dh":
+        drop_lowest = 0
+        drop_highest = raw_n
+    elif drop_type == "kh":
+        if raw_n < 1 or raw_n >= count:
+            raise FormulaError(
+                f"'kh{raw_n}' must keep between 1 and {count - 1} dice from a pool of {count}: '{raw}'"
+            )
+        drop_lowest = count - raw_n
+        drop_highest = 0
+    elif drop_type == "kl":
+        if raw_n < 1 or raw_n >= count:
+            raise FormulaError(
+                f"'kl{raw_n}' must keep between 1 and {count - 1} dice from a pool of {count}: '{raw}'"
+            )
+        drop_lowest = 0
+        drop_highest = count - raw_n
+    else:
+        drop_lowest = 0
+        drop_highest = 0
 
     if drop_lowest + drop_highest >= count:
         raise FormulaError(
