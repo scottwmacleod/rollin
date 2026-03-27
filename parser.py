@@ -19,6 +19,7 @@ class ParsedFormula:
     drop_lowest: int
     drop_highest: int
     modifier: int
+    fixed_value: int | None = None
 
 
 class FormulaError(ValueError):
@@ -27,6 +28,13 @@ class FormulaError(ValueError):
 
 def parse_formula(raw: str) -> ParsedFormula:
     text = raw.strip().replace(" ", "").lower()
+
+    try:
+        return ParsedFormula(raw=raw.strip(), count=0, sides=0, drop_lowest=0,
+                             drop_highest=0, modifier=0, fixed_value=int(text))
+    except ValueError:
+        pass
+
     m = FORMULA_RE.match(text)
     if not m:
         raise FormulaError(f"Invalid formula: '{raw}'")
