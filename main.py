@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-import readline
+import re
 from datetime import datetime
+
+from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import Completer, Completion
 
 import parser as dice_parser
 import presets as preset_store
@@ -9,34 +12,29 @@ import roller
 
 # ── Tab completion ──────────────────────────────────────────────────────────
 
-COMMANDS = ["roll", "save", "presets", "delete", "history", "help", "quit"]
+COMMANDS = ["delete", "help", "history", "presets", "quit", "roll", "save"]
 PRESET_COMMANDS = {"roll", "delete"}
 
-
-def _completer(text, state):
-    buf = readline.get_line_buffer()
-    tokens = buf.lstrip().split()
-
-    # Complete command names at the start of the line
-    if not tokens or (len(tokens) == 1 and not buf.endswith(" ")):
-        matches = [c for c in COMMANDS if c.startswith(text)]
-        return matches[state] if state < len(matches) else None
-
-    cmd = tokens[0].lower()
-    if cmd in PRESET_COMMANDS and (len(tokens) == 1 or (len(tokens) == 2 and not buf.endswith(" "))):
-        preset_names = list(preset_store.load_presets().keys())
-        matches = [n for n in preset_names if n.startswith(text)]
-        return matches[state] if state < len(matches) else None
-
-    return None
+_WORD_RE = re.compile(r"[^\s]+")
 
 
-readline.set_completer(_completer)
-readline.set_completer_delims(" \t\n")  # keep hyphens as part of words
-if "libedit" in readline.__doc__:
-    readline.parse_and_bind("bind ^I rl_complete")
-else:
-    readline.parse_and_bind("tab: complete")
+class DiceCompleter(Completer):
+    def get_completions(self, document, complete_event):
+        text = document.text_before_cursor
+        word = document.get_word_before_cursor(pattern=_WORD_RE)
+        tokens = text.lstrip().split()
+
+        if not tokens or (len(tokens) == 1 and not text.endswith(" ")):
+            for cmd in COMMANDS:
+                if cmd.startswith(word):
+                    yield Completion(cmd, start_position=-len(word))
+            return
+
+        cmd = tokens[0].lower()
+        if cmd in PRESET_COMMANDS and (len(tokens) == 1 or (len(tokens) == 2 and not text.endswith(" "))):
+            for name in sorted(preset_store.load_presets().keys()):
+                if name.startswith(word):
+                    yield Completion(name, start_position=-len(word))
 
 
 # ── Formatting ─────────────────────────────────────────────────────────────
@@ -189,10 +187,11 @@ def cmd_help() -> None:
 def main() -> None:
     print("Dice Roller  |  type 'help' for commands, 'quit' to exit\n")
     history: list = []
+    session = PromptSession("> ", completer=DiceCompleter(), complete_while_typing=True)
 
     while True:
         try:
-            line = input("> ").strip()
+            line = session.prompt().strip()
         except (EOFError, KeyboardInterrupt):
             print()
             break
