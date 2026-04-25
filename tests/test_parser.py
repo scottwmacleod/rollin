@@ -1,9 +1,4 @@
 import pytest
-
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-
 import parser as dice_parser
 from parser import FormulaError, parse_formula, parse_formulas
 

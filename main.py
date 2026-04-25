@@ -113,7 +113,6 @@ def cmd_save(args: str) -> None:
         print("Usage: save <name> <formula> [, formula2, ...]")
         return
     name, formula = parts[0], parts[1]
-    # Validate the formula before saving
     try:
         dice_parser.parse_formulas(formula)
     except dice_parser.FormulaError as e:
@@ -142,15 +141,16 @@ def cmd_delete(args: str) -> None:
     if not args:
         print("Usage: delete <name>")
         return
+    name = args.strip()
     try:
-        deleted = preset_store.delete_preset(args.strip())
+        deleted = preset_store.delete_preset(name)
     except OSError as e:
         print(f"Error: {e}")
         return
     if deleted:
-        print(f"  Deleted preset '{args.strip()}'.")
+        print(f"  Deleted preset '{name}'.")
     else:
-        print(f"  No preset named '{args.strip()}'.")
+        print(f"  No preset named '{name}'.")
 
 
 def cmd_history(history: list) -> None:

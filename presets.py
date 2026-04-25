@@ -5,8 +5,6 @@ PRESETS_FILE = os.path.join(os.path.dirname(__file__), "presets.json")
 
 
 def load_presets() -> dict[str, str]:
-    if not os.path.exists(PRESETS_FILE):
-        return {}
     try:
         with open(PRESETS_FILE, "r") as f:
             data = json.load(f)
@@ -18,11 +16,8 @@ def load_presets() -> dict[str, str]:
 
 
 def save_presets(presets: dict[str, str]) -> None:
-    try:
-        with open(PRESETS_FILE, "w") as f:
-            json.dump(presets, f, indent=2)
-    except OSError as e:
-        raise OSError(f"Failed to save presets: {e}") from e
+    with open(PRESETS_FILE, "w") as f:
+        json.dump(presets, f, indent=2)
 
 
 def add_preset(name: str, formula: str) -> None:
