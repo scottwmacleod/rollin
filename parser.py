@@ -1,6 +1,9 @@
 import re
 from dataclasses import dataclass
 
+MAX_DICE = 1000
+MAX_SIDES = 10000
+
 # Matches: [count]d<sides>[dl|dh[n]][+/-modifier]
 # Examples: 2d6, d20, 4d6dl1, 3d8+5, 2d10dh-2
 FORMULA_RE = re.compile(
@@ -47,8 +50,12 @@ def parse_formula(raw: str) -> ParsedFormula:
 
     if count < 1:
         raise FormulaError(f"Dice count must be at least 1: '{raw}'")
+    if count > MAX_DICE:
+        raise FormulaError(f"Dice count cannot exceed {MAX_DICE}: '{raw}'")
     if sides < 2:
         raise FormulaError(f"Sides must be at least 2: '{raw}'")
+    if sides > MAX_SIDES:
+        raise FormulaError(f"Sides cannot exceed {MAX_SIDES}: '{raw}'")
 
     raw_n = int(drop_n_str) if drop_n_str else 1
 

@@ -5,10 +5,14 @@ PRESETS_FILE = os.path.join(os.path.dirname(__file__), "presets.json")
 
 
 def load_presets() -> dict[str, str]:
-    if not os.path.exists(PRESETS_FILE):
+    try:
+        with open(PRESETS_FILE, "r") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            return {}
+        return {k: v for k, v in data.items() if isinstance(k, str) and isinstance(v, str)}
+    except (json.JSONDecodeError, OSError):
         return {}
-    with open(PRESETS_FILE, "r") as f:
-        return json.load(f)
 
 
 def save_presets(presets: dict[str, str]) -> None:
