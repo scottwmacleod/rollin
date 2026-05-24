@@ -5,7 +5,7 @@ A command-line dice roller for tabletop RPGs (D&D, Pathfinder, etc.).
 ## Installation
 
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ pip install -r requirements.txt
 Start the interactive session:
 
 ```bash
-python main.py
+python3 main.py
 ```
 
 You can also type a formula directly without the `roll` prefix:
@@ -72,13 +72,13 @@ Save frequently used rolls:
 Run tests:
 
 ```bash
-pip install pytest
+pip3 install pytest
 pytest tests/ -v
 ```
 
 Run the linter:
 
 ```bash
-pip install ruff
+pip3 install ruff
 ruff check .
 ```
