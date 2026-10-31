@@ -438,3 +438,101 @@ fn importing_again_skips_existing_names_unless_forced() {
     assert_eq!(forced.stdout, "imported 2, skipped 0\n");
     assert_eq!(formula_of(&cli, "braceup"), "d6");
 }
+
+#[test]
+fn import_skips_bad_entries_with_reasons_and_keeps_the_good_ones() {
+    let cli = Cli::new();
+    let json = write_json(
+        &cli,
+        r#"{
+            "good": "2d6+1",
+            "Shouty": "d4",
+            "d20": "d20+1",
+            "save": "d6",
+            "adv": "d6",
+            "bad formula": "d6",
+            "broken": "d20+",
+            "number": 5,
+            "nothing": null,
+            "nested": ["d6"]
+        }"#,
+    );
+    let run = cli.run(&["import", &json]);
+    run.assert_success();
+    let lines: Vec<&str> = run.stdout.lines().collect();
+    let expect = [
+        "skipped 'adv': it is a reserved dice keyword",
+        "skipped 'bad formula': names must start with a letter and use only letters, digits, '_' or '-'",
+        "skipped 'broken': invalid formula: expected a number, a dice group or '(', found end of input",
+        "skipped 'd20': it would parse as the dice formula d20",
+        "skipped 'nested': value must be a string, found an array",
+        "skipped 'nothing': value must be a string, found null",
+        "skipped 'number': value must be a string, found a number",
+        "skipped 'save': it is a command word (save, presets, delete, import, roll)",
+        "imported 2, skipped 8",
+    ];
+    assert_eq!(lines, expect);
+    assert_eq!(formula_of(&cli, "good"), "2d6+1");
+    assert_eq!(formula_of(&cli, "shouty"), "d4");
+}
+
+#[test]
+fn import_of_names_differing_only_by_case_keeps_the_first() {
+    let cli = Cli::new();
+    let json = write_json(&cli, r#"{"Atk": "d20", "atk": "d6"}"#);
+    let run = cli.run(&["import", &json]);
+    assert_eq!(
+        run.stdout,
+        "skipped 'atk': already exists (use --force to overwrite)\nimported 1, skipped 1\n"
+    );
+    assert_eq!(formula_of(&cli, "atk"), "d20");
+}
+
+#[test]
+fn an_unusable_import_file_is_an_error_and_changes_nothing() {
+    let cli = Cli::new();
+    cli.run(&["save", "keep", "d6"]).assert_success();
+    let missing = cli.config_dir().join("nope.json");
+    let run = cli.run(&["import", missing.to_str().unwrap()]);
+    assert_eq!(run.code, 1);
+    assert!(
+        run.stderr
+            .starts_with(&format!("error: {}: ", missing.display())),
+        "{run:?}"
+    );
+    for (contents, problem) in [
+        ("not json", "not valid JSON: "),
+        ("[\"d6\"]", "expected a JSON object of name to formula"),
+        ("\"d6\"", "expected a JSON object of name to formula"),
+    ] {
+        let path = write_json(&cli, contents);
+        let run = cli.run(&["import", &path]);
+        assert_eq!(run.code, 1, "{contents}: {run:?}");
+        assert!(run.stdout.is_empty());
+        assert!(
+            run.stderr.starts_with(&format!("error: {path}: {problem}")),
+            "{run:?}"
+        );
+    }
+    assert_eq!(cli.run(&["presets"]).stdout, "keep  d6\n");
+}
+
+#[test]
+fn import_usage_and_corrupt_store() {
+    let cli = Cli::new();
+    for args in [
+        &["import"][..],
+        &["import", "a", "b"],
+        &["import", "--force"],
+    ] {
+        let run = cli.run(args);
+        assert_eq!(run.code, 1, "{args:?}");
+        assert_eq!(run.stderr, "error: usage: import <path> [--force]\n");
+    }
+    let json = write_json(&cli, r#"{"a": "d6"}"#);
+    let path = write_store(&cli, "oops = = 1");
+    let run = cli.run(&["import", &json]);
+    assert_eq!(run.code, 1);
+    assert!(run.stderr.contains("not valid TOML"), "{run:?}");
+    assert_eq!(std::fs::read_to_string(path).unwrap(), "oops = = 1");
+}

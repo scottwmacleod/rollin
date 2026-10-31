@@ -126,23 +126,27 @@ pub enum NameRule {
     ParsesAsFormula,
 }
 
-impl std::fmt::Display for NameError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let name = &self.name;
-        write!(f, "invalid preset name '{name}': ")?;
+impl NameError {
+    /// Which rule failed, without the name.
+    pub fn reason(&self) -> String {
         match self.rule {
-            NameRule::Shape => write!(
-                f,
-                "names must start with a letter and use only letters, digits, '_' or '-'"
-            ),
-            NameRule::CommandWord => {
-                write!(f, "it is a command word ({})", COMMAND_WORDS.join(", "))
+            NameRule::Shape => {
+                "names must start with a letter and use only letters, digits, '_' or '-'".into()
             }
-            NameRule::DiceKeyword => write!(f, "it is a reserved dice keyword"),
+            NameRule::CommandWord => {
+                format!("it is a command word ({})", COMMAND_WORDS.join(", "))
+            }
+            NameRule::DiceKeyword => "it is a reserved dice keyword".into(),
             NameRule::ParsesAsFormula => {
-                write!(f, "it would parse as the dice formula {name}")
+                format!("it would parse as the dice formula {}", self.name)
             }
         }
+    }
+}
+
+impl std::fmt::Display for NameError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "invalid preset name '{}': {}", self.name, self.reason())
     }
 }
 

@@ -263,14 +263,32 @@ pub fn execute(
             })?;
             let mut presets = store.load()?;
             let mut report = ImportReport::default();
-            for (name, formula) in entries {
-                let formula = formula.as_str().unwrap_or_default();
-                let key = name.to_lowercase();
-                if presets.contains_key(&key) && !force {
-                    report.skipped.push((
-                        name.clone(),
-                        "already exists (use --force to overwrite)".into(),
-                    ));
+            for (name, value) in entries {
+                let skip = |reason: String| (name.clone(), reason);
+                let key = match validate_name(name) {
+                    Ok(key) => key,
+                    Err(e) => {
+                        report.skipped.push(skip(e.reason()));
+                        continue;
+                    }
+                };
+                let Some(formula) = value.as_str() else {
+                    report.skipped.push(skip(format!(
+                        "value must be a string, found {}",
+                        json_kind(value)
+                    )));
+                    continue;
+                };
+                if let Err(e) = crate::parser::parse(formula) {
+                    report
+                        .skipped
+                        .push(skip(format!("invalid formula: {}", e.message())));
+                    continue;
+                }
+                if presets.contains_key(&key) && (!force || report.imported.contains(&key)) {
+                    report
+                        .skipped
+                        .push(skip("already exists (use --force to overwrite)".into()));
                     continue;
                 }
                 presets.insert(key.clone(), formula.to_string());
@@ -322,4 +340,15 @@ fn edit_distance(a: &str, b: &str) -> usize {
         }
     }
     row[b.len()]
+}
+
+fn json_kind(value: &serde_json::Value) -> &'static str {
+    match value {
+        serde_json::Value::Null => "null",
+        serde_json::Value::Bool(_) => "a boolean",
+        serde_json::Value::Number(_) => "a number",
+        serde_json::Value::String(_) => "a string",
+        serde_json::Value::Array(_) => "an array",
+        serde_json::Value::Object(_) => "an object",
+    }
 }
