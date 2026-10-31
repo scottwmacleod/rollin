@@ -48,3 +48,37 @@ fn a_preset_rolls_by_bare_name_with_a_header() {
         format!("(preset 'atk': d20+5)\n{}", direct.stdout)
     );
 }
+
+#[test]
+fn json_and_quiet_output_for_a_preset_have_no_header() {
+    let cli = Cli::new();
+    cli.run(&["save", "pair", "d20+5, 2d6"]).assert_success();
+    let json = cli.run(&["pair", "--seed", "3", "--json"]);
+    assert_eq!(json.json()["rolls"].as_array().unwrap().len(), 2);
+    let quiet = cli.run(&["pair", "--seed", "3", "-q"]);
+    quiet.assert_success();
+    assert_eq!(quiet.stdout.lines().count(), 2, "{quiet:?}");
+    assert!(!quiet.stdout.contains("preset"));
+}
+
+#[test]
+fn verbose_output_for_a_preset_keeps_the_header() {
+    let cli = Cli::new();
+    cli.run(&["save", "atk", "d20+5"]).assert_success();
+    let run = cli.run(&["atk", "--seed", "3", "-v"]);
+    run.assert_success();
+    assert!(run.stdout.starts_with("(preset 'atk': d20+5)\n"), "{run:?}");
+}
+
+#[test]
+fn roll_command_accepts_a_formula_or_a_preset_name() {
+    let cli = Cli::new();
+    cli.run(&["save", "atk", "d20+5"]).assert_success();
+    let formula = cli.run(&["roll", "2d6", "+", "1", "--seed", "4"]);
+    let direct = cli.run(&["2d6 + 1", "--seed", "4"]);
+    formula.assert_success();
+    assert_eq!(formula.stdout, direct.stdout);
+    let preset = cli.run(&["ROLL", "ATK", "--seed", "4"]);
+    preset.assert_success();
+    assert_eq!(preset.stdout, cli.run(&["atk", "--seed", "4"]).stdout);
+}

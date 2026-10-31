@@ -65,6 +65,10 @@ pub fn parse_command(
             }),
             _ => Err(CommandError::Usage("save <name> <formula>".into())),
         },
+        Some("roll") if rest.is_empty() => {
+            Err(CommandError::Usage("roll <formula or preset name>".into()))
+        }
+        Some("roll") => roll_or_preset(rest, preset_names),
         Some("presets") => Ok(Command::Presets),
         _ => roll_or_preset(words, preset_names),
     }
