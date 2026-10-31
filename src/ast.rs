@@ -71,8 +71,33 @@ pub struct Dice {
     pub text: String,
     pub count: i64,
     pub sides: i64,
+    pub reroll: Option<Reroll>,
     pub explode: Option<Explode>,
     pub select: Option<Select>,
+}
+
+/// A reroll clause: `r` or `rr` after the dice, before any explode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Reroll {
+    pub mode: RerollMode,
+    pub cmp: Cmp,
+    pub value: i64,
+}
+
+/// How often a matching die is rerolled.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RerollMode {
+    /// `r`: once; the second result stands even if it matches.
+    Once,
+    /// `rr`: until the die no longer matches.
+    Repeat,
+}
+
+impl Reroll {
+    /// Whether a die showing `face` is rerolled.
+    pub fn triggers(&self, face: i64) -> bool {
+        self.cmp.test(face, self.value)
+    }
 }
 
 /// An explode clause: `!` after the dice, before any keep/drop.
@@ -104,16 +129,23 @@ pub enum Cmp {
     Eq,
 }
 
+impl Cmp {
+    /// Whether `face <cmp> value` holds.
+    pub fn test(self, face: i64, value: i64) -> bool {
+        match self {
+            Cmp::Gt => face > value,
+            Cmp::Ge => face >= value,
+            Cmp::Lt => face < value,
+            Cmp::Le => face <= value,
+            Cmp::Eq => face == value,
+        }
+    }
+}
+
 impl Explode {
     /// Whether a die showing `face` explodes.
     pub fn triggers(&self, face: i64) -> bool {
-        match self.cmp {
-            Cmp::Gt => face > self.value,
-            Cmp::Ge => face >= self.value,
-            Cmp::Lt => face < self.value,
-            Cmp::Le => face <= self.value,
-            Cmp::Eq => face == self.value,
-        }
+        self.cmp.test(face, self.value)
     }
 }
 

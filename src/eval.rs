@@ -1,6 +1,6 @@
 //! Evaluator: walks the AST, drawing dice from the injected RNG.
 
-use crate::ast::{BinOp, ExplodeMode, Expr, ExprKind, Item};
+use crate::ast::{BinOp, ExplodeMode, Expr, ExprKind, Item, RerollMode};
 use crate::error::Error;
 use crate::{Die, Link, Node, Roll, Status};
 use rand::Rng;
@@ -8,6 +8,9 @@ use std::ops::Range;
 
 /// Hard limit (ADR 0006): extra dice one original die may roll.
 const MAX_EXPLOSIONS_PER_DIE: usize = 100;
+
+/// Hard limit (ADR 0006): rerolls of one die under `rr`.
+const MAX_REROLLS_PER_DIE: usize = 100;
 
 /// Hard limit (ADR 0006): dice rolled by one roll, extra explosion dice
 /// included.
@@ -53,6 +56,29 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
             let mut dice = Vec::new();
             for _ in 0..d.count {
                 let mut raw = ctx.die(d.sides, &d.text, &expr.span)?;
+                if let Some(reroll) = d.reroll {
+                    let mut rerolls = 0;
+                    while reroll.triggers(i64::from(raw)) {
+                        if rerolls == MAX_REROLLS_PER_DIE {
+                            return Err(Error::LimitExceeded {
+                                cap: "rerolls per die",
+                                limit: MAX_REROLLS_PER_DIE,
+                                term: d.text.clone(),
+                                span: expr.span.clone(),
+                            });
+                        }
+                        rerolls += 1;
+                        dice.push(Die {
+                            value: raw,
+                            status: Status::Rerolled,
+                            parts: Vec::new(),
+                        });
+                        raw = ctx.die(d.sides, &d.text, &expr.span)?;
+                        if reroll.mode == RerollMode::Once {
+                            break;
+                        }
+                    }
+                }
                 let mut die = Die {
                     value: raw,
                     status: Status::Kept,
@@ -89,8 +115,8 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                     }));
                 }
             }
-            let drops = d.drops(dice.len());
-            apply_drops(&mut dice, drops);
+            let pool = dice.iter().filter(|d| d.status != Status::Rerolled).count();
+            apply_drops(&mut dice, d.drops(pool));
             let subtotal = dice
                 .iter()
                 .filter(|d| d.status.counts())
@@ -166,7 +192,9 @@ fn apply(
 /// Marks the lowest and highest dice as dropped. Ties are broken by roll
 /// order (stable sort), matching v1.
 fn apply_drops(dice: &mut [Die], (lowest, highest): (i64, i64)) {
-    let mut order: Vec<usize> = (0..dice.len()).collect();
+    let mut order: Vec<usize> = (0..dice.len())
+        .filter(|&i| dice[i].status != Status::Rerolled)
+        .collect();
     order.sort_by_key(|&i| dice[i].value);
     let (lowest, highest) = (lowest as usize, highest as usize);
     for &i in order.iter().take(lowest) {

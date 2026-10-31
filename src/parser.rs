@@ -5,7 +5,8 @@
 //! just the simplest such expression.
 
 use crate::ast::{
-    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Item, Select, SelectKind,
+    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Item, Reroll, RerollMode, Select,
+    SelectKind,
 };
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
@@ -258,6 +259,7 @@ impl Parser<'_> {
                 sides_span,
             ));
         }
+        let reroll = self.parse_reroll(sides)?;
         let explode = self.parse_explode(sides)?;
         let select = self.parse_select(count)?;
         let span = self.tokens[start].span.start..self.prev_end();
@@ -275,11 +277,63 @@ impl Parser<'_> {
                 text: self.src[span.clone()].to_string(),
                 count,
                 sides,
+                reroll,
                 explode,
                 select,
             }),
             span,
         })
+    }
+
+    fn at_comparison(&self) -> bool {
+        matches!(
+            self.peek(),
+            Some(Token::Gt | Token::Ge | Token::Lt | Token::Le | Token::Eq)
+        )
+    }
+
+    /// A condition on a face: a comparison operator then a number, or a bare
+    /// number meaning equals.
+    fn parse_condition(&mut self, what: &str) -> Result<(Cmp, i64), Error> {
+        let cmp = match self.peek() {
+            Some(Token::Gt) => Cmp::Gt,
+            Some(Token::Ge) => Cmp::Ge,
+            Some(Token::Lt) => Cmp::Lt,
+            Some(Token::Le) => Cmp::Le,
+            _ => Cmp::Eq,
+        };
+        if self.at_comparison() {
+            self.pos += 1;
+        }
+        let value = self.number(what)?;
+        Ok((cmp, value))
+    }
+
+    /// Optional `r` reroll clause with a condition.
+    fn parse_reroll(&mut self, sides: i64) -> Result<Option<Reroll>, Error> {
+        let mode = match self.peek() {
+            Some(Token::Word(w)) if w == "r" => RerollMode::Once,
+            Some(Token::Word(w)) if w == "rr" => RerollMode::Repeat,
+            _ => return Ok(None),
+        };
+        let start = self.tokens[self.pos].span.start;
+        self.pos += 1;
+        if !self.at_comparison() && !matches!(self.peek(), Some(Token::Number(_))) {
+            return Err(self.unexpected(
+                "a reroll condition (a number, or a comparison such as <2, <=2, >5, >=5, =3)",
+            ));
+        }
+        let (cmp, value) = self.parse_condition("a number after the reroll condition")?;
+        let reroll = Reroll { mode, cmp, value };
+        if mode == RerollMode::Repeat && (1..=sides).all(|face| reroll.triggers(face)) {
+            let span = start..self.prev_end();
+            return Err(Error::InfiniteReroll {
+                clause: self.src[span.clone()].to_string(),
+                sides,
+                span,
+            });
+        }
+        Ok(Some(reroll))
     }
 
     /// Optional `!` explode clause: `!` alone explodes on the maximum face,
@@ -299,20 +353,10 @@ impl Parser<'_> {
         } else {
             ExplodeMode::Plain
         };
-        let (cmp, value) = match self.peek() {
-            Some(Token::Gt) => (Cmp::Gt, None),
-            Some(Token::Ge) => (Cmp::Ge, None),
-            Some(Token::Lt) => (Cmp::Lt, None),
-            Some(Token::Le) => (Cmp::Le, None),
-            Some(Token::Eq) => (Cmp::Eq, None),
-            _ => (Cmp::Eq, Some(sides)),
-        };
-        let value = match value {
-            Some(v) => v,
-            None => {
-                self.pos += 1;
-                self.number("a number after the explode condition")?
-            }
+        let (cmp, value) = if self.at_comparison() {
+            self.parse_condition("a number after the explode condition")?
+        } else {
+            (Cmp::Eq, sides)
         };
         let explode = Explode { mode, cmp, value };
         if (1..=sides).all(|face| explode.triggers(face)) {

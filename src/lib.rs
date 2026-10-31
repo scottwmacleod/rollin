@@ -43,6 +43,9 @@ pub enum Status {
     /// An extra die rolled because an earlier die exploded. It counts toward
     /// the total unless a keep/drop clause drops it.
     Exploded,
+    /// A die replaced by a reroll. Its value is kept for the record but never
+    /// counts; the replacement die follows it.
+    Rerolled,
 }
 
 impl Status {

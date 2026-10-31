@@ -51,6 +51,10 @@ the same thing here; arithmetic is an addition on top.
 | `3d6!!`, `3d6!!>5` | Compounding: the extra rolls are added into the same die, which shows one combined value |
 | `3d6!p`, `3d6!p>5` | Penetrating: like `!`, but each extra die counts one less than it rolled (a 1 counts 0) |
 | `4d6!dl1`, `4d6!!kh2` | Explode first, then keep/drop applies to the whole resulting pool |
+| `4d6r1`, `4d6r=1` | Reroll any die showing 1, once; the second result stands even if it is also a 1 |
+| `4d6r<2`, `4d6r<=2`, `d20r>5`, `d20r>=19` | Reroll once on a comparison (`<`, `<=`, `>`, `>=`, `=`) instead of equals |
+| `4d6rr1`, `4d6rr<=2` | Reroll repeatedly until the die no longer matches |
+| `4d6r1!dl1` | Order of operations: reroll, then explode, then keep/drop |
 | `15` | A bare number is its own total |
 | `2d6+1d4+3`, `d20+d4-2` | Add and subtract any dice groups and numbers |
 | `d20*2`, `10/4` | Multiply and divide; they bind tighter than `+` and `-` |
@@ -69,6 +73,18 @@ the 10000-dice limit below. A condition that holds for every face (`d6!>=1`,
 one that never holds (`d6!>6`) is allowed and simply never explodes. Keep
 and drop counts are checked against the dice written, but apply to every die
 in the exploded pool (`4d6!kh2` keeps the two highest of all of them).
+A reroll replaces the original die's value; the rerolled-away values stay in
+the result (see the output modes) but never count toward the total. A reroll
+needs a condition (`4d6r` is an error) and goes straight after the dice,
+before any `!` and keep/drop. `rr` stops at 100 rerolls per die: a longer
+chain is an error naming the cap and the term. Rerolled dice count toward
+the 10000-dice limit below. An `rr` condition that holds for every face
+(`d6rr<=6`, `d6rr>=1`, `d6rr<7`) would reroll forever and is rejected before
+rolling; plain `r` with such a condition is allowed (it just rerolls every
+die once), and a condition that never holds (`d6rr>6`) is allowed and does
+nothing. Keep and drop counts are checked against the dice written
+(`4d6r1dl4` is an error), and apply to the dice that stand, not to
+rerolled-away values.
 Quote formulas containing `!` in an interactive shell (`rollin '3d6!'`), where
 `!` can trigger history expansion.
 
@@ -150,6 +166,21 @@ $ rollin -v --seed 2 3d6!!
 $ rollin -v --seed 2 3d6!p
 3d6!p
   3d6!p: 2 kept, 6 kept, 3 exploded, 4 kept = 15
+  total: 15
+```
+
+Dice a reroll replaced are shown between tildes (`~1~`) in the default
+output, with the die that replaced them right after, and as `rerolled` in
+`-v`. With color on they are dim and crossed out (dropped dice are dim only):
+
+```
+$ rollin --seed 3 4d6r1
+4d6r1  [~1~, 4, ~1~, 6, ~1~, 5, 4]  →  19
+$ rollin --seed 8 4d6rr1
+4d6rr1  [2, ~1~, ~1~, 5, 5, 6]  →  18
+$ rollin -v --seed 3 4d6r<2dl1
+4d6r<2dl1
+  4d6r<2dl1: 1 rerolled, 4 dropped, 1 rerolled, 6 kept, 1 rerolled, 5 kept, 4 kept = 15
   total: 15
 ```
 

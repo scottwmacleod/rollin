@@ -42,6 +42,11 @@ impl Painter {
         self.wrap("2", text)
     }
 
+    /// Dim and crossed out: a die a reroll replaced.
+    fn struck(self, text: &str) -> String {
+        self.wrap("2;9", text)
+    }
+
     fn bold(self, text: &str) -> String {
         self.wrap("1", text)
     }
@@ -78,6 +83,11 @@ fn natural(expr: &Node) -> Option<Natural> {
     let Node::Dice { sides, dice, .. } = dice else {
         return None;
     };
+    // Dice a reroll replaced are history; only the one that stands counts.
+    let dice: Vec<&Die> = dice
+        .iter()
+        .filter(|d| d.status != Status::Rerolled)
+        .collect();
     if dice.len() != 1 || *sides != 20 || dice[0].parts.len() > 1 {
         return None;
     }
@@ -95,12 +105,14 @@ fn status_label(status: Status) -> &'static str {
         Status::Kept => "kept",
         Status::Dropped => "dropped",
         Status::Exploded => "exploded",
+        Status::Rerolled => "rerolled",
     }
 }
 
 /// Styles a die's text by its status and any natural highlight.
 fn paint_die(p: Painter, die: &Die, nat: Option<Natural>, text: &str) -> String {
     match (die.status, nat) {
+        (Status::Rerolled, _) => p.struck(text),
         (Status::Dropped, _) => p.dim(text),
         (_, Some(Natural::Twenty)) => p.wrap("1;32", text),
         (_, Some(Natural::One)) => p.wrap("1;31", text),
@@ -120,7 +132,8 @@ fn has_dice(node: &Node) -> bool {
     }
 }
 
-/// Shows each dice group's dice (dropped in parentheses), joined by the
+/// Shows each dice group's dice (dropped in parentheses, rerolled-away dice
+/// between tildes), joined by the
 /// formula's operators.
 fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
     match node {
@@ -137,6 +150,7 @@ fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
                     };
                     let text = match d.status {
                         Status::Dropped => format!("({}{bang})", d.value),
+                        Status::Rerolled => format!("~{}~", d.value),
                         _ => format!("{}{bang}", d.value),
                     };
                     paint_die(p, d, nat, &text)
