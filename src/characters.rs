@@ -62,6 +62,19 @@ impl CharacterStore {
         }
     }
 
+    /// Deletes a character's file. A missing file is fine (the character was
+    /// virtual).
+    pub fn delete(&self, name: &str) -> Result<(), StoreError> {
+        match std::fs::remove_file(self.path(name)) {
+            Ok(()) => Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(e) => Err(StoreError {
+                path: self.path(name),
+                message: e.to_string(),
+            }),
+        }
+    }
+
     /// Whether a character exists (`default` always does).
     pub fn exists(&self, name: &str) -> bool {
         name == DEFAULT || self.path(name).is_file()

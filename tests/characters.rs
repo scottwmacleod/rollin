@@ -348,3 +348,44 @@ fn command_words_cannot_be_preset_names() {
         assert!(run.stderr.contains("it is a command word"), "{run:?}");
     }
 }
+
+#[test]
+fn char_delete_removes_a_character_and_falls_back_to_default_when_active() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    cli.run(&["char", "new", "mira"]).assert_success();
+    let other = cli.run(&["char", "delete", "grog"]);
+    other.assert_success();
+    assert_eq!(other.stdout, "deleted character 'grog'\n");
+    assert!(!cli
+        .config_dir()
+        .join("rollin/characters/grog.toml")
+        .exists());
+    assert_eq!(cli.run(&["char"]).stdout, "active character: mira\n");
+    let active = cli.run(&["char", "delete", "MIRA"]);
+    active.assert_success();
+    assert_eq!(
+        active.stdout,
+        "deleted character 'mira'; active character is now 'default'\n"
+    );
+    assert_eq!(cli.run(&["characters"]).stdout, "* default\n");
+}
+
+#[test]
+fn the_default_character_cannot_be_deleted_and_unknown_ones_are_errors() {
+    let cli = Cli::new();
+    cli.run(&["set", "str", "3"]).assert_success();
+    let run = cli.run(&["char", "delete", "default"]);
+    assert_eq!(run.code, 1, "{run:?}");
+    assert_eq!(
+        run.stderr,
+        "error: the 'default' character cannot be deleted\n"
+    );
+    assert_eq!(cli.run(&["vars"]).stdout, "str = 3\n");
+    let missing = cli.run(&["char", "delete", "nobody"]);
+    assert_eq!(missing.code, 1);
+    assert_eq!(
+        missing.stderr,
+        "error: no character named 'nobody'\nhint: create it with: rollin char new nobody\n"
+    );
+}

@@ -2,7 +2,7 @@
 //! and one executor that runs it against a [`Context`]. The one-shot binary
 //! and the later interactive session both use it. It never prints.
 
-use crate::characters::{Character, CharacterStore};
+use crate::characters::{Character, CharacterStore, DEFAULT};
 use crate::presets::{is_name_shaped, validate_name, NameError, NameRule, Store, StoreError};
 use crate::{Error, Roll};
 use rand::Rng;
@@ -32,6 +32,8 @@ pub enum Command {
     CharShow,
     /// Make an existing character active.
     CharSwitch(String),
+    /// Delete a character.
+    CharDelete(String),
     /// Create an empty character and make it active.
     CharNew(String),
     /// List the active character's variables.
@@ -83,6 +85,8 @@ pub enum CommandError {
         /// An existing name within edit distance 2.
         suggestion: Option<String>,
     },
+    /// `char delete default`.
+    CannotDeleteDefault,
     /// `char new` named a character that already exists.
     CharacterExists(String),
     /// A character name that breaks a naming rule.
@@ -121,6 +125,9 @@ impl std::fmt::Display for CommandError {
             CommandError::InvalidName(e) => write!(f, "{e}"),
             CommandError::NoSuchCharacter { name, .. } => {
                 write!(f, "no character named '{name}'")
+            }
+            CommandError::CannotDeleteDefault => {
+                write!(f, "the 'default' character cannot be deleted")
             }
             CommandError::CharacterExists(name) => {
                 write!(f, "character '{name}' already exists")
@@ -174,6 +181,9 @@ pub fn parse_command(
         Some("characters") => Ok(Command::Characters),
         Some("char") => match rest {
             [] => Ok(Command::CharShow),
+            [delete, name] if delete.eq_ignore_ascii_case("delete") => {
+                Ok(Command::CharDelete(name.to_lowercase()))
+            }
             [new, name] if new.eq_ignore_ascii_case("new") => {
                 Ok(Command::CharNew(name.to_lowercase()))
             }
@@ -201,6 +211,21 @@ pub fn parse_command(
         },
         _ => roll_or_preset(words, preset_names),
     }
+}
+
+/// Errors unless the character exists, suggesting a near miss.
+fn require_character(characters: &CharacterStore, name: &str) -> Result<(), CommandError> {
+    if characters.exists(name) {
+        return Ok(());
+    }
+    let suggestion = characters
+        .names()?
+        .into_iter()
+        .find(|n| edit_distance(n, name) <= 2);
+    Err(CommandError::NoSuchCharacter {
+        name: name.to_string(),
+        suggestion,
+    })
 }
 
 /// Checks a character name and returns its stored (lowercase) form.
@@ -328,6 +353,11 @@ pub enum Output {
     },
     /// The active character.
     ActiveCharacter(String),
+    /// A character was deleted; `was_active` if it had been the active one.
+    CharDeleted {
+        name: String,
+        was_active: bool,
+    },
     /// A character was created and made active.
     CharCreated(String),
     /// A different character was made active.
@@ -465,18 +495,25 @@ pub fn execute(
         Command::CharShow => Ok(Output::ActiveCharacter(ctx.characters()?.active()?)),
         Command::CharSwitch(name) => {
             let characters = ctx.characters()?;
-            if !characters.exists(name) {
-                let suggestion = characters
-                    .names()?
-                    .into_iter()
-                    .find(|n| edit_distance(n, name) <= 2);
-                return Err(CommandError::NoSuchCharacter {
-                    name: name.clone(),
-                    suggestion,
-                });
-            }
+            require_character(&characters, name)?;
             characters.set_active(name)?;
             Ok(Output::CharSwitched(name.clone()))
+        }
+        Command::CharDelete(name) => {
+            let characters = ctx.characters()?;
+            if name == DEFAULT {
+                return Err(CommandError::CannotDeleteDefault);
+            }
+            require_character(&characters, name)?;
+            characters.delete(name)?;
+            let was_active = characters.active()? == *name;
+            if was_active {
+                characters.set_active(DEFAULT)?;
+            }
+            Ok(Output::CharDeleted {
+                name: name.clone(),
+                was_active,
+            })
         }
         Command::CharNew(name) => {
             let characters = ctx.characters()?;

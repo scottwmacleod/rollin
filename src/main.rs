@@ -157,6 +157,13 @@ fn show(args: &Args, output: Output) {
                 println!("{mark} {name}");
             }
         }
+        Output::CharDeleted {
+            name,
+            was_active: false,
+        } => println!("deleted character '{name}'"),
+        Output::CharDeleted { name, .. } => {
+            println!("deleted character '{name}'; active character is now 'default'");
+        }
         Output::CharCreated(name) => {
             println!("created character '{name}' and made it active");
         }
