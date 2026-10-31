@@ -6,7 +6,7 @@ use common::Cli;
 fn version_is_2_0_0() {
     let run = Cli::new().run(&["--version"]);
     run.assert_success();
-    assert_eq!(run.stdout.trim(), "rollin 2.0.0");
+    assert_eq!(run.stdout.trim(), "rollin 2.0.1");
 }
 
 #[test]
