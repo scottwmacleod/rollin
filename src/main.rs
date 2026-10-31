@@ -16,7 +16,7 @@ use std::process::ExitCode;
 #[command(version)]
 struct Args {
     /// A formula to roll, e.g. d20 or "4d6dl1, d20+5", a preset name, or a
-    /// command: save, presets, delete, import, roll
+    /// command: save, presets, delete, import, roll, set, unset, vars, char, characters
     #[arg(required = true, allow_negative_numbers = true)]
     words: Vec<String>,
 

@@ -6,3 +6,4 @@
 # everyone who runs the test benefits from these saved cases.
 cc ddf5a2582d0cd40dcdfca726adeb63b095e0ce5f25cc2ae75ce61191c39eaf18 # shrinks to n = 2, sides = 2, kind = 0, k_raw = 0, explicit = false, modifier = None, seed = 4019692557555167081
 cc f171282895cd31b8aed5c08ec15abc8b7379756e3a8b123c7af6a73914cdc9bf # shrinks to raw = "a_", seed = 0
+cc 3fdb4c3be871fcd381660170ef90ee688eec089d04c2c745c0e8102ff2a29719 # shrinks to raw = "d0", seed = 0
