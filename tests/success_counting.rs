@@ -16,11 +16,6 @@ fn status(d: &Value) -> &str {
     d["status"].as_str().unwrap()
 }
 
-/// The dice of the first roll of `formula --seed seed --json`.
-fn dice(cli: &Cli, formula: &str, seed: u64) -> Vec<Value> {
-    flat_dice(&cli.roll_json(formula, seed)["rolls"][0]["expr"])
-}
-
 #[test]
 fn ge_counts_the_dice_that_meet_the_condition() {
     let cli = Cli::new();
