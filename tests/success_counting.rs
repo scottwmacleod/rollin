@@ -388,3 +388,208 @@ fn verbose_sum_rolls_are_unchanged() {
         j["rolls"][0]["total"].as_i64().unwrap()
     })));
 }
+
+#[test]
+fn quiet_prints_the_plain_net_number() {
+    let cli = Cli::new();
+    for seed in 0..10 {
+        let out = cli.roll_json("6d10>=8f1", seed);
+        let run = cli.run(&["-q", "--seed", &seed.to_string(), "6d10>=8f1, d20"]);
+        run.assert_success();
+        let expected = format!(
+            "{}\n{}\n",
+            out["rolls"][0]["total"],
+            cli.roll_json("6d10>=8f1, d20", seed)["rolls"][1]["total"]
+        );
+        assert_eq!(run.stdout, expected);
+    }
+}
+
+#[test]
+fn every_comparison_operator_counts_correctly() {
+    let cli = Cli::new();
+    type Case = (&'static str, fn(i64) -> bool);
+    let cases: [Case; 6] = [
+        ("6d10>=8", |v| v >= 8),
+        ("6d10>7", |v| v > 7),
+        ("6d10<=3", |v| v <= 3),
+        ("6d10<3", |v| v < 3),
+        ("10d10=10", |v| v == 10),
+        ("6D10 >= 8", |v| v >= 8),
+    ];
+    for (formula, wins) in cases {
+        let mut nonzero = false;
+        for seed in SEEDS {
+            let out = cli.roll_json(formula, seed);
+            let hits = flat_dice(&out["rolls"][0]["expr"])
+                .iter()
+                .filter(|d| wins(value(d)))
+                .count() as i64;
+            assert_eq!(out["rolls"][0]["total"], hits, "{formula} seed {seed}");
+            nonzero |= hits > 0;
+        }
+        assert!(nonzero, "{formula}: never a success");
+    }
+}
+
+#[test]
+fn trivial_and_impossible_conditions_are_legal() {
+    let cli = Cli::new();
+    assert_eq!(cli.roll_json("5d6>=1", 2)["rolls"][0]["total"], 5);
+    assert_eq!(cli.roll_json("5d6>6", 2)["rolls"][0]["total"], 0);
+    assert_eq!(cli.roll_json("5d6<1", 2)["rolls"][0]["total"], 0);
+}
+
+#[test]
+fn dropped_and_rerolled_away_dice_never_count() {
+    let cli = Cli::new();
+    let (mut dropped_matched, mut rerolled_matched) = (false, false);
+    for seed in SEEDS {
+        // Keep/drop first, then the count: a dropped 6 is not a success.
+        let out = cli.roll_json("4d6dh1>=5", seed);
+        let pool = flat_dice(&out["rolls"][0]["expr"]);
+        let hits = pool
+            .iter()
+            .filter(|d| status(d) == "kept" && value(d) >= 5)
+            .count() as i64;
+        assert_eq!(out["rolls"][0]["total"], hits, "seed {seed}: {pool:?}");
+        for d in pool.iter().filter(|d| status(d) == "dropped") {
+            assert!(d.get("outcome").is_none(), "{pool:?}");
+            dropped_matched |= value(d) >= 5;
+        }
+        // Reroll first: the rerolled-away 1 would be a failure but is history.
+        let out = cli.roll_json("6d10r<=2>=8f<=3", seed);
+        let pool = flat_dice(&out["rolls"][0]["expr"]);
+        let node = &out["rolls"][0]["expr"];
+        for d in pool.iter().filter(|d| status(d) == "rerolled") {
+            assert!(d.get("outcome").is_none(), "{pool:?}");
+            rerolled_matched |= value(d) <= 3;
+        }
+        let standing: Vec<&Value> = pool.iter().filter(|d| status(d) != "rerolled").collect();
+        let s = standing.iter().filter(|d| value(d) >= 8).count() as i64;
+        let f = standing
+            .iter()
+            .filter(|d| value(d) < 8 && value(d) <= 3)
+            .count() as i64;
+        assert_eq!(
+            (
+                node["successes"].as_i64().unwrap(),
+                node["failures"].as_i64().unwrap()
+            ),
+            (s, f)
+        );
+    }
+    assert!(dropped_matched && rerolled_matched);
+}
+
+#[test]
+fn exploded_dice_count_and_explode_then_success_parse_by_a_fixed_rule() {
+    let cli = Cli::new();
+    // `!` takes the comparison right after it as its explode condition, so
+    // `8d10!>=8` explodes on 8+ and is a plain sum; a success clause follows
+    // the explode condition: `8d10!>=8>=8`.
+    let out = cli.roll_json("8d10!>=8", 5);
+    assert!(out["rolls"][0].get("kind").is_none(), "{out}");
+    let mut exploded_hit = false;
+    for seed in SEEDS {
+        for formula in [
+            "8d10!>=8>=8",
+            "4d6!>5>=6",
+            "4d6!!>5>=6",
+            "4d6!p>5>=5",
+            "4d6!=6>5",
+            "4d6! =6 >5",
+        ] {
+            let out = cli.roll_json(formula, seed);
+            let roll = &out["rolls"][0];
+            assert_eq!(roll["kind"], "count", "{formula}");
+            let (cmp, v) = match formula {
+                "8d10!>=8>=8" => (0, 8),
+                "4d6!>5>=6" | "4d6!!>5>=6" => (0, 6),
+                "4d6!p>5>=5" => (0, 5),
+                _ => (1, 5),
+            };
+            let hits = flat_dice(&roll["expr"])
+                .iter()
+                .filter(|d| {
+                    status(d) != "dropped"
+                        && if cmp == 0 {
+                            value(d) >= v
+                        } else {
+                            value(d) > v
+                        }
+                })
+                .count() as i64;
+            assert_eq!(roll["total"], hits, "{formula} seed {seed}");
+            exploded_hit |= flat_dice(&roll["expr"])
+                .iter()
+                .any(|d| status(d) == "exploded" && d.get("outcome").is_some());
+        }
+    }
+    assert!(exploded_hit, "no exploded die ever scored");
+}
+
+#[test]
+fn all_modifiers_apply_in_order_reroll_explode_keep_then_count() {
+    let cli = Cli::new();
+    let mut scored_exploded = false;
+    for seed in SEEDS {
+        let out = cli.roll_json("6d6r1!kh4>=5f<=2", seed);
+        let node = &out["rolls"][0]["expr"];
+        let pool = flat_dice(node);
+        let counting: Vec<&Value> = pool
+            .iter()
+            .filter(|d| matches!(status(d), "kept" | "exploded"))
+            .collect();
+        assert_eq!(counting.len(), 4, "seed {seed}: {pool:?}");
+        let s = counting.iter().filter(|d| value(d) >= 5).count() as i64;
+        let f = counting.iter().filter(|d| value(d) <= 2).count() as i64;
+        assert_eq!(node["successes"], s);
+        assert_eq!(node["failures"], f);
+        assert_eq!(out["rolls"][0]["total"], s - f);
+        scored_exploded |= pool
+            .iter()
+            .any(|d| status(d) == "exploded" && d.get("outcome").is_some());
+    }
+    assert!(scored_exploded);
+}
+
+#[test]
+fn malformed_success_and_failure_clauses_are_syntax_errors_with_spans() {
+    let cases = [
+        (
+            "6d10f1",
+            "error: a failure clause 'f' must follow a success clause, as in 6d10>=8f1\n  6d10f1\n      ^\n",
+        ),
+        (
+            "6d10>=8f",
+            "error: expected a failure condition (a number, or a comparison such as <=2, >9, =1), found end of input\n  6d10>=8f\n          ^\n",
+        ),
+        (
+            "6d10>=",
+            "error: expected a number after the success condition, found end of input\n  6d10>=\n        ^\n",
+        ),
+        (
+            "6d10>=8>=9",
+            "error: expected ',' or the end of the formula, found '>='\n  6d10>=8>=9\n         ^^\n",
+        ),
+        (
+            "6d10>=8f1f2",
+            "error: expected ',' or the end of the formula, found 'f'\n  6d10>=8f1f2\n           ^\n",
+        ),
+    ];
+    for (formula, expected) in cases {
+        assert_eq!(failure(formula), expected, "{formula}");
+    }
+}
+
+#[test]
+fn v1_formulas_do_not_pick_up_counts() {
+    let cli = Cli::new();
+    for seed in 0..10 {
+        for formula in ["4d6dl1", "d20+5", "2d6+3", "3d6!", "4d6r1"] {
+            let out = cli.roll_json(formula, seed);
+            assert!(out["rolls"][0].get("kind").is_none(), "{formula}");
+        }
+    }
+}

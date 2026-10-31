@@ -379,6 +379,12 @@ impl Parser<'_> {
     /// `=`) and a number. A bare number is not a success clause.
     fn parse_count(&mut self) -> Result<Option<Success>, Error> {
         if !self.at_comparison() {
+            if matches!(self.peek(), Some(Token::Word(w)) if w == "f") {
+                return Err(Error::syntax(
+                    "a failure clause 'f' must follow a success clause, as in 6d10>=8f1",
+                    self.tokens[self.pos].span.clone(),
+                ));
+            }
             return Ok(None);
         }
         let (cmp, value) = self.parse_condition("a number after the success condition")?;
