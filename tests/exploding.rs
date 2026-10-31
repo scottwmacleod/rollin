@@ -267,3 +267,22 @@ fn explosions_happen_before_keep_and_drop_which_see_every_die() {
     }
     assert!(bigger_pools > 0, "no explosion reached keep/drop");
 }
+
+#[test]
+fn exploded_dice_count_toward_the_dice_per_expression_cap() {
+    // Each 1000d4!>=2 rolls about 4000 dice, though only 3000 are written.
+    let err = failure("1000d4!>=2 + 1000d4!>=2 + 1000d4!>=2");
+    assert!(
+        err.starts_with("error: dice per expression cap (10000) exceeded by '1000d4!>=2'\n"),
+        "{err}"
+    );
+}
+
+#[test]
+fn compounded_extra_rolls_count_toward_the_dice_per_expression_cap() {
+    let err = failure("1000d4!!>=2 + 1000d4!!>=2 + 1000d4!!>=2");
+    assert!(
+        err.starts_with("error: dice per expression cap (10000) exceeded by '1000d4!!>=2'\n"),
+        "{err}"
+    );
+}
