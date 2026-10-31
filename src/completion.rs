@@ -65,6 +65,12 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
             };
         }
     }
+    if typed.starts_with('-') {
+        return Completion {
+            start,
+            candidates: matching(&FLAGS, typed),
+        };
+    }
     let (words, pending) = positional_words(&before[..start]);
     let chars = || {
         data.characters
@@ -99,6 +105,18 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
         candidates: matching(&names, typed),
     }
 }
+
+/// The long flags, offered when a word starts with a dash.
+const FLAGS: [&str; 8] = [
+    "--seed",
+    "--json",
+    "--color",
+    "--char",
+    "--global",
+    "--force",
+    "--verbose",
+    "--quiet",
+];
 
 /// Flags that take a value in the next word.
 const VALUE_FLAGS: [&str; 3] = ["--seed", "--char", "--color"];
