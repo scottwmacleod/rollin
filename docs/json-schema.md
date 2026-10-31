@@ -15,7 +15,7 @@ whenever the shape or meaning of an existing field changes or a field is
 removed. Adding a new field or a new node `type` or die `status` value is
 backwards compatible and does not bump it (exploding dice added the die
 status `exploded`, the die field `parts` and the dice-node field `sides`
-without a bump), so consumers must ignore unknown
+without a bump; rerolls added the die status `rerolled` the same way), so consumers must ignore unknown
 fields and treat unknown `status` values as "not counted" unless documented
 otherwise.
 
@@ -81,9 +81,10 @@ array. Statuses:
 | `kept` | yes | An original die that was not dropped |
 | `dropped` | no | Removed by a drop/keep clause (this wins over `exploded`: a dropped extra die is `dropped`) |
 | `exploded` | yes | An extra die rolled because an earlier die exploded |
+| `rerolled` | no | A value a reroll (`r`, `rr`) replaced; the die that replaced it follows immediately |
 
-Later features add statuses (rerolls add `rerolled`, which will not count);
-consumers should treat a status they do not know as not counting.
+Later features add statuses; consumers should treat a status they do not know
+as not counting.
 
 `parts` is present only on a compounded die (`!!`) that actually exploded: the
 rolls added together into `value`, in order, so `value` is their sum. A
@@ -108,6 +109,27 @@ after exploding. `rollin --seed 2 --json 3d6!` (shortened):
 
 and `rollin --seed 2 --json 3d6!!` has the die
 `{"value": 10, "status": "kept", "parts": [6, 4]}`.
+
+#### Rerolls
+
+`4d6r1` rerolls each die showing 1, once; `rr` rerolls until the die no
+longer matches (at most 100 rerolls per die). The value a reroll replaced
+stays in `dice` with status `rerolled`, immediately before the die that
+replaced it (several in a row under `rr`). That replacement is an ordinary
+`kept` die (or `dropped` by a keep/drop clause, which only sees the dice that
+stand). Rerolled dice never count toward `subtotal`. Order of operations:
+reroll, then explode, then keep/drop. `rollin --seed 8 --json 4d6rr1`
+(shortened):
+
+```json
+{"type": "dice", "term": "4d6rr1", "sides": 6,
+ "dice": [{"value": 2, "status": "kept"}, {"value": 1, "status": "rerolled"},
+          {"value": 1, "status": "rerolled"}, {"value": 5, "status": "kept"},
+          {"value": 5, "status": "kept"}, {"value": 6, "status": "kept"}],
+ "subtotal": 18}
+```
+
+This is an additive change: `schema_version` stays 1.
 
 ### `neg`
 
