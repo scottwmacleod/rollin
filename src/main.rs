@@ -94,7 +94,21 @@ fn config_dir() -> Option<PathBuf> {
 
 fn fail(e: &CommandError) -> ExitCode {
     match e {
-        CommandError::Formula { source, error } => eprint!("{}", render_error(source, error)),
+        CommandError::Formula { source, error } => {
+            eprint!("{}", render_error(source, error, &error.to_string()));
+        }
+        CommandError::UndefinedVariable(u) => {
+            eprint!("{}", render_error(&u.source, &u.error, &e.to_string()));
+            if u.defined.is_empty() {
+                eprintln!("no variables are defined");
+            } else {
+                eprintln!("defined: {}", u.defined.join(", "));
+            }
+            if let Some(near) = &u.suggestion {
+                eprintln!("did you mean @{near}?");
+            }
+            eprintln!("set it with: rollin set {} <value>", u.name);
+        }
         CommandError::UnknownPreset { suggestion, .. } => {
             eprintln!("error: {e}");
             if let Some(name) = suggestion {
@@ -215,7 +229,7 @@ fn iteration_width(rolls: &[Roll]) -> usize {
 }
 
 /// The message, the formula, and carets under the offending span.
-fn render_error(formula: &str, error: &Error) -> String {
+fn render_error(formula: &str, error: &Error, message: &str) -> String {
     let span = error.span();
     // Show control characters (e.g. a newline) as spaces so the line and the
     // carets stay aligned.
@@ -226,7 +240,7 @@ fn render_error(formula: &str, error: &Error) -> String {
     let start = formula[..span.start].chars().count();
     let len = formula[span.start..span.end].chars().count().max(1);
     format!(
-        "error: {error}\n  {line}\n  {}{}\n",
+        "error: {message}\n  {line}\n  {}{}\n",
         " ".repeat(start),
         "^".repeat(len)
     )

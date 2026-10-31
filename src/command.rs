@@ -30,6 +30,24 @@ pub enum Command {
     Vars,
 }
 
+/// Details of an undefined variable, for a helpful message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UndefinedVariable {
+    /// The formula text.
+    pub source: String,
+    /// The underlying [`Error::UndefinedVariable`].
+    pub error: Error,
+    /// The variable's name, lowercase.
+    pub name: String,
+    pub character: String,
+    /// The character's variable names, sorted.
+    pub defined: Vec<String>,
+    /// A defined name within edit distance 2 of the missing one.
+    pub suggestion: Option<String>,
+    /// Whether the character was chosen with `--char`.
+    pub explicit: bool,
+}
+
 /// Why a command could not be parsed or run.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CommandError {
@@ -37,6 +55,8 @@ pub enum CommandError {
     Usage(String),
     /// A formula that does not parse or evaluate; `source` is its text.
     Formula { source: String, error: Error },
+    /// A formula used `@name` and the character has no such variable.
+    UndefinedVariable(Box<UndefinedVariable>),
     /// `delete` named a preset that does not exist.
     NoSuchPreset(String),
     /// A lone word that is neither a formula nor a saved preset.
@@ -64,6 +84,9 @@ impl std::fmt::Display for CommandError {
         match self {
             CommandError::Usage(usage) => write!(f, "usage: {usage}"),
             CommandError::Formula { error, .. } => write!(f, "{error}"),
+            CommandError::UndefinedVariable(u) => {
+                write!(f, "{} on character '{}'", u.error, u.character)
+            }
             CommandError::NoSuchPreset(name) => write!(f, "no preset named '{name}'"),
             CommandError::UnknownPreset { word, .. } => {
                 write!(f, "'{word}' is not a valid formula or a known preset")
@@ -275,12 +298,15 @@ pub fn execute(
     rng: &mut impl Rng,
 ) -> Result<Output, CommandError> {
     let store = ctx.store()?;
-    let vars = ctx.characters()?.load("default")?.vars;
     match command {
-        Command::Roll(formula) => roll_formula(formula, None, &vars, rng),
+        Command::Roll(formula) => {
+            let scope = Scope::load(ctx)?;
+            roll_formula(formula, None, &scope, rng)
+        }
         Command::RollPreset(name) => {
+            let scope = Scope::load(ctx)?;
             let formula = store.load()?.remove(name).unwrap_or_default();
-            roll_formula(&formula, Some((name.clone(), formula.clone())), &vars, rng)
+            roll_formula(&formula, Some((name.clone(), formula.clone())), &scope, rng)
         }
         Command::Save { name, formula } => {
             let name = validate_name(name).map_err(CommandError::InvalidName)?;
@@ -384,18 +410,63 @@ fn check_formula(formula: &str) -> Result<(), CommandError> {
         })
 }
 
+/// The character whose variables a formula is rolled against.
+struct Scope {
+    name: String,
+    vars: BTreeMap<String, i64>,
+    /// Whether the character was chosen with `--char`.
+    explicit: bool,
+}
+
+impl Scope {
+    fn load(ctx: &Context) -> Result<Scope, CommandError> {
+        let name = "default".to_string();
+        let vars = ctx.characters()?.load(&name)?.vars;
+        Ok(Scope {
+            name,
+            vars,
+            explicit: false,
+        })
+    }
+
+    /// Turns a library error for `source` into a command error, adding the
+    /// character's details to an undefined variable.
+    fn error(&self, source: &str, error: Error) -> CommandError {
+        match &error {
+            Error::UndefinedVariable { name, .. } => {
+                let suggestion = self
+                    .vars
+                    .keys()
+                    .filter(|v| edit_distance(v, name) <= 2)
+                    .min_by_key(|v| edit_distance(v, name))
+                    .cloned();
+                CommandError::UndefinedVariable(Box::new(UndefinedVariable {
+                    source: source.to_string(),
+                    name: name.clone(),
+                    character: self.name.clone(),
+                    defined: self.vars.keys().cloned().collect(),
+                    suggestion,
+                    explicit: self.explicit,
+                    error,
+                }))
+            }
+            _ => CommandError::Formula {
+                source: source.to_string(),
+                error,
+            },
+        }
+    }
+}
+
 fn roll_formula(
     formula: &str,
     preset: Option<(String, String)>,
-    vars: &BTreeMap<String, i64>,
+    scope: &Scope,
     rng: &mut impl Rng,
 ) -> Result<Output, CommandError> {
-    crate::roll_with(formula, &|name| vars.get(name).copied(), rng)
+    crate::roll_with(formula, &|name| scope.vars.get(name).copied(), rng)
         .map(|rolls| Output::Rolls { preset, rolls })
-        .map_err(|error| CommandError::Formula {
-            source: formula.to_string(),
-            error,
-        })
+        .map_err(|error| scope.error(formula, error))
 }
 
 /// Levenshtein distance between two strings.

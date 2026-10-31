@@ -152,3 +152,41 @@ fn set_rejects_bad_variable_names() {
     }
     assert!(cli.run(&["vars"]).stdout.starts_with("No variables"));
 }
+
+#[test]
+fn an_undefined_variable_underlines_the_name_and_says_how_to_fix_it() {
+    let cli = Cli::new();
+    for (name, value) in [("con", "1"), ("dex", "2"), ("prof", "3")] {
+        cli.run(&["set", name, value]).assert_success();
+    }
+    let run = cli.run(&["d20+@str"]);
+    assert_eq!(run.code, 1, "{run:?}");
+    assert!(run.stdout.is_empty());
+    assert_eq!(
+        run.stderr,
+        "error: undefined variable @str on character 'default'\n  d20+@str\n      ^^^^\ndefined: con, dex, prof\nset it with: rollin set str <value>\n"
+    );
+}
+
+#[test]
+fn an_undefined_variable_with_nothing_defined_says_so() {
+    let run = Cli::new().run(&["d20 + @str"]);
+    assert_eq!(
+        run.stderr,
+        "error: undefined variable @str on character 'default'\n  d20 + @str\n        ^^^^\nno variables are defined\nset it with: rollin set str <value>\n"
+    );
+}
+
+#[test]
+fn an_undefined_variable_offers_a_near_miss_within_two_edits() {
+    let cli = Cli::new();
+    cli.run(&["set", "str", "3"]).assert_success();
+    cli.run(&["set", "wisdom", "3"]).assert_success();
+    let run = cli.run(&["d20+@SRT"]);
+    assert_eq!(
+        run.stderr,
+        "error: undefined variable @srt on character 'default'\n  d20+@SRT\n      ^^^^\ndefined: str, wisdom\ndid you mean @str?\nset it with: rollin set srt <value>\n"
+    );
+    let far = cli.run(&["d20+@zzzzz"]);
+    assert!(!far.stderr.contains("did you mean"), "{far:?}");
+}
