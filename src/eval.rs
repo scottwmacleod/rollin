@@ -9,6 +9,9 @@ use std::ops::Range;
 /// Hard limit (ADR 0006): extra dice one original die may roll.
 const MAX_EXPLOSIONS_PER_DIE: usize = 100;
 
+/// Hard limit (ADR 0006): rerolls of one die under `rr`.
+const MAX_REROLLS_PER_DIE: usize = 100;
+
 /// Hard limit (ADR 0006): dice rolled by one roll, extra explosion dice
 /// included.
 const MAX_DICE_PER_EXPRESSION: usize = 10000;
@@ -54,7 +57,17 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
             for _ in 0..d.count {
                 let mut raw = ctx.die(d.sides, &d.text, &expr.span)?;
                 if let Some(reroll) = d.reroll {
+                    let mut rerolls = 0;
                     while reroll.triggers(i64::from(raw)) {
+                        if rerolls == MAX_REROLLS_PER_DIE {
+                            return Err(Error::LimitExceeded {
+                                cap: "rerolls per die",
+                                limit: MAX_REROLLS_PER_DIE,
+                                term: d.text.clone(),
+                                span: expr.span.clone(),
+                            });
+                        }
+                        rerolls += 1;
                         dice.push(Die {
                             value: raw,
                             status: Status::Rerolled,

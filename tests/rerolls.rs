@@ -164,3 +164,30 @@ fn a_condition_that_never_matches_is_a_no_op() {
         assert!(pool.iter().all(|d| status(d) == "kept"), "{formula}");
     }
 }
+
+#[test]
+fn rerolled_dice_count_toward_the_dice_per_expression_cap() {
+    // Each term rolls 2000 dice (every die rerolled once): five fit exactly,
+    // the sixth does not, though only 6000 dice are written.
+    let five = ["1000d6r<=6"; 5].join("+");
+    let run = Cli::new().run(&["--seed", "1", "--json", "--", &five]);
+    run.assert_success();
+    let six = ["1000d6r<=6"; 6].join("+");
+    let stderr = failure(&six);
+    assert!(
+        stderr.starts_with("error: dice per expression cap (10000) exceeded by '1000d6r<=6'"),
+        "{stderr}"
+    );
+}
+
+#[test]
+fn more_than_100_rerolls_of_one_die_is_an_error_naming_cap_and_term() {
+    // Seed 3 rerolls a d100 that rerolls on 99 or less more than 100 times.
+    let run = Cli::new().run(&["--seed", "3", "--", "d100rr<=99"]);
+    assert!(!run.success(), "{run:?}");
+    assert_eq!(run.stdout, "");
+    assert_eq!(
+        run.stderr,
+        "error: rerolls per die cap (100) exceeded by 'd100rr<=99'\n  d100rr<=99\n  ^^^^^^^^^^\n"
+    );
+}
