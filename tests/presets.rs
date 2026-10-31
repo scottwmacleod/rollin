@@ -174,3 +174,42 @@ fn save_without_a_formula_prints_usage() {
         assert_eq!(run.stderr, "error: usage: save <name> <formula>\n");
     }
 }
+
+#[test]
+fn names_that_break_a_rule_are_rejected_at_save_with_the_rule() {
+    let shape = "names must start with a letter and use only letters, digits, '_' or '-'";
+    let cases: &[(&str, String)] = &[
+        ("Foo Bar", format!("invalid preset name 'Foo Bar': {shape}")),
+        ("9lives", format!("invalid preset name '9lives': {shape}")),
+        ("", format!("invalid preset name '': {shape}")),
+        (
+            "save",
+            "invalid preset name 'save': it is a command word (save, presets, delete, import, roll)".into(),
+        ),
+        (
+            "PRESETS",
+            "invalid preset name 'PRESETS': it is a command word (save, presets, delete, import, roll)".into(),
+        ),
+        ("adv", "invalid preset name 'adv': it is a reserved dice keyword".into()),
+        ("dis", "invalid preset name 'dis': it is a reserved dice keyword".into()),
+        ("kh", "invalid preset name 'kh': it is a reserved dice keyword".into()),
+        ("d20", "invalid preset name 'd20': it would parse as the dice formula d20".into()),
+        ("D6", "invalid preset name 'D6': it would parse as the dice formula D6".into()),
+        ("df", "invalid preset name 'df': it is a reserved dice keyword".into()),
+    ];
+    for (name, message) in cases {
+        let cli = Cli::new();
+        let run = cli.run(&["save", name, "d20"]);
+        assert_eq!(run.code, 1, "{name:?}: {run:?}");
+        assert_eq!(run.stderr, format!("error: {message}\n"), "{name:?}");
+        assert!(cli.run(&["presets"]).stdout.starts_with("No presets"));
+    }
+}
+
+#[test]
+fn v1_style_names_are_accepted() {
+    let cli = Cli::new();
+    for name in ["adv-attack", "dis_attack", "braceup", "a1"] {
+        cli.run(&["save", name, "d20"]).assert_success();
+    }
+}

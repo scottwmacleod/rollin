@@ -95,3 +95,78 @@ impl Store {
         }
     }
 }
+
+/// Words the command parser treats as commands.
+pub const COMMAND_WORDS: [&str; 5] = ["save", "presets", "delete", "import", "roll"];
+
+/// Words the formula lexer and parser treat as keywords.
+const DICE_KEYWORDS: [&str; 12] = [
+    "d", "df", "dl", "dh", "kl", "kh", "r", "rr", "p", "f", "adv", "dis",
+];
+
+/// Why a string cannot be a preset name. The name is as the user typed it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NameError {
+    pub name: String,
+    pub rule: NameRule,
+}
+
+/// The rule a rejected name broke.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NameRule {
+    /// Not `[a-z][a-z0-9_-]*` after lowercasing.
+    Shape,
+    CommandWord,
+    DiceKeyword,
+    /// The name parses as a complete dice formula.
+    ParsesAsFormula,
+}
+
+impl std::fmt::Display for NameError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = &self.name;
+        write!(f, "invalid preset name '{name}': ")?;
+        match self.rule {
+            NameRule::Shape => write!(
+                f,
+                "names must start with a letter and use only letters, digits, '_' or '-'"
+            ),
+            NameRule::CommandWord => {
+                write!(f, "it is a command word ({})", COMMAND_WORDS.join(", "))
+            }
+            NameRule::DiceKeyword => write!(f, "it is a reserved dice keyword"),
+            NameRule::ParsesAsFormula => {
+                write!(f, "it would parse as the dice formula {name}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for NameError {}
+
+/// Checks a preset name and returns its stored (lowercase) form.
+pub fn validate_name(raw: &str) -> Result<String, NameError> {
+    let name = raw.to_lowercase();
+    let fail = |rule| NameError {
+        name: raw.to_string(),
+        rule,
+    };
+    if !is_name_shaped(&name) {
+        Err(fail(NameRule::Shape))
+    } else if COMMAND_WORDS.contains(&name.as_str()) {
+        Err(fail(NameRule::CommandWord))
+    } else if DICE_KEYWORDS.contains(&name.as_str()) {
+        Err(fail(NameRule::DiceKeyword))
+    } else if crate::parser::parse(&name).is_ok() {
+        Err(fail(NameRule::ParsesAsFormula))
+    } else {
+        Ok(name)
+    }
+}
+
+/// Whether `name` matches `[a-z][a-z0-9_-]*`.
+pub(crate) fn is_name_shaped(name: &str) -> bool {
+    let mut chars = name.chars();
+    chars.next().is_some_and(|c| c.is_ascii_lowercase())
+        && chars.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '-')
+}

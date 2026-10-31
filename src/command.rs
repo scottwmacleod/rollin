@@ -2,7 +2,7 @@
 //! and one executor that runs it against a [`Context`]. The one-shot binary
 //! and the later interactive session both use it. It never prints.
 
-use crate::presets::{Store, StoreError};
+use crate::presets::{is_name_shaped, validate_name, NameError, Store, StoreError};
 use crate::{Error, Roll};
 use rand::Rng;
 use std::path::PathBuf;
@@ -37,6 +37,8 @@ pub enum CommandError {
         /// A saved name within edit distance 2 of `word`.
         suggestion: Option<String>,
     },
+    /// A preset name that breaks a naming rule.
+    InvalidName(NameError),
     /// The presets file could not be read or written.
     Store(StoreError),
 }
@@ -50,6 +52,7 @@ impl std::fmt::Display for CommandError {
             CommandError::UnknownPreset { word, .. } => {
                 write!(f, "'{word}' is not a valid formula or a known preset")
             }
+            CommandError::InvalidName(e) => write!(f, "{e}"),
             CommandError::Store(e) => write!(f, "{e}"),
         }
     }
@@ -161,9 +164,9 @@ pub fn execute(
             roll_formula(&formula, Some((name.clone(), formula.clone())), rng)
         }
         Command::Save { name, formula } => {
+            let name = validate_name(name).map_err(CommandError::InvalidName)?;
             check_formula(formula)?;
             let mut presets = store.load()?;
-            let name = name.to_lowercase();
             let replaced = presets.insert(name.clone(), formula.clone());
             store.save(&presets)?;
             Ok(Output::Saved {
@@ -222,11 +225,4 @@ fn edit_distance(a: &str, b: &str) -> usize {
         }
     }
     row[b.len()]
-}
-
-/// Whether `name` matches `[a-z][a-z0-9_-]*`.
-fn is_name_shaped(name: &str) -> bool {
-    let mut chars = name.chars();
-    chars.next().is_some_and(|c| c.is_ascii_lowercase())
-        && chars.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '-')
 }
