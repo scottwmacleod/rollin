@@ -111,6 +111,13 @@ fn show(args: &Args, output: Output) {
             formula,
             replaced: Some(old),
         } => println!("replaced '{name}' (was {old}): {formula}"),
+        Output::Imported(report) => {
+            println!(
+                "imported {}, skipped {}",
+                report.imported.len(),
+                report.skipped.len()
+            );
+        }
         Output::Deleted { name } => println!("deleted '{name}'"),
         Output::Presets(presets) if presets.is_empty() => {
             println!("No presets saved. Add one with: rollin save <name> <formula>");

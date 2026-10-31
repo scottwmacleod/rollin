@@ -15,7 +15,9 @@ mod parser;
 mod presets;
 
 pub use ast::{BinOp, Special};
-pub use command::{config_dir, execute, parse_command, Command, CommandError, Context, Output};
+pub use command::{
+    config_dir, execute, parse_command, Command, CommandError, Context, ImportReport, Output,
+};
 pub use error::Error;
 pub use presets::{Store, StoreError};
 

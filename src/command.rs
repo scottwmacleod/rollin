@@ -18,6 +18,8 @@ pub enum Command {
     Save { name: String, formula: String },
     /// List global presets.
     Presets,
+    /// Merge a v1 `presets.json` into the store.
+    Import { path: PathBuf, force: bool },
     /// Delete a global preset.
     Delete { name: String },
 }
@@ -39,6 +41,8 @@ pub enum CommandError {
     },
     /// Neither `XDG_CONFIG_HOME` nor `HOME` gives a config directory.
     NoConfigDir,
+    /// The file given to `import` could not be read as a v1 presets file.
+    Import { path: PathBuf, message: String },
     /// A preset name that breaks a naming rule.
     InvalidName(NameError),
     /// The presets file could not be read or written.
@@ -59,6 +63,9 @@ impl std::fmt::Display for CommandError {
                     f,
                     "cannot find a config directory: set XDG_CONFIG_HOME or HOME"
                 )
+            }
+            CommandError::Import { path, message } => {
+                write!(f, "{}: {message}", path.display())
             }
             CommandError::InvalidName(e) => write!(f, "{e}"),
             CommandError::Store(e) => write!(f, "{e}"),
@@ -95,6 +102,13 @@ pub fn parse_command(
         }
         Some("roll") => roll_or_preset(rest, preset_names),
         Some("presets") => Ok(Command::Presets),
+        Some("import") => match rest {
+            [path] => Ok(Command::Import {
+                path: PathBuf::from(path),
+                force: false,
+            }),
+            _ => Err(CommandError::Usage("import <path> [--force]".into())),
+        },
         Some("delete") => match rest {
             [name] => Ok(Command::Delete { name: name.clone() }),
             _ => Err(CommandError::Usage("delete <name>".into())),
@@ -177,8 +191,18 @@ pub enum Output {
     Deleted {
         name: String,
     },
+    Imported(ImportReport),
     /// Presets as (name, formula), sorted by name.
     Presets(Vec<(String, String)>),
+}
+
+/// What an import did.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ImportReport {
+    /// Names added (or replaced, with `--force`).
+    pub imported: Vec<String>,
+    /// Entries left out, as (name as written, reason).
+    pub skipped: Vec<(String, String)>,
 }
 
 /// Runs a command.
@@ -214,6 +238,30 @@ pub fn execute(
             }
             store.save(&presets)?;
             Ok(Output::Deleted { name })
+        }
+        Command::Import { path, .. } => {
+            let raw = std::fs::read_to_string(path).map_err(|e| CommandError::Import {
+                path: path.clone(),
+                message: e.to_string(),
+            })?;
+            let json: serde_json::Value =
+                serde_json::from_str(&raw).map_err(|e| CommandError::Import {
+                    path: path.clone(),
+                    message: format!("not valid JSON: {e}"),
+                })?;
+            let entries = json.as_object().ok_or_else(|| CommandError::Import {
+                path: path.clone(),
+                message: "expected a JSON object of name to formula".into(),
+            })?;
+            let mut presets = store.load()?;
+            let mut report = ImportReport::default();
+            for (name, formula) in entries {
+                let formula = formula.as_str().unwrap_or_default();
+                presets.insert(name.to_lowercase(), formula.to_string());
+                report.imported.push(name.to_lowercase());
+            }
+            store.save(&presets)?;
+            Ok(Output::Imported(report))
         }
         Command::Presets => Ok(Output::Presets(store.load()?.into_iter().collect())),
     }

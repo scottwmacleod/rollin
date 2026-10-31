@@ -357,3 +357,39 @@ fn a_failed_write_keeps_the_old_file_and_leaves_no_temp_file() {
     );
     assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
 }
+
+const FIXTURE: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/presets.json");
+
+fn fixture_names() -> Vec<String> {
+    let raw = std::fs::read_to_string(FIXTURE).unwrap();
+    let map: std::collections::BTreeMap<String, String> = serde_json::from_str(&raw).unwrap();
+    map.into_keys().collect()
+}
+
+#[test]
+fn the_real_v1_file_imports_with_no_skips_and_every_preset_rolls() {
+    let cli = Cli::new();
+    let names = fixture_names();
+    let run = cli.run(&["import", FIXTURE]);
+    run.assert_success();
+    assert_eq!(run.stdout, "imported 10, skipped 0\n");
+    assert_eq!(names.len(), 10);
+    let listed = cli.run(&["presets"]).stdout;
+    for name in &names {
+        let rolled = cli.run(&[name, "--seed", "1"]);
+        rolled.assert_success();
+        assert!(
+            rolled.stdout.starts_with(&format!("(preset '{name}': ")),
+            "{rolled:?}"
+        );
+        assert!(
+            listed.contains(name.as_str()),
+            "{name} missing from {listed}"
+        );
+        let json = cli.run(&["roll", name, "--seed", "1", "--json"]);
+        assert!(
+            !json.json()["rolls"].as_array().unwrap().is_empty(),
+            "{name}"
+        );
+    }
+}
