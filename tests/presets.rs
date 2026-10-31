@@ -130,7 +130,7 @@ fn delete_removes_a_preset_case_insensitively() {
         .assert_success();
     cli.run(&["save", "--global", "keep", "d6"])
         .assert_success();
-    let run = cli.run(&["delete", "ATK"]);
+    let run = cli.run(&["delete", "--global", "ATK"]);
     run.assert_success();
     assert_eq!(run.stdout, "deleted 'atk'\n");
     assert_eq!(cli.run(&["presets"]).stdout, "keep  d6  [global]\n");
@@ -138,7 +138,7 @@ fn delete_removes_a_preset_case_insensitively() {
 
 #[test]
 fn deleting_a_missing_preset_is_an_error() {
-    let run = Cli::new().run(&["delete", "ghost"]);
+    let run = Cli::new().run(&["delete", "--global", "ghost"]);
     assert_eq!(run.code, 1, "{run:?}");
     assert!(run.stdout.is_empty());
     assert_eq!(run.stderr, "error: no preset named 'ghost'\n");
@@ -148,7 +148,7 @@ fn deleting_a_missing_preset_is_an_error() {
 fn delete_without_a_name_prints_usage() {
     let run = Cli::new().run(&["delete"]);
     assert_eq!(run.code, 1);
-    assert_eq!(run.stderr, "error: usage: delete <name>\n");
+    assert_eq!(run.stderr, "error: usage: delete <name> [--global]\n");
 }
 
 #[test]
@@ -244,7 +244,7 @@ fn a_corrupt_file_is_a_clear_error_and_is_never_overwritten() {
     for args in [
         &["presets"][..],
         &["save", "--global", "new", "d6"],
-        &["delete", "attack"],
+        &["delete", "--global", "attack"],
         &["roll", "attack"],
         &["attack"],
     ] {
@@ -343,7 +343,7 @@ fn writes_leave_only_the_presets_file_behind() {
     let cli = Cli::new();
     cli.run(&["save", "--global", "a", "d4"]).assert_success();
     cli.run(&["save", "--global", "b", "d6"]).assert_success();
-    cli.run(&["delete", "a"]).assert_success();
+    cli.run(&["delete", "--global", "a"]).assert_success();
     let mut names: Vec<_> = std::fs::read_dir(cli.config_dir().join("rollin"))
         .unwrap()
         .map(|e| e.unwrap().file_name().into_string().unwrap())

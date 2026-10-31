@@ -132,6 +132,14 @@ fn fail(e: &CommandError) -> ExitCode {
             }
             eprintln!("hint: run `rollin presets` to list saved presets");
         }
+        CommandError::NoSuchCharacterPreset {
+            name,
+            global_exists: true,
+            ..
+        } => {
+            eprintln!("error: {e}");
+            eprintln!("hint: it is a global preset; delete it with: rollin delete --global {name}");
+        }
         CommandError::NoSuchCharacter { name, suggestion } => {
             eprintln!("error: {e}");
             if let Some(near) = suggestion {
@@ -204,7 +212,14 @@ fn show(args: &Args, output: Output) {
             value,
             character,
         } => println!("set {name} = {value} on '{character}'"),
-        Output::Deleted { name } => println!("deleted '{name}'"),
+        Output::Deleted {
+            name,
+            character: None,
+        } => println!("deleted '{name}'"),
+        Output::Deleted {
+            name,
+            character: Some(character),
+        } => println!("deleted '{name}' from '{character}'"),
         Output::Presets(presets) if presets.is_empty() => {
             println!("No presets saved. Add one with: rollin save <name> <formula>");
         }

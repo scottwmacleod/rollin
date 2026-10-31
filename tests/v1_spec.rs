@@ -141,7 +141,7 @@ fn check_presets(cli: &Cli, c: &Case) -> Result<(), String> {
         }
         "presets_delete_preset" => {
             ok(cli, &["save", "--global", "gone", "d6"])?;
-            ok(cli, &["delete", "gone"])?;
+            ok(cli, &["delete", "--global", "gone"])?;
             clean_error(cli, &["gone"], "'gone'")?;
             eq(
                 "listing",

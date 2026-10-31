@@ -697,3 +697,38 @@ fn a_character_preset_shadows_a_global_one_of_the_same_name_both_ways() {
         "atk   d20  [global]\nonly  d6   [global]\n"
     );
 }
+
+#[test]
+fn delete_removes_from_the_character_and_needs_global_for_global_presets() {
+    let cli = Cli::new();
+    cli.run(&["save", "--global", "only", "d6"])
+        .assert_success();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    cli.run(&["save", "atk", "d20"]).assert_success();
+
+    let removed = cli.run(&["delete", "ATK"]);
+    removed.assert_success();
+    assert_eq!(removed.stdout, "deleted 'atk' from 'grog'\n");
+    assert_eq!(cli.run(&["presets"]).stdout, "only  d6  [global]\n");
+
+    let global_only = cli.run(&["delete", "only"]);
+    assert_eq!(global_only.code, 1, "{global_only:?}");
+    assert_eq!(
+        global_only.stderr,
+        "error: no preset named 'only' on character 'grog'\nhint: it is a global preset; delete it with: rollin delete --global only\n"
+    );
+    assert!(cli.run(&["presets"]).stdout.contains("only"));
+
+    let ghost = cli.run(&["delete", "ghost"]);
+    assert_eq!(
+        ghost.stderr,
+        "error: no preset named 'ghost' on character 'grog'\n"
+    );
+
+    let global = cli.run(&["delete", "--global", "only"]);
+    global.assert_success();
+    assert_eq!(global.stdout, "deleted 'only'\n");
+    let again = cli.run(&["delete", "only", "--global"]);
+    assert_eq!(again.stderr, "error: no preset named 'only'\n");
+    assert!(cli.run(&["presets"]).stdout.starts_with("No presets"));
+}

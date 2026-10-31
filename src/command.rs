@@ -26,8 +26,8 @@ pub enum Command {
     Presets,
     /// Merge a v1 `presets.json` into the store.
     Import { path: PathBuf, force: bool },
-    /// Delete a global preset.
-    Delete { name: String },
+    /// Delete a preset from the active character, or a global one.
+    Delete { name: String, global: bool },
     /// Set a variable on a character.
     Set { name: String, value: i64 },
     /// Remove a variable.
@@ -75,6 +75,13 @@ pub enum CommandError {
     UndefinedVariable(Box<UndefinedVariable>),
     /// `delete` named a preset that does not exist.
     NoSuchPreset(String),
+    /// `delete` named a preset the character does not have.
+    NoSuchCharacterPreset {
+        name: String,
+        character: String,
+        /// Whether a global preset of that name exists.
+        global_exists: bool,
+    },
     /// A lone word that is neither a formula nor a saved preset.
     UnknownPreset {
         word: String,
@@ -120,6 +127,9 @@ impl std::fmt::Display for CommandError {
                 write!(f, "{} on character '{}'", u.error, u.character)
             }
             CommandError::NoSuchPreset(name) => write!(f, "no preset named '{name}'"),
+            CommandError::NoSuchCharacterPreset {
+                name, character, ..
+            } => write!(f, "no preset named '{name}' on character '{character}'"),
             CommandError::UnknownPreset { word, .. } => {
                 write!(f, "'{word}' is not a valid formula or a known preset")
             }
@@ -234,10 +244,16 @@ pub fn parse_command(
         },
         Some("presets") => Ok(Command::Presets),
         Some("import") => parse_import(rest),
-        Some("delete") => match rest {
-            [name] => Ok(Command::Delete { name: name.clone() }),
-            _ => Err(CommandError::Usage("delete <name>".into())),
-        },
+        Some("delete") => {
+            let (rest, global) = take_flag(rest, "--global");
+            match rest.as_slice() {
+                [name] => Ok(Command::Delete {
+                    name: name.clone(),
+                    global,
+                }),
+                _ => Err(CommandError::Usage("delete <name> [--global]".into())),
+            }
+        }
         _ => roll_or_preset(words, preset_names),
     }
 }
@@ -434,6 +450,8 @@ pub enum Output {
     },
     Deleted {
         name: String,
+        /// The character it was deleted from; `None` for a global preset.
+        character: Option<String>,
     },
     Imported(ImportReport),
     /// A variable was removed from a character.
@@ -553,14 +571,33 @@ pub fn execute(
                 replaced,
             })
         }
-        Command::Delete { name } => {
+        Command::Delete { name, global } => {
             let name = name.to_lowercase();
-            let mut presets = store.load()?;
-            if presets.remove(&name).is_none() {
-                return Err(CommandError::NoSuchPreset(name));
+            let mut globals = store.load()?;
+            if *global {
+                if globals.remove(&name).is_none() {
+                    return Err(CommandError::NoSuchPreset(name));
+                }
+                store.save(&globals)?;
+                return Ok(Output::Deleted {
+                    name,
+                    character: None,
+                });
             }
-            store.save(&presets)?;
-            Ok(Output::Deleted { name })
+            let (characters, active) = ctx.current()?;
+            let mut character = characters.load(&active)?;
+            if character.presets.remove(&name).is_none() {
+                return Err(CommandError::NoSuchCharacterPreset {
+                    global_exists: globals.contains_key(&name),
+                    name,
+                    character: active,
+                });
+            }
+            characters.save(&active, &character)?;
+            Ok(Output::Deleted {
+                name,
+                character: Some(active),
+            })
         }
         Command::Import { path, force } => {
             let raw = std::fs::read_to_string(path).map_err(|e| CommandError::Import {
