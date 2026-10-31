@@ -130,6 +130,11 @@ fn show(args: &Args, output: Output) {
                 report.skipped.len()
             );
         }
+        Output::VarSet {
+            name,
+            value,
+            character,
+        } => println!("set {name} = {value} on '{character}'"),
         Output::Deleted { name } => println!("deleted '{name}'"),
         Output::Presets(presets) if presets.is_empty() => {
             println!("No presets saved. Add one with: rollin save <name> <formula>");

@@ -22,6 +22,8 @@ pub enum Command {
     Import { path: PathBuf, force: bool },
     /// Delete a global preset.
     Delete { name: String },
+    /// Set a variable on a character.
+    Set { name: String, value: i64 },
 }
 
 /// Why a command could not be parsed or run.
@@ -101,6 +103,13 @@ pub fn parse_command(
             Err(CommandError::Usage("roll <formula or preset name>".into()))
         }
         Some("roll") => roll_or_preset(rest, preset_names),
+        Some("set") => match rest {
+            [name, value] => Ok(Command::Set {
+                name: name.to_lowercase(),
+                value: value.parse().unwrap_or(0),
+            }),
+            _ => Err(CommandError::Usage("set <name> <integer>".into())),
+        },
         Some("presets") => Ok(Command::Presets),
         Some("import") => parse_import(rest),
         Some("delete") => match rest {
@@ -197,6 +206,11 @@ pub enum Output {
         name: String,
     },
     Imported(ImportReport),
+    VarSet {
+        name: String,
+        value: i64,
+        character: String,
+    },
     /// Presets as (name, formula), sorted by name.
     Presets(Vec<(String, String)>),
 }
@@ -297,6 +311,11 @@ pub fn execute(
             Ok(Output::Imported(report))
         }
         Command::Presets => Ok(Output::Presets(store.load()?.into_iter().collect())),
+        Command::Set { name, value } => Ok(Output::VarSet {
+            name: name.clone(),
+            value: *value,
+            character: "default".into(),
+        }),
     }
 }
 
