@@ -128,13 +128,13 @@ proptest! {
 
     /// The same, from an alphabet where many strings are almost-valid.
     #[test]
-    fn dice_like_strings_never_panic(s in "[0-9dDkKlLhHpP+\\-*/() ,!<>=]{0,40}") {
+    fn dice_like_strings_never_panic(s in "[0-9dDkKlLhHpPrR+\\-*/() ,!<>=]{0,40}") {
         let _ = roll(&s, &mut seeded_rng(0));
     }
 
     /// Errors carry a span that lies inside the formula on char boundaries.
     #[test]
-    fn error_spans_lie_inside_the_input(s in "[0-9dDkKlLhHpP+\\-*/() ,!<>=é]{0,40}") {
+    fn error_spans_lie_inside_the_input(s in "[0-9dDkKlLhHpPrR+\\-*/() ,!<>=é]{0,40}") {
         if let Err(e) = roll(&s, &mut seeded_rng(0)) {
             let span = e.span();
             prop_assert!(span.start <= span.end && span.end <= s.len(), "{:?} {:?}", s, span);
@@ -355,5 +355,120 @@ proptest! {
                 }
             }
         }
+    }
+}
+
+/// A reroll formula: count, sides, `r` or `rr`, a condition, then optional
+/// explode and drop clauses. Returns the formula, the mode and the condition
+/// as a predicate description `(cmp index, value)`.
+fn gen_reroll() -> impl Strategy<Value = (String, bool, usize, u32, u32)> {
+    (
+        1u32..=6,
+        2u32..=20,
+        any::<bool>(),
+        0usize..6,
+        0u32..=22,
+        any::<bool>(),
+        prop::option::of(1u32..=3),
+    )
+        .prop_map(|(n, sides, repeat, cmp, v, explode, drop)| {
+            // Index 5 is the bare-number form, which means equals.
+            let cond = match cmp {
+                5 => v.to_string(),
+                c => format!("{}{v}", [">", ">=", "<", "<=", "="][c]),
+            };
+            let drop_text = match drop {
+                Some(k) if k < n => format!("dl{k}"),
+                _ => String::new(),
+            };
+            let formula = format!(
+                "{n}d{sides}{}{cond}{}{drop_text}",
+                if repeat { "rr" } else { "r" },
+                if explode { "!" } else { "" },
+            );
+            (formula, repeat, cmp, v, sides)
+        })
+}
+
+fn cond_matches(cmp: usize, v: u32, face: u32) -> bool {
+    match cmp {
+        0 => face > v,
+        1 => face >= v,
+        2 => face < v,
+        3 => face <= v,
+        _ => face == v,
+    }
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(512))]
+
+    /// For arbitrary reroll formulas: the total is the sum of the counting
+    /// dice; rerolled-away dice never count; under `rr` every standing
+    /// original die (a die that follows its slot's rerolls and is not an
+    /// explosion) fails the condition; and no die is rerolled more than the
+    /// cap. Only the static rejection and the caps may fail a roll.
+    #[test]
+    fn rerolled_totals_agree_and_rr_leaves_no_matching_final_die(
+        (formula, repeat, cmp, v, sides) in gen_reroll(),
+        seed in any::<u64>(),
+    ) {
+        let rolls = match roll(&formula, &mut seeded_rng(seed)) {
+            Ok(rolls) => rolls,
+            Err(Error::InfiniteReroll { .. } | Error::InfiniteExplosion { .. } | Error::LimitExceeded { .. }) => {
+                return Ok(());
+            }
+            Err(e) => return Err(TestCaseError::fail(format!("{formula}: {e}"))),
+        };
+        let r = &rolls[0];
+        let dice = dice_of(&r.expr);
+        let counted: i64 = dice
+            .iter()
+            .filter(|d| d.status.counts())
+            .map(|d| i64::from(d.value))
+            .sum();
+        prop_assert_eq!(r.total, counted, "{}", formula);
+        prop_assert!(dice.iter().all(|d| (1..=sides).contains(&d.value)), "{}", formula);
+
+        // Runs of rerolled dice, each ended by the die that replaced them.
+        let mut run = 0usize;
+        for (i, d) in dice.iter().enumerate() {
+            if d.status == Status::Rerolled {
+                run += 1;
+                prop_assert!(cond_matches(cmp, v, d.value), "{}: {:?}", formula, dice);
+                prop_assert!(run <= 100, "{}", formula);
+                if !repeat {
+                    prop_assert!(run <= 1, "{}: {:?}", formula, dice);
+                }
+                prop_assert!(i + 1 < dice.len(), "{}: ends on a rerolled die", formula);
+            } else {
+                if run > 0 && repeat {
+                    // Exploded dice and the explosions of this die follow it;
+                    // the replacement itself is the die right after the run.
+                    prop_assert!(!cond_matches(cmp, v, d.value), "{}: {:?}", formula, dice);
+                }
+                run = 0;
+            }
+        }
+        if repeat {
+            // Every die that stands as an original (not exploded, not
+            // dropped-from-explosion) fails the condition. Exploded extras
+            // are plain rolls and may match.
+            let exploding = formula.contains('!');
+            for d in dice.iter().filter(|d| match d.status {
+                Status::Kept => true,
+                Status::Dropped => !exploding,
+                _ => false,
+            }) {
+                prop_assert!(!cond_matches(cmp, v, d.value), "{}: {:?}", formula, dice);
+            }
+        }
+    }
+
+    /// Parsing arbitrary text containing reroll letters never panics, and
+    /// reroll-shaped text always errors or succeeds cleanly.
+    #[test]
+    fn reroll_like_strings_never_panic(s in "[0-9dDrR<>=!kKhHlL ]{0,30}") {
+        let _ = roll(&s, &mut seeded_rng(0));
     }
 }
