@@ -102,18 +102,26 @@ pub fn parse_command(
         }
         Some("roll") => roll_or_preset(rest, preset_names),
         Some("presets") => Ok(Command::Presets),
-        Some("import") => match rest {
-            [path] => Ok(Command::Import {
-                path: PathBuf::from(path),
-                force: false,
-            }),
-            _ => Err(CommandError::Usage("import <path> [--force]".into())),
-        },
+        Some("import") => parse_import(rest),
         Some("delete") => match rest {
             [name] => Ok(Command::Delete { name: name.clone() }),
             _ => Err(CommandError::Usage("delete <name>".into())),
         },
         _ => roll_or_preset(words, preset_names),
+    }
+}
+
+/// `import <path> [--force]`, with the flag allowed anywhere after `import`.
+fn parse_import(rest: &[String]) -> Result<Command, CommandError> {
+    let usage = || CommandError::Usage("import <path> [--force]".into());
+    let force = rest.iter().any(|w| w.eq_ignore_ascii_case("--force"));
+    let mut paths = rest.iter().filter(|w| !w.eq_ignore_ascii_case("--force"));
+    match (paths.next(), paths.next()) {
+        (Some(path), None) if !path.starts_with("--") => Ok(Command::Import {
+            path: PathBuf::from(path),
+            force,
+        }),
+        _ => Err(usage()),
     }
 }
 
@@ -239,7 +247,7 @@ pub fn execute(
             store.save(&presets)?;
             Ok(Output::Deleted { name })
         }
-        Command::Import { path, .. } => {
+        Command::Import { path, force } => {
             let raw = std::fs::read_to_string(path).map_err(|e| CommandError::Import {
                 path: path.clone(),
                 message: e.to_string(),
@@ -257,10 +265,20 @@ pub fn execute(
             let mut report = ImportReport::default();
             for (name, formula) in entries {
                 let formula = formula.as_str().unwrap_or_default();
-                presets.insert(name.to_lowercase(), formula.to_string());
-                report.imported.push(name.to_lowercase());
+                let key = name.to_lowercase();
+                if presets.contains_key(&key) && !force {
+                    report.skipped.push((
+                        name.clone(),
+                        "already exists (use --force to overwrite)".into(),
+                    ));
+                    continue;
+                }
+                presets.insert(key.clone(), formula.to_string());
+                report.imported.push(key);
             }
-            store.save(&presets)?;
+            if !report.imported.is_empty() {
+                store.save(&presets)?;
+            }
             Ok(Output::Imported(report))
         }
         Command::Presets => Ok(Output::Presets(store.load()?.into_iter().collect())),

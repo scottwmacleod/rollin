@@ -36,6 +36,11 @@ struct Args {
     #[arg(long, value_enum, default_value = "auto")]
     color: ColorChoice,
 
+    /// Overwrite existing presets (only for `import`; handled by the command
+    /// parser, which clap would otherwise reject as an unknown flag)
+    #[arg(long, hide = true)]
+    force: bool,
+
     /// Show the full breakdown of each roll
     #[arg(short, long)]
     verbose: bool,
@@ -59,7 +64,11 @@ fn main() -> ExitCode {
     let names = &mut || -> Result<Vec<String>, CommandError> {
         Ok(ctx.store()?.load()?.into_keys().collect())
     };
-    let command = match parse_command(&args.words, names) {
+    let mut words = args.words.clone();
+    if args.force {
+        words.push("--force".into());
+    }
+    let command = match parse_command(&words, names) {
         Ok(command) => command,
         Err(e) => return fail(&e),
     };
@@ -112,6 +121,9 @@ fn show(args: &Args, output: Output) {
             replaced: Some(old),
         } => println!("replaced '{name}' (was {old}): {formula}"),
         Output::Imported(report) => {
+            for (name, reason) in &report.skipped {
+                println!("skipped '{name}': {reason}");
+            }
             println!(
                 "imported {}, skipped {}",
                 report.imported.len(),

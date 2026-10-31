@@ -393,3 +393,48 @@ fn the_real_v1_file_imports_with_no_skips_and_every_preset_rolls() {
         );
     }
 }
+
+/// Writes `json` to a file in the Cli's config dir and returns its path.
+fn write_json(cli: &Cli, json: &str) -> String {
+    let path = cli.config_dir().join("v1.json");
+    std::fs::write(&path, json).unwrap();
+    path.to_str().unwrap().to_string()
+}
+
+/// The formula `presets` lists for `name`.
+fn formula_of(cli: &Cli, name: &str) -> String {
+    let listed = cli.run(&["presets"]).stdout;
+    let line = listed
+        .lines()
+        .find(|l| l.split_whitespace().next() == Some(name))
+        .unwrap_or_else(|| panic!("{name} not listed in {listed}"));
+    line[name.len()..].trim().to_string()
+}
+
+#[test]
+fn importing_again_skips_existing_names_unless_forced() {
+    let cli = Cli::new();
+    cli.run(&["import", FIXTURE]).assert_success();
+    let again = cli.run(&["import", FIXTURE]);
+    again.assert_success();
+    let names = fixture_names();
+    let mut expected: String = names
+        .iter()
+        .map(|n| format!("skipped '{n}': already exists (use --force to overwrite)\n"))
+        .collect();
+    expected.push_str("imported 0, skipped 10\n");
+    assert_eq!(again.stdout, expected);
+
+    let json = write_json(&cli, r#"{"braceup": "d6", "fresh": "d8"}"#);
+    let merged = cli.run(&["import", &json]);
+    assert_eq!(
+        merged.stdout,
+        "skipped 'braceup': already exists (use --force to overwrite)\nimported 1, skipped 1\n"
+    );
+    assert_eq!(formula_of(&cli, "braceup"), "d10+9");
+
+    let forced = cli.run(&["import", &json, "--force"]);
+    forced.assert_success();
+    assert_eq!(forced.stdout, "imported 2, skipped 0\n");
+    assert_eq!(formula_of(&cli, "braceup"), "d6");
+}
