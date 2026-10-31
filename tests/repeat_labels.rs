@@ -67,14 +67,6 @@ fn a_label_inside_parentheses_swallows_the_close_paren() {
 }
 
 #[test]
-fn verbose_shows_the_label_on_the_block_header() {
-    let run = Cli::new().run(&["-v", "--seed", "1", "d20+8 # attack"]);
-    run.assert_success();
-    let first = run.stdout.lines().next().unwrap();
-    assert_eq!(first, "d20+8  # attack");
-}
-
-#[test]
 fn color_dims_the_label_and_plain_output_has_no_escapes() {
     let cli = Cli::new();
     let on = cli.run(&["--color", "always", "--seed", "1", "d20+8 # attack"]);
@@ -221,31 +213,6 @@ fn a_list_repeats_whole_each_item_line_carries_its_iteration() {
         assert!(line.starts_with(&format!("{k}: ")), "{line}");
         assert!(line.ends_with(tail), "{line}");
     }
-}
-
-#[test]
-fn verbose_puts_an_iteration_header_before_each_repeat() {
-    let out = stdout_of(&Cli::new(), 1, &["-v", "2x d20+8 # attack, d10+5"]);
-    let headers: Vec<&str> = out.lines().filter(|l| l.starts_with("iteration")).collect();
-    assert_eq!(headers, ["iteration 1 of 2", "iteration 2 of 2"]);
-    let blocks: Vec<&str> = out
-        .lines()
-        .filter(|l| l.starts_with("d20+8") || l.starts_with("d10+5"))
-        .collect();
-    assert_eq!(
-        blocks,
-        ["d20+8  # attack", "d10+5", "d20+8  # attack", "d10+5"]
-    );
-    // Each header comes before its own iteration's blocks.
-    let first_block = out.find("d20+8").unwrap();
-    assert!(out.find("iteration 1 of 2").unwrap() < first_block);
-    assert!(first_block < out.find("iteration 2 of 2").unwrap());
-}
-
-#[test]
-fn verbose_without_repeat_has_no_iteration_header() {
-    let out = stdout_of(&Cli::new(), 1, &["-v", "d20+8"]);
-    assert!(!out.contains("iteration"), "{out}");
 }
 
 #[test]

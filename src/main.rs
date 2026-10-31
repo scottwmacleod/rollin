@@ -3,7 +3,7 @@ mod repl;
 
 use clap::Parser;
 use rand_chacha::ChaCha8Rng;
-use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
+use render::{color_enabled, render_line, ColorChoice, Painter};
 use rollin::{
     entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output,
     PresetEntry, PresetSource, Roll, Shadow,
@@ -27,7 +27,6 @@ Examples:
   $ rollin 2d6+3 --seed 7               reproducible
   $ rollin 2d6+3 --json                 machine-readable
   $ rollin -q 2d6+3                     only the total
-  $ rollin -v 4d6dl1                    full breakdown
   $ rollin set str 3                    set a variable on the active character
   $ rollin 'd20+@str'                   use it in a formula
   $ rollin save atk 'd20+@str'          save a preset (roll it with: rollin atk)
@@ -54,12 +53,12 @@ pub struct Args {
     #[arg(long = "char", value_name = "NAME")]
     character: Option<String>,
 
-    /// Print the result tree as JSON (ignores -q and -v)
+    /// Print the result tree as JSON (ignores -q)
     #[arg(long)]
     json: bool,
 
     /// Print only the total of each roll, one per line
-    #[arg(short, long, conflicts_with = "verbose")]
+    #[arg(short, long)]
     quiet: bool,
 
     /// When to colorize human output: never beats always, which beats
@@ -77,10 +76,6 @@ pub struct Args {
     /// reject as an unknown flag)
     #[arg(long, hide = true)]
     global: bool,
-
-    /// Show the full breakdown of each roll
-    #[arg(short, long)]
-    verbose: bool,
 }
 
 /// Version of the `--json` schema (see docs/json-schema.md). Bump on any
@@ -326,32 +321,12 @@ fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<Roll>) {
         if let Some((name, formula)) = preset {
             println!("(preset '{name}': {formula})");
         }
-        if args.verbose {
-            let total = rolls.iter().filter_map(|r| r.iteration).max().unwrap_or(0);
-            let mut previous = None;
-            let blocks: Vec<String> = rolls
-                .iter()
-                .map(|r| {
-                    let block = render_verbose(paint, r);
-                    let header = match r.iteration {
-                        Some(k) if previous != Some(k) => {
-                            format!("iteration {k} of {total}\n")
-                        }
-                        _ => String::new(),
-                    };
-                    previous = r.iteration;
-                    format!("{header}{block}")
-                })
-                .collect();
-            println!("{}", blocks.join("\n\n"));
-        } else {
-            let width = iteration_width(&rolls);
-            for r in &rolls {
-                let prefix = r
-                    .iteration
-                    .map_or(String::new(), |k| format!("{k:>width$}: "));
-                println!("{prefix}{}", render_line(paint, r));
-            }
+        let width = iteration_width(&rolls);
+        for r in &rolls {
+            let prefix = r
+                .iteration
+                .map_or(String::new(), |k| format!("{k:>width$}: "));
+            println!("{prefix}{}", render_line(paint, r));
         }
     }
 }

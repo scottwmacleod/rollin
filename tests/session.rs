@@ -43,7 +43,6 @@ fn every_kind_of_line_matches_the_one_shot_output_byte_for_byte() {
     assert_parity(&[
         // rolls and output modes
         "4d6dl1 --seed 3",
-        "-v 4d6dl1 --seed 3",
         "-q 2d6+3 --seed 7",
         "--json 2d6+3 --seed 7",
         "--color always d20 --seed 2",
@@ -53,7 +52,6 @@ fn every_kind_of_line_matches_the_one_shot_output_byte_for_byte() {
         "--json",
         "--seed",
         "--help",
-        "-q -v d20",
         "--color puce d20",
         // formula errors with spans
         "d20+",

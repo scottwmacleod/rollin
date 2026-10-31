@@ -1,4 +1,4 @@
-//! Output modes (color, verbose, quiet, JSON) at the CLI seam.
+//! Output modes (color, quiet, JSON) at the CLI seam.
 
 mod common;
 
@@ -52,11 +52,17 @@ fn quiet_error_goes_to_stderr_with_nothing_on_stdout() {
 }
 
 #[test]
-fn quiet_and_verbose_conflict() {
-    let run = Cli::new().run(&["-q", "-v", "d20"]);
-    assert!(!run.success());
-    assert_eq!(run.stdout, "");
-    assert!(run.stderr.contains("cannot be used with"), "{run:?}");
+fn verbose_flags_are_rejected() {
+    for flag in ["-v", "--verbose"] {
+        let run = Cli::new().run(&[flag, "d20"]);
+        assert_eq!(run.code, 2, "{flag}: {run:?}");
+        assert_eq!(run.stdout, "");
+        assert!(
+            run.stderr
+                .contains(&format!("unexpected argument '{flag}'")),
+            "{flag}: {run:?}"
+        );
+    }
 }
 
 #[test]
@@ -197,93 +203,6 @@ fn natural_highlight_is_limited_to_a_lone_d20_term() {
             run.stdout
         );
     }
-}
-
-#[test]
-fn verbose_lists_every_die_with_its_status_and_the_subtotal() {
-    let cli = Cli::new();
-    let json = cli.roll_json("4d6dl1", 3);
-    let dice = common::flat_dice(&json["rolls"][0]["expr"]);
-    let run = cli.run(&["-v", "4d6dl1", "--seed", "3"]);
-    run.assert_success();
-    let cells: Vec<String> = dice
-        .iter()
-        .map(|d| format!("{} {}", d["value"], d["status"].as_str().unwrap()))
-        .collect();
-    let subtotal = json["rolls"][0]["total"].as_i64().unwrap();
-    assert_eq!(
-        run.stdout,
-        format!(
-            "4d6dl1\n  4d6dl1: {} = {subtotal}\n  total: {subtotal}\n",
-            cells.join(", ")
-        )
-    );
-    assert!(run.stdout.contains("dropped") && run.stdout.contains("kept"));
-}
-
-#[test]
-fn verbose_shows_each_term_its_operator_and_the_total() {
-    let cli = Cli::new();
-    let run = cli.run(&["-v", "2d6+1d4-3", "--seed", "3"]);
-    run.assert_success();
-    let lines: Vec<&str> = run.stdout.lines().collect();
-    assert_eq!(lines[0], "2d6+1d4-3");
-    assert!(lines[1].starts_with("  2d6: ") && lines[1].contains(" = "));
-    assert!(lines[2].starts_with("  + 1d4: ") && lines[2].contains(" = "));
-    assert_eq!(lines[3], "  - 3");
-    let total = totals(&cli, "2d6+1d4-3", 3)[0];
-    assert_eq!(lines[4], format!("  total: {total}"));
-}
-
-#[test]
-fn verbose_handles_nested_expressions() {
-    let cli = Cli::new();
-    let run = cli.run(&["-v", "(d20+5)*2", "--seed", "3"]);
-    run.assert_success();
-    let total = totals(&cli, "(d20+5)*2", 3)[0];
-    let lines: Vec<&str> = run.stdout.lines().collect();
-    assert_eq!(lines[0], "(d20+5)*2");
-    assert_eq!(lines[1], "  (");
-    assert!(lines[2].starts_with("    d20: ") && lines[2].contains("kept"));
-    assert_eq!(lines[3], "    + 5");
-    assert!(lines[4].starts_with("  ) = "));
-    assert_eq!(lines[5], "  * 2");
-    assert_eq!(lines[6], format!("  total: {total}"));
-
-    // Operator precedence nests too: the product is one bracketed unit.
-    let run = cli.run(&["-v", "2+3*4"]);
-    assert_eq!(
-        run.stdout,
-        "2+3*4\n  2\n  + (\n    3\n    * 4\n  ) = 12\n  total: 14\n"
-    );
-}
-
-#[test]
-fn verbose_prints_one_block_per_roll_separated_by_a_blank_line() {
-    let run = Cli::new().run(&["-v", "d20+8, d10+5", "--seed", "1"]);
-    run.assert_success();
-    let blocks: Vec<&str> = run.stdout.trim_end().split("\n\n").collect();
-    assert_eq!(blocks.len(), 2, "{:?}", run.stdout);
-    assert!(blocks[0].starts_with("d20+8\n"));
-    assert!(blocks[1].starts_with("d10+5\n"));
-}
-
-#[test]
-fn verbose_color_dims_dropped_dice() {
-    let run = color_run(&["-v", "4d6dl1", "--seed", "3", "--color", "always"]);
-    assert!(
-        run.stdout.contains(&format!("{DIM}1 dropped{RESET}")),
-        "{:?}",
-        run.stdout
-    );
-}
-
-#[test]
-fn json_ignores_verbose() {
-    let cli = Cli::new();
-    let plain = cli.roll_json("4d6dl1", 3);
-    let run = cli.run(&["-v", "--json", "4d6dl1", "--seed", "3"]);
-    assert_eq!(run.json(), plain);
 }
 
 #[test]

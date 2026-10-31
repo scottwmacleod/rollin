@@ -303,21 +303,6 @@ fn default_output_marks_exploded_dice_with_a_bang() {
 }
 
 #[test]
-fn verbose_output_labels_exploded_dice_and_shows_compound_parts() {
-    let cli = Cli::new();
-    let run = cli.run(&["-v", "--seed", "2", "3d6!"]);
-    assert_eq!(
-        run.stdout,
-        "3d6!\n  3d6!: 2 kept, 6 kept, 4 exploded, 4 kept = 16\n  total: 16\n"
-    );
-    let run = cli.run(&["-v", "--seed", "2", "3d6!!"]);
-    assert_eq!(
-        run.stdout,
-        "3d6!!\n  3d6!!: 2 kept, 10 kept (6+4), 4 kept = 16\n  total: 16\n"
-    );
-}
-
-#[test]
 fn json_records_exploded_status_and_compound_parts() {
     let cli = Cli::new();
     let plain = cli.roll_json("3d6!", 2);
