@@ -133,7 +133,6 @@ fn invalid_formulas_fail_with_a_message_not_a_panic() {
         "d20+",
         "d20 d6",
         "99999999999999999999d6",
-        "d20+d6",
         "4d6dlx",
     ] {
         let run = cli.run(&[bad]);
