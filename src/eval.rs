@@ -98,6 +98,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 .sum();
             Ok(Node::Dice {
                 term: d.text.clone(),
+                sides: d.sides,
                 dice,
                 subtotal,
             })

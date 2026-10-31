@@ -75,10 +75,10 @@ fn natural(expr: &Node) -> Option<Natural> {
         }
         _ => return None,
     };
-    let Node::Dice { term, dice, .. } = dice else {
+    let Node::Dice { sides, dice, .. } = dice else {
         return None;
     };
-    if dice.len() != 1 || sides(term) != Some(20) {
+    if dice.len() != 1 || *sides != 20 || dice[0].parts.len() > 1 {
         return None;
     }
     match dice[0].value {
@@ -86,13 +86,6 @@ fn natural(expr: &Node) -> Option<Natural> {
         1 => Some(Natural::One),
         _ => None,
     }
-}
-
-/// The number of sides in a term such as `d20` or `1d20kh`.
-fn sides(term: &str) -> Option<u32> {
-    let (_, rest) = term.split_once(['d', 'D'])?;
-    let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
-    digits.parse().ok()
 }
 
 /// How a die's status reads in the `-v` breakdown. Exhaustive on purpose:
@@ -201,6 +194,7 @@ fn verbose_node(
             term,
             dice,
             subtotal,
+            ..
         } => {
             let cells: Vec<String> = dice
                 .iter()

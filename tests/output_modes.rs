@@ -292,3 +292,11 @@ fn default_output_is_one_line_per_roll() {
     run.assert_success();
     assert_eq!(run.stdout.lines().count(), 3, "{:?}", run.stdout);
 }
+
+#[test]
+fn json_dice_nodes_carry_their_sides() {
+    let out = Cli::new().roll_json("2d6+d20", 1);
+    let chain = &out["rolls"][0]["expr"];
+    assert_eq!(chain["first"]["sides"], 6);
+    assert_eq!(chain["rest"][0]["node"]["sides"], 20);
+}

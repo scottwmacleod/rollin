@@ -74,6 +74,7 @@ pub enum Node {
     /// A dice group: its dice and their kept sum.
     Dice {
         term: String,
+        sides: i64,
         dice: Vec<Die>,
         subtotal: i64,
     },
