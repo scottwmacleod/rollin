@@ -95,6 +95,7 @@ fn status_label(status: Status) -> &'static str {
         Status::Kept => "kept",
         Status::Dropped => "dropped",
         Status::Exploded => "exploded",
+        Status::Rerolled => "rerolled",
     }
 }
 

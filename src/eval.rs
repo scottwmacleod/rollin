@@ -53,6 +53,16 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
             let mut dice = Vec::new();
             for _ in 0..d.count {
                 let mut raw = ctx.die(d.sides, &d.text, &expr.span)?;
+                if let Some(reroll) = d.reroll {
+                    if reroll.triggers(i64::from(raw)) {
+                        dice.push(Die {
+                            value: raw,
+                            status: Status::Rerolled,
+                            parts: Vec::new(),
+                        });
+                        raw = ctx.die(d.sides, &d.text, &expr.span)?;
+                    }
+                }
                 let mut die = Die {
                     value: raw,
                     status: Status::Kept,
@@ -89,8 +99,8 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                     }));
                 }
             }
-            let drops = d.drops(dice.len());
-            apply_drops(&mut dice, drops);
+            let pool = dice.iter().filter(|d| d.status != Status::Rerolled).count();
+            apply_drops(&mut dice, d.drops(pool));
             let subtotal = dice
                 .iter()
                 .filter(|d| d.status.counts())
@@ -166,7 +176,9 @@ fn apply(
 /// Marks the lowest and highest dice as dropped. Ties are broken by roll
 /// order (stable sort), matching v1.
 fn apply_drops(dice: &mut [Die], (lowest, highest): (i64, i64)) {
-    let mut order: Vec<usize> = (0..dice.len()).collect();
+    let mut order: Vec<usize> = (0..dice.len())
+        .filter(|&i| dice[i].status != Status::Rerolled)
+        .collect();
     order.sort_by_key(|&i| dice[i].value);
     let (lowest, highest) = (lowest as usize, highest as usize);
     for &i in order.iter().take(lowest) {

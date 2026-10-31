@@ -5,7 +5,7 @@
 //! just the simplest such expression.
 
 use crate::ast::{
-    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Item, Select, SelectKind,
+    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Item, Reroll, Select, SelectKind,
 };
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
@@ -258,6 +258,7 @@ impl Parser<'_> {
                 sides_span,
             ));
         }
+        let reroll = self.parse_reroll()?;
         let explode = self.parse_explode(sides)?;
         let select = self.parse_select(count)?;
         let span = self.tokens[start].span.start..self.prev_end();
@@ -275,11 +276,22 @@ impl Parser<'_> {
                 text: self.src[span.clone()].to_string(),
                 count,
                 sides,
+                reroll,
                 explode,
                 select,
             }),
             span,
         })
+    }
+
+    /// Optional `r` reroll clause with a condition.
+    fn parse_reroll(&mut self) -> Result<Option<Reroll>, Error> {
+        if !matches!(self.peek(), Some(Token::Word(w)) if w == "r") {
+            return Ok(None);
+        }
+        self.pos += 1;
+        let value = self.number("a number after the reroll condition")?;
+        Ok(Some(Reroll { cmp: Cmp::Eq, value }))
     }
 
     /// Optional `!` explode clause: `!` alone explodes on the maximum face,
