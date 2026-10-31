@@ -324,3 +324,36 @@ fn no_usable_config_directory_is_a_clear_error() {
         "error: cannot find a config directory: set XDG_CONFIG_HOME or HOME\n"
     );
 }
+
+#[test]
+fn writes_leave_only_the_presets_file_behind() {
+    let cli = Cli::new();
+    cli.run(&["save", "a", "d4"]).assert_success();
+    cli.run(&["save", "b", "d6"]).assert_success();
+    cli.run(&["delete", "a"]).assert_success();
+    let mut names: Vec<_> = std::fs::read_dir(cli.config_dir().join("rollin"))
+        .unwrap()
+        .map(|e| e.unwrap().file_name().into_string().unwrap())
+        .collect();
+    names.sort();
+    assert_eq!(names, ["presets.toml"]);
+}
+
+#[test]
+fn a_failed_write_keeps_the_old_file_and_leaves_no_temp_file() {
+    use std::os::unix::fs::PermissionsExt;
+    let cli = Cli::new();
+    cli.run(&["save", "a", "d4"]).assert_success();
+    let dir = cli.config_dir().join("rollin");
+    let before = std::fs::read_to_string(dir.join("presets.toml")).unwrap();
+    std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o500)).unwrap();
+    let run = cli.run(&["save", "b", "d6"]);
+    std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700)).unwrap();
+    assert_eq!(run.code, 1, "{run:?}");
+    assert!(run.stderr.starts_with("error: "), "{run:?}");
+    assert_eq!(
+        std::fs::read_to_string(dir.join("presets.toml")).unwrap(),
+        before
+    );
+    assert_eq!(std::fs::read_dir(&dir).unwrap().count(), 1);
+}
