@@ -145,13 +145,11 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
                 end = i + 1;
                 chars.next();
             }
-            // `adv`, `dis`, `df` (fudge) and a repeat's `x` end a run early, so `d20advdl1`
-            // lexes as `adv`, `dl`, `1` and `4dFdl1` as `df`, `dl`, `1`.
+            // `adv`, `dis` and a repeat's `x` end a run early, so `d20advdl1`
+            // lexes as `adv`, `dl`, `1`.
             let word = src[start..end].to_ascii_lowercase();
             let split = if word.starts_with("adv") || word.starts_with("dis") {
                 3
-            } else if word.starts_with("df") {
-                2
             } else if word.starts_with('x')
                 && matches!(out.last(), Some(t) if matches!(t.token, Token::Number(_) | Token::Var(_)) && (t.span.end == start || word == "x"))
             {

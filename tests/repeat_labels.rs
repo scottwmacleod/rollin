@@ -326,18 +326,18 @@ fn the_dice_cap_is_per_roll_not_per_repeat() {
 }
 
 #[test]
-fn success_counts_fudge_and_advantage_work_inside_a_repeat_with_labels() {
+fn success_counts_percentile_and_advantage_work_inside_a_repeat_with_labels() {
     let cli = Cli::new();
-    let out = cli.roll_json("2x 6d10>=8f1 # pool, 4dF # fate, d20adv+5 # hit", 4);
+    let out = cli.roll_json("2x 6d10>=8f1 # pool, 4d% # fate, d20adv+5 # hit", 4);
     let rolls = out["rolls"].as_array().unwrap();
     assert_eq!(rolls.len(), 6);
     assert_eq!(rolls[0]["kind"], "count");
     assert_eq!(rolls[0]["label"], "pool");
-    assert_eq!(rolls[1]["expr"]["special"], "fudge");
+    assert_eq!(rolls[1]["expr"]["special"], "percentile");
     assert_eq!(rolls[2]["label"], "hit");
     assert_eq!(rolls[3]["iteration"], 2);
     assert_eq!(rolls[3]["kind"], "count");
-    let text = stdout_of(&cli, 4, &["2x 6d10>=8f1 # pool, 4dF # fate"]);
+    let text = stdout_of(&cli, 4, &["2x 6d10>=8f1 # pool, 4d% # fate"]);
     assert!(text.lines().next().unwrap().starts_with("1: 6d10>=8f1"));
     assert!(text.contains("success"), "{text}");
 }

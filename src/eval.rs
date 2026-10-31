@@ -1,6 +1,6 @@
 //! Evaluator: walks the AST, drawing dice from the injected RNG.
 
-use crate::ast::{BinOp, Dice, ExplodeMode, Expr, ExprKind, Item, RerollMode, Special};
+use crate::ast::{BinOp, Dice, ExplodeMode, Expr, ExprKind, Item, RerollMode};
 use crate::error::Error;
 use crate::{Die, Kind, Link, Node, Outcome, Roll, Status, Tally};
 use rand::Rng;
@@ -35,13 +35,7 @@ impl<R: Rng> Ctx<'_, R> {
                 span: span.clone(),
             });
         }
-        // A fudge die is a d3 shifted down by two: faces 1, 2, 3 read -1, 0, +1.
-        let face = i64::from(self.rng.gen_range(1..=dice.sides as u32));
-        Ok(if dice.special == Some(Special::Fudge) {
-            face - 2
-        } else {
-            face
-        })
+        Ok(i64::from(self.rng.gen_range(1..=dice.sides as u32)))
     }
 }
 

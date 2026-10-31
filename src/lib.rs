@@ -126,7 +126,7 @@ pub enum Node {
     Dice {
         term: String,
         sides: i64,
-        /// Present only for `d%` and `dF`; absent on ordinary dice.
+        /// Present only for `d%`; absent on ordinary dice.
         #[serde(skip_serializing_if = "Option::is_none")]
         special: Option<Special>,
         dice: Vec<Die>,
