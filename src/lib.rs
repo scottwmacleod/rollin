@@ -196,7 +196,7 @@ pub struct Roll {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
     /// For a repeated formula (`Nx`), which repeat (from 1) this roll is in.
-    #[serde(skip)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub iteration: Option<u32>,
 }
 

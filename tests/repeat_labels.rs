@@ -105,3 +105,17 @@ fn repeat_rolls_the_formula_n_times_with_numbered_lines() {
         .collect();
     assert_eq!(repeated, expected);
 }
+
+#[test]
+fn json_rolls_carry_the_iteration_only_when_repeated() {
+    let cli = Cli::new();
+    let out = cli.roll_json("2x d20+8 # attack, d10", 1);
+    let rolls = out["rolls"].as_array().unwrap();
+    let got: Vec<(i64, bool)> = rolls
+        .iter()
+        .map(|r| (r["iteration"].as_i64().unwrap(), r.get("label").is_some()))
+        .collect();
+    assert_eq!(got, [(1, true), (1, false), (2, true), (2, false)]);
+    let plain = cli.roll_json("d20+8", 1);
+    assert!(plain["rolls"][0].get("iteration").is_none());
+}
