@@ -1,21 +1,22 @@
 mod render;
+mod repl;
 
 use clap::Parser;
 use rand_chacha::ChaCha8Rng;
 use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
 use rollin::{
-    entropy_rng, execute, format_history, help_text, parse_command, seeded_rng, session_command,
-    CommandError, Context, Error, Output, PresetEntry, PresetSource, Roll, SessionCommand, Shadow,
+    entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output,
+    PresetEntry, PresetSource, Roll, Shadow,
 };
 use serde::Serialize;
-use std::io::{BufRead, IsTerminal};
+use std::io::IsTerminal;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 /// A dice roller for the command line.
 #[derive(Parser)]
 #[command(version)]
-struct Args {
+pub struct Args {
     /// A formula to roll, e.g. d20 or "4d6dl1, d20+5", a preset name, or a
     /// command: save, presets, delete, import, roll, set, unset, vars, char, characters
     #[arg(allow_negative_numbers = true)]
@@ -77,52 +78,14 @@ fn main() -> ExitCode {
         if let Some(seed) = args.seed {
             rng = seeded_rng(seed);
         }
-        return session(&mut rng);
+        return repl::session(&mut rng);
     }
     run_line(&args, &mut rng)
 }
 
-/// Reads lines from stdin and runs each as if its words were given one-shot.
-fn session(rng: &mut ChaCha8Rng) -> ExitCode {
-    let mut history: Vec<String> = Vec::new();
-    for line in std::io::stdin().lock().lines().map_while(Result::ok) {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
-        if history.last().map(String::as_str) != Some(line) {
-            history.push(line.to_string());
-        }
-        let words: Vec<&str> = line.split_whitespace().collect();
-        match session_command(&words) {
-            Some(SessionCommand::Quit) => break,
-            Some(SessionCommand::Help) => {
-                print!("{}", help_text());
-                continue;
-            }
-            Some(SessionCommand::History) => {
-                print!("{}", format_history(history.iter().map(String::as_str)));
-                continue;
-            }
-            None => {}
-        }
-        match Args::try_parse_from(std::iter::once("rollin").chain(words)) {
-            Ok(args) if args.words.is_empty() => {}
-            Ok(args) => {
-                run_line(&args, rng);
-            }
-            // Print the clap error (or --help text) and carry on.
-            Err(e) => {
-                let _ = e.print();
-            }
-        }
-    }
-    ExitCode::SUCCESS
-}
-
 /// Runs one parsed command line against a fresh context, printing its
 /// output or error. The one-shot path and the session both come through here.
-fn run_line(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
+pub fn run_line(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
     let mut ctx = Context::new(config_dir());
     ctx.character = args.character.clone();
     let names = &mut || ctx.preset_names();
@@ -150,7 +113,7 @@ fn run_line(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
 }
 
 /// `$XDG_CONFIG_HOME` if absolute, else `$HOME/.config`.
-fn config_dir() -> Option<PathBuf> {
+pub fn config_dir() -> Option<PathBuf> {
     let xdg = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
     let home = std::env::var_os("HOME").map(PathBuf::from);
     rollin::config_dir(xdg.as_deref(), home.as_deref())
