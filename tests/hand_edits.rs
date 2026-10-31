@@ -37,3 +37,26 @@ fn saving_a_preset_appends_it_and_leaves_hand_written_text_alone() {
         format!("{PRESETS}heal = \"d4+2\"\n")
     );
 }
+
+#[test]
+fn deleting_a_preset_removes_only_its_own_line() {
+    let cli = Cli::new();
+    let path = write(&cli, "presets.toml", PRESETS);
+    cli.run(&["delete", "--global", "atk"]).assert_success();
+    assert_eq!(
+        std::fs::read_to_string(path).unwrap(),
+        PRESETS.replace("atk = \"2d6+3\"\n", "")
+    );
+}
+
+#[test]
+fn overwriting_a_preset_keeps_its_key_spacing_and_trailing_comment() {
+    let cli = Cli::new();
+    let path = write(&cli, "presets.toml", PRESETS);
+    cli.run(&["save", "--global", "zap", "d20+9"])
+        .assert_success();
+    assert_eq!(
+        std::fs::read_to_string(path).unwrap(),
+        PRESETS.replace("'d20+8'   #", "\"d20+9\"   #")
+    );
+}
