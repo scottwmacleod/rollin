@@ -6,6 +6,9 @@ use crate::{Die, Link, Node, Roll, Status};
 use rand::Rng;
 use std::ops::Range;
 
+/// Hard limit (ADR 0006): extra dice one original die may roll.
+const MAX_EXPLOSIONS_PER_DIE: usize = 100;
+
 pub fn evaluate(item: &Item, rng: &mut impl Rng) -> Result<Roll, Error> {
     let expr = eval_expr(&item.expr, rng)?;
     Ok(Roll {
@@ -26,7 +29,17 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
                     value,
                     status: Status::Kept,
                 });
+                let mut explosions = 0;
                 while d.explode.is_some_and(|e| e.triggers(i64::from(value))) {
+                    if explosions == MAX_EXPLOSIONS_PER_DIE {
+                        return Err(Error::LimitExceeded {
+                            cap: "explosions per die",
+                            limit: MAX_EXPLOSIONS_PER_DIE,
+                            term: d.text.clone(),
+                            span: expr.span.clone(),
+                        });
+                    }
+                    explosions += 1;
                     value = rng.gen_range(1..=d.sides as u32);
                     dice.push(Die {
                         value,

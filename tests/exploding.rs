@@ -86,3 +86,15 @@ fn conditions_choose_which_faces_explode() {
         assert_eq!(explosions > 0, *formula != "3d6!>6", "{formula}");
     }
 }
+
+#[test]
+fn more_than_100_explosions_of_one_die_is_an_error_naming_cap_and_term() {
+    // Seed 7 chains 130 explosions on a d100 that explodes on 2 or more.
+    let run = Cli::new().run(&["--seed", "7", "--", "d100!>=2"]);
+    assert!(!run.success(), "{run:?}");
+    assert_eq!(run.stdout, "");
+    assert_eq!(
+        run.stderr,
+        "error: explosions per die cap (100) exceeded by 'd100!>=2'\n  d100!>=2\n  ^^^^^^^^\n"
+    );
+}
