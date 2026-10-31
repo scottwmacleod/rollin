@@ -5,14 +5,15 @@
 //! just the simplest such expression.
 
 use crate::ast::{
-    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Item, Reroll, RerollMode,
-    Select, SelectKind, Special, Success,
+    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Formula, Item, Reroll,
+    RerollMode, Select, SelectKind, Special, Success,
 };
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
 const MAX_DICE_PER_TERM: i64 = 1000;
 const MAX_DICE_PER_EXPRESSION: i64 = 10000;
 const MAX_DEPTH: usize = 32;
+const MAX_REPEAT: i64 = 100;
 const MAX_SIDES: i64 = 10000;
 /// `d%` is a d100.
 const PERCENTILE_SIDES: i64 = 100;
@@ -22,7 +23,7 @@ const FUDGE_SIDES: i64 = 3;
 use crate::lexer::{tokenize, Spanned, Token};
 
 /// Parses a whole formula (comma-separated items) into items.
-pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
+pub fn parse(src: &str) -> Result<Formula, Error> {
     let tokens = tokenize(src)?;
     let mut parser = Parser {
         src,
@@ -32,6 +33,32 @@ pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
         depth: 0,
         item_dice: 0,
     };
+    let mut repeat = None;
+    if let [Spanned {
+        token: Token::Number(n),
+        ..
+    }, Spanned {
+        token: Token::Word(w),
+        ..
+    }, ..] = tokens.as_slice()
+    {
+        if w == "x" {
+            let span = tokens[0].span.start..tokens[1].span.end;
+            if *n < 1 {
+                return Err(Error::syntax("repeat count must be at least 1", span));
+            }
+            if *n > MAX_REPEAT {
+                return Err(Error::LimitExceeded {
+                    cap: "repeat",
+                    limit: MAX_REPEAT as usize,
+                    term: src[span.clone()].to_string(),
+                    span,
+                });
+            }
+            repeat = Some(*n as u32);
+            parser.pos = 2;
+        }
+    }
     let mut items = Vec::new();
     loop {
         // v1 ignores empty items, so `d20,,d6` and a trailing comma are fine.
@@ -41,22 +68,44 @@ pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
         if parser.at_end() {
             break;
         }
+        if matches!(parser.peek(), Some(Token::Label(_))) {
+            return Err(Error::syntax(
+                "a label needs a roll before it, as in 'd20 # attack'",
+                parser.tokens[parser.pos].span.clone(),
+            ));
+        }
         let start = parser.here();
         parser.item_dice = 0;
         let expr = parser.parse_item()?;
         let stop = parser.prev_end();
+        let label = match parser.peek() {
+            Some(Token::Label(text)) => {
+                let text = text.clone();
+                parser.pos += 1;
+                Some(text)
+            }
+            _ => None,
+        };
         items.push(Item {
             source: src[start..stop].trim().to_string(),
             expr,
+            label,
         });
         if !parser.at_end() && !matches!(parser.peek(), Some(Token::Comma)) {
             return Err(parser.unexpected("',' or the end of the formula"));
         }
     }
     if items.is_empty() {
+        if repeat.is_some() {
+            let span = tokens[0].span.start..tokens[1].span.end;
+            return Err(Error::syntax(
+                format!("'{}' has nothing to repeat", &src[span.clone()]),
+                span,
+            ));
+        }
         return Err(Error::syntax("no formulas provided", 0..src.len()));
     }
-    Ok(items)
+    Ok(Formula { repeat, items })
 }
 
 struct Parser<'a> {
@@ -208,6 +257,10 @@ impl Parser<'_> {
                 })
             }
             None => Err(Error::syntax("unclosed '('", open)),
+            Some(Token::Label(_)) => Err(Error::syntax(
+                "unclosed '(': a label runs to the next comma, so it swallowed the ')'; put labels at the end of an item",
+                open,
+            )),
             Some(_) => Err(self.unexpected("')'")),
         }
     }
@@ -222,6 +275,18 @@ impl Parser<'_> {
             Some(Token::Number(n)) => {
                 let n = *n;
                 self.pos += 1;
+                if let Some(Token::Word(w)) = self.peek() {
+                    if w == "x" {
+                        let span = self.tokens[start].span.start..self.tokens[self.pos].span.end;
+                        return Err(Error::syntax(
+                            format!(
+                                "a repeat ('{}') is allowed only once, at the very start of the formula",
+                                &self.src[span.clone()]
+                            ),
+                            span,
+                        ));
+                    }
+                }
                 if !matches!(self.peek(), Some(Token::Word(w)) if w == "d" || w == "df") {
                     return Ok(Expr {
                         kind: ExprKind::Number(n),
@@ -624,5 +689,6 @@ fn describe(t: &Token) -> String {
         Token::Lt => "'<'".into(),
         Token::Le => "'<='".into(),
         Token::Eq => "'='".into(),
+        Token::Label(_) => "a label".into(),
     }
 }

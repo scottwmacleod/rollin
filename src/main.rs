@@ -166,14 +166,39 @@ fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<Roll>) {
             println!("(preset '{name}': {formula})");
         }
         if args.verbose {
-            let blocks: Vec<String> = rolls.iter().map(|r| render_verbose(paint, r)).collect();
+            let total = rolls.iter().filter_map(|r| r.iteration).max().unwrap_or(0);
+            let mut previous = None;
+            let blocks: Vec<String> = rolls
+                .iter()
+                .map(|r| {
+                    let block = render_verbose(paint, r);
+                    let header = match r.iteration {
+                        Some(k) if previous != Some(k) => {
+                            format!("iteration {k} of {total}\n")
+                        }
+                        _ => String::new(),
+                    };
+                    previous = r.iteration;
+                    format!("{header}{block}")
+                })
+                .collect();
             println!("{}", blocks.join("\n\n"));
         } else {
+            let width = iteration_width(&rolls);
             for r in &rolls {
-                println!("{}", render_line(paint, r));
+                let prefix = r
+                    .iteration
+                    .map_or(String::new(), |k| format!("{k:>width$}: "));
+                println!("{prefix}{}", render_line(paint, r));
             }
         }
     }
+}
+
+/// Digits in the highest iteration number, so prefixes line up.
+fn iteration_width(rolls: &[Roll]) -> usize {
+    let last = rolls.iter().filter_map(|r| r.iteration).max().unwrap_or(0);
+    last.to_string().len()
 }
 
 /// The message, the formula, and carets under the offending span.

@@ -3,12 +3,22 @@
 use serde::Serialize;
 use std::ops::Range;
 
+/// A parsed formula: an optional repeat count and the items it applies to.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Formula {
+    /// The `N` of a leading `Nx`; `None` when the formula is not repeated.
+    pub repeat: Option<u32>,
+    pub items: Vec<Item>,
+}
+
 /// One comma-separated item of a formula: a single roll.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Item {
     /// The item's source text, trimmed.
     pub source: String,
     pub expr: Expr,
+    /// The `# text` note on this item, trimmed.
+    pub label: Option<String>,
 }
 
 /// An expression with the byte range of the source it came from.

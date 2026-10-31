@@ -238,15 +238,23 @@ fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
     }
 }
 
+/// The roll's label as it trails a line: two spaces then `# text`, dimmed.
+fn label_suffix(p: Painter, roll: &Roll) -> String {
+    roll.label
+        .as_ref()
+        .map_or(String::new(), |l| format!("  {}", p.dim(&format!("# {l}"))))
+}
+
 /// The default output: one line per roll.
 pub fn render_line(p: Painter, roll: &Roll) -> String {
     let total = p.bold(&total_text(roll));
+    let label = label_suffix(p, roll);
     if !has_dice(&roll.expr) {
-        return format!("{}  →  {total}", roll.formula);
+        return format!("{}  →  {total}{label}", roll.formula);
     }
     let nat = natural(&roll.expr);
     format!(
-        "{}  {}  →  {total}",
+        "{}  {}  →  {total}{label}",
         roll.formula,
         expr_line(p, &roll.expr, nat)
     )
@@ -256,7 +264,7 @@ pub fn render_line(p: Painter, roll: &Roll) -> String {
 /// term's subtotal, the operators, and the total.
 pub fn render_verbose(p: Painter, roll: &Roll) -> String {
     let nat = natural(&roll.expr);
-    let mut lines = vec![roll.formula.clone()];
+    let mut lines = vec![format!("{}{}", roll.formula, label_suffix(p, roll))];
     verbose_node(p, &roll.expr, nat, 1, "", &mut lines);
     lines.push(format!("  total: {}", p.bold(&total_text(roll))));
     lines.join("\n")

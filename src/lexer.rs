@@ -26,6 +26,8 @@ pub enum Token {
     Lt,
     Le,
     Eq,
+    /// `#` and the text after it, up to (not including) the next comma.
+    Label(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -49,6 +51,24 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
             out.push(Spanned {
                 token,
                 span: start..start + 2,
+            });
+            continue;
+        }
+        if c == '#' {
+            let end = src[start..].find(',').map_or(src.len(), |i| start + i);
+            while chars.peek().is_some_and(|&(i, _)| i < end) {
+                chars.next();
+            }
+            let text = src[start + 1..end].trim();
+            if text.is_empty() {
+                return Err(Error::syntax(
+                    "a label '#' needs text after it, as in '# attack'",
+                    start..start + 1,
+                ));
+            }
+            out.push(Spanned {
+                token: Token::Label(text.to_string()),
+                span: start..end,
             });
             continue;
         }
@@ -102,13 +122,18 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
                 end = i + 1;
                 chars.next();
             }
-            // `adv`, `dis` and `df` (fudge) end a run early, so `d20advdl1`
+            // `adv`, `dis`, `df` (fudge) and a repeat's `x` end a run early, so `d20advdl1`
             // lexes as `adv`, `dl`, `1` and `4dFdl1` as `df`, `dl`, `1`.
             let word = src[start..end].to_ascii_lowercase();
             let split = if word.starts_with("adv") || word.starts_with("dis") {
                 3
             } else if word.starts_with("df") {
                 2
+            } else if word.starts_with('x')
+                && matches!(out.last(), Some(t) if matches!(t.token, Token::Number(_)) && (t.span.end == start || word == "x"))
+            {
+                // The `x` of `3xd20` (a repeat) ends right after the number.
+                1
             } else {
                 word.len()
             };
