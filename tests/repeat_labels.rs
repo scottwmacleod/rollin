@@ -47,3 +47,21 @@ fn a_label_with_no_roll_is_an_error_but_empty_items_are_still_ignored() {
     run.assert_success();
     assert_eq!(run.stdout.lines().count(), 2);
 }
+
+#[test]
+fn a_label_runs_to_the_next_comma_and_may_hold_any_other_text() {
+    let out = Cli::new().roll_json("d20 #  Fireball: (3d6) ✨ 100%!  ,d6#b", 1);
+    let rolls = out["rolls"].as_array().unwrap();
+    assert_eq!(rolls.len(), 2);
+    assert_eq!(rolls[0]["label"], "Fireball: (3d6) ✨ 100%!");
+    assert_eq!(rolls[1]["label"], "b");
+    assert_eq!(rolls[1]["formula"], "d6");
+}
+
+#[test]
+fn a_label_inside_parentheses_swallows_the_close_paren() {
+    let run = Cli::new().run(&["(d20 # x)"]);
+    assert!(!run.success());
+    assert!(run.stderr.contains("unclosed '('"), "{run:?}");
+    assert!(run.stderr.contains("label"), "{run:?}");
+}

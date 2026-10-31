@@ -223,6 +223,10 @@ impl Parser<'_> {
                 })
             }
             None => Err(Error::syntax("unclosed '('", open)),
+            Some(Token::Label(_)) => Err(Error::syntax(
+                "unclosed '(': a label runs to the next comma, so it swallowed the ')'; put labels at the end of an item",
+                open,
+            )),
             Some(_) => Err(self.unexpected("')'")),
         }
     }
