@@ -84,3 +84,94 @@ fn adv_and_dis_cannot_be_combined_with_keep_or_drop() {
         );
     }
 }
+
+fn dice_values(cli: &Cli, formula: &str, seed: u64) -> Vec<(i64, String)> {
+    let out = cli.roll_json(formula, seed);
+    common::flat_dice(&out["rolls"][0]["expr"])
+        .iter()
+        .map(|d| {
+            (
+                d["value"].as_i64().unwrap(),
+                d["status"].as_str().unwrap().to_string(),
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn advantage_keeps_the_higher_die_and_drops_the_other() {
+    let cli = Cli::new();
+    for seed in 0..40 {
+        let adv = dice_values(&cli, "d20adv", seed);
+        let dis = dice_values(&cli, "d20dis", seed);
+        for (pool, keeps_high) in [(&adv, true), (&dis, false)] {
+            assert_eq!(pool.len(), 2, "seed {seed}");
+            let (hi, lo) = (pool[0].0.max(pool[1].0), pool[0].0.min(pool[1].0));
+            let kept: Vec<_> = pool.iter().filter(|d| d.1 == "kept").collect();
+            let dropped = pool.iter().filter(|d| d.1 == "dropped").count();
+            assert_eq!((kept.len(), dropped), (1, 1), "seed {seed}: {pool:?}");
+            assert_eq!(kept[0].0, if keeps_high { hi } else { lo }, "seed {seed}");
+        }
+    }
+}
+
+#[test]
+fn modifiers_parentheses_and_other_modifiers_combine_with_adv_and_dis() {
+    let cli = Cli::new();
+    for seed in 0..20 {
+        let same = |a: &str, b: &str| {
+            assert_eq!(
+                without_text(&cli.roll_json(a, seed)),
+                without_text(&cli.roll_json(b, seed)),
+                "{a} vs {b}, seed {seed}"
+            );
+        };
+        same("d20adv+8", "2d20kh1+8");
+        same("1d20ADV - 2", "2d20kh1-2");
+        same("(d20dis+3)*2", "(2d20kl1+3)*2");
+        same("d20r1adv", "2d20r1kh1");
+        same("d20!dis", "2d20!kl1");
+        same("d10adv>=7", "2d10kh1>=7");
+    }
+}
+
+#[test]
+fn the_formula_echo_shows_what_was_typed() {
+    let run = Cli::new().run(&["--seed", "1", "D20ADV+8"]);
+    run.assert_success();
+    assert!(run.stdout.starts_with("D20ADV+8  "), "{}", run.stdout);
+}
+
+#[test]
+fn default_output_shows_both_dice_with_the_loser_dropped() {
+    let run = Cli::new().run(&["--seed", "1", "d20adv"]);
+    run.assert_success();
+    let line = run.stdout.trim();
+    let dice = line.split("  ").nth(1).unwrap();
+    assert!(
+        dice.starts_with('[') && dice.contains("(") && dice.contains(", "),
+        "{line}"
+    );
+}
+
+#[test]
+fn natural_highlights_never_apply_to_advantage() {
+    let cli = Cli::new();
+    let mut saw_natural = false;
+    for seed in 0..200 {
+        let run = cli.run(&["--seed", &seed.to_string(), "--color", "always", "d20adv"]);
+        let high = dice_values(&cli, "d20adv", seed)
+            .iter()
+            .any(|d| d.0 == 20 && d.1 == "kept");
+        let low = dice_values(&cli, "d20adv", seed)
+            .iter()
+            .any(|d| d.0 == 1 && d.1 == "kept");
+        saw_natural |= high || low;
+        assert!(
+            !run.stdout.contains("1;32") && !run.stdout.contains("1;31"),
+            "seed {seed}: {}",
+            run.stdout
+        );
+    }
+    assert!(saw_natural, "no natural 20 or 1 in the sample");
+}
