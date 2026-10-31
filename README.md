@@ -15,6 +15,8 @@ rollin "d20+8, d10+5"      # one line per roll
 rollin d20+8, d10+5        # unquoted also works (arguments are joined)
 rollin 2d6+3 --seed 7      # reproducible
 rollin 2d6+3 --json        # machine-readable, with kept/dropped per die
+rollin -q 2d6+3            # just the total
+rollin -v 4d6dl1           # full breakdown
 ```
 
 Dropped dice are shown in parentheses and do not count toward the total.
@@ -85,14 +87,52 @@ error: dice per term cap (1000) exceeded by '1001d6'
 Exceeding a cap names the cap and the term. Other errors: `unclosed '('`,
 `arithmetic overflow`, `sides must be between 2 and 10000`, and so on.
 
-### JSON result tree
+### Output modes
 
-`--json` prints one entry per roll with its `formula`, `total` and an `expr`
-tree. Each node has a `type`: `number`, `dice` (its `term`, `dice` with
-`kept`/`dropped` status, and `subtotal`), `neg`, `group` (parentheses), or
-`chain` (a `first` node plus `rest`, a list of `{op, node}`, and the chain's
-`total`). `2d6+1` becomes a `chain` of a `dice` node and `{"op": "+", "node":
-{"type": "number", "value": 1}}`.
+By default each roll prints on one line, as above. Flags change the renderer;
+all of them draw from the same result tree.
+
+**Color.** On a terminal, dropped dice are dimmed, totals are bold, and when
+the whole roll is a single d20 (`d20`, `d20+5`, `1d20-2`) a natural 20 is
+bold green and a natural 1 bold red. Color is off when stdout is not a
+terminal (for example piped) or when `NO_COLOR` is set to a non-empty value.
+`--color <auto|always|never>` overrides it; the default is `auto`. Precedence:
+`--color never` beats `--color always`, which beats `NO_COLOR`, which beats
+terminal detection. Errors on stderr are always plain.
+
+**Verbose (`-v`, `--verbose`).** One block per roll (blank line between
+blocks) listing every die with its status, each term's subtotal, the
+operators, and the total. Nested expressions are indented and bracketed:
+
+```
+$ rollin -v 4d6dl1 --seed 3
+4d6dl1
+  4d6dl1: 1 dropped, 4 kept, 1 kept, 6 kept = 11
+  total: 11
+$ rollin -v "(d20+5)*2" --seed 3
+(d20+5)*2
+  (
+    d20: 3 kept = 3
+    + 5
+  ) = 8
+  * 2
+  total: 16
+```
+
+**Quiet (`-q`, `--quiet`).** Only the total of each roll, one per line, so
+`$(rollin -q 2d6+3)` works in scripts. Errors still go to stderr with a
+non-zero exit and nothing on stdout.
+
+```
+$ rollin -q "d20+8, d10+5" --seed 1
+17
+8
+```
+
+**JSON (`--json`).** The result tree as one line of JSON with a
+`schema_version`; see [docs/json-schema.md](docs/json-schema.md) for the
+schema and an example of every node type. `--json` wins over `-q` and `-v`
+(they are ignored). `-q` and `-v` together are an error.
 
 ## Development
 
@@ -115,7 +155,8 @@ per test. The helper is `tests/common/mod.rs` (`Cli::new()`, `cli.run(&[..])`).
 | `tests/roll.rs` | End-to-end rolls, e.g. `rollin d20 --seed 1` |
 | `tests/arithmetic.rs` | `+ - * /`, precedence, parentheses, result tree |
 | `tests/errors.rs` | Error text with underlined spans, caps, overflow |
-| `tests/golden.rs` | Golden fixtures: formula + seed to expected `--json` |
+| `tests/output_modes.rs` | Color, `-v`, `-q` and `--json` flag behaviour |
+| `tests/golden.rs` | Golden fixtures (the `--json` contract): formula + seed to expected output |
 | `tests/v1_spec.rs` | The Python v1 test cases as a parity spec |
 | `tests/properties.rs` | `proptest` invariants at the library API, including "never panics" |
 | `tests/fixtures_present.rs` | Committed fixtures (`presets.json`) are well-formed |
@@ -139,7 +180,7 @@ Add a file `tests/fixtures/golden/<name>.json`; no Rust changes are needed:
 { "formula": "2d6", "seed": 7, "expected": { "rolls": [ ... ] } }
 ```
 
-Generate `expected` by running `rollin <formula> --seed <N> --json`, then check
+Generate `expected` by running `rollin --seed <N> --json -- <formula>`, then check
 by eye that the values are plausible (within die ranges) before committing. A
 failing case is reported by file name.
 

@@ -1,0 +1,5 @@
+{
+  "formula": "15",
+  "seed": 1,
+  "expected": {"schema_version":1,"rolls":[{"formula":"15","total":15,"expr":{"type":"number","value":15}}]}
+}

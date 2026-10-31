@@ -1,6 +1,10 @@
+mod render;
+
 use clap::Parser;
-use rollin::{entropy_rng, roll, seeded_rng, Error, Node, Roll, Status};
+use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
+use rollin::{entropy_rng, roll, seeded_rng, Error, Roll};
 use serde::Serialize;
+use std::io::IsTerminal;
 use std::process::ExitCode;
 
 /// A dice roller for the command line.
@@ -15,69 +19,32 @@ struct Args {
     #[arg(long)]
     seed: Option<u64>,
 
-    /// Print the result tree as JSON
+    /// Print the result tree as JSON (ignores -q and -v)
     #[arg(long)]
     json: bool,
+
+    /// Print only the total of each roll, one per line
+    #[arg(short, long, conflicts_with = "verbose")]
+    quiet: bool,
+
+    /// When to colorize human output: never beats always, which beats
+    /// NO_COLOR, which beats terminal detection (auto)
+    #[arg(long, value_enum, default_value = "auto")]
+    color: ColorChoice,
+
+    /// Show the full breakdown of each roll
+    #[arg(short, long)]
+    verbose: bool,
 }
+
+/// Version of the `--json` schema (see docs/json-schema.md). Bump on any
+/// change to the shape or meaning of existing fields.
+const SCHEMA_VERSION: u32 = 1;
 
 #[derive(Serialize)]
 struct Output {
+    schema_version: u32,
     rolls: Vec<Roll>,
-}
-
-/// Shows each dice group's dice (dropped in parentheses), joined by the
-/// formula's operators.
-fn render_expr(node: &Node) -> String {
-    match node {
-        Node::Number { value } => value.to_string(),
-        Node::Dice { dice, .. } => {
-            let cells: Vec<String> = dice
-                .iter()
-                .map(|d| match d.status {
-                    Status::Kept => d.value.to_string(),
-                    Status::Dropped => format!("({})", d.value),
-                })
-                .collect();
-            format!("[{}]", cells.join(", "))
-        }
-        Node::Neg { operand, .. } => format!("-{}", render_expr(operand)),
-        Node::Group { inner, .. } => format!("({})", render_expr(inner)),
-        Node::Chain { first, rest, .. } => {
-            let mut out = render_expr(first);
-            for link in rest {
-                out.push_str(&format!(
-                    " {} {}",
-                    link.op.symbol(),
-                    render_expr(&link.node)
-                ));
-            }
-            out
-        }
-    }
-}
-
-fn has_dice(node: &Node) -> bool {
-    match node {
-        Node::Number { .. } => false,
-        Node::Dice { .. } => true,
-        Node::Neg { operand, .. } => has_dice(operand),
-        Node::Group { inner, .. } => has_dice(inner),
-        Node::Chain { first, rest, .. } => {
-            has_dice(first) || rest.iter().any(|l| has_dice(&l.node))
-        }
-    }
-}
-
-fn render(roll: &Roll) -> String {
-    if !has_dice(&roll.expr) {
-        return format!("{}  →  {}", roll.formula, roll.total);
-    }
-    format!(
-        "{}  {}  →  {}",
-        roll.formula,
-        render_expr(&roll.expr),
-        roll.total
-    )
 }
 
 fn main() -> ExitCode {
@@ -89,13 +56,34 @@ fn main() -> ExitCode {
     };
     match result {
         Ok(rolls) if args.json => {
-            let out = Output { rolls };
+            let out = Output {
+                schema_version: SCHEMA_VERSION,
+                rolls,
+            };
             println!("{}", serde_json::to_string(&out).expect("serialize"));
             ExitCode::SUCCESS
         }
-        Ok(rolls) => {
+        Ok(rolls) if args.quiet => {
             for r in &rolls {
-                println!("{}", render(r));
+                println!("{}", r.total);
+            }
+            ExitCode::SUCCESS
+        }
+        Ok(rolls) => {
+            let no_color = std::env::var("NO_COLOR").ok();
+            let on = color_enabled(
+                args.color,
+                no_color.as_deref(),
+                std::io::stdout().is_terminal(),
+            );
+            let paint = Painter { on };
+            if args.verbose {
+                let blocks: Vec<String> = rolls.iter().map(|r| render_verbose(paint, r)).collect();
+                println!("{}", blocks.join("\n\n"));
+            } else {
+                for r in &rolls {
+                    println!("{}", render_line(paint, r));
+                }
             }
             ExitCode::SUCCESS
         }

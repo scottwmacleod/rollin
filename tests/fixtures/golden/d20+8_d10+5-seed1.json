@@ -1,5 +1,5 @@
 {
   "formula": "d20+8, d10+5",
   "seed": 1,
-  "expected": {"rolls":[{"formula":"d20+8","total":17,"expr":{"type":"chain","first":{"type":"dice","term":"d20","dice":[{"value":9,"status":"kept"}],"subtotal":9},"rest":[{"op":"+","node":{"type":"number","value":8}}],"total":17}},{"formula":"d10+5","total":8,"expr":{"type":"chain","first":{"type":"dice","term":"d10","dice":[{"value":3,"status":"kept"}],"subtotal":3},"rest":[{"op":"+","node":{"type":"number","value":5}}],"total":8}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"d20+8","total":17,"expr":{"type":"chain","first":{"type":"dice","term":"d20","dice":[{"value":9,"status":"kept"}],"subtotal":9},"rest":[{"op":"+","node":{"type":"number","value":8}}],"total":17}},{"formula":"d10+5","total":8,"expr":{"type":"chain","first":{"type":"dice","term":"d10","dice":[{"value":3,"status":"kept"}],"subtotal":3},"rest":[{"op":"+","node":{"type":"number","value":5}}],"total":8}}]}
 }

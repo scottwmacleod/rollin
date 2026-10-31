@@ -1,5 +1,5 @@
 {
   "formula": "15, d20",
   "seed": 1,
-  "expected": {"rolls":[{"formula":"15","total":15,"expr":{"type":"number","value":15}},{"formula":"d20","total":9,"expr":{"type":"dice","term":"d20","dice":[{"value":9,"status":"kept"}],"subtotal":9}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"15","total":15,"expr":{"type":"number","value":15}},{"formula":"d20","total":9,"expr":{"type":"dice","term":"d20","dice":[{"value":9,"status":"kept"}],"subtotal":9}}]}
 }
