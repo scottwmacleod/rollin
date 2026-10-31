@@ -1,7 +1,7 @@
 //! Characters: one TOML file each under `rollin/characters/` (ADR 0004),
 //! holding integer variables and presets.
 
-use crate::presets::{is_name_shaped, write_atomic, StoreError};
+use crate::presets::{edit_document, is_name_shaped, string_values, sync_section, StoreError};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -110,13 +110,14 @@ impl CharacterStore {
         // A corrupt state file is an error, never overwritten.
         self.active()?;
         let path = self.state_path();
-        let mut root = toml::Table::new();
-        root.insert("active".into(), toml::Value::String(name.to_string()));
-        let text = toml::to_string(&root).map_err(|e| StoreError {
-            path: path.clone(),
-            message: e.to_string(),
-        })?;
-        write_atomic(&path, &text)
+        edit_document(&path, |doc| {
+            let mut new = toml_edit::Value::from(name);
+            if let Some(old) = doc.get("active").and_then(toml_edit::Item::as_value) {
+                *new.decor_mut() = old.decor().clone();
+            }
+            doc["active"] = toml_edit::Item::Value(new);
+            Ok(())
+        })
     }
 
     fn state_path(&self) -> PathBuf {
@@ -169,24 +170,17 @@ impl CharacterStore {
         Ok(character)
     }
 
-    /// Replaces a character's file, atomically.
+    /// Makes a character's file hold exactly `character`, atomically. An
+    /// existing file is edited in place, so hand-written text survives.
     pub fn save(&self, name: &str, character: &Character) -> Result<(), StoreError> {
-        let mut vars = toml::Table::new();
-        for (var, value) in &character.vars {
-            vars.insert(var.clone(), toml::Value::Integer(*value));
-        }
-        let mut presets = toml::Table::new();
-        for (preset, formula) in &character.presets {
-            presets.insert(preset.clone(), toml::Value::String(formula.clone()));
-        }
-        let mut root = toml::Table::new();
-        root.insert("vars".into(), toml::Value::Table(vars));
-        root.insert("presets".into(), toml::Value::Table(presets));
-        let path = self.path(name);
-        let text = toml::to_string(&root).map_err(|e| StoreError {
-            path: path.clone(),
-            message: e.to_string(),
-        })?;
-        write_atomic(&path, &text)
+        let vars = character
+            .vars
+            .iter()
+            .map(|(var, value)| (var.clone(), toml_edit::Value::from(*value)))
+            .collect();
+        edit_document(&self.path(name), |doc| {
+            sync_section(doc, "vars", vars)?;
+            sync_section(doc, "presets", string_values(&character.presets))
+        })
     }
 }

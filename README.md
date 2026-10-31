@@ -250,7 +250,8 @@ Writes are atomic (a temp file in the same directory, then a rename). A
 missing file just means no presets. A file that is not valid TOML, or whose
 `presets` is not a table of strings, makes every preset command fail with an
 error naming the file; it is never overwritten by a failed command. Saving
-rewrites the file, so comments in it are not kept.
+edits the file in place: your comments, key order and formatting survive;
+only the entries that changed are touched, and new presets are appended.
 
 **Importing v1 presets.** `rollin import presets.json` merges a v1
 `presets.json` (a flat JSON object of name to formula) into the store:
@@ -428,7 +429,8 @@ state.toml              active = "grog"
 characters/grog.toml    [vars] str = 5        [presets] atk = "d20+@str"
 ```
 
-All are hand-editable TOML and written atomically. `default` is virtual until
+All are hand-editable TOML and written atomically; saves edit an existing
+file in place, so your comments and layout are kept. `default` is virtual until
 something is saved on it: it appears in `characters` and can be used with no
 file. If `state.toml` names a character whose file is gone, commands fail
 with a message suggesting `rollin char default`. A file that is not valid
