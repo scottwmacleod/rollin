@@ -1,6 +1,9 @@
 //! Pure pieces of the interactive session: which lines are session commands,
 //! and the text they print. The binary owns all I/O.
 
+/// The words only the session understands.
+pub const SESSION_WORDS: [&str; 4] = ["help", "quit", "exit", "history"];
+
 /// A command only the session understands (one-shot treats these words as
 /// ordinary, unknown words).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
