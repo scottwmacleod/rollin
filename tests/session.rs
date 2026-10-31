@@ -103,3 +103,13 @@ fn every_kind_of_line_matches_the_one_shot_output_byte_for_byte() {
 fn a_char_override_applies_to_its_own_line_only() {
     assert_parity(&["char new grog", "set str 5", "--char default vars", "vars"]);
 }
+
+#[test]
+fn quit_and_exit_end_the_session_in_any_case() {
+    for word in ["quit", "exit", "QUIT", "Exit"] {
+        let run = Cli::new().run_stdin(&[], &format!("d20 --seed 1\n{word}\nd20 --seed 1\n"));
+        assert_eq!(run.code, 0, "{word}: {run:?}");
+        assert_eq!(run.stdout, "d20  [9]  →  9\n", "{word}");
+        assert_eq!(run.stderr, "", "{word}");
+    }
+}

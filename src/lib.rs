@@ -14,6 +14,7 @@ mod eval;
 mod lexer;
 mod parser;
 mod presets;
+mod session;
 
 pub use ast::{BinOp, Special};
 pub use command::{
@@ -22,6 +23,7 @@ pub use command::{
 };
 pub use error::Error;
 pub use presets::{validate_name, NameError, NameRule, Store, StoreError};
+pub use session::{session_command, SessionCommand};
 
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
