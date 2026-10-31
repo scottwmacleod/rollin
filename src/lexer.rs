@@ -130,7 +130,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
             } else if word.starts_with("df") {
                 2
             } else if word.starts_with('x')
-                && matches!(out.last(), Some(t) if matches!(t.token, Token::Number(_)))
+                && matches!(out.last(), Some(t) if matches!(t.token, Token::Number(_)) && (t.span.end == start || word == "x"))
             {
                 // The `x` of `3xd20` (a repeat) ends right after the number.
                 1
