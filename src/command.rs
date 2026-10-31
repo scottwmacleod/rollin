@@ -133,12 +133,9 @@ fn roll_or_preset(
 ) -> Result<Command, CommandError> {
     if let [word] = words {
         let name = word.to_lowercase();
-        // Only a word that does not even start like a formula can be a preset
-        // name; `d6dl9` stays a formula error.
-        let not_a_formula = matches!(
-            crate::parser::parse(word),
-            Err(Error::Syntax { span, .. }) if span.start == 0
-        );
+        // A name-shaped word that fails to parse as a formula (a syntax
+        // error, not a bad dice group like `d6dl9`) may be a preset name.
+        let not_a_formula = matches!(crate::parser::parse(word), Err(Error::Syntax { .. }));
         if not_a_formula && is_name_shaped(&name) {
             let names = preset_names()?;
             if names.contains(&name) {

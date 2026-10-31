@@ -211,6 +211,7 @@ fn v1_style_names_are_accepted() {
     let cli = Cli::new();
     for name in ["adv-attack", "dis_attack", "braceup", "a1"] {
         cli.run(&["save", name, "d20"]).assert_success();
+        cli.run(&[name, "--seed", "1"]).assert_success();
     }
 }
 

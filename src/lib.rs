@@ -19,7 +19,7 @@ pub use command::{
     config_dir, execute, parse_command, Command, CommandError, Context, ImportReport, Output,
 };
 pub use error::Error;
-pub use presets::{Store, StoreError};
+pub use presets::{validate_name, NameError, NameRule, Store, StoreError};
 
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;

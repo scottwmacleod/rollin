@@ -656,3 +656,82 @@ mod special_dice {
         }
     }
 }
+
+// ---- Presets and the command parser (library seam, invariants only) ----
+
+mod presets {
+    use proptest::prelude::*;
+    use rollin::{
+        execute, parse_command, roll, seeded_rng, validate_name, Command, CommandError, Context,
+        Output,
+    };
+
+    fn no_presets() -> Result<Vec<String>, CommandError> {
+        Ok(Vec::new())
+    }
+
+    proptest! {
+        /// Whatever name validation accepts is stored lowercase and can be
+        /// rolled back by name (in any letter case).
+        #[test]
+        fn accepted_names_are_lowercase_and_roll_back(
+            raw in "[A-Za-z][A-Za-z0-9_ -]{0,10}",
+            seed in any::<u64>(),
+        ) {
+            if let Ok(stored) = validate_name(&raw) {
+                prop_assert_eq!(&stored, &raw.to_lowercase());
+                let dir = tempfile::TempDir::new().unwrap();
+                let ctx = Context { config_dir: Some(dir.path().to_path_buf()) };
+                let mut rng = seeded_rng(seed);
+                let save = Command::Save { name: raw.clone(), formula: "2d6+1".into() };
+                execute(&save, &ctx, &mut rng).unwrap();
+                let command = parse_command(
+                    &[raw.to_uppercase()],
+                    &mut || Ok(vec![stored.clone()]),
+                ).unwrap();
+                prop_assert_eq!(&command, &Command::RollPreset(stored.clone()));
+                match execute(&command, &ctx, &mut rng).unwrap() {
+                    Output::Rolls { preset, rolls } => {
+                        prop_assert_eq!(preset, Some((stored, "2d6+1".to_string())));
+                        prop_assert_eq!(rolls.len(), 1);
+                    }
+                    other => prop_assert!(false, "unexpected {:?}", other),
+                }
+            }
+        }
+
+        /// A name that parses as a dice formula is never accepted.
+        #[test]
+        fn names_that_parse_as_formulas_are_rejected(
+            name in "[0-9]{0,2}[dD][0-9a-zA-Z%]{0,4}",
+        ) {
+            if roll(&name, &mut seeded_rng(0)).is_ok() {
+                prop_assert!(validate_name(&name).is_err(), "{} accepted", name);
+            }
+        }
+
+        /// Dispatch never panics, whatever the words.
+        #[test]
+        fn parse_command_never_panics(
+            words in proptest::collection::vec("[ -~]{0,8}", 0..6),
+        ) {
+            let _ = parse_command(&words, &mut no_presets);
+        }
+
+        /// Same, drawing words from the command vocabulary so every branch is hit.
+        #[test]
+        fn parse_command_never_panics_on_command_words(
+            words in proptest::collection::vec(
+                prop_oneof![
+                    Just("save".to_string()), Just("presets".to_string()),
+                    Just("delete".to_string()), Just("import".to_string()),
+                    Just("roll".to_string()), Just("--force".to_string()),
+                    Just("d20".to_string()), "[a-z-]{0,6}",
+                ],
+                0..6,
+            ),
+        ) {
+            let _ = parse_command(&words, &mut no_presets);
+        }
+    }
+}
