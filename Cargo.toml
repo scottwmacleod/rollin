@@ -1,0 +1,12 @@
+[package]
+name = "rollin"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rollin"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rollin"
+path = "src/main.rs"
