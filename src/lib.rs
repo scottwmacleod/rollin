@@ -12,7 +12,7 @@ mod eval;
 mod lexer;
 mod parser;
 
-pub use ast::BinOp;
+pub use ast::{BinOp, Special};
 pub use error::Error;
 
 use rand::{Rng, SeedableRng};
@@ -114,6 +114,9 @@ pub enum Node {
     Dice {
         term: String,
         sides: i64,
+        /// Present only for `d%` and `dF`; absent on ordinary dice.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        special: Option<Special>,
         dice: Vec<Die>,
         /// The sum of the counting dice, or on a success count the net
         /// successes (successes minus failures).

@@ -155,6 +155,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
             Ok(Node::Dice {
                 term: d.text.clone(),
                 sides: d.sides,
+                special: d.special,
                 dice,
                 subtotal,
                 tally,

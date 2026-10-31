@@ -6,7 +6,7 @@
 
 use crate::ast::{
     BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Item, Reroll, RerollMode,
-    Select, SelectKind, Success,
+    Select, SelectKind, Special, Success,
 };
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
@@ -242,11 +242,11 @@ impl Parser<'_> {
         }
         let count_span = self.tokens[start].span.clone();
         let sides_start = self.pos;
-        let sides = if matches!(self.peek(), Some(Token::Percent)) {
+        let (sides, special) = if matches!(self.peek(), Some(Token::Percent)) {
             self.pos += 1;
-            PERCENTILE_SIDES
+            (PERCENTILE_SIDES, Some(Special::Percentile))
         } else {
-            self.number("the number of sides after 'd'")?
+            (self.number("the number of sides after 'd'")?, None)
         };
         let sides_span = self.tokens[sides_start].span.clone();
         if count > MAX_DICE_PER_TERM {
@@ -293,6 +293,7 @@ impl Parser<'_> {
                 text: self.src[span.clone()].to_string(),
                 count,
                 sides,
+                special,
                 reroll,
                 explode,
                 select,

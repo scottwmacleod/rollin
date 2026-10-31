@@ -55,3 +55,38 @@ fn percentile_dice_roll_one_to_one_hundred() {
     }
     assert!(seen.len() > 50, "suspiciously few distinct values: {}", seen.len());
 }
+
+#[test]
+fn percentile_works_with_advantage_like_any_single_die() {
+    let cli = Cli::new();
+    for seed in 0..20 {
+        assert_eq!(
+            without_text(&cli.roll_json("d%adv", seed)),
+            without_text(&cli.roll_json("2d100kh1", seed)),
+            "seed {seed}"
+        );
+    }
+}
+
+#[test]
+fn json_marks_percentile_groups_and_echoes_the_term_as_typed() {
+    let out = Cli::new().roll_json("2D%", 3);
+    let node = &out["rolls"][0]["expr"];
+    assert_eq!(node["term"], "2D%");
+    assert_eq!(node["sides"], 100);
+    assert_eq!(node["special"], "percentile");
+    let ordinary = Cli::new().roll_json("2d100", 3);
+    assert!(ordinary["rolls"][0]["expr"].get("special").is_none());
+    assert_eq!(out["schema_version"], 1);
+}
+
+#[test]
+fn default_and_verbose_output_echo_percentile_as_typed() {
+    let cli = Cli::new();
+    let run = cli.run(&["--seed", "99", "2d%"]);
+    run.assert_success();
+    assert!(run.stdout.starts_with("2d%  ["), "{}", run.stdout);
+    let run = cli.run(&["--seed", "99", "-v", "d%"]);
+    run.assert_success();
+    assert!(run.stdout.contains("d%: "), "{}", run.stdout);
+}
