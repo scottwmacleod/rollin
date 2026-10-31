@@ -20,3 +20,13 @@ fn json_rolls_carry_the_label_only_when_labelled() {
     assert!(rolls[1].get("label").is_none(), "{rolls:?}");
     assert_eq!(out["schema_version"], 1);
 }
+
+#[test]
+fn an_empty_label_is_an_error_pointing_at_the_hash() {
+    let run = Cli::new().run(&["d20 #  "]);
+    assert!(!run.success());
+    assert_eq!(run.stdout, "");
+    assert!(run.stderr.contains("label"), "{run:?}");
+    // The caret sits under the '#'.
+    assert!(run.stderr.contains("\n  d20 #  \n      ^\n"), "{run:?}");
+}

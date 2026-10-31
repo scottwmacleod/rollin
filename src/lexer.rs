@@ -59,8 +59,15 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
             while chars.peek().is_some_and(|&(i, _)| i < end) {
                 chars.next();
             }
+            let text = src[start + 1..end].trim();
+            if text.is_empty() {
+                return Err(Error::syntax(
+                    "a label '#' needs text after it, as in '# attack'",
+                    start..start + 1,
+                ));
+            }
             out.push(Spanned {
-                token: Token::Label(src[start + 1..end].trim().to_string()),
+                token: Token::Label(text.to_string()),
                 span: start..end,
             });
             continue;
