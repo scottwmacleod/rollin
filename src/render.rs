@@ -2,7 +2,7 @@
 //! the `-v` breakdown, with optional ANSI styling.
 
 use clap::ValueEnum;
-use rollin::{BinOp, Die, Node, Roll, Status};
+use rollin::{BinOp, Die, Node, Outcome, Roll, Status, Tally};
 
 /// The `--color` flag.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
@@ -45,6 +45,14 @@ impl Painter {
     /// Dim and crossed out: a die a reroll replaced.
     fn struck(self, text: &str) -> String {
         self.wrap("2;9", text)
+    }
+
+    fn green(self, text: &str) -> String {
+        self.wrap("32", text)
+    }
+
+    fn red(self, text: &str) -> String {
+        self.wrap("31", text)
     }
 
     fn bold(self, text: &str) -> String {
@@ -114,9 +122,52 @@ fn paint_die(p: Painter, die: &Die, nat: Option<Natural>, text: &str) -> String 
     match (die.status, nat) {
         (Status::Rerolled, _) => p.struck(text),
         (Status::Dropped, _) => p.dim(text),
+        (_, _) if die.outcome == Some(Outcome::Success) => p.green(text),
+        (_, _) if die.outcome == Some(Outcome::Failure) => p.red(text),
         (_, Some(Natural::Twenty)) => p.wrap("1;32", text),
         (_, Some(Natural::One)) => p.wrap("1;31", text),
         _ => text.to_string(),
+    }
+}
+
+/// `✓` after a success, `✗` after a failure, nothing otherwise.
+fn outcome_mark(outcome: Option<Outcome>) -> &'static str {
+    match outcome {
+        Some(Outcome::Success) => "✓",
+        Some(Outcome::Failure) => "✗",
+        None => "",
+    }
+}
+
+/// `3 successes`, `1 success`; with failures the net is followed by the
+/// breakdown: `2 successes (3 - 1 failure)`.
+fn count_label(tally: &Tally) -> String {
+    let net = tally.successes - tally.failures;
+    let noun = if net.abs() == 1 {
+        "success"
+    } else {
+        "successes"
+    };
+    if tally.failures == 0 {
+        return format!("{net} {noun}");
+    }
+    let fail_noun = if tally.failures == 1 {
+        "failure"
+    } else {
+        "failures"
+    };
+    format!(
+        "{net} {noun} ({} - {} {fail_noun})",
+        tally.successes, tally.failures
+    )
+}
+
+/// The roll's total as shown: a plain number for a sum, a labelled tally for
+/// a success count.
+fn total_text(roll: &Roll) -> String {
+    match roll.expr.tally() {
+        Some(tally) => count_label(tally),
+        None => roll.total.to_string(),
     }
 }
 
@@ -148,10 +199,12 @@ fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
                     } else {
                         ""
                     };
+                    // A trailing mark shows a success-count die's outcome.
+                    let mark = outcome_mark(d.outcome);
                     let text = match d.status {
                         Status::Dropped => format!("({}{bang})", d.value),
                         Status::Rerolled => format!("~{}~", d.value),
-                        _ => format!("{}{bang}", d.value),
+                        _ => format!("{}{bang}{mark}", d.value),
                     };
                     paint_die(p, d, nat, &text)
                 })
@@ -176,7 +229,7 @@ fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
 
 /// The default output: one line per roll.
 pub fn render_line(p: Painter, roll: &Roll) -> String {
-    let total = p.bold(&roll.total.to_string());
+    let total = p.bold(&total_text(roll));
     if !has_dice(&roll.expr) {
         return format!("{}  →  {total}", roll.formula);
     }
@@ -194,7 +247,7 @@ pub fn render_verbose(p: Painter, roll: &Roll) -> String {
     let nat = natural(&roll.expr);
     let mut lines = vec![roll.formula.clone()];
     verbose_node(p, &roll.expr, nat, 1, "", &mut lines);
-    lines.push(format!("  total: {}", p.bold(&roll.total.to_string())));
+    lines.push(format!("  total: {}", p.bold(&total_text(roll))));
     lines.join("\n")
 }
 
@@ -214,12 +267,18 @@ fn verbose_node(
             term,
             dice,
             subtotal,
+            tally,
             ..
         } => {
             let cells: Vec<String> = dice
                 .iter()
                 .map(|d| {
                     let mut text = format!("{} {}", d.value, status_label(d.status));
+                    match d.outcome {
+                        Some(Outcome::Success) => text.push_str(" success"),
+                        Some(Outcome::Failure) => text.push_str(" failure"),
+                        None => {}
+                    }
                     if d.parts.len() > 1 {
                         let parts: Vec<String> = d.parts.iter().map(u32::to_string).collect();
                         text.push_str(&format!(" ({})", parts.join("+")));
@@ -231,6 +290,12 @@ fn verbose_node(
                 "{pad}{lead}{term}: {} = {subtotal}",
                 cells.join(", ")
             ));
+            if let Some(t) = tally {
+                out.push(format!(
+                    "{pad}  successes: {}, failures: {}, net: {subtotal}",
+                    t.successes, t.failures
+                ));
+            }
         }
         Node::Neg { operand, total } => {
             out.push(format!("{pad}{lead}-("));

@@ -27,7 +27,7 @@ The single number a roll produces.
 _Avoid_: Sum, score
 
 **Success count**:
-A total made of how many dice met a condition instead of a sum of faces, e.g. `6d10>=8`. Cannot be mixed into arithmetic.
+A total made of how many dice met a condition instead of a sum of faces, e.g. `6d10>=8`; failures (`f1`) subtract, so it is successes minus failures and can be zero or negative. Cannot be mixed into arithmetic.
 _Avoid_: Hits, pool result
 
 **Label**:

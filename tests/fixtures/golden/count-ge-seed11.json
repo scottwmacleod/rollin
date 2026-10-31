@@ -1,0 +1,5 @@
+{
+  "formula": "6d10>=8",
+  "seed": 11,
+  "expected": {"schema_version":1,"rolls":[{"formula":"6d10>=8","kind":"count","total":1,"expr":{"type":"dice","term":"6d10>=8","sides":10,"dice":[{"value":4,"status":"kept"},{"value":4,"status":"kept"},{"value":10,"status":"kept","outcome":"success"},{"value":6,"status":"kept"},{"value":6,"status":"kept"},{"value":6,"status":"kept"}],"subtotal":1,"kind":"count","successes":1,"failures":0}}]}
+}

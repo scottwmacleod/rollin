@@ -32,6 +32,8 @@ pub enum Error {
         sides: i64,
         span: Range<usize>,
     },
+    /// A success count used as an operand of arithmetic. `span` is the count.
+    CountInArithmetic { span: Range<usize> },
     /// Division by zero; `span` is the divisor.
     DivisionByZero { span: Range<usize> },
     /// Integer arithmetic overflowed; `span` is the operation that did.
@@ -61,6 +63,7 @@ impl Error {
             | Error::LimitExceeded { span, .. }
             | Error::InfiniteExplosion { span, .. }
             | Error::InfiniteReroll { span, .. }
+            | Error::CountInArithmetic { span }
             | Error::DivisionByZero { span }
             | Error::Overflow { span } => span.clone(),
         }
@@ -79,6 +82,7 @@ impl Error {
             Error::InfiniteReroll { clause, sides, .. } => format!(
                 "reroll condition '{clause}' is true for every face of a d{sides}, so it would never stop"
             ),
+            Error::CountInArithmetic { .. } => "a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice".into(),
             Error::DivisionByZero { .. } => "division by zero".into(),
             Error::Overflow { .. } => "arithmetic overflow".into(),
         }

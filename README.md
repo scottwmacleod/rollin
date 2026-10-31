@@ -55,6 +55,9 @@ the same thing here; arithmetic is an addition on top.
 | `4d6r<2`, `4d6r<=2`, `d20r>5`, `d20r>=19` | Reroll once on a comparison (`<`, `<=`, `>`, `>=`, `=`) instead of equals |
 | `4d6rr1`, `4d6rr<=2` | Reroll repeatedly until the die no longer matches |
 | `4d6r1!dl1` | Order of operations: reroll, then explode, then keep/drop |
+| `6d10>=8`, `6d10>7`, `6d10<=3`, `6d10<3`, `6d10=10` | Success count: the roll is how many dice meet the condition, not a sum |
+| `6d10>=8f1`, `6d10>=8f<=2`, `6d10>=8 f1` | Failure clause: each counting die matching it (and not a success) subtracts 1 |
+| `4d6dl1>=5`, `6d10r1!=10kh4>=8f1` | Order of operations: reroll, explode, keep/drop, then success counting |
 | `15` | A bare number is its own total |
 | `2d6+1d4+3`, `d20+d4-2` | Add and subtract any dice groups and numbers |
 | `d20*2`, `10/4` | Multiply and divide; they bind tighter than `+` and `-` |
@@ -85,6 +88,27 @@ die once), and a condition that never holds (`d6rr>6`) is allowed and does
 nothing. Keep and drop counts are checked against the dice written
 (`4d6r1dl4` is an error), and apply to the dice that stand, not to
 rerolled-away values.
+A success clause goes last on the dice group, after reroll, explode and
+keep/drop: it is a comparison operator (`>=`, `>`, `<=`, `<`, `=`) and a
+number. A bare number is not a success clause (`6d10=10`, not `6d10 10`). The
+optional failure clause `f` must come straight after it and takes a bare
+number (equals) or a comparison, like a reroll condition. Only dice that
+count are scored: dropped and rerolled-away dice are not, exploded extra dice
+are, and a compounded or penetrating die is scored by its counted value.
+The result is a success count: successes minus failures, so it can be zero
+or negative. A die that matches both clauses is a success (success wins),
+so `d6>=5f>=3` fails only on a 3 or 4. Always-true and never-true
+conditions are legal (`5d6>=1` is always 5).
+A `!` takes the comparison right after it as its own explode condition, so
+`8d10!>=8` is an exploding d10 that sums (it explodes on 8 or more) and is
+not a success count; put the success clause after an explicit explode
+condition: `8d10!>=8>=8`, `4d6!>5>=6`, or `4d6!=6>=5`. The same goes for
+a reroll (`6d10r<2>=8`).
+A success count is a different kind of result from a sum, so it cannot be
+mixed into arithmetic: `6d10>=8 + 3`, `3 + 6d10>=8`, `-6d10>=8`,
+`2*6d10>=8`, `(6d10>=8)+1` and two counts added are errors. A whole roll
+may be parenthesised, `(6d10>=8)`, and counts and sums can sit side by side
+in a comma list: `6d10>=8, d20`.
 Quote formulas containing `!` in an interactive shell (`rollin '3d6!'`), where
 `!` can trigger history expansion.
 
@@ -109,6 +133,10 @@ $ rollin "d20 / (3-3)"
 error: division by zero
   d20 / (3-3)
         ^^^^^
+$ rollin "6d10>=8 + 3"
+error: a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice
+  6d10>=8 + 3
+  ^^^^^^^
 $ rollin "2d6+1001d6"
 error: dice per term cap (1000) exceeded by '1001d6'
   2d6+1001d6
@@ -182,6 +210,25 @@ $ rollin -v --seed 3 4d6r<2dl1
 4d6r<2dl1
   4d6r<2dl1: 1 rerolled, 4 dropped, 1 rerolled, 6 kept, 1 rerolled, 5 kept, 4 kept = 15
   total: 15
+```
+
+Success counts show each counting die's outcome after its value, `✓` for a
+success and `✗` for a failure, and label the total as a count so it cannot
+be mistaken for a sum: `3 successes`, `1 success`. When any die failed, the net
+is followed by the breakdown, `2 successes (3 - 1 failure)`. With color on,
+successes are green and failures red. `-v` adds the words `success` and
+`failure` to the dice and a tally line; `-q` prints just the net number.
+
+```
+$ rollin --seed 6 6d10>=8
+6d10>=8  [4, 5, 6, 4, 4, 1]  →  0 successes
+$ rollin --seed 2 6d10>=8f1
+6d10>=8f1  [6, 6, 1✗, 3, 9✓, 3]  →  0 successes (1 - 1 failure)
+$ rollin -v --seed 2 6d10>=8f1
+6d10>=8f1
+  6d10>=8f1: 6 kept, 6 kept, 1 kept failure, 3 kept, 9 kept success, 3 kept = 0
+    successes: 1, failures: 1, net: 0
+  total: 0 successes (1 - 1 failure)
 ```
 
 **Quiet (`-q`, `--quiet`).** Only the total of each roll, one per line, so

@@ -1,7 +1,7 @@
 //! Library-API invariants via proptest (the secondary seam).
 
 use proptest::prelude::*;
-use rollin::{roll, seeded_rng, Die, Node, Status};
+use rollin::{roll, seeded_rng, Die, Kind, Node, Outcome, Status};
 
 /// Every die in a result tree, in roll order.
 fn dice_of(node: &Node) -> Vec<Die> {
@@ -128,13 +128,13 @@ proptest! {
 
     /// The same, from an alphabet where many strings are almost-valid.
     #[test]
-    fn dice_like_strings_never_panic(s in "[0-9dDkKlLhHpPrR+\\-*/() ,!<>=]{0,40}") {
+    fn dice_like_strings_never_panic(s in "[0-9dDfFkKlLhHpPrR+\\-*/() ,!<>=]{0,40}") {
         let _ = roll(&s, &mut seeded_rng(0));
     }
 
     /// Errors carry a span that lies inside the formula on char boundaries.
     #[test]
-    fn error_spans_lie_inside_the_input(s in "[0-9dDkKlLhHpPrR+\\-*/() ,!<>=é]{0,40}") {
+    fn error_spans_lie_inside_the_input(s in "[0-9dDfFkKlLhHpPrR+\\-*/() ,!<>=é]{0,40}") {
         if let Err(e) = roll(&s, &mut seeded_rng(0)) {
             let span = e.span();
             prop_assert!(span.start <= span.end && span.end <= s.len(), "{:?} {:?}", s, span);
@@ -470,5 +470,103 @@ proptest! {
     #[test]
     fn reroll_like_strings_never_panic(s in "[0-9dDrR<>=!kKhHlL ]{0,30}") {
         let _ = roll(&s, &mut seeded_rng(0));
+    }
+}
+
+/// A comparison written out and its predicate; index 5 is the bare-number
+/// form (equals), valid only for failure clauses.
+fn cond_text(cmp: usize, v: u32) -> String {
+    match cmp {
+        5 => v.to_string(),
+        c => format!("{}{v}", [">", ">=", "<", "<=", "="][c]),
+    }
+}
+
+/// A success-count formula: dice, optional reroll/explode/drop, a success
+/// clause and an optional failure clause.
+#[allow(clippy::type_complexity)]
+fn gen_success() -> impl Strategy<Value = (String, (usize, u32), Option<(usize, u32)>, u32)> {
+    (
+        (1u32..=8, 2u32..=20),
+        (0usize..5, 0u32..=22),
+        prop::option::of((0usize..6, 0u32..=22)),
+        (any::<bool>(), any::<bool>(), prop::option::of(1u32..=3)),
+    )
+        .prop_map(|((n, sides), success, failure, (reroll, explode, drop))| {
+            let drop_text = match drop {
+                Some(k) if k < n => format!("dl{k}"),
+                _ => String::new(),
+            };
+            let formula = format!(
+                "{n}d{sides}{}{}{drop_text}{}{}",
+                if reroll { "r=1" } else { "" },
+                if explode {
+                    format!("!={sides}")
+                } else {
+                    String::new()
+                },
+                cond_text(success.0, success.1),
+                failure.map_or(String::new(), |(c, v)| format!("f{}", cond_text(c, v))),
+            );
+            (formula, success, failure, sides)
+        })
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(512))]
+
+    /// The total of a success count is its successes minus its failures,
+    /// which are exactly the counting dice matching the success condition and
+    /// (if not already successes) the failure condition. Dropped and
+    /// rerolled-away dice never score. Only the caps may fail a roll.
+    #[test]
+    fn success_tally_equals_matching_counting_dice(
+        (formula, success, failure, sides) in gen_success(),
+        seed in any::<u64>(),
+    ) {
+        let rolls = match roll(&formula, &mut seeded_rng(seed)) {
+            Ok(rolls) => rolls,
+            Err(rollin::Error::LimitExceeded { .. } | rollin::Error::InfiniteExplosion { .. }) => {
+                return Ok(());
+            }
+            Err(e) => return Err(TestCaseError::fail(format!("{formula}: {e}"))),
+        };
+        let r = &rolls[0];
+        prop_assert_eq!(r.kind, Kind::Count, "{}", formula);
+        let Node::Dice { dice, tally, subtotal, .. } = &r.expr else {
+            return Err(TestCaseError::fail(format!("{formula}: not a dice node")));
+        };
+        let tally = tally.as_ref().expect("a success count has a tally");
+        let (mut s, mut f) = (0i64, 0i64);
+        for d in dice {
+            let face = d.value;
+            let expect = if !d.status.counts() {
+                None
+            } else if cond_matches(success.0, success.1, face) {
+                Some(Outcome::Success)
+            } else if failure.is_some_and(|(c, v)| cond_matches(c, v, face)) {
+                Some(Outcome::Failure)
+            } else {
+                None
+            };
+            prop_assert_eq!(d.outcome, expect, "{}: {:?}", formula, d);
+            s += i64::from(expect == Some(Outcome::Success));
+            f += i64::from(expect == Some(Outcome::Failure));
+        }
+        prop_assert_eq!((tally.successes, tally.failures), (s, f), "{}", formula);
+        prop_assert_eq!(*subtotal, s - f, "{}", formula);
+        prop_assert_eq!(r.total, s - f, "{}", formula);
+        prop_assert!(dice.iter().all(|d| (1..=sides).contains(&d.value)), "{}", formula);
+    }
+
+    /// Text built from the success/failure alphabet never panics, and
+    /// every error span stays inside the input on char boundaries.
+    #[test]
+    fn success_like_strings_never_panic(s in "[0-9dDfF+\\-*/(), <>=!rRkKhHlLé]{0,30}") {
+        if let Err(e) = roll(&s, &mut seeded_rng(0)) {
+            let span = e.span();
+            prop_assert!(span.start <= span.end && span.end <= s.len(), "{:?} {:?}", s, span);
+            prop_assert!(s.is_char_boundary(span.start) && s.is_char_boundary(span.end));
+        }
     }
 }

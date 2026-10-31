@@ -5,8 +5,8 @@
 //! just the simplest such expression.
 
 use crate::ast::{
-    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Item, Reroll, RerollMode, Select,
-    SelectKind,
+    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Item, Reroll, RerollMode,
+    Select, SelectKind, Success,
 };
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
@@ -127,6 +127,8 @@ impl Parser<'_> {
             }
             self.pos += 1;
             let rhs = self.parse_expr(op.precedence() + 1)?;
+            reject_count(&lhs)?;
+            reject_count(&rhs)?;
             lhs = link(lhs, op, rhs);
         }
         Ok(lhs)
@@ -150,6 +152,7 @@ impl Parser<'_> {
                 self.enter(start)?;
                 self.pos += 1;
                 let operand = self.parse_unary()?;
+                reject_count(&operand)?;
                 self.depth -= 1;
                 let span = start..operand.span.end;
                 Ok(Expr {
@@ -262,6 +265,7 @@ impl Parser<'_> {
         let reroll = self.parse_reroll(sides)?;
         let explode = self.parse_explode(sides)?;
         let select = self.parse_select(count)?;
+        let success = self.parse_count()?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
         if self.item_dice > MAX_DICE_PER_EXPRESSION {
@@ -280,6 +284,7 @@ impl Parser<'_> {
                 reroll,
                 explode,
                 select,
+                success,
             }),
             span,
         })
@@ -370,6 +375,38 @@ impl Parser<'_> {
         Ok(Some(explode))
     }
 
+    /// Optional success clause: a comparison operator (`>=`, `>`, `<=`, `<`,
+    /// `=`) and a number. A bare number is not a success clause.
+    fn parse_count(&mut self) -> Result<Option<Success>, Error> {
+        if !self.at_comparison() {
+            if matches!(self.peek(), Some(Token::Word(w)) if w == "f") {
+                return Err(Error::syntax(
+                    "a failure clause 'f' must follow a success clause, as in 6d10>=8f1",
+                    self.tokens[self.pos].span.clone(),
+                ));
+            }
+            return Ok(None);
+        }
+        let (cmp, value) = self.parse_condition("a number after the success condition")?;
+        let failure = if matches!(self.peek(), Some(Token::Word(w)) if w == "f") {
+            self.pos += 1;
+            if !self.at_comparison() && !matches!(self.peek(), Some(Token::Number(_))) {
+                return Err(self.unexpected(
+                    "a failure condition (a number, or a comparison such as <=2, >9, =1)",
+                ));
+            }
+            let (cmp, value) = self.parse_condition("a number after the failure condition")?;
+            Some(Failure { cmp, value })
+        } else {
+            None
+        };
+        Ok(Some(Success {
+            cmp,
+            value,
+            failure,
+        }))
+    }
+
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
     fn parse_select(&mut self, count: i64) -> Result<Option<Select>, Error> {
         let kind = match self.peek() {
@@ -411,6 +448,16 @@ impl Parser<'_> {
         }
         Ok(Some(Select { kind, n }))
     }
+}
+
+/// A success count is its own kind of result and cannot be an operand.
+fn reject_count(operand: &Expr) -> Result<(), Error> {
+    if operand.is_count() {
+        return Err(Error::CountInArithmetic {
+            span: operand.span.clone(),
+        });
+    }
+    Ok(())
 }
 
 /// Appends `op rhs` to `lhs`, extending its chain when it is one of the same

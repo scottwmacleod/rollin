@@ -33,6 +33,18 @@ pub enum ExprKind {
     },
 }
 
+impl Expr {
+    /// Whether this expression is a success count (a dice group with a
+    /// success clause, possibly parenthesised).
+    pub fn is_count(&self) -> bool {
+        match &self.kind {
+            ExprKind::Dice(d) => d.success.is_some(),
+            ExprKind::Group(inner) => inner.is_count(),
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum BinOp {
     #[serde(rename = "+")]
@@ -74,6 +86,7 @@ pub struct Dice {
     pub reroll: Option<Reroll>,
     pub explode: Option<Explode>,
     pub select: Option<Select>,
+    pub success: Option<Success>,
 }
 
 /// A reroll clause: `r` or `rr` after the dice, before any explode.
@@ -146,6 +159,36 @@ impl Explode {
     /// Whether a die showing `face` explodes.
     pub fn triggers(&self, face: i64) -> bool {
         self.cmp.test(face, self.value)
+    }
+}
+
+/// A success clause: `>=8`, `>7`, `<=3`, `<3` or `=10` after the other
+/// modifiers. The roll becomes a success count rather than a sum.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Success {
+    pub cmp: Cmp,
+    pub value: i64,
+    pub failure: Option<Failure>,
+}
+
+/// A failure clause: `f` right after the success clause. Each counting die
+/// that matches (and is not already a success) subtracts one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Failure {
+    pub cmp: Cmp,
+    pub value: i64,
+}
+
+impl Success {
+    /// Whether a counting die showing `face` is a success.
+    pub fn succeeds(&self, face: i64) -> bool {
+        self.cmp.test(face, self.value)
+    }
+
+    /// Whether a counting die showing `face` is a failure. A die that is a
+    /// success is never also a failure: success wins.
+    pub fn fails(&self, face: i64) -> bool {
+        !self.succeeds(face) && self.failure.is_some_and(|f| f.cmp.test(face, f.value))
     }
 }
 

@@ -2,7 +2,7 @@
 
 use crate::ast::{BinOp, ExplodeMode, Expr, ExprKind, Item, RerollMode};
 use crate::error::Error;
-use crate::{Die, Link, Node, Roll, Status};
+use crate::{Die, Kind, Link, Node, Outcome, Roll, Status, Tally};
 use rand::Rng;
 use std::ops::Range;
 
@@ -44,6 +44,11 @@ pub fn evaluate(item: &Item, rng: &mut impl Rng) -> Result<Roll, Error> {
     let expr = eval_expr(&item.expr, &mut ctx)?;
     Ok(Roll {
         formula: item.source.clone(),
+        kind: if expr.is_count() {
+            Kind::Count
+        } else {
+            Kind::Sum
+        },
         total: expr.total(),
         expr,
     })
@@ -72,6 +77,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                             value: raw,
                             status: Status::Rerolled,
                             parts: Vec::new(),
+                            outcome: None,
                         });
                         raw = ctx.die(d.sides, &d.text, &expr.span)?;
                         if reroll.mode == RerollMode::Once {
@@ -83,6 +89,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                     value: raw,
                     status: Status::Kept,
                     parts: Vec::new(),
+                    outcome: None,
                 };
                 let mut extras = Vec::new();
                 let mut explosions = 0;
@@ -112,21 +119,45 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                         value: raw - u32::from(penetrate),
                         status: Status::Exploded,
                         parts: Vec::new(),
+                        outcome: None,
                     }));
                 }
             }
             let pool = dice.iter().filter(|d| d.status != Status::Rerolled).count();
             apply_drops(&mut dice, d.drops(pool));
-            let subtotal = dice
-                .iter()
-                .filter(|d| d.status.counts())
-                .map(|d| i64::from(d.value))
-                .sum();
+            let mut tally = None;
+            let subtotal = match d.success {
+                Some(success) => {
+                    let (mut successes, mut failures) = (0, 0);
+                    for die in dice.iter_mut().filter(|d| d.status.counts()) {
+                        let face = i64::from(die.value);
+                        if success.succeeds(face) {
+                            die.outcome = Some(Outcome::Success);
+                            successes += 1;
+                        } else if success.fails(face) {
+                            die.outcome = Some(Outcome::Failure);
+                            failures += 1;
+                        }
+                    }
+                    tally = Some(Tally {
+                        kind: Kind::Count,
+                        successes,
+                        failures,
+                    });
+                    successes - failures
+                }
+                None => dice
+                    .iter()
+                    .filter(|d| d.status.counts())
+                    .map(|d| i64::from(d.value))
+                    .sum(),
+            };
             Ok(Node::Dice {
                 term: d.text.clone(),
                 sides: d.sides,
                 dice,
                 subtotal,
+                tally,
             })
         }
         ExprKind::Neg(inner) => {

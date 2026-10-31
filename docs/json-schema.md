@@ -15,7 +15,7 @@ whenever the shape or meaning of an existing field changes or a field is
 removed. Adding a new field or a new node `type` or die `status` value is
 backwards compatible and does not bump it (exploding dice added the die
 status `exploded`, the die field `parts` and the dice-node field `sides`
-without a bump; rerolls added the die status `rerolled` the same way), so consumers must ignore unknown
+without a bump; rerolls added the die status `rerolled` the same way; success counting added the roll and dice-node field `kind`, the dice-node fields `successes` and `failures`, and the die field `outcome` the same way), so consumers must ignore unknown
 fields and treat unknown `status` values as "not counted" unless documented
 otherwise.
 
@@ -40,6 +40,7 @@ status is non-zero), so a successful run always yields a valid document.
 | `formula` | string | The item as written (trimmed) |
 | `total` | integer | The roll's total; equals `expr`'s total |
 | `expr` | node | The result tree |
+| `kind` | string | `"count"` for a success count. **Absent for an ordinary sum**, so existing documents are unchanged |
 
 ## Nodes
 
@@ -130,6 +131,35 @@ reroll, then explode, then keep/drop. `rollin --seed 8 --json 4d6rr1`
 ```
 
 This is an additive change: `schema_version` stays 1.
+
+#### Success counting
+
+`6d10>=8` is a success count: its `total` is a number of dice, not a sum of
+faces. The roll gets `"kind": "count"` and so does the dice node, which also
+gets `successes` and `failures` (both always present on a count; `failures` is
+0 without an `f` clause). `subtotal` and the roll's `total` are the net,
+`successes - failures`, and may be zero or negative. Only dice that count
+(`kept`, `exploded`) are scored: each carries `"outcome": "success"` if it
+met the success condition, or `"failure"` if it did not but met the failure
+condition (success wins when both match). `outcome` is absent on every other
+die, and on every die of a sum. A consumer that sees no `kind` has a sum.
+Order of operations: reroll, explode, keep/drop, then success counting.
+`rollin --seed 2 --json 6d10>=8f1` (shortened):
+
+```json
+{"formula": "6d10>=8f1", "kind": "count", "total": 0,
+ "expr": {"type": "dice", "term": "6d10>=8f1", "sides": 10,
+  "dice": [{"value": 6, "status": "kept"}, {"value": 6, "status": "kept"},
+           {"value": 1, "status": "kept", "outcome": "failure"},
+           {"value": 3, "status": "kept"},
+           {"value": 9, "status": "kept", "outcome": "success"},
+           {"value": 3, "status": "kept"}],
+  "subtotal": 0, "kind": "count", "successes": 1, "failures": 1}}
+```
+
+A success count is never an operand: `neg`, `chain` and arithmetic never
+contain one, and at most it appears inside `group` nodes. This is an additive
+change: `schema_version` stays 1.
 
 ### `neg`
 
