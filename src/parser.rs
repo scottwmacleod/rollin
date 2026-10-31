@@ -4,7 +4,7 @@
 //! precedence climbing. The v1 shape (a dice group plus a flat modifier) is
 //! just the simplest such expression.
 
-use crate::ast::{BinOp, Dice, Expr, ExprKind, Item, Select, SelectKind};
+use crate::ast::{BinOp, Dice, Explode, Expr, ExprKind, Item, Select, SelectKind};
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
 const MAX_DICE_PER_TERM: i64 = 1000;
@@ -256,6 +256,7 @@ impl Parser<'_> {
                 sides_span,
             ));
         }
+        let explode = self.parse_explode();
         let select = self.parse_select(count)?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
@@ -272,10 +273,20 @@ impl Parser<'_> {
                 text: self.src[span.clone()].to_string(),
                 count,
                 sides,
+                explode,
                 select,
             }),
             span,
         })
+    }
+
+    /// Optional `!` explode clause.
+    fn parse_explode(&mut self) -> Option<Explode> {
+        if matches!(self.peek(), Some(Token::Bang)) {
+            self.pos += 1;
+            return Some(Explode {});
+        }
+        None
     }
 
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
@@ -353,5 +364,6 @@ fn describe(t: &Token) -> String {
         Token::LParen => "'('".into(),
         Token::RParen => "')'".into(),
         Token::Comma => "','".into(),
+        Token::Bang => "'!'".into(),
     }
 }

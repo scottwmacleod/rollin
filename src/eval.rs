@@ -19,16 +19,25 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
     match &expr.kind {
         ExprKind::Number(n) => Ok(Node::Number { value: *n }),
         ExprKind::Dice(d) => {
-            let mut dice: Vec<Die> = (0..d.count)
-                .map(|_| Die {
-                    value: rng.gen_range(1..=d.sides as u32),
+            let mut dice = Vec::new();
+            for _ in 0..d.count {
+                let mut value = rng.gen_range(1..=d.sides as u32);
+                dice.push(Die {
+                    value,
                     status: Status::Kept,
-                })
-                .collect();
+                });
+                while d.explode.is_some() && i64::from(value) == d.sides {
+                    value = rng.gen_range(1..=d.sides as u32);
+                    dice.push(Die {
+                        value,
+                        status: Status::Exploded,
+                    });
+                }
+            }
             apply_drops(&mut dice, d.drops());
             let subtotal = dice
                 .iter()
-                .filter(|d| d.status == Status::Kept)
+                .filter(|d| d.status.counts())
                 .map(|d| i64::from(d.value))
                 .sum();
             Ok(Node::Dice {

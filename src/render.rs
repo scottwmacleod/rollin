@@ -101,6 +101,7 @@ fn status_label(status: Status) -> &'static str {
     match status {
         Status::Kept => "kept",
         Status::Dropped => "dropped",
+        Status::Exploded => "exploded",
     }
 }
 

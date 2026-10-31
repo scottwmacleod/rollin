@@ -71,8 +71,13 @@ pub struct Dice {
     pub text: String,
     pub count: i64,
     pub sides: i64,
+    pub explode: Option<Explode>,
     pub select: Option<Select>,
 }
+
+/// An explode clause: `!` after the dice, before any keep/drop.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Explode {}
 
 /// A drop/keep clause: `dl`, `dh`, `kl` or `kh` with a count.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

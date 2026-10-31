@@ -40,6 +40,16 @@ pub fn entropy_rng() -> ChaCha8Rng {
 pub enum Status {
     Kept,
     Dropped,
+    /// An extra die rolled because an earlier die exploded. It counts toward
+    /// the total unless a keep/drop clause drops it.
+    Exploded,
+}
+
+impl Status {
+    /// Whether a die with this status counts toward its group's subtotal.
+    pub fn counts(self) -> bool {
+        matches!(self, Status::Kept | Status::Exploded)
+    }
 }
 
 /// One individual random value inside a roll.

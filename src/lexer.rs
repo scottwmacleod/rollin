@@ -17,6 +17,8 @@ pub enum Token {
     LParen,
     RParen,
     Comma,
+    /// `!`, which starts an explode clause.
+    Bang,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,6 +39,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
             '(' => Some(Token::LParen),
             ')' => Some(Token::RParen),
             ',' => Some(Token::Comma),
+            '!' => Some(Token::Bang),
             _ => None,
         };
         if let Some(token) = single {
