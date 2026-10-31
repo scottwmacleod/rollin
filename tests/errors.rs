@@ -103,7 +103,7 @@ fn too_many_dice_in_a_term_names_the_cap_and_the_term() {
 
 #[test]
 fn too_many_dice_in_an_expression_names_the_cap_and_the_term() {
-    let ten = vec!["1000d6"; 10].join("+");
+    let ten = ["1000d6"; 10].join("+");
     let cli = Cli::new();
     cli.run(&[&ten, "--seed", "1"]).assert_success();
     // The cap is per roll: the same ten groups in two comma items are fine.
