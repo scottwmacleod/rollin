@@ -51,6 +51,8 @@ pub enum CommandError {
     Import { path: PathBuf, message: String },
     /// A preset name that breaks a naming rule.
     InvalidName(NameError),
+    /// A variable name that is not `[a-z][a-z0-9_]*`; the text is as typed.
+    InvalidVarName(String),
     /// `set` was given a value that is not an `i64`.
     NotAnInteger(String),
     /// The presets file could not be read or written.
@@ -76,6 +78,10 @@ impl std::fmt::Display for CommandError {
                 write!(f, "{}: {message}", path.display())
             }
             CommandError::InvalidName(e) => write!(f, "{e}"),
+            CommandError::InvalidVarName(name) => write!(
+                f,
+                "invalid variable name '{name}': names must start with a letter and use only letters, digits or '_'"
+            ),
             CommandError::NotAnInteger(value) => write!(
                 f,
                 "'{value}' is not an integer; variables hold whole numbers from {} to {}",
@@ -118,7 +124,7 @@ pub fn parse_command(
         Some("vars") => Ok(Command::Vars),
         Some("set") => match rest {
             [name, value] => Ok(Command::Set {
-                name: name.to_lowercase(),
+                name: validate_var_name(name)?,
                 value: value
                     .parse()
                     .map_err(|_| CommandError::NotAnInteger(value.clone()))?,
@@ -132,6 +138,19 @@ pub fn parse_command(
             _ => Err(CommandError::Usage("delete <name>".into())),
         },
         _ => roll_or_preset(words, preset_names),
+    }
+}
+
+/// Checks a variable name and returns its stored (lowercase) form.
+fn validate_var_name(raw: &str) -> Result<String, CommandError> {
+    let name = raw.to_lowercase();
+    let mut chars = name.chars();
+    let valid = chars.next().is_some_and(|c| c.is_ascii_lowercase())
+        && chars.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_');
+    if valid {
+        Ok(name)
+    } else {
+        Err(CommandError::InvalidVarName(raw.to_string()))
     }
 }
 

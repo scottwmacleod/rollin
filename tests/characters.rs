@@ -121,3 +121,34 @@ fn set_accepts_negative_and_extreme_integers() {
     let literal = cli.roll_json("d20-1", 5);
     assert_eq!(roll["rolls"][0]["total"], literal["rolls"][0]["total"]);
 }
+
+#[test]
+fn variable_names_are_case_insensitive_and_stored_lowercase() {
+    let cli = Cli::new();
+    cli.run(&["set", "STR", "3"]).assert_success();
+    cli.run(&["set", "Str", "4"]).assert_success();
+    assert_eq!(cli.run(&["vars"]).stdout, "str = 4\n");
+    let file =
+        std::fs::read_to_string(cli.config_dir().join("rollin/characters/default.toml")).unwrap();
+    assert!(file.contains("str = 4"), "{file}");
+    let roll = cli.roll_json("d20+@sTr", 5);
+    assert_eq!(
+        roll["rolls"][0]["expr"],
+        cli.roll_json("d20+4", 5)["rolls"][0]["expr"]
+    );
+}
+
+#[test]
+fn set_rejects_bad_variable_names() {
+    let cli = Cli::new();
+    for bad in ["1x", "_x", "st-r", "st r", "", "a.b", "é"] {
+        let run = cli.run(&["set", bad, "3"]);
+        assert_eq!(run.code, 1, "{bad:?}: {run:?}");
+        assert_eq!(
+            run.stderr,
+            format!("error: invalid variable name '{bad}': names must start with a letter and use only letters, digits or '_'\n"),
+            "{bad:?}"
+        );
+    }
+    assert!(cli.run(&["vars"]).stdout.starts_with("No variables"));
+}
