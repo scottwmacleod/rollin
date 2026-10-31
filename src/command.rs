@@ -386,6 +386,16 @@ impl Context {
             .ok_or(CommandError::NoConfigDir)
     }
 
+    /// Every preset name rolling can reach: the character's own and global.
+    pub fn preset_names(&self) -> Result<Vec<String>, CommandError> {
+        let (characters, name) = self.current()?;
+        let mut names: Vec<String> = characters.load(&name)?.presets.into_keys().collect();
+        names.extend(self.store()?.load()?.into_keys());
+        names.sort();
+        names.dedup();
+        Ok(names)
+    }
+
     /// The presets store, or an error if there is no config directory.
     pub fn store(&self) -> Result<Store, CommandError> {
         self.config_dir
@@ -472,6 +482,17 @@ pub struct PresetEntry {
     pub name: String,
     pub formula: String,
     pub source: PresetSource,
+    pub shadow: Shadow,
+}
+
+/// How a preset relates to a same-named one in the other scope.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Shadow {
+    None,
+    /// A character preset hiding a global one.
+    Shadows,
+    /// A global preset hidden by the named character's preset.
+    ShadowedBy(String),
 }
 
 /// What an import did.
@@ -497,7 +518,10 @@ pub fn execute(
         }
         Command::RollPreset(name) => {
             let scope = Scope::load(ctx)?;
-            let formula = store.load()?.remove(name).unwrap_or_default();
+            let formula = match scope.presets.get(name) {
+                Some(formula) => formula.clone(),
+                None => store.load()?.remove(name).unwrap_or_default(),
+            };
             roll_formula(&formula, Some((name.clone(), formula.clone())), &scope, rng)
         }
         Command::Save {
@@ -592,23 +616,28 @@ pub fn execute(
         }
         Command::Presets => {
             let (characters, active) = ctx.current()?;
-            let own = characters
-                .load(&active)?
-                .presets
-                .into_iter()
-                .map(|(name, formula)| PresetEntry {
-                    name,
-                    formula,
-                    source: PresetSource::Character(active.clone()),
-                });
-            let global = store
-                .load()?
-                .into_iter()
-                .map(|(name, formula)| PresetEntry {
-                    name,
-                    formula,
-                    source: PresetSource::Global,
-                });
+            let own_presets = characters.load(&active)?.presets;
+            let global_presets = store.load()?;
+            let own = own_presets.iter().map(|(name, formula)| PresetEntry {
+                name: name.clone(),
+                formula: formula.clone(),
+                source: PresetSource::Character(active.clone()),
+                shadow: if global_presets.contains_key(name) {
+                    Shadow::Shadows
+                } else {
+                    Shadow::None
+                },
+            });
+            let global = global_presets.iter().map(|(name, formula)| PresetEntry {
+                name: name.clone(),
+                formula: formula.clone(),
+                source: PresetSource::Global,
+                shadow: if own_presets.contains_key(name) {
+                    Shadow::ShadowedBy(active.clone())
+                } else {
+                    Shadow::None
+                },
+            });
             Ok(Output::Presets(own.chain(global).collect()))
         }
         Command::Set { name, value } => {
@@ -712,6 +741,8 @@ fn check_formula(formula: &str) -> Result<(), CommandError> {
 struct Scope {
     name: String,
     vars: BTreeMap<String, i64>,
+    /// The character's own presets, which shadow global ones.
+    presets: BTreeMap<String, String>,
     /// Whether the character was chosen with `--char`.
     explicit: bool,
 }
@@ -719,10 +750,11 @@ struct Scope {
 impl Scope {
     fn load(ctx: &Context) -> Result<Scope, CommandError> {
         let (characters, name) = ctx.current()?;
-        let vars = characters.load(&name)?.vars;
+        let character = characters.load(&name)?;
         Ok(Scope {
             name,
-            vars,
+            vars: character.vars,
+            presets: character.presets,
             explicit: ctx.character.is_some(),
         })
     }

@@ -627,3 +627,73 @@ fn save_global_writes_the_global_file_from_anywhere_on_the_line() {
         "gl   d20    [global]\ngl2  d20+1  [global]\ngl3  d20+2  [global]\ngl4  d6     [global]\n"
     );
 }
+
+#[test]
+fn a_character_preset_resolves_its_variables_when_rolled_not_when_saved() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    // Neither variable exists yet: saving still works.
+    cli.run(&["save", "atk", "d20+@str+@prof"]).assert_success();
+    let early = cli.run(&["atk"]);
+    assert!(
+        early
+            .stderr
+            .contains("undefined variable @str on character 'grog'"),
+        "{early:?}"
+    );
+    cli.run(&["set", "str", "3"]).assert_success();
+    cli.run(&["set", "prof", "2"]).assert_success();
+
+    let by_name = cli.run(&["atk", "--seed", "9"]);
+    by_name.assert_success();
+    let direct = cli.run(&["d20+5", "--seed", "9"]);
+    let header = "(preset 'atk': d20+@str+@prof)\n";
+    assert!(by_name.stdout.starts_with(header), "{by_name:?}");
+    let total = |out: &str| {
+        out.lines()
+            .last()
+            .unwrap()
+            .split_whitespace()
+            .last()
+            .unwrap()
+            .to_string()
+    };
+    assert_eq!(total(&by_name.stdout), total(&direct.stdout));
+
+    // Changing a variable changes the preset's roll.
+    cli.run(&["set", "str", "10"]).assert_success();
+    let quiet = |args: &[&str]| cli.run(args).stdout;
+    assert_eq!(
+        quiet(&["atk", "--seed", "9", "-q"]),
+        quiet(&["d20+12", "--seed", "9", "-q"])
+    );
+    assert_eq!(
+        quiet(&["roll", "atk", "--seed", "9", "-q"]),
+        quiet(&["d20+12", "--seed", "9", "-q"])
+    );
+}
+
+#[test]
+fn a_character_preset_shadows_a_global_one_of_the_same_name_both_ways() {
+    let cli = Cli::new();
+    cli.run(&["save", "--global", "atk", "d20"])
+        .assert_success();
+    cli.run(&["save", "--global", "only", "d6"])
+        .assert_success();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    cli.run(&["save", "atk", "d20+100"]).assert_success();
+
+    let q = |args: &[&str]| cli.run(args).stdout;
+    // On grog the character preset wins; the global one is still reachable by name elsewhere.
+    assert!(q(&["atk", "--seed", "1"]).starts_with("(preset 'atk': d20+100)\n"));
+    assert!(q(&["--char", "default", "atk", "--seed", "1"]).starts_with("(preset 'atk': d20)\n"));
+    assert!(q(&["only", "--seed", "1"]).starts_with("(preset 'only': d6)\n"));
+    assert_eq!(
+        q(&["presets"]),
+        "atk   d20+100  [grog, shadows global]\natk   d20      [global, shadowed by grog]\nonly  d6       [global]\n"
+    );
+    assert_eq!(
+        q(&["--char", "default", "presets"]),
+        "atk   d20  [global]\nonly  d6   [global]\n"
+    );
+}

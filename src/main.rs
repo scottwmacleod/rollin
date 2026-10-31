@@ -4,7 +4,7 @@ use clap::Parser;
 use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
 use rollin::{
     entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output,
-    PresetEntry, PresetSource, Roll,
+    PresetEntry, PresetSource, Roll, Shadow,
 };
 use serde::Serialize;
 use std::io::IsTerminal;
@@ -71,9 +71,7 @@ fn main() -> ExitCode {
     let args = Args::parse();
     let mut ctx = Context::new(config_dir());
     ctx.character = args.character.clone();
-    let names = &mut || -> Result<Vec<String>, CommandError> {
-        Ok(ctx.store()?.load()?.into_keys().collect())
-    };
+    let names = &mut || ctx.preset_names();
     let mut words = args.words.clone();
     if args.global {
         words.push("--global".into());
@@ -221,7 +219,15 @@ fn show(args: &Args, output: Output) {
                     PresetSource::Character(c) => c.as_str(),
                     PresetSource::Global => "global",
                 };
-                println!("{:<name_w$}  {:<formula_w$}  [{source}]", p.name, p.formula);
+                let note = match &p.shadow {
+                    Shadow::None => String::new(),
+                    Shadow::Shadows => ", shadows global".to_string(),
+                    Shadow::ShadowedBy(c) => format!(", shadowed by {c}"),
+                };
+                println!(
+                    "{:<name_w$}  {:<formula_w$}  [{source}{note}]",
+                    p.name, p.formula
+                );
             }
         }
     }

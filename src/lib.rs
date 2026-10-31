@@ -18,7 +18,7 @@ mod presets;
 pub use ast::{BinOp, Special};
 pub use command::{
     config_dir, execute, parse_command, Command, CommandError, Context, ImportReport, Output,
-    PresetEntry, PresetSource, UndefinedVariable,
+    PresetEntry, PresetSource, Shadow, UndefinedVariable,
 };
 pub use error::Error;
 pub use presets::{validate_name, NameError, NameRule, Store, StoreError};
