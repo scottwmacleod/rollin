@@ -66,6 +66,7 @@ the same thing here; arithmetic is an addition on top.
 | `3d6!>5`, `d10!>=8`, `3d6!<2`, `3d6!<=2`, `3d6!=4` | Explode on a condition instead of the maximum |
 | `3d6!!`, `3d6!!>5` | Compounding: the extra rolls are added into the same die, which shows one combined value |
 | `3d6!p`, `3d6!p>5` | Penetrating: like `!`, but each extra die counts one less than it rolled (a 1 counts 0) |
+| `8d10!>=8>=8`, `4d6!>5>=6` | Explode and count successes: `!` takes the first comparison as its explode condition, so the success clause needs its own (`8d10!>=8` is a sum that explodes on 8+, not a count) |
 | `4d6!dl1`, `4d6!!kh2` | Explode first, then keep/drop applies to the whole resulting pool |
 | `4d6r1`, `4d6r=1` | Reroll any die showing 1, once; the second result stands even if it is also a 1 |
 | `4d6r<2`, `4d6r<=2`, `d20r>5`, `d20r>=19` | Reroll once on a comparison (`<`, `<=`, `>`, `>=`, `=`) instead of equals |
