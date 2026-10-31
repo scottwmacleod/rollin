@@ -165,3 +165,14 @@ fn a_repeat_of_a_plain_number_is_a_typed_error_that_points_to_multiplication() {
         "error: 'x' means repeat, and '5+2' has no dice to repeat\n  3x5+2\n  ^^\nhint: for multiplication use *; did you mean 3*5+2?\n"
     );
 }
+
+#[test]
+fn a_repeat_with_dice_anywhere_in_the_list_is_fine_and_a_diceless_list_has_no_rewrite() {
+    let ok = Cli::new().run(&["--seed", "1", "2x 3, d6"]);
+    ok.assert_success();
+    assert_eq!(ok.stdout.lines().count(), 4, "{ok:?}");
+    assert_eq!(
+        failure("2x 3, 4"),
+        "error: 'x' means repeat, and '3, 4' has no dice to repeat\n  2x 3, 4\n  ^^\nhint: for multiplication use *\n"
+    );
+}
