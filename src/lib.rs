@@ -6,6 +6,14 @@
 //! The RNG algorithm is pinned to ChaCha8 (see [`seeded_rng`]) so `--seed`
 //! output stays stable. Changing it invalidates every golden fixture.
 
+mod ast;
+mod error;
+mod eval;
+mod lexer;
+mod parser;
+
+pub use error::{Error, ParseError};
+
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use serde::Serialize;
@@ -45,45 +53,14 @@ pub struct Die {
 pub struct Roll {
     pub formula: String,
     pub dice: Vec<Die>,
+    /// Flat number added to the kept dice (`+5` is 5, `-2` is -2).
+    pub modifier: i64,
     pub total: i64,
 }
 
-/// A formula could not be parsed.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ParseError(pub String);
-
-impl std::fmt::Display for ParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "invalid formula: {}", self.0)
-    }
-}
-
-impl std::error::Error for ParseError {}
-
-/// Parses and evaluates `[N]dM` using the injected RNG.
-pub fn roll(formula: &str, rng: &mut impl Rng) -> Result<Roll, ParseError> {
-    let err = || ParseError(formula.to_string());
-    let lower = formula.trim().to_ascii_lowercase();
-    let (count, sides) = lower.split_once('d').ok_or_else(err)?;
-    let count: u32 = if count.is_empty() {
-        1
-    } else {
-        count.parse().map_err(|_| err())?
-    };
-    let sides: u32 = sides.parse().map_err(|_| err())?;
-    if count == 0 || sides < 2 {
-        return Err(err());
-    }
-    let dice: Vec<Die> = (0..count)
-        .map(|_| Die {
-            value: rng.gen_range(1..=sides),
-            status: Status::Kept,
-        })
-        .collect();
-    let total = dice.iter().map(|d| i64::from(d.value)).sum();
-    Ok(Roll {
-        formula: formula.trim().to_string(),
-        dice,
-        total,
-    })
+/// Parses and evaluates a formula (one or more comma-separated rolls) using
+/// the injected RNG, returning one [`Roll`] per item.
+pub fn roll(formula: &str, rng: &mut impl Rng) -> Result<Vec<Roll>, Error> {
+    let items = parser::parse(formula)?;
+    items.iter().map(|item| eval::evaluate(item, rng)).collect()
 }

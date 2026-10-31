@@ -1,5 +1,5 @@
 {
   "formula": "3d8",
   "seed": 2024,
-  "expected": {"rolls":[{"formula":"3d8","dice":[{"value":7,"status":"kept"},{"value":2,"status":"kept"},{"value":6,"status":"kept"}],"total":15}]}
+  "expected": {"rolls":[{"formula":"3d8","dice":[{"value":7,"status":"kept"},{"value":2,"status":"kept"},{"value":6,"status":"kept"}],"modifier":0,"total":15}]}
 }

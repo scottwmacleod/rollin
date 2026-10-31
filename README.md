@@ -7,6 +7,44 @@ A dice roller for the command line.
 Version 2 is a rewrite in Rust and is in progress. The original Python
 implementation (v1) is preserved at the git tag `v1.0`.
 
+## Usage
+
+```sh
+rollin 4d6dl1              # 4d6dl1  [5, 3, 4, (1)]  →  12
+rollin "d20+8, d10+5"      # one line per roll
+rollin d20+8, d10+5        # unquoted also works (arguments are joined)
+rollin 2d6+3 --seed 7      # reproducible
+rollin 2d6+3 --json        # machine-readable, with kept/dropped per die
+```
+
+Dropped dice are shown in parentheses and do not count toward the total.
+A flat modifier is shown after the dice (`[4, 2] + 3`).
+
+### Formula syntax
+
+Formulas are case-insensitive and spaces are ignored. This is the v1 syntax;
+every v1 formula means the same thing here.
+
+| Formula | Meaning |
+| --- | --- |
+| `d20` | One d20 (`dM` is `1dM`) |
+| `2d6` | Two d6s |
+| `3d8+5`, `2d6-2` | Dice plus or minus a flat number |
+| `4d6dl1` | Drop the lowest 1 |
+| `4d6dh1` | Drop the highest 1 |
+| `4d6dl`, `4d6dh` | Drop count defaults to 1 |
+| `4d6kh3` | Keep the highest 3 |
+| `4d6kl2` | Keep the lowest 2 |
+| `4d6kh` | Keep count defaults to 1 |
+| `2d20kh+8` | Keep clause, then modifier |
+| `15` | A bare number is its own total |
+| `d20+8, d10+5` | Comma-separated list: each item is its own roll on its own line |
+
+Limits (v1): 1 to 1000 dice, 2 to 10000 sides. Dropping or keeping that leaves
+no dice is an error. Invalid input prints `error: ...` and exits non-zero.
+A bare negative number needs `--` so it is not read as an option:
+`rollin -- -5`.
+
 ## Development
 
 Requires a stable Rust toolchain (see `rust-toolchain.toml`).

@@ -1,0 +1,5 @@
+{
+  "formula": "3d8+5",
+  "seed": 3,
+  "expected": {"rolls":[{"formula":"3d8+5","dice":[{"value":6,"status":"kept"},{"value":8,"status":"kept"},{"value":7,"status":"kept"}],"modifier":5,"total":26}]}
+}
