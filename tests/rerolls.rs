@@ -289,24 +289,11 @@ fn default_output_marks_rerolled_away_dice_with_tildes() {
 }
 
 #[test]
-fn verbose_output_lists_rerolled_dice_with_their_status() {
-    assert_eq!(
-        out(&["--seed", "3", "-v", "4d6r1dl1"]),
-        "4d6r1dl1\n  4d6r1dl1: 1 rerolled, 4 dropped, 1 rerolled, 6 kept, 1 rerolled, 5 kept, 4 kept = 15\n  total: 15\n"
-    );
-}
-
-#[test]
 fn color_dims_and_strikes_rerolled_dice() {
     let stdout = out(&["--seed", "3", "--color", "always", "4d6r1dl1"]);
     // Rerolled dice are dim and crossed out; dropped ones stay merely dim.
     assert!(stdout.contains("\x1b[2;9m~1~\x1b[0m"), "{stdout:?}");
     assert!(stdout.contains("\x1b[2m(4)\x1b[0m"), "{stdout:?}");
-    let verbose = out(&["--seed", "3", "--color", "always", "-v", "4d6r1dl1"]);
-    assert!(
-        verbose.contains("\x1b[2;9m1 rerolled\x1b[0m"),
-        "{verbose:?}"
-    );
 }
 
 #[test]

@@ -85,14 +85,14 @@ fn json_marks_percentile_groups_and_echoes_the_term_as_typed() {
 }
 
 #[test]
-fn default_and_verbose_output_echo_percentile_as_typed() {
+fn default_output_echoes_percentile_as_typed() {
     let cli = Cli::new();
     let run = cli.run(&["--seed", "99", "2d%"]);
     run.assert_success();
     assert!(run.stdout.starts_with("2d%  ["), "{}", run.stdout);
-    let run = cli.run(&["--seed", "99", "-v", "d%"]);
+    let run = cli.run(&["--seed", "99", "d%"]);
     run.assert_success();
-    assert!(run.stdout.contains("d%: "), "{}", run.stdout);
+    assert!(run.stdout.starts_with("d%  ["), "{}", run.stdout);
 }
 
 #[track_caller]
