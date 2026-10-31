@@ -107,15 +107,8 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
 }
 
 /// The long flags, offered when a word starts with a dash.
-const FLAGS: [&str; 8] = [
-    "--seed",
-    "--json",
-    "--color",
-    "--char",
-    "--global",
-    "--force",
-    "--verbose",
-    "--quiet",
+const FLAGS: [&str; 7] = [
+    "--seed", "--json", "--color", "--char", "--global", "--force", "--quiet",
 ];
 
 /// Flags that take a value in the next word.

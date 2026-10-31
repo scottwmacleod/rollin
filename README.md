@@ -29,7 +29,6 @@ rollin d20+8, d10+5        # unquoted also works (arguments are joined)
 rollin 2d6+3 --seed 7      # reproducible
 rollin 2d6+3 --json        # machine-readable, with kept/dropped per die
 rollin -q 2d6+3            # just the total
-rollin -v 4d6dl1           # full breakdown
 rollin 6x 4d6dl1           # repeat: six numbered stat rolls
 rollin 'd20+8 # attack'    # a label (quote the #)
 rollin                     # no formula: start an interactive session
@@ -218,9 +217,9 @@ saved 'house': d6
 - `roll <x>` takes a formula or a preset name. A bare word that is not a
   formula is looked up as a preset; an unknown one is an error that suggests
   `rollin presets` and, if a saved name is within two edits, `did you mean`.
-- `--seed`, `-v`, `-q`, `--json` and `--color` work with presets as with any
+- `--seed`, `-q`, `--json` and `--color` work with presets as with any
   roll. The `(preset 'name': formula)` header is printed in the default and
-  `-v` modes only, so `--json` and `-q` stay machine-clean. `presets`,
+  default mode only, so `--json` and `-q` stay machine-clean. `presets`,
   `save`, `delete` and `import` print plain text whatever the mode.
 - `delete <name> [--global]` removes the preset from the active character.
   A name the character does not have is an error (exit 1); if a global preset
@@ -502,101 +501,52 @@ $ rollin --seed 1 'd20+8 # attack'
 d20+8  [9] + 8  →  17  # attack
 ```
 
-`-v` prints an `iteration k of N` line before each iteration's blocks, and a
-roll's label follows its formula on the block header (`d20+8  # attack`).
 `-q` prints one total per line, in order. `--json` adds `"iteration"` to each
 roll of a repeated formula and `"label"` to each labelled roll (see the
 schema doc); the rolls array stays flat, in the order rolled.
 
 ```
-$ rollin --seed 1 -v '2x d20+8 # attack'
-iteration 1 of 2
-d20+8  # attack
-  d20: 9 kept = 9
-  + 8
-  total: 17
-
-iteration 2 of 2
-d20+8  # attack
-  d20: 2 kept = 2
-  + 8
-  total: 10
 $ rollin --seed 1 -q 3x d20+8
 17
 10
 13
 ```
 
-**Verbose (`-v`, `--verbose`).** One block per roll (blank line between
-blocks) listing every die with its status, each term's subtotal, the
-operators, and the total. Nested expressions are indented and bracketed:
-
-```
-$ rollin -v 4d6dl1 --seed 3
-4d6dl1
-  4d6dl1: 1 dropped, 4 kept, 1 kept, 6 kept = 11
-  total: 11
-$ rollin -v "(d20+5)*2" --seed 3
-(d20+5)*2
-  (
-    d20: 3 kept = 3
-    + 5
-  ) = 8
-  * 2
-  total: 16
-```
-
 Exploded dice are marked with a trailing `!` in the default output and the
-word `exploded` in `-v`; a compounded die is one entry marked `!` whose
-`-v` line shows the rolls it combined:
+word `exploded` in `--json`; a compounded die is one entry marked `!` whose
+`--json` node lists the rolls it combined (`"parts"`):
 
 ```
 $ rollin --seed 2 3d6!
 3d6!  [2, 6, 4!, 4]  →  16
 $ rollin --seed 2 3d6!!
 3d6!!  [2, 10!, 4]  →  16
-$ rollin -v --seed 2 3d6!!
-3d6!!
-  3d6!!: 2 kept, 10 kept (6+4), 4 kept = 16
-  total: 16
-$ rollin -v --seed 2 3d6!p
-3d6!p
-  3d6!p: 2 kept, 6 kept, 3 exploded, 4 kept = 15
-  total: 15
+$ rollin --seed 2 3d6!p
+3d6!p  [2, 6, 3!, 4]  →  15
 ```
 
 Dice a reroll replaced are shown between tildes (`~1~`) in the default
 output, with the die that replaced them right after, and as `rerolled` in
-`-v`. With color on they are dim and crossed out (dropped dice are dim only):
+`--json`. With color on they are dim and crossed out (dropped dice are dim only):
 
 ```
 $ rollin --seed 3 4d6r1
 4d6r1  [~1~, 4, ~1~, 6, ~1~, 5, 4]  →  19
 $ rollin --seed 8 4d6rr1
 4d6rr1  [2, ~1~, ~1~, 5, 5, 6]  →  18
-$ rollin -v --seed 3 4d6r<2dl1
-4d6r<2dl1
-  4d6r<2dl1: 1 rerolled, 4 dropped, 1 rerolled, 6 kept, 1 rerolled, 5 kept, 4 kept = 15
-  total: 15
 ```
 
 Success counts show each counting die's outcome after its value, `✓` for a
 success and `✗` for a failure, and label the total as a count so it cannot
 be mistaken for a sum: `3 successes`, `1 success`. When any die failed, the net
 is followed by the breakdown, `2 successes (3 - 1 failure)`. With color on,
-successes are green and failures red. `-v` adds the words `success` and
-`failure` to the dice and a tally line; `-q` prints just the net number.
+successes are green and failures red. `--json` carries each die's outcome and the tally; `-q` prints just the net number.
 
 ```
 $ rollin --seed 6 6d10>=8
 6d10>=8  [4, 5, 6, 4, 4, 1]  →  0 successes
 $ rollin --seed 2 6d10>=8f1
 6d10>=8f1  [6, 6, 1✗, 3, 9✓, 3]  →  0 successes (1 - 1 failure)
-$ rollin -v --seed 2 6d10>=8f1
-6d10>=8f1
-  6d10>=8f1: 6 kept, 6 kept, 1 kept failure, 3 kept, 9 kept success, 3 kept = 0
-    successes: 1, failures: 1, net: 0
-  total: 0 successes (1 - 1 failure)
 ```
 
 **Quiet (`-q`, `--quiet`).** Only the total of each roll, one per line, so
@@ -611,8 +561,8 @@ $ rollin -q "d20+8, d10+5" --seed 1
 
 **JSON (`--json`).** The result tree as one line of JSON with a
 `schema_version`; see [docs/json-schema.md](docs/json-schema.md) for the
-schema and an example of every node type. `--json` wins over `-q` and `-v`
-(they are ignored). `-q` and `-v` together are an error.
+schema and an example of every node type. `--json` wins over `-q`
+(which is ignored).
 
 ## Session
 
@@ -661,7 +611,7 @@ rollin[grog]> quit
 prompts and the banner only appear on a terminal.)
 
 **Every line is a one-shot command.** A line is split on whitespace into
-words and run exactly like `rollin <words>`: the same flags (`--seed N`, `-v`,
+words and run exactly like `rollin <words>`: the same flags (`--seed N`,
 `-q`, `--json`, `--color X`, `--char X`, ...) work and apply to that line
 only, and the output and errors are the same bytes. Quotes are unnecessary
 (and would be taken literally): `#` labels and spaces work as typed, so
@@ -728,7 +678,7 @@ per test. The helper is `tests/common/mod.rs` (`Cli::new()`, `cli.run(&[..])`).
 | `tests/arithmetic.rs` | `+ - * /`, precedence, parentheses, result tree |
 | `tests/errors.rs` | Error text with underlined spans, caps, overflow |
 | `tests/repeat_labels.rs` | `Nx` repeat and `#` labels in every output mode, caps and errors, presets |
-| `tests/output_modes.rs` | Color, `-v`, `-q` and `--json` flag behaviour |
+| `tests/output_modes.rs` | Color, `-q` and `--json` flag behaviour |
 | `tests/presets.rs` | Preset commands, name rules, the TOML store, `import`, against a temp config dir |
 | `tests/golden.rs` | Golden fixtures (the `--json` contract): formula + seed to expected output |
 | `tests/v1_spec.rs` | The Python v1 test cases as a parity spec |

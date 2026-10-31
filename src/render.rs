@@ -1,5 +1,5 @@
-//! Human-readable renderers over the result tree: the one-line default and
-//! the `-v` breakdown, with optional ANSI styling.
+//! Human-readable renderer over the result tree: the one-line output, with
+//! optional ANSI styling.
 
 use clap::ValueEnum;
 use rollin::{BinOp, Die, Node, Outcome, Roll, Status, Tally};
@@ -103,17 +103,6 @@ fn natural(expr: &Node) -> Option<Natural> {
         20 => Some(Natural::Twenty),
         1 => Some(Natural::One),
         _ => None,
-    }
-}
-
-/// How a die's status reads in the `-v` breakdown. Exhaustive on purpose:
-/// new statuses (exploded, rerolled) must be given a word here.
-fn status_label(status: Status) -> &'static str {
-    match status {
-        Status::Kept => "kept",
-        Status::Dropped => "dropped",
-        Status::Exploded => "exploded",
-        Status::Rerolled => "rerolled",
     }
 }
 
@@ -248,101 +237,4 @@ pub fn render_line(p: Painter, roll: &Roll) -> String {
         roll.formula,
         expr_line(p, &roll.expr, nat)
     )
-}
-
-/// The `-v` output: one block per roll, every die with its status, each
-/// term's subtotal, the operators, and the total.
-pub fn render_verbose(p: Painter, roll: &Roll) -> String {
-    let nat = natural(&roll.expr);
-    let mut lines = vec![format!("{}{}", roll.formula, label_suffix(p, roll))];
-    verbose_node(p, &roll.expr, nat, 1, "", &mut lines);
-    lines.push(format!("  total: {}", p.bold(&total_text(roll))));
-    lines.join("\n")
-}
-
-/// Appends `node` at `depth`; `lead` is the operator that introduces it.
-fn verbose_node(
-    p: Painter,
-    node: &Node,
-    nat: Option<Natural>,
-    depth: usize,
-    lead: &str,
-    out: &mut Vec<String>,
-) {
-    let pad = "  ".repeat(depth);
-    match node {
-        Node::Number { value } => out.push(format!("{pad}{lead}{value}")),
-        Node::Dice {
-            term,
-            dice,
-            subtotal,
-            tally,
-            ..
-        } => {
-            let cells: Vec<String> = dice
-                .iter()
-                .map(|d| {
-                    let mut text = format!("{} {}", d.value, status_label(d.status));
-                    match d.outcome {
-                        Some(Outcome::Success) => text.push_str(" success"),
-                        Some(Outcome::Failure) => text.push_str(" failure"),
-                        None => {}
-                    }
-                    if d.parts.len() > 1 {
-                        let parts: Vec<String> = d.parts.iter().map(i64::to_string).collect();
-                        text.push_str(&format!(" ({})", parts.join("+")));
-                    }
-                    paint_die(p, d, nat, &text)
-                })
-                .collect();
-            out.push(format!(
-                "{pad}{lead}{term}: {} = {subtotal}",
-                cells.join(", ")
-            ));
-            if let Some(t) = tally {
-                out.push(format!(
-                    "{pad}  successes: {}, failures: {}, net: {subtotal}",
-                    t.successes, t.failures
-                ));
-            }
-        }
-        Node::Neg { operand, total } => {
-            out.push(format!("{pad}{lead}-("));
-            verbose_node(p, operand, nat, depth + 1, "", out);
-            out.push(format!("{pad}) = {total}"));
-        }
-        Node::Group { inner, total } => {
-            out.push(format!("{pad}{lead}("));
-            verbose_node(p, inner, nat, depth + 1, "", out);
-            out.push(format!("{pad}) = {total}"));
-        }
-        Node::Chain { first, rest, .. } => {
-            operand(p, first, nat, depth, lead, out);
-            for link in rest {
-                let lead = format!("{} ", link.op.symbol());
-                operand(p, &link.node, nat, depth, &lead, out);
-            }
-        }
-    }
-}
-
-/// A chain operand. A nested chain (from operator precedence, as in `2+3*4`)
-/// is bracketed so its subtotal is visible and it reads as one unit.
-fn operand(
-    p: Painter,
-    node: &Node,
-    nat: Option<Natural>,
-    depth: usize,
-    lead: &str,
-    out: &mut Vec<String>,
-) {
-    match node {
-        Node::Chain { total, .. } => {
-            let pad = "  ".repeat(depth);
-            out.push(format!("{pad}{lead}("));
-            verbose_node(p, node, nat, depth + 1, "", out);
-            out.push(format!("{pad}) = {total}"));
-        }
-        _ => verbose_node(p, node, nat, depth, lead, out),
-    }
 }
