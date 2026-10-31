@@ -238,7 +238,7 @@ $ rollin -v --seed 3 4d6r<2dl1
   total: 15
 ```
 
-Fudge dice read `+`, `0` and `-` in the one-line output (`4dF  [-, 0, +, +]  →  1`) and as numbers in `-v`.
+Fudge dice read `+`, `0` and `-` in the one-line output (`4dF  [-, -, +, +]  →  0`) and as numbers in `-v`.
 Success counts show each counting die's outcome after its value, `✓` for a
 success and `✗` for a failure, and label the total as a count so it cannot
 be mistaken for a sum: `3 successes`, `1 success`. When any die failed, the net
