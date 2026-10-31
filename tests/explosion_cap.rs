@@ -74,5 +74,8 @@ fn the_plain_pool_records_100_exploded_dice_at_the_boundary() {
     };
     // The original, then 100 extras, the last of which stopped.
     assert_eq!(dice.len(), 101);
-    assert_eq!(dice.iter().filter(|d| d.status == Status::Exploded).count(), 100);
+    assert_eq!(
+        dice.iter().filter(|d| d.status == Status::Exploded).count(),
+        100
+    );
 }

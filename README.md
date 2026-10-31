@@ -46,6 +46,11 @@ the same thing here; arithmetic is an addition on top.
 | `4d6kl2` | Keep the lowest 2 |
 | `4d6kh` | Keep count defaults to 1 |
 | `2d20kh+8` | Keep clause, then modifier |
+| `3d6!` | Exploding: each die showing its maximum rolls another die, which can explode too |
+| `3d6!>5`, `d10!>=8`, `3d6!<2`, `3d6!<=2`, `3d6!=4` | Explode on a condition instead of the maximum |
+| `3d6!!`, `3d6!!>5` | Compounding: the extra rolls are added into the same die, which shows one combined value |
+| `3d6!p`, `3d6!p>5` | Penetrating: like `!`, but each extra die counts one less than it rolled (a 1 counts 0) |
+| `4d6!dl1`, `4d6!!kh2` | Explode first, then keep/drop applies to the whole resulting pool |
 | `15` | A bare number is its own total |
 | `2d6+1d4+3`, `d20+d4-2` | Add and subtract any dice groups and numbers |
 | `d20*2`, `10/4` | Multiply and divide; they bind tighter than `+` and `-` |
@@ -57,8 +62,18 @@ Arithmetic is integer-only. Division truncates toward zero (`7/2` is 3,
 `-7/2` is -3), and `*` and `/` are applied left to right (`100/5/2` is 10).
 Division by zero and integer overflow are errors, never wrapped values.
 
+Exploding dice stop at 100 explosions per die: a longer chain is an error
+naming the cap and the term, not a truncated result. Extra dice count toward
+the 10000-dice limit below. A condition that holds for every face (`d6!>=1`,
+`d6!<7`, `d6!!<=6`) would explode forever and is rejected before rolling;
+one that never holds (`d6!>6`) is allowed and simply never explodes. Keep
+and drop counts are checked against the dice written, but apply to every die
+in the exploded pool (`4d6!kh2` keeps the two highest of all of them).
+Quote formulas containing `!` in an interactive shell (`rollin '3d6!'`), where
+`!` can trigger history expansion.
+
 Limits: 1 to 1000 dice per term, 2 to 10000 sides, 10000 dice rolled per
-roll (one comma-separated item), and nesting (parentheses and unary minus)
+roll (one comma-separated item, explosion dice included), and nesting (parentheses and unary minus)
 32 deep. Dropping or keeping that leaves no dice is an error.
 A bare negative number needs `--` so it is not read as an option:
 `rollin -- -5`.
@@ -117,6 +132,25 @@ $ rollin -v "(d20+5)*2" --seed 3
   ) = 8
   * 2
   total: 16
+```
+
+Exploded dice are marked with a trailing `!` in the default output and the
+word `exploded` in `-v`; a compounded die is one entry marked `!` whose
+`-v` line shows the rolls it combined:
+
+```
+$ rollin --seed 2 3d6!
+3d6!  [2, 6, 4!, 4]  →  16
+$ rollin --seed 2 3d6!!
+3d6!!  [2, 10!, 4]  →  16
+$ rollin -v --seed 2 3d6!!
+3d6!!
+  3d6!!: 2 kept, 10 kept (6+4), 4 kept = 16
+  total: 16
+$ rollin -v --seed 2 3d6!p
+3d6!p
+  3d6!p: 2 kept, 6 kept, 3 exploded, 4 kept = 15
+  total: 15
 ```
 
 **Quiet (`-q`, `--quiet`).** Only the total of each roll, one per line, so

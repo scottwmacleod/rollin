@@ -6,6 +6,9 @@ mod common;
 use common::{flat_dice, Cli};
 use serde_json::Value;
 
+/// A formula and the faces it explodes on.
+type Case = (&'static str, fn(i64) -> bool);
+
 const SEEDS: std::ops::Range<u64> = 0..60;
 
 /// The dice of the first roll of `formula --seed seed --json`.
@@ -67,7 +70,7 @@ fn bang_explodes_dice_showing_their_maximum() {
 #[test]
 fn conditions_choose_which_faces_explode() {
     let cli = Cli::new();
-    let cases: [(&str, fn(i64) -> bool); 7] = [
+    let cases: [Case; 7] = [
         ("3d6!>5", |v| v > 5),
         ("3d6!>=5", |v| v >= 5),
         ("3d6!<2", |v| v < 2),
@@ -102,7 +105,7 @@ fn more_than_100_explosions_of_one_die_is_an_error_naming_cap_and_term() {
 #[test]
 fn double_bang_compounds_extra_rolls_into_one_die() {
     let cli = Cli::new();
-    let cases: [(&str, fn(i64) -> bool); 3] = [
+    let cases: [Case; 3] = [
         ("3d6!!", |v| v == 6),
         ("3d6!!>4", |v| v > 4),
         ("3d6!! <= 2", |v| v <= 2),
@@ -135,7 +138,7 @@ fn double_bang_compounds_extra_rolls_into_one_die() {
 #[test]
 fn bang_p_penetrates_so_each_extra_roll_counts_one_less() {
     let cli = Cli::new();
-    let cases: [(&str, fn(i64) -> bool); 3] = [
+    let cases: [Case; 3] = [
         ("3d6!p", |v| v == 6),
         ("3d6!p>4", |v| v > 4),
         ("3D6 ! P <= 2", |v| v <= 2),
