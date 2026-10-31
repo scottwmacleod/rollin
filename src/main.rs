@@ -81,9 +81,15 @@ fn main() -> ExitCode {
 fn session(rng: &mut ChaCha8Rng) -> ExitCode {
     for line in std::io::stdin().lock().lines().map_while(Result::ok) {
         let words: Vec<&str> = line.split_whitespace().collect();
-        let args = Args::parse_from(std::iter::once("rollin").chain(words));
-        if !args.words.is_empty() {
-            run_line(&args, rng);
+        match Args::try_parse_from(std::iter::once("rollin").chain(words)) {
+            Ok(args) if args.words.is_empty() => {}
+            Ok(args) => {
+                run_line(&args, rng);
+            }
+            // Print the clap error (or --help text) and carry on.
+            Err(e) => {
+                let _ = e.print();
+            }
         }
     }
     ExitCode::SUCCESS
