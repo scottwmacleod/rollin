@@ -215,3 +215,56 @@ fn reroll_clauses_out_of_order_or_repeated_are_parse_errors() {
         assert!(stderr.starts_with("error: "), "{formula}: {stderr}");
     }
 }
+
+#[test]
+fn rerolls_happen_before_explosions_which_happen_before_keep_drop() {
+    let cli = Cli::new();
+    let (mut explosion_after_reroll, mut dropped_with_rerolls) = (0, 0);
+    for seed in 0..200 {
+        // Rerolls on 6 and explodes on 6: the standing die decides explosion.
+        let pool = dice(&cli, "4d6r6!", seed);
+        for (i, d) in pool.iter().enumerate() {
+            if status(d) == "rerolled" {
+                assert_eq!(value(d), 6);
+                assert_ne!(status(&pool[i + 1]), "exploded", "{pool:?}");
+                if value(&pool[i + 1]) == 6 {
+                    // The second 6 stands and explodes.
+                    assert_eq!(status(&pool[i + 2]), "exploded", "{pool:?}");
+                    explosion_after_reroll += 1;
+                }
+            }
+        }
+
+        // Keep/drop sees only the standing pool (rerolled dice are never
+        // dropped, nor counted as part of the pool).
+        let out = cli.roll_json("4d6r1!dl1", seed);
+        let pool = flat_dice(&out["rolls"][0]["expr"]);
+        let standing: Vec<&Value> = pool.iter().filter(|d| status(d) != "rerolled").collect();
+        let dropped: Vec<&&Value> = standing.iter().filter(|d| status(d) == "dropped").collect();
+        assert_eq!(dropped.len(), 1, "{pool:?}");
+        let lowest = standing.iter().map(|d| value(d)).min().unwrap();
+        assert_eq!(value(dropped[0]), lowest, "{pool:?}");
+        let counted: i64 = standing
+            .iter()
+            .filter(|d| status(d) != "dropped")
+            .map(|d| value(d))
+            .sum();
+        assert_eq!(out["rolls"][0]["total"], counted, "{pool:?}");
+        dropped_with_rerolls += usize::from(pool.iter().any(|d| status(d) == "rerolled"));
+    }
+    assert!(explosion_after_reroll > 0);
+    assert!(dropped_with_rerolls > 0);
+}
+
+#[test]
+fn keep_and_drop_counts_are_still_checked_against_the_dice_written() {
+    // Rerolled-away dice are not extra dice in the pool.
+    assert_eq!(
+        failure("4d6r1dl4"),
+        "error: cannot drop 4 dice from a pool of 4\n  4d6r1dl4\n       ^^^\n"
+    );
+    assert_eq!(
+        failure("4d6rr<=2kh0"),
+        "error: must keep between 1 and 3 dice from a pool of 4\n  4d6rr<=2kh0\n           ^^^\n"
+    );
+}
