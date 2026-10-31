@@ -16,7 +16,7 @@ use std::process::ExitCode;
 struct Args {
     /// A formula to roll, e.g. d20 or "4d6dl1, d20+5", a preset name, or a
     /// command: save, presets, delete, import, roll
-    #[arg(required = true)]
+    #[arg(required = true, allow_negative_numbers = true)]
     words: Vec<String>,
 
     /// Seed the random number generator for reproducible rolls

@@ -102,3 +102,22 @@ fn set_rejects_values_that_are_not_i64_integers_and_stores_nothing() {
     }
     assert!(cli.run(&["vars"]).stdout.starts_with("No variables"));
 }
+
+#[test]
+fn set_accepts_negative_and_extreme_integers() {
+    let cli = Cli::new();
+    let set = cli.run(&["set", "str", "-1"]);
+    set.assert_success();
+    assert_eq!(set.stdout, "set str = -1 on 'default'\n");
+    cli.run(&["set", "big", "9223372036854775807"])
+        .assert_success();
+    cli.run(&["set", "small", "-9223372036854775808"])
+        .assert_success();
+    assert_eq!(
+        cli.run(&["vars"]).stdout,
+        "big = 9223372036854775807\nsmall = -9223372036854775808\nstr = -1\n"
+    );
+    let roll = cli.roll_json("d20+@str", 5);
+    let literal = cli.roll_json("d20-1", 5);
+    assert_eq!(roll["rolls"][0]["total"], literal["rolls"][0]["total"]);
+}
