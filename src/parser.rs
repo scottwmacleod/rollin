@@ -5,7 +5,7 @@
 //! just the simplest such expression.
 
 use crate::ast::{BinOp, Dice, Expr, ExprKind, Item, Select, SelectKind};
-use crate::error::ParseError;
+use crate::error::Error;
 /// v1 limits (ticket #11 reworks limits and error reporting).
 const MAX_DICE: i64 = 1000;
 const MAX_SIDES: i64 = 10000;
@@ -13,7 +13,7 @@ const MAX_SIDES: i64 = 10000;
 use crate::lexer::{tokenize, Spanned, Token};
 
 /// Parses a whole formula (comma-separated items) into items.
-pub fn parse(src: &str) -> Result<Vec<Item>, ParseError> {
+pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
     let tokens = tokenize(src)?;
     let mut parser = Parser {
         src,
@@ -42,7 +42,7 @@ pub fn parse(src: &str) -> Result<Vec<Item>, ParseError> {
         }
     }
     if items.is_empty() {
-        return Err(ParseError::new("no formulas provided", 0..src.len()));
+        return Err(Error::syntax("no formulas provided", 0..src.len()));
     }
     Ok(items)
 }
@@ -77,20 +77,20 @@ impl Parser<'_> {
         t
     }
 
-    fn unexpected(&self, expected: &str) -> ParseError {
+    fn unexpected(&self, expected: &str) -> Error {
         match self.tokens.get(self.pos) {
-            Some(t) => ParseError::new(
+            Some(t) => Error::syntax(
                 format!("expected {expected}, found {}", describe(&t.token)),
                 t.span.clone(),
             ),
-            None => ParseError::new(
+            None => Error::syntax(
                 format!("expected {expected}, found end of input"),
                 self.end..self.end,
             ),
         }
     }
 
-    fn number(&mut self, what: &str) -> Result<i64, ParseError> {
+    fn number(&mut self, what: &str) -> Result<i64, Error> {
         match self.peek() {
             Some(Token::Number(n)) => {
                 let n = *n;
@@ -101,13 +101,13 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_item(&mut self) -> Result<Expr, ParseError> {
+    fn parse_item(&mut self) -> Result<Expr, Error> {
         self.parse_expr(1)
     }
 
     /// Precedence climbing: parses operators binding at least as tightly as
     /// `min_prec`. Operators of one level extend a single flat chain.
-    fn parse_expr(&mut self, min_prec: u8) -> Result<Expr, ParseError> {
+    fn parse_expr(&mut self, min_prec: u8) -> Result<Expr, Error> {
         let mut lhs = self.parse_unary()?;
         while let Some(op) = self.peek_binop() {
             if op.precedence() < min_prec {
@@ -131,7 +131,7 @@ impl Parser<'_> {
     }
 
     /// Unary `-` negates and unary `+` is a no-op (v1 accepted `+5`).
-    fn parse_unary(&mut self) -> Result<Expr, ParseError> {
+    fn parse_unary(&mut self) -> Result<Expr, Error> {
         match self.peek() {
             Some(Token::Minus) => {
                 let start = self.tokens[self.pos].span.start;
@@ -151,7 +151,7 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_group(&mut self) -> Result<Expr, ParseError> {
+    fn parse_group(&mut self) -> Result<Expr, Error> {
         let open = self.tokens[self.pos].span.clone();
         self.pos += 1;
         let inner = self.parse_expr(1)?;
@@ -163,13 +163,13 @@ impl Parser<'_> {
                     span: open.start..self.prev_end(),
                 })
             }
-            None => Err(ParseError::new("unclosed '('", open)),
+            None => Err(Error::syntax("unclosed '('", open)),
             Some(_) => Err(self.unexpected("')'")),
         }
     }
 
     /// A parenthesised expression, a number or a dice group.
-    fn parse_operand(&mut self) -> Result<Expr, ParseError> {
+    fn parse_operand(&mut self) -> Result<Expr, Error> {
         let start = self.pos;
         if matches!(self.peek(), Some(Token::LParen)) {
             return self.parse_group();
@@ -195,7 +195,7 @@ impl Parser<'_> {
             }) if w == "d" => {}
             _ => {
                 self.pos -= 1;
-                return Err(self.unexpected("a dice group like d20 or 2d6"));
+                return Err(self.unexpected("a number, a dice group or '('"));
             }
         }
         let count_span = self.tokens[start].span.clone();
@@ -203,13 +203,13 @@ impl Parser<'_> {
         let sides = self.number("the number of sides after 'd'")?;
         let sides_span = self.tokens[sides_start].span.clone();
         if !(1..=MAX_DICE).contains(&count) {
-            return Err(ParseError::new(
+            return Err(Error::invalid_dice(
                 format!("dice count must be between 1 and {MAX_DICE}"),
                 count_span,
             ));
         }
         if !(2..=MAX_SIDES).contains(&sides) {
-            return Err(ParseError::new(
+            return Err(Error::invalid_dice(
                 format!("sides must be between 2 and {MAX_SIDES}"),
                 sides_span,
             ));
@@ -228,7 +228,7 @@ impl Parser<'_> {
     }
 
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
-    fn parse_select(&mut self, count: i64) -> Result<Option<Select>, ParseError> {
+    fn parse_select(&mut self, count: i64) -> Result<Option<Select>, Error> {
         let kind = match self.peek() {
             Some(Token::Word(w)) => match w.as_str() {
                 "dl" => SelectKind::DropLowest,
@@ -252,7 +252,7 @@ impl Parser<'_> {
         let span = word_span.start..self.prev_end();
         let keeps = matches!(kind, SelectKind::KeepLowest | SelectKind::KeepHighest);
         if keeps && !(1..count).contains(&n) {
-            return Err(ParseError::new(
+            return Err(Error::invalid_dice(
                 format!(
                     "must keep between 1 and {} dice from a pool of {count}",
                     count - 1
@@ -261,7 +261,7 @@ impl Parser<'_> {
             ));
         }
         if !keeps && n >= count {
-            return Err(ParseError::new(
+            return Err(Error::invalid_dice(
                 format!("cannot drop {n} dice from a pool of {count}"),
                 span,
             ));

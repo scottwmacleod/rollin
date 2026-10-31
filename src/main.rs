@@ -1,5 +1,5 @@
 use clap::Parser;
-use rollin::{entropy_rng, roll, seeded_rng, Node, Roll, Status};
+use rollin::{entropy_rng, roll, seeded_rng, Error, Node, Roll, Status};
 use serde::Serialize;
 use std::process::ExitCode;
 
@@ -45,7 +45,11 @@ fn render_expr(node: &Node) -> String {
         Node::Chain { first, rest, .. } => {
             let mut out = render_expr(first);
             for link in rest {
-                out.push_str(&format!(" {} {}", link.op.symbol(), render_expr(&link.node)));
+                out.push_str(&format!(
+                    " {} {}",
+                    link.op.symbol(),
+                    render_expr(&link.node)
+                ));
             }
             out
         }
@@ -96,8 +100,26 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         Err(e) => {
-            eprintln!("error: {e}");
+            eprint!("{}", render_error(&formula, &e));
             ExitCode::FAILURE
         }
     }
+}
+
+/// The message, the formula, and carets under the offending span.
+fn render_error(formula: &str, error: &Error) -> String {
+    let span = error.span();
+    // Show control characters (e.g. a newline) as spaces so the line and the
+    // carets stay aligned.
+    let line: String = formula
+        .chars()
+        .map(|c| if c.is_control() { ' ' } else { c })
+        .collect();
+    let start = formula[..span.start].chars().count();
+    let len = formula[span.start..span.end].chars().count().max(1);
+    format!(
+        "error: {error}\n  {line}\n  {}{}\n",
+        " ".repeat(start),
+        "^".repeat(len)
+    )
 }

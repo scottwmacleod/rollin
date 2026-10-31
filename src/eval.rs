@@ -4,6 +4,7 @@ use crate::ast::{BinOp, Expr, ExprKind, Item};
 use crate::error::Error;
 use crate::{Die, Link, Node, Roll, Status};
 use rand::Rng;
+use std::ops::Range;
 
 pub fn evaluate(item: &Item, rng: &mut impl Rng) -> Result<Roll, Error> {
     let expr = eval_expr(&item.expr, rng)?;
@@ -38,7 +39,9 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
         }
         ExprKind::Neg(inner) => {
             let operand = eval_expr(inner, rng)?;
-            let total = operand.total().checked_neg().ok_or(Error::Overflow)?;
+            let total = operand.total().checked_neg().ok_or(Error::Overflow {
+                span: expr.span.clone(),
+            })?;
             Ok(Node::Neg {
                 operand: Box::new(operand),
                 total,
@@ -52,12 +55,14 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
             })
         }
         ExprKind::Chain { first, rest } => {
+            let first_span = first.span.clone();
             let first = eval_expr(first, rng)?;
             let mut total = first.total();
             let mut links = Vec::with_capacity(rest.len());
             for (op, operand) in rest {
                 let node = eval_expr(operand, rng)?;
-                total = apply(*op, total, node.total())?;
+                let span = first_span.start..operand.span.end;
+                total = apply(*op, total, node.total(), span, operand.span.clone())?;
                 links.push(Link { op: *op, node });
             }
             Ok(Node::Chain {
@@ -69,7 +74,19 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
     }
 }
 
-fn apply(op: BinOp, lhs: i64, rhs: i64) -> Result<i64, Error> {
+/// Applies one operator with checked arithmetic. `span` covers the whole
+/// operation (for overflow); `rhs_span` is the right operand (for division
+/// by zero).
+fn apply(
+    op: BinOp,
+    lhs: i64,
+    rhs: i64,
+    span: Range<usize>,
+    rhs_span: Range<usize>,
+) -> Result<i64, Error> {
+    if op == BinOp::Div && rhs == 0 {
+        return Err(Error::DivisionByZero { span: rhs_span });
+    }
     match op {
         BinOp::Add => lhs.checked_add(rhs),
         BinOp::Sub => lhs.checked_sub(rhs),
@@ -77,7 +94,7 @@ fn apply(op: BinOp, lhs: i64, rhs: i64) -> Result<i64, Error> {
         // Rust integer division truncates toward zero.
         BinOp::Div => lhs.checked_div(rhs),
     }
-    .ok_or(Error::Overflow)
+    .ok_or(Error::Overflow { span })
 }
 
 /// Marks the lowest and highest dice as dropped. Ties are broken by roll

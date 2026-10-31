@@ -35,11 +35,13 @@ fn sums_dice_groups_and_numbers_with_each_term_in_the_tree() {
     assert_eq!(rest[0]["node"]["term"], "1d4");
     assert_eq!(rest[0]["node"]["subtotal"], kept_sum(&rest[0]["node"]));
     assert_eq!(rest[1]["op"], "+");
-    assert_eq!(rest[1]["node"], serde_json::json!({"type": "number", "value": 3}));
+    assert_eq!(
+        rest[1]["node"],
+        serde_json::json!({"type": "number", "value": 3})
+    );
 
-    let expected = first["subtotal"].as_i64().unwrap()
-        + rest[0]["node"]["subtotal"].as_i64().unwrap()
-        + 3;
+    let expected =
+        first["subtotal"].as_i64().unwrap() + rest[0]["node"]["subtotal"].as_i64().unwrap() + 3;
     assert_eq!(roll["total"], expected);
     assert_eq!(expr["total"], expected);
 }
@@ -50,7 +52,9 @@ fn human_output_joins_each_groups_dice_with_the_operators() {
     let json = cli.roll_json("d20+d4-2", 5);
     let expr = &json["rolls"][0]["expr"];
     let a = expr["first"]["dice"][0]["value"].as_i64().unwrap();
-    let b = expr["rest"][0]["node"]["dice"][0]["value"].as_i64().unwrap();
+    let b = expr["rest"][0]["node"]["dice"][0]["value"]
+        .as_i64()
+        .unwrap();
     let total = json["rolls"][0]["total"].as_i64().unwrap();
 
     let run = cli.run(&["d20+d4-2", "--seed", "5"]);
@@ -66,7 +70,9 @@ fn human_output_joins_each_groups_dice_with_the_operators() {
 fn total(cli: &Cli, formula: &str) -> i64 {
     let run = cli.run(&["--seed", "1", "--json", "--", formula]);
     run.assert_success();
-    run.json()["rolls"][0]["total"].as_i64().expect("integer total")
+    run.json()["rolls"][0]["total"]
+        .as_i64()
+        .expect("integer total")
 }
 
 #[test]
@@ -140,7 +146,9 @@ fn a_parenthesised_dice_sum_is_a_group_in_the_tree_and_the_output() {
     let roll = &out["rolls"][0];
     let group = &roll["expr"]["first"];
     assert_eq!(group["type"], "group");
-    let die = group["inner"]["first"]["dice"][0]["value"].as_i64().unwrap();
+    let die = group["inner"]["first"]["dice"][0]["value"]
+        .as_i64()
+        .unwrap();
     assert_eq!(group["total"], die + 5);
     assert_eq!(roll["total"], (die + 5) * 2);
 
@@ -161,5 +169,8 @@ fn unary_minus_applies_to_dice_and_numbers() {
         .unwrap();
     assert_eq!(roll["total"], 10 - die);
     let run = cli.run(&["10 + -d6", "--seed", "2"]);
-    assert_eq!(run.stdout, format!("10 + -d6  10 + -[{die}]  →  {}\n", 10 - die));
+    assert_eq!(
+        run.stdout,
+        format!("10 + -d6  10 + -[{die}]  →  {}\n", 10 - die)
+    );
 }

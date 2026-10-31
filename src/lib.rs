@@ -13,7 +13,7 @@ mod lexer;
 mod parser;
 
 pub use ast::BinOp;
-pub use error::{Error, ParseError};
+pub use error::Error;
 
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -93,7 +93,9 @@ impl Node {
         match self {
             Node::Number { value } => *value,
             Node::Dice { subtotal, .. } => *subtotal,
-            Node::Neg { total, .. } | Node::Group { total, .. } | Node::Chain { total, .. } => *total,
+            Node::Neg { total, .. } | Node::Group { total, .. } | Node::Chain { total, .. } => {
+                *total
+            }
         }
     }
 }
