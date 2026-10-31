@@ -330,3 +330,11 @@ fn json_records_exploded_status_and_compound_parts() {
         serde_json::json!({"value": 10, "status": "kept", "parts": [6, 4]})
     );
 }
+
+#[test]
+fn a_compounded_20_is_not_a_natural_20() {
+    // Seed 16 rolls a 19 that compounds with a 1 into a combined 20.
+    let run = Cli::new().run(&["--color", "always", "--seed", "16", "d20!!>=19"]);
+    run.assert_success();
+    assert!(!run.stdout.contains("\x1b[1;32m"), "{run:?}");
+}
