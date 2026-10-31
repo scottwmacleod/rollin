@@ -1,6 +1,6 @@
 mod common;
 
-use common::Cli;
+use common::{flat_dice, Cli};
 
 /// Parses `d20  [14]  →  14` into (dice, total).
 fn parse_line(line: &str) -> (Vec<u32>, u32) {
@@ -116,7 +116,7 @@ fn bare_number_is_its_own_total() {
 fn json_marks_each_die_kept_or_dropped() {
     let cli = Cli::new();
     let out = cli.roll_json("4d6dl1", 3);
-    let dice = out["rolls"][0]["dice"].as_array().unwrap();
+    let dice = flat_dice(&out["rolls"][0]["expr"]);
     let statuses: Vec<&str> = dice.iter().map(|d| d["status"].as_str().unwrap()).collect();
     assert_eq!(statuses.iter().filter(|s| **s == "dropped").count(), 1);
     assert_eq!(statuses.iter().filter(|s| **s == "kept").count(), 3);

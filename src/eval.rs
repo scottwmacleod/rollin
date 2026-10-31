@@ -1,35 +1,23 @@
 //! Evaluator: walks the AST, drawing dice from the injected RNG.
 
-use crate::ast::{BinOp, Expr, Item};
+use crate::ast::{BinOp, Expr, ExprKind, Item};
 use crate::error::Error;
-use crate::{Die, Roll, Status};
+use crate::{Die, Link, Node, Roll, Status};
 use rand::Rng;
 
-struct Evaluated {
-    dice: Vec<Die>,
-    /// Sum of the flat numbers added in.
-    modifier: i64,
-    total: i64,
-}
-
 pub fn evaluate(item: &Item, rng: &mut impl Rng) -> Result<Roll, Error> {
-    let e = eval_expr(&item.expr, rng)?;
+    let expr = eval_expr(&item.expr, rng)?;
     Ok(Roll {
         formula: item.source.clone(),
-        dice: e.dice,
-        modifier: e.modifier,
-        total: e.total,
+        total: expr.total(),
+        expr,
     })
 }
 
-fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Evaluated, Error> {
-    match expr {
-        Expr::Number(n) => Ok(Evaluated {
-            dice: Vec::new(),
-            modifier: *n,
-            total: *n,
-        }),
-        Expr::Dice(d) => {
+fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
+    match &expr.kind {
+        ExprKind::Number(n) => Ok(Node::Number { value: *n }),
+        ExprKind::Dice(d) => {
             let mut dice: Vec<Die> = (0..d.count)
                 .map(|_| Die {
                     value: rng.gen_range(1..=d.sides as u32),
@@ -37,38 +25,49 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Evaluated, Error> {
                 })
                 .collect();
             apply_drops(&mut dice, d.drops());
-            let total = dice
+            let subtotal = dice
                 .iter()
                 .filter(|d| d.status == Status::Kept)
                 .map(|d| i64::from(d.value))
                 .sum();
-            Ok(Evaluated {
+            Ok(Node::Dice {
+                term: d.text.clone(),
                 dice,
-                modifier: 0,
+                subtotal,
+            })
+        }
+        ExprKind::Neg(inner) => {
+            let operand = eval_expr(inner, rng)?;
+            let total = operand.total().checked_neg().ok_or(Error::Overflow)?;
+            Ok(Node::Neg {
+                operand: Box::new(operand),
                 total,
             })
         }
-        Expr::Binary { op, lhs, rhs } => {
-            let mut l = eval_expr(lhs, rng)?;
-            let r = eval_expr(rhs, rng)?;
-            let (modifier, total) = match op {
-                BinOp::Add => (
-                    l.modifier.checked_add(r.modifier),
-                    l.total.checked_add(r.total),
-                ),
-                BinOp::Sub => (
-                    l.modifier.checked_sub(r.modifier),
-                    l.total.checked_sub(r.total),
-                ),
-            };
-            l.dice.extend(r.dice);
-            Ok(Evaluated {
-                dice: l.dice,
-                modifier: modifier.ok_or(Error::Overflow)?,
-                total: total.ok_or(Error::Overflow)?,
+        ExprKind::Chain { first, rest } => {
+            let first = eval_expr(first, rng)?;
+            let mut total = first.total();
+            let mut links = Vec::with_capacity(rest.len());
+            for (op, operand) in rest {
+                let node = eval_expr(operand, rng)?;
+                total = apply(*op, total, node.total())?;
+                links.push(Link { op: *op, node });
+            }
+            Ok(Node::Chain {
+                first: Box::new(first),
+                rest: links,
+                total,
             })
         }
     }
+}
+
+fn apply(op: BinOp, lhs: i64, rhs: i64) -> Result<i64, Error> {
+    match op {
+        BinOp::Add => lhs.checked_add(rhs),
+        BinOp::Sub => lhs.checked_sub(rhs),
+    }
+    .ok_or(Error::Overflow)
 }
 
 /// Marks the lowest and highest dice as dropped. Ties are broken by roll

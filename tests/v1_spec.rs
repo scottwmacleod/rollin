@@ -8,7 +8,7 @@
 
 mod common;
 
-use common::Cli;
+use common::{flat_dice, Cli};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -93,7 +93,7 @@ fn check(cli: &Cli, c: &Case) -> Result<(), String> {
         }
     }
     let first = rolls.first().ok_or("no rolls")?;
-    let dice = first["dice"].as_array().ok_or("missing dice")?;
+    let dice = flat_dice(&first["expr"]);
     let total = first["total"].as_i64().ok_or("total not an integer")?;
     let with = |status: &str| -> Vec<i64> {
         dice.iter()

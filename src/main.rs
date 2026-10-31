@@ -1,5 +1,5 @@
 use clap::Parser;
-use rollin::{entropy_rng, roll, seeded_rng, Roll, Status};
+use rollin::{entropy_rng, roll, seeded_rng, Node, Roll, Status};
 use serde::Serialize;
 use std::process::ExitCode;
 
@@ -25,28 +25,51 @@ struct Output {
     rolls: Vec<Roll>,
 }
 
+/// Shows each dice group's dice (dropped in parentheses), joined by the
+/// formula's operators.
+fn render_expr(node: &Node) -> String {
+    match node {
+        Node::Number { value } => value.to_string(),
+        Node::Dice { dice, .. } => {
+            let cells: Vec<String> = dice
+                .iter()
+                .map(|d| match d.status {
+                    Status::Kept => d.value.to_string(),
+                    Status::Dropped => format!("({})", d.value),
+                })
+                .collect();
+            format!("[{}]", cells.join(", "))
+        }
+        Node::Neg { operand, .. } => format!("-{}", render_expr(operand)),
+        Node::Chain { first, rest, .. } => {
+            let mut out = render_expr(first);
+            for link in rest {
+                out.push_str(&format!(" {} {}", link.op.symbol(), render_expr(&link.node)));
+            }
+            out
+        }
+    }
+}
+
+fn has_dice(node: &Node) -> bool {
+    match node {
+        Node::Number { .. } => false,
+        Node::Dice { .. } => true,
+        Node::Neg { operand, .. } => has_dice(operand),
+        Node::Chain { first, rest, .. } => {
+            has_dice(first) || rest.iter().any(|l| has_dice(&l.node))
+        }
+    }
+}
+
 fn render(roll: &Roll) -> String {
-    if roll.dice.is_empty() {
+    if !has_dice(&roll.expr) {
         return format!("{}  →  {}", roll.formula, roll.total);
     }
-    let dice: Vec<String> = roll
-        .dice
-        .iter()
-        .map(|d| match d.status {
-            Status::Kept => d.value.to_string(),
-            Status::Dropped => format!("({})", d.value),
-        })
-        .collect();
-    let modifier = match roll.modifier {
-        0 => String::new(),
-        m if m > 0 => format!(" + {m}"),
-        m => format!(" - {}", m.unsigned_abs()),
-    };
     format!(
-        "{}  [{}]{}  →  {}",
+        "{}  {}  →  {}",
         roll.formula,
-        dice.join(", "),
-        modifier,
+        render_expr(&roll.expr),
         roll.total
     )
 }

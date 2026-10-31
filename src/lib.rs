@@ -12,6 +12,7 @@ mod eval;
 mod lexer;
 mod parser;
 
+pub use ast::BinOp;
 pub use error::{Error, ParseError};
 
 use rand::{Rng, SeedableRng};
@@ -48,14 +49,56 @@ pub struct Die {
     pub status: Status,
 }
 
+/// One node of a roll's result tree. Every node carries what it contributed,
+/// so any expression can be shown term by term.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum Node {
+    Number {
+        value: i64,
+    },
+    /// A dice group: its dice and their kept sum.
+    Dice {
+        term: String,
+        dice: Vec<Die>,
+        subtotal: i64,
+    },
+    Neg {
+        operand: Box<Node>,
+        total: i64,
+    },
+    /// Operands joined by operators of one precedence level, left to right.
+    Chain {
+        first: Box<Node>,
+        rest: Vec<Link>,
+        total: i64,
+    },
+}
+
+/// An operator and the operand on its right.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Link {
+    pub op: BinOp,
+    pub node: Node,
+}
+
+impl Node {
+    /// The value this node evaluates to.
+    pub fn total(&self) -> i64 {
+        match self {
+            Node::Number { value } => *value,
+            Node::Dice { subtotal, .. } => *subtotal,
+            Node::Neg { total, .. } | Node::Chain { total, .. } => *total,
+        }
+    }
+}
+
 /// The result of evaluating one roll.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Roll {
     pub formula: String,
-    pub dice: Vec<Die>,
-    /// Flat number added to the kept dice (`+5` is 5, `-2` is -2).
-    pub modifier: i64,
     pub total: i64,
+    pub expr: Node,
 }
 
 /// Parses and evaluates a formula (one or more comma-separated rolls) using

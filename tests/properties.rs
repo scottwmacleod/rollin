@@ -1,7 +1,23 @@
 //! Library-API invariants via proptest (the secondary seam).
 
 use proptest::prelude::*;
-use rollin::{roll, seeded_rng, Status};
+use rollin::{roll, seeded_rng, Die, Node, Status};
+
+/// Every die in a result tree, in roll order.
+fn dice_of(node: &Node) -> Vec<Die> {
+    match node {
+        Node::Number { .. } => Vec::new(),
+        Node::Dice { dice, .. } => dice.clone(),
+        Node::Neg { operand, .. } => dice_of(operand),
+        Node::Chain { first, rest, .. } => {
+            let mut all = dice_of(first);
+            for link in rest {
+                all.extend(dice_of(&link.node));
+            }
+            all
+        }
+    }
+}
 
 proptest! {
     #[test]
@@ -12,12 +28,12 @@ proptest! {
     ) {
         let mut rng = seeded_rng(seed);
         let r = &roll(&format!("{n}d{sides}"), &mut rng).unwrap()[0];
-        prop_assert_eq!(r.dice.len() as u32, n);
-        for d in &r.dice {
+        let dice = dice_of(&r.expr);
+        prop_assert_eq!(dice.len() as u32, n);
+        for d in &dice {
             prop_assert!((1..=sides).contains(&d.value));
         }
-        let kept_sum: i64 = r
-            .dice
+        let kept_sum: i64 = dice
             .iter()
             .filter(|d| d.status == Status::Kept)
             .map(|d| i64::from(d.value))
@@ -61,7 +77,7 @@ proptest! {
         let pool = &roll(&format!("{n}d{sides}"), &mut seeded_rng(seed)).unwrap()[0];
 
         let values = |status| -> Vec<u32> {
-            r.dice.iter().filter(|d| d.status == status).map(|d| d.value).collect()
+            dice_of(&r.expr).iter().filter(|d| d.status == status).map(|d| d.value).collect()
         };
         let (kept, dropped) = (values(Status::Kept), values(Status::Dropped));
 
@@ -72,11 +88,10 @@ proptest! {
         // Total is the kept sum plus the modifier.
         let kept_sum: i64 = kept.iter().map(|&v| i64::from(v)).sum();
         prop_assert_eq!(r.total, kept_sum + modifier.unwrap_or(0));
-        prop_assert_eq!(r.modifier, modifier.unwrap_or(0));
 
         // Kept values are a sub-multiset of the rolled values (and so are the
         // dropped ones, and together they are exactly the rolled values).
-        let mut rolled: Vec<u32> = pool.dice.iter().map(|d| d.value).collect();
+        let mut rolled: Vec<u32> = dice_of(&pool.expr).iter().map(|d| d.value).collect();
         let mut all: Vec<u32> = kept.iter().chain(&dropped).copied().collect();
         rolled.sort_unstable();
         all.sort_unstable();
