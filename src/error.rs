@@ -36,6 +36,13 @@ pub enum Error {
     CountInArithmetic { span: Range<usize> },
     /// Division by zero; `span` is the divisor.
     DivisionByZero { span: Range<usize> },
+    /// An error whose offending text includes variables: `inner` plus the
+    /// values those variables resolved to, so the message can mention them.
+    WithVariables {
+        inner: Box<Error>,
+        /// (name, value) of each variable inside the error's span.
+        bindings: Vec<(String, i64)>,
+    },
     /// A formula used `@name` but no variable of that name is defined.
     /// `span` is the `@name` as written.
     UndefinedVariable { name: String, span: Range<usize> },
@@ -61,6 +68,7 @@ impl Error {
     /// The byte range of the offending input.
     pub fn span(&self) -> Range<usize> {
         match self {
+            Error::WithVariables { inner, .. } => inner.span(),
             Error::Syntax { span, .. }
             | Error::InvalidDice { span, .. }
             | Error::LimitExceeded { span, .. }
@@ -76,6 +84,18 @@ impl Error {
     /// A readable description of what went wrong.
     pub fn message(&self) -> String {
         match self {
+            Error::WithVariables { inner, bindings } => {
+                let values = bindings
+                    .iter()
+                    .map(|(name, value)| format!("@{name} is {value}"))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                match (&**inner, bindings.len()) {
+                    // `@s is 1 but sides must be between 2 and 10000`
+                    (Error::InvalidDice { message, .. }, 1) => format!("{values} but {message}"),
+                    _ => format!("{} ({values})", inner.message()),
+                }
+            }
             Error::Syntax { message, .. } | Error::InvalidDice { message, .. } => message.clone(),
             Error::LimitExceeded {
                 cap, limit, term, ..

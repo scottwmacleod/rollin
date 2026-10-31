@@ -190,3 +190,60 @@ fn an_undefined_variable_offers_a_near_miss_within_two_edits() {
     let far = cli.run(&["d20+@zzzzz"]);
     assert!(!far.stderr.contains("did you mean"), "{far:?}");
 }
+
+#[track_caller]
+fn assert_error(cli: &Cli, formula: &str, expected: &str) {
+    let run = cli.run(&[formula]);
+    assert_eq!(run.code, 1, "{formula}: {run:?}");
+    assert_eq!(run.stderr, expected, "{formula}");
+}
+
+#[test]
+fn range_errors_underline_the_variable_and_mention_its_value() {
+    let cli = Cli::new();
+    for (name, value) in [("s", "1"), ("n", "0"), ("big", "1001"), ("z", "0")] {
+        cli.run(&["set", name, value]).assert_success();
+    }
+    assert_error(
+        &cli,
+        "d@s",
+        "error: @s is 1 but sides must be between 2 and 10000\n  d@s\n   ^^\n",
+    );
+    assert_error(
+        &cli,
+        "@n d6",
+        "error: @n is 0 but dice count must be at least 1\n  @n d6\n  ^^\n",
+    );
+    assert_error(
+        &cli,
+        "@big d6",
+        "error: dice per term cap (1000) exceeded by '@big d6' (@big is 1001)\n  @big d6\n  ^^^^\n",
+    );
+    assert_error(
+        &cli,
+        "d6!>@z",
+        "error: explosion condition '!>@z' is true for every face of a d6, so it would never stop (@z is 0)\n  d6!>@z\n    ^^^^\n",
+    );
+    assert_error(
+        &cli,
+        "@n x d20",
+        "error: repeat count must be at least 1 (@n is 0)\n  @n x d20\n  ^^^^\n",
+    );
+}
+
+#[test]
+fn a_malformed_at_sign_is_a_syntax_error() {
+    let cli = Cli::new();
+    let hint = "'@' must be followed by a variable name that starts with a letter, as in '@str'";
+    assert_error(&cli, "d20+@", &format!("error: {hint}\n  d20+@\n      ^\n"));
+    assert_error(
+        &cli,
+        "d20+@1abc",
+        &format!("error: {hint}\n  d20+@1abc\n      ^^^^^\n"),
+    );
+    assert_error(
+        &cli,
+        "d20+@_x",
+        &format!("error: {hint}\n  d20+@_x\n      ^^^\n"),
+    );
+}
