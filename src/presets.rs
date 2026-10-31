@@ -150,6 +150,9 @@ pub enum NameRule {
     DiceKeyword,
     /// The name parses as a complete dice formula.
     ParsesAsFormula,
+    /// The name is dice syntax with invalid values (`d0`), so it could never
+    /// be rolled by name.
+    LooksLikeDice,
 }
 
 impl NameError {
@@ -166,6 +169,7 @@ impl NameError {
                 format!("it is a command word ({})", COMMAND_WORDS.join(", "))
             }
             NameRule::DiceKeyword => "it is a reserved dice keyword".into(),
+            NameRule::LooksLikeDice => "it looks like dice syntax".into(),
             NameRule::ParsesAsFormula => {
                 format!("it would parse as the dice formula {}", self.name)
             }
@@ -194,10 +198,12 @@ pub fn validate_name(raw: &str) -> Result<String, NameError> {
         Err(fail(NameRule::CommandWord))
     } else if DICE_KEYWORDS.contains(&name.as_str()) {
         Err(fail(NameRule::DiceKeyword))
-    } else if crate::parser::parse(&name).is_ok() {
-        Err(fail(NameRule::ParsesAsFormula))
     } else {
-        Ok(name)
+        match crate::parser::parse(&name) {
+            Ok(_) => Err(fail(NameRule::ParsesAsFormula)),
+            Err(crate::Error::Syntax { .. }) => Ok(name),
+            Err(_) => Err(fail(NameRule::LooksLikeDice)),
+        }
     }
 }
 

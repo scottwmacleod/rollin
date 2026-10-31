@@ -892,6 +892,15 @@ mod variables {
         Ok(())
     }
 
+    /// With no lookup, a variable is an undefined-variable error that names
+    /// no character and underlines the `@name`.
+    #[test]
+    fn a_variable_with_no_lookup_is_undefined_without_a_character() {
+        let err = roll("d20 + @Str", &mut seeded_rng(0)).unwrap_err();
+        assert_eq!(err.message(), "undefined variable @str");
+        assert_eq!(err.span(), 6..10);
+    }
+
     proptest! {
         /// A formula with `@x` rolls exactly like the same formula with the
         /// variable's value typed in: same dice, statuses and totals, and it

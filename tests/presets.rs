@@ -555,3 +555,17 @@ fn import_usage_and_corrupt_store() {
     assert!(run.stderr.contains("not valid TOML"), "{run:?}");
     assert_eq!(std::fs::read_to_string(path).unwrap(), "oops = = 1");
 }
+
+#[test]
+fn names_that_are_dice_syntax_but_invalid_dice_are_rejected_too() {
+    let cli = Cli::new();
+    for name in ["d0", "D1", "d99999"] {
+        let run = cli.run(&["save", name, "d6"]);
+        assert_eq!(run.code, 1, "{name}: {run:?}");
+        assert_eq!(
+            run.stderr,
+            format!("error: invalid preset name '{name}': it looks like dice syntax\n"),
+            "{name}"
+        );
+    }
+}
