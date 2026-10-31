@@ -18,6 +18,8 @@ pub enum Command {
     Save { name: String, formula: String },
     /// List global presets.
     Presets,
+    /// Delete a global preset.
+    Delete { name: String },
 }
 
 /// Why a command could not be parsed or run.
@@ -27,6 +29,8 @@ pub enum CommandError {
     Usage(String),
     /// A formula that does not parse or evaluate; `source` is its text.
     Formula { source: String, error: Error },
+    /// `delete` named a preset that does not exist.
+    NoSuchPreset(String),
     /// A lone word that is neither a formula nor a saved preset.
     UnknownPreset {
         word: String,
@@ -42,6 +46,7 @@ impl std::fmt::Display for CommandError {
         match self {
             CommandError::Usage(usage) => write!(f, "usage: {usage}"),
             CommandError::Formula { error, .. } => write!(f, "{error}"),
+            CommandError::NoSuchPreset(name) => write!(f, "no preset named '{name}'"),
             CommandError::UnknownPreset { word, .. } => {
                 write!(f, "'{word}' is not a valid formula or a known preset")
             }
@@ -79,6 +84,10 @@ pub fn parse_command(
         }
         Some("roll") => roll_or_preset(rest, preset_names),
         Some("presets") => Ok(Command::Presets),
+        Some("delete") => match rest {
+            [name] => Ok(Command::Delete { name: name.clone() }),
+            _ => Err(CommandError::Usage("delete <name>".into())),
+        },
         _ => roll_or_preset(words, preset_names),
     }
 }
@@ -129,6 +138,9 @@ pub enum Output {
         name: String,
         formula: String,
     },
+    Deleted {
+        name: String,
+    },
     /// Presets as (name, formula), sorted by name.
     Presets(Vec<(String, String)>),
 }
@@ -155,6 +167,15 @@ pub fn execute(
                 name: name.to_lowercase(),
                 formula: formula.clone(),
             })
+        }
+        Command::Delete { name } => {
+            let name = name.to_lowercase();
+            let mut presets = store.load()?;
+            if presets.remove(&name).is_none() {
+                return Err(CommandError::NoSuchPreset(name));
+            }
+            store.save(&presets)?;
+            Ok(Output::Deleted { name })
         }
         Command::Presets => Ok(Output::Presets(store.load()?.into_iter().collect())),
     }

@@ -103,6 +103,7 @@ fn show(args: &Args, output: Output) {
     match output {
         Output::Rolls { preset, rolls } => show_rolls(args, preset, rolls),
         Output::Saved { name, formula } => println!("saved '{name}': {formula}"),
+        Output::Deleted { name } => println!("deleted '{name}'"),
         Output::Presets(presets) if presets.is_empty() => {
             println!("No presets saved. Add one with: rollin save <name> <formula>");
         }

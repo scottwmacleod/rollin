@@ -116,3 +116,29 @@ fn a_malformed_dice_word_keeps_its_formula_error() {
     assert!(run.stderr.contains("^"), "{run:?}");
     assert!(!run.stderr.contains("known preset"), "{run:?}");
 }
+
+#[test]
+fn delete_removes_a_preset_case_insensitively() {
+    let cli = Cli::new();
+    cli.run(&["save", "atk", "d20+5"]).assert_success();
+    cli.run(&["save", "keep", "d6"]).assert_success();
+    let run = cli.run(&["delete", "ATK"]);
+    run.assert_success();
+    assert_eq!(run.stdout, "deleted 'atk'\n");
+    assert_eq!(cli.run(&["presets"]).stdout, "keep  d6\n");
+}
+
+#[test]
+fn deleting_a_missing_preset_is_an_error() {
+    let run = Cli::new().run(&["delete", "ghost"]);
+    assert_eq!(run.code, 1, "{run:?}");
+    assert!(run.stdout.is_empty());
+    assert_eq!(run.stderr, "error: no preset named 'ghost'\n");
+}
+
+#[test]
+fn delete_without_a_name_prints_usage() {
+    let run = Cli::new().run(&["delete"]);
+    assert_eq!(run.code, 1);
+    assert_eq!(run.stderr, "error: usage: delete <name>\n");
+}
