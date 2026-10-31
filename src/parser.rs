@@ -6,7 +6,7 @@
 
 use crate::ast::{
     BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Item, Reroll, RerollMode, Select,
-    SelectKind,
+    SelectKind, Success,
 };
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
@@ -262,6 +262,7 @@ impl Parser<'_> {
         let reroll = self.parse_reroll(sides)?;
         let explode = self.parse_explode(sides)?;
         let select = self.parse_select(count)?;
+        let success = self.parse_count()?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
         if self.item_dice > MAX_DICE_PER_EXPRESSION {
@@ -280,6 +281,7 @@ impl Parser<'_> {
                 reroll,
                 explode,
                 select,
+                success,
             }),
             span,
         })
@@ -368,6 +370,16 @@ impl Parser<'_> {
             });
         }
         Ok(Some(explode))
+    }
+
+    /// Optional success clause: a comparison operator (`>=`, `>`, `<=`, `<`,
+    /// `=`) and a number. A bare number is not a success clause.
+    fn parse_count(&mut self) -> Result<Option<Success>, Error> {
+        if !self.at_comparison() {
+            return Ok(None);
+        }
+        let (cmp, value) = self.parse_condition("a number after the success condition")?;
+        Ok(Some(Success { cmp, value }))
     }
 
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).

@@ -74,6 +74,7 @@ pub struct Dice {
     pub reroll: Option<Reroll>,
     pub explode: Option<Explode>,
     pub select: Option<Select>,
+    pub success: Option<Success>,
 }
 
 /// A reroll clause: `r` or `rr` after the dice, before any explode.
@@ -145,6 +146,21 @@ impl Cmp {
 impl Explode {
     /// Whether a die showing `face` explodes.
     pub fn triggers(&self, face: i64) -> bool {
+        self.cmp.test(face, self.value)
+    }
+}
+
+/// A success clause: `>=8`, `>7`, `<=3`, `<3` or `=10` after the other
+/// modifiers. The roll becomes a success count rather than a sum.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Success {
+    pub cmp: Cmp,
+    pub value: i64,
+}
+
+impl Success {
+    /// Whether a counting die showing `face` is a success.
+    pub fn succeeds(&self, face: i64) -> bool {
         self.cmp.test(face, self.value)
     }
 }

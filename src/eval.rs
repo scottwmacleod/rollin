@@ -117,11 +117,17 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
             }
             let pool = dice.iter().filter(|d| d.status != Status::Rerolled).count();
             apply_drops(&mut dice, d.drops(pool));
-            let subtotal = dice
-                .iter()
-                .filter(|d| d.status.counts())
-                .map(|d| i64::from(d.value))
-                .sum();
+            let subtotal = match d.success {
+                Some(success) => dice
+                    .iter()
+                    .filter(|d| d.status.counts() && success.succeeds(i64::from(d.value)))
+                    .count() as i64,
+                None => dice
+                    .iter()
+                    .filter(|d| d.status.counts())
+                    .map(|d| i64::from(d.value))
+                    .sum(),
+            };
             Ok(Node::Dice {
                 term: d.text.clone(),
                 sides: d.sides,
