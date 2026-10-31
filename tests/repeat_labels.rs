@@ -194,3 +194,31 @@ fn a_repeat_with_nothing_after_it_is_an_error() {
         );
     }
 }
+
+#[test]
+fn iteration_prefixes_align_when_there_are_ten_or_more() {
+    let out = stdout_of(&Cli::new(), 1, &["12x d20 # a, d6"]);
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(lines.len(), 24);
+    assert!(lines[0].starts_with(" 1: d20  "), "{}", lines[0]);
+    assert!(lines[1].starts_with(" 1: d6  "), "{}", lines[1]);
+    assert!(lines[16].starts_with(" 9: d20  "), "{}", lines[16]);
+    assert!(lines[18].starts_with("10: d20  "), "{}", lines[18]);
+    assert!(lines[23].starts_with("12: d6  "), "{}", lines[23]);
+}
+
+#[test]
+fn a_list_repeats_whole_each_item_line_carries_its_iteration() {
+    let out = stdout_of(&Cli::new(), 1, &["2x d20+8 # attack, d10+5 # damage"]);
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(lines.len(), 4);
+    for (line, (k, tail)) in lines.iter().zip([
+        (1, "# attack"),
+        (1, "# damage"),
+        (2, "# attack"),
+        (2, "# damage"),
+    ]) {
+        assert!(line.starts_with(&format!("{k}: ")), "{line}");
+        assert!(line.ends_with(tail), "{line}");
+    }
+}
