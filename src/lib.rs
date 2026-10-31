@@ -147,13 +147,19 @@ pub struct Link {
 }
 
 impl Node {
+    /// The success/failure tally if this node is a success count (looking
+    /// through parentheses).
+    pub fn tally(&self) -> Option<&Tally> {
+        match self {
+            Node::Dice { tally, .. } => tally.as_ref(),
+            Node::Group { inner, .. } => inner.tally(),
+            _ => None,
+        }
+    }
+
     /// Whether this node is a success count.
     pub fn is_count(&self) -> bool {
-        match self {
-            Node::Dice { tally, .. } => tally.is_some(),
-            Node::Group { inner, .. } => inner.is_count(),
-            _ => false,
-        }
+        self.tally().is_some()
     }
 
     /// The value this node evaluates to.

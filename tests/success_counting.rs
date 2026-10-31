@@ -199,3 +199,83 @@ fn a_lone_or_parenthesised_success_count_and_comma_lists_are_fine() {
     // A sum next to a count in the list still sums.
     assert_eq!(out["rolls"][1]["expr"]["type"], "dice");
 }
+
+/// stdout of `rollin <args...> <formula>` with the given seed.
+fn human(args: &[&str], formula: &str, seed: u64) -> String {
+    let seed = seed.to_string();
+    let mut all = vec!["--seed", &seed];
+    all.extend_from_slice(args);
+    all.extend(["--", formula]);
+    let run = Cli::new().run(&all);
+    run.assert_success();
+    run.stdout
+}
+
+/// The default line's dice cells: `✓` marks a success, `✗` a failure.
+fn cells(pool: &[Value]) -> String {
+    let cells: Vec<String> = pool
+        .iter()
+        .map(|d| match d.get("outcome").and_then(Value::as_str) {
+            Some("success") => format!("{}✓", value(d)),
+            Some("failure") => format!("{}✗", value(d)),
+            _ => value(d).to_string(),
+        })
+        .collect();
+    format!("[{}]", cells.join(", "))
+}
+
+#[test]
+fn default_output_marks_outcomes_and_labels_the_count() {
+    let cli = Cli::new();
+    // Pinned: one concrete seed, written out by hand.
+    let out = cli.roll_json("6d10>=8", 6);
+    let pool = flat_dice(&out["rolls"][0]["expr"]);
+    assert_eq!(
+        human(&[], "6d10>=8", 6),
+        format!(
+            "6d10>=8  {}  →  {}\n",
+            cells(&pool),
+            label(out["rolls"][0]["total"].as_i64().unwrap(), None)
+        )
+    );
+    let mut seen = [false; 3]; // singular, plural, failures breakdown
+    for seed in SEEDS {
+        for formula in ["6d10>=8", "6d10>=8f1"] {
+            let out = cli.roll_json(formula, seed);
+            let node = &out["rolls"][0]["expr"];
+            let pool = flat_dice(node);
+            let (s, f) = (
+                node["successes"].as_i64().unwrap(),
+                node["failures"].as_i64().unwrap(),
+            );
+            let total = s - f;
+            let tail = label(total, (f > 0).then_some((s, f)));
+            seen[0] |= tail.starts_with("1 success") && !tail.starts_with("1 successes");
+            seen[1] |= tail.starts_with("3 successes");
+            seen[2] |= f > 0 && tail.contains('(');
+            assert_eq!(
+                human(&[], formula, seed),
+                format!("{formula}  {}  →  {tail}\n", cells(&pool)),
+                "{formula} seed {seed}"
+            );
+        }
+    }
+    assert_eq!(seen, [true; 3]);
+}
+
+/// The documented total label: `3 successes`, `1 success`, and with failures
+/// `2 successes (3 - 1 failure)`.
+fn label(total: i64, tally: Option<(i64, i64)>) -> String {
+    let noun = if total.abs() == 1 {
+        "success"
+    } else {
+        "successes"
+    };
+    match tally {
+        None => format!("{total} {noun}"),
+        Some((s, f)) => {
+            let fail_noun = if f == 1 { "failure" } else { "failures" };
+            format!("{total} {noun} ({s} - {f} {fail_noun})")
+        }
+    }
+}
