@@ -114,7 +114,11 @@ fn rr_rerolls_until_the_die_no_longer_matches() {
             }
             assert_eq!(run, 0, "pool ends on a standing die: {pool:?}");
             assert_eq!(slots, 4, "{formula} seed {seed}");
-            let sum: i64 = pool.iter().filter(|d| status(d) != "rerolled").map(value).sum();
+            let sum: i64 = pool
+                .iter()
+                .filter(|d| status(d) != "rerolled")
+                .map(value)
+                .sum();
             assert_eq!(out["rolls"][0]["total"], sum);
         }
         assert!(chains_over_one > 0, "{formula}: no multi-reroll chain");
@@ -267,4 +271,63 @@ fn keep_and_drop_counts_are_still_checked_against_the_dice_written() {
         failure("4d6rr<=2kh0"),
         "error: must keep between 1 and 3 dice from a pool of 4\n  4d6rr<=2kh0\n          ^^^\n"
     );
+}
+
+fn out(args: &[&str]) -> String {
+    let run = Cli::new().run(args);
+    run.assert_success();
+    run.stdout
+}
+
+#[test]
+fn default_output_marks_rerolled_away_dice_with_tildes() {
+    // Seed 3 rerolls three 1s into 4, 6 and 5; the 4 is then dropped.
+    assert_eq!(
+        out(&["--seed", "3", "4d6r1dl1"]),
+        "4d6r1dl1  [~1~, (4), ~1~, 6, ~1~, 5, 4]  →  15\n"
+    );
+}
+
+#[test]
+fn verbose_output_lists_rerolled_dice_with_their_status() {
+    assert_eq!(
+        out(&["--seed", "3", "-v", "4d6r1dl1"]),
+        "4d6r1dl1\n  4d6r1dl1: 1 rerolled, 4 dropped, 1 rerolled, 6 kept, 1 rerolled, 5 kept, 4 kept = 15\n  total: 15\n"
+    );
+}
+
+#[test]
+fn color_dims_and_strikes_rerolled_dice() {
+    let stdout = out(&["--seed", "3", "--color", "always", "4d6r1dl1"]);
+    // Rerolled dice are dim and crossed out; dropped ones stay merely dim.
+    assert!(stdout.contains("\x1b[2;9m~1~\x1b[0m"), "{stdout:?}");
+    assert!(stdout.contains("\x1b[2m(4)\x1b[0m"), "{stdout:?}");
+    let verbose = out(&["--seed", "3", "--color", "always", "-v", "4d6r1dl1"]);
+    assert!(
+        verbose.contains("\x1b[2;9m1 rerolled\x1b[0m"),
+        "{verbose:?}"
+    );
+}
+
+#[test]
+fn a_natural_20_highlight_ignores_rerolled_away_dice() {
+    // A lone d20 that rerolls: the highlight follows the die that stands.
+    let cli = Cli::new();
+    let mut checked = 0;
+    for seed in 0..400 {
+        let json = cli.roll_json("d20r<=10", seed);
+        let pool = flat_dice(&json["rolls"][0]["expr"]);
+        if pool.len() != 2 {
+            continue;
+        }
+        let standing = value(&pool[1]);
+        let seed = seed.to_string();
+        let stdout = out(&["--seed", &seed, "--color", "always", "d20r<=10"]);
+        let green = stdout.contains("\x1b[1;32m");
+        let red = stdout.contains("\x1b[1;31m");
+        assert_eq!(green, standing == 20, "seed {seed}: {stdout:?}");
+        assert_eq!(red, standing == 1, "seed {seed}: {stdout:?}");
+        checked += usize::from(standing == 20 || standing == 1);
+    }
+    assert!(checked > 0, "no seed ended on a natural");
 }
