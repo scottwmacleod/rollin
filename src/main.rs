@@ -15,9 +15,17 @@ struct Args {
     #[arg(long)]
     seed: Option<u64>,
 
-    /// Print the result tree as JSON
+    /// Print the result tree as JSON (ignores -q and -v)
     #[arg(long)]
     json: bool,
+
+    /// Print only the total of each roll, one per line
+    #[arg(short, long, conflicts_with = "verbose")]
+    quiet: bool,
+
+    /// Show the full breakdown of each roll
+    #[arg(short, long)]
+    verbose: bool,
 }
 
 /// Version of the `--json` schema (see docs/json-schema.md). Bump on any
@@ -99,6 +107,12 @@ fn main() -> ExitCode {
                 rolls,
             };
             println!("{}", serde_json::to_string(&out).expect("serialize"));
+            ExitCode::SUCCESS
+        }
+        Ok(rolls) if args.quiet => {
+            for r in &rolls {
+                println!("{}", r.total);
+            }
             ExitCode::SUCCESS
         }
         Ok(rolls) => {
