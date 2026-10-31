@@ -1,9 +1,7 @@
 //! Characters: one TOML file each under `rollin/characters/` (ADR 0004),
 //! holding integer variables and presets.
 
-use crate::presets::{
-    edit_document, is_name_shaped, string_values, sync_section, write_atomic, StoreError,
-};
+use crate::presets::{edit_document, is_name_shaped, string_values, sync_section, StoreError};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -112,13 +110,14 @@ impl CharacterStore {
         // A corrupt state file is an error, never overwritten.
         self.active()?;
         let path = self.state_path();
-        let mut root = toml::Table::new();
-        root.insert("active".into(), toml::Value::String(name.to_string()));
-        let text = toml::to_string(&root).map_err(|e| StoreError {
-            path: path.clone(),
-            message: e.to_string(),
-        })?;
-        write_atomic(&path, &text)
+        edit_document(&path, |doc| {
+            let mut new = toml_edit::Value::from(name);
+            if let Some(old) = doc.get("active").and_then(toml_edit::Item::as_value) {
+                *new.decor_mut() = old.decor().clone();
+            }
+            doc["active"] = toml_edit::Item::Value(new);
+            Ok(())
+        })
     }
 
     fn state_path(&self) -> PathBuf {

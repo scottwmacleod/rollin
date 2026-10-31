@@ -89,3 +89,36 @@ fn setting_a_variable_edits_the_character_file_in_place() {
             .replace("dex = 10", "dex = 12\ncon = 14")
     );
 }
+
+#[test]
+fn saving_a_character_preset_keeps_vars_and_presets_text() {
+    let cli = Cli::new();
+    let path = write(&cli, "characters/grog.toml", GROG);
+    cli.run(&["--char", "grog", "save", "smash", "2d8+@str"])
+        .assert_success();
+    cli.run(&["--char", "grog", "delete", "rage"])
+        .assert_success();
+    assert_eq!(
+        std::fs::read_to_string(path).unwrap(),
+        GROG.replace(
+            "rage = \"d20+@str\"   # only on a good day\n",
+            "smash = \"2d8+@str\"\n"
+        )
+    );
+}
+
+#[test]
+fn switching_character_edits_the_state_file_in_place() {
+    let cli = Cli::new();
+    write(&cli, "characters/grog.toml", GROG);
+    let path = write(
+        &cli,
+        "state.toml",
+        "# which sheet is open\nactive = \"default\"   # for now\n",
+    );
+    cli.run(&["char", "grog"]).assert_success();
+    assert_eq!(
+        std::fs::read_to_string(path).unwrap(),
+        "# which sheet is open\nactive = \"grog\"   # for now\n"
+    );
+}
