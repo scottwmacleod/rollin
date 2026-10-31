@@ -2,7 +2,7 @@
 //! the `-v` breakdown, with optional ANSI styling.
 
 use clap::ValueEnum;
-use rollin::{BinOp, Die, Node, Outcome, Roll, Special, Status, Tally};
+use rollin::{BinOp, Die, Node, Outcome, Roll, Status, Tally};
 
 /// The `--color` flag.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
@@ -130,16 +130,6 @@ fn paint_die(p: Painter, die: &Die, nat: Option<Natural>, text: &str) -> String 
     }
 }
 
-/// A die's face in the one-line output. Fudge dice read `+`, `0` and `-`,
-/// as printed on the physical dice; everything else is the number.
-fn face_text(special: Option<Special>, value: i64) -> String {
-    match (special, value) {
-        (Some(Special::Fudge), 1) => "+".into(),
-        (Some(Special::Fudge), -1) => "-".into(),
-        _ => value.to_string(),
-    }
-}
-
 /// `✓` after a success, `✗` after a failure, nothing otherwise.
 fn outcome_mark(outcome: Option<Outcome>) -> &'static str {
     match outcome {
@@ -199,7 +189,7 @@ fn has_dice(node: &Node) -> bool {
 fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
     match node {
         Node::Number { value } => value.to_string(),
-        Node::Dice { dice, special, .. } => {
+        Node::Dice { dice, .. } => {
             let cells: Vec<String> = dice
                 .iter()
                 .map(|d| {
@@ -211,7 +201,7 @@ fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
                     };
                     // A trailing mark shows a success-count die's outcome.
                     let mark = outcome_mark(d.outcome);
-                    let face = face_text(*special, d.value);
+                    let face = d.value.to_string();
                     let text = match d.status {
                         Status::Dropped => format!("({face}{bang})"),
                         Status::Rerolled => format!("~{face}~"),

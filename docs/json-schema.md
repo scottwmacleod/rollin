@@ -15,7 +15,7 @@ whenever the shape or meaning of an existing field changes or a field is
 removed. Adding a new field or a new node `type` or die `status` value is
 backwards compatible and does not bump it (exploding dice added the die
 status `exploded`, the die field `parts` and the dice-node field `sides`
-without a bump; rerolls added the die status `rerolled` the same way; success counting added the roll and dice-node field `kind`, the dice-node fields `successes` and `failures`, and the die field `outcome` the same way; percentile and fudge dice added the dice-node field `special` the same way, and repeat and labels added the roll fields `iteration` and `label` the same way, and fudge dice are the first dice whose `value` can be negative, which no consumer reading integers will mind), so consumers must ignore unknown
+without a bump; rerolls added the die status `rerolled` the same way; success counting added the roll and dice-node field `kind`, the dice-node fields `successes` and `failures`, and the die field `outcome` the same way; percentile dice added the dice-node field `special` the same way, and repeat and labels added the roll fields `iteration` and `label` the same way), so consumers must ignore unknown
 fields and treat unknown `status` values as "not counted" unless documented
 otherwise.
 
@@ -80,7 +80,7 @@ the dice whose status counts (`kept` and `exploded`).
 | `sides` | integer | Faces on each die (additive; added with exploding dice) |
 | `dice` | array of die | Every die rolled |
 | `subtotal` | integer | Sum of the dice whose status counts |
-| `special` | string | `"percentile"` for `d%`, `"fudge"` for `dF`. **Absent on ordinary dice**, so existing documents are unchanged (additive) |
+| `special` | string | `"percentile"` for `d%`. **Absent on ordinary dice**, so existing documents are unchanged (additive) |
 
 A die is `{"value": <integer>, "status": <string>}`, plus an optional `parts`
 array. Statuses:
@@ -169,23 +169,13 @@ A success count is never an operand: `neg`, `chain` and arithmetic never
 contain one, and at most it appears inside `group` nodes. This is an additive
 change: `schema_version` stays 1.
 
-#### Advantage, percentile and fudge dice
+#### Advantage and percentile dice
 
 `d20adv` and `d20dis` are sugar for `2d20kh1` and `2d20kl1`: the node is the
 same as for those formulas (two dice, the loser `dropped`) except `term`,
 which is what was typed (`d20adv`). They add nothing to the schema.
 
-`d%` is a d100: `sides` is 100 and `special` is `"percentile"`. `dF` has
-`sides` 3 (its three outcomes) and `special` `"fudge"`; each die's `value` is
--1, 0 or 1 (negative values occur only on fudge dice), and `subtotal` is
-their sum. `rollin --seed 3 --json 4dFdl1` (shortened):
-
-```json
-{"type": "dice", "term": "4dFdl1", "sides": 3, "special": "fudge",
- "dice": [{"value": -1, "status": "dropped"}, {"value": -1, "status": "kept"},
-          {"value": 1, "status": "kept"}, {"value": 1, "status": "kept"}],
- "subtotal": 1}
-```
+`d%` is a d100: `sides` is 100 and `special` is `"percentile"`.
 
 This is an additive change: `schema_version` stays 1.
 

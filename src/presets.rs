@@ -136,8 +136,8 @@ pub const COMMAND_WORDS: [&str; 14] = [
 ];
 
 /// Words the formula lexer and parser treat as keywords.
-const DICE_KEYWORDS: [&str; 12] = [
-    "d", "df", "dl", "dh", "kl", "kh", "r", "rr", "p", "f", "adv", "dis",
+const DICE_KEYWORDS: [&str; 11] = [
+    "d", "dl", "dh", "kl", "kh", "r", "rr", "p", "f", "adv", "dis",
 ];
 
 /// Why a string cannot be a preset name. The name is as the user typed it.

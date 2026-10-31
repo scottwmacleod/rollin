@@ -93,7 +93,7 @@ pub struct Dice {
     pub text: String,
     pub count: i64,
     pub sides: i64,
-    /// Set for `d%` and `dF`, which are not an ordinary numbered die.
+    /// Set for `d%`, which is not an ordinary numbered die.
     pub special: Option<Special>,
     pub reroll: Option<Reroll>,
     pub explode: Option<Explode>,
@@ -107,8 +107,6 @@ pub struct Dice {
 pub enum Special {
     /// `d%`, a d100.
     Percentile,
-    /// `dF`, a fudge die.
-    Fudge,
 }
 
 /// A reroll clause: `r` or `rr` after the dice, before any explode.

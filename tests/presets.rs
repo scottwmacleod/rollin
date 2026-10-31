@@ -207,7 +207,6 @@ fn names_that_break_a_rule_are_rejected_at_save_with_the_rule() {
         ("kh", "invalid preset name 'kh': it is a reserved dice keyword".into()),
         ("d20", "invalid preset name 'd20': it would parse as the dice formula d20".into()),
         ("D6", "invalid preset name 'D6': it would parse as the dice formula D6".into()),
-        ("df", "invalid preset name 'df': it is a reserved dice keyword".into()),
     ];
     for (name, message) in cases {
         let cli = Cli::new();

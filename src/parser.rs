@@ -17,8 +17,6 @@ const MAX_REPEAT: i64 = 100;
 const MAX_SIDES: i64 = 10000;
 /// `d%` is a d100.
 const PERCENTILE_SIDES: i64 = 100;
-/// A fudge die has three outcomes, drawn like a d3 and shifted to -1, 0, +1.
-const FUDGE_SIDES: i64 = 3;
 
 use crate::lexer::{tokenize, Spanned, Token};
 
@@ -335,7 +333,7 @@ impl Parser<'_> {
                         ));
                     }
                 }
-                if !matches!(self.peek(), Some(Token::Word(w)) if w == "d" || w == "df") {
+                if !matches!(self.peek(), Some(Token::Word(w)) if w == "d") {
                     return Ok(Expr {
                         kind: ExprKind::Number(n),
                         span: self.tokens[start].span.clone(),
@@ -345,21 +343,19 @@ impl Parser<'_> {
             }
             _ => 1,
         };
-        let fudge = match self.bump() {
+        match self.bump() {
             Some(Spanned {
                 token: Token::Word(w),
                 ..
-            }) if w == "d" || w == "df" => w == "df",
+            }) if w == "d" => {}
             _ => {
                 self.pos -= 1;
                 return Err(self.unexpected("a number, a dice group or '('"));
             }
         };
         let count_span = self.tokens[start].span.clone();
-        let sides_start = if fudge { self.pos - 1 } else { self.pos };
-        let (sides, special) = if fudge {
-            (FUDGE_SIDES, Some(Special::Fudge))
-        } else if matches!(self.peek(), Some(Token::Percent)) {
+        let sides_start = self.pos;
+        let (sides, special) = if matches!(self.peek(), Some(Token::Percent)) {
             self.pos += 1;
             (PERCENTILE_SIDES, Some(Special::Percentile))
         } else {
@@ -380,15 +376,11 @@ impl Parser<'_> {
                 count_span,
             ));
         }
-        if !fudge && !(2..=MAX_SIDES).contains(&sides) {
+        if !(2..=MAX_SIDES).contains(&sides) {
             return Err(Error::invalid_dice(
                 format!("sides must be between 2 and {MAX_SIDES}"),
                 sides_span,
             ));
-        }
-        if fudge {
-            self.reject_on_fudge(&["r", "rr"], false, "reroll")?;
-            self.reject_on_fudge(&[], true, "explode")?;
         }
         let reroll = self.parse_reroll(sides)?;
         let explode = self.parse_explode(sides)?;
@@ -398,9 +390,6 @@ impl Parser<'_> {
             None => (count, self.parse_select(count)?),
         };
         self.reject_select_with_advantage(advantage, select)?;
-        if fudge {
-            self.reject_comparison_on_fudge()?;
-        }
         let success = self.parse_count()?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
@@ -542,34 +531,6 @@ impl Parser<'_> {
             value,
             failure,
         }))
-    }
-
-    /// Fudge dice have no reroll or explode clause: an error at the clause's
-    /// first token (a word in `words`, or `!` when `bang` is set).
-    fn reject_on_fudge(&self, words: &[&str], bang: bool, what: &str) -> Result<(), Error> {
-        let hit = match self.peek() {
-            Some(Token::Word(w)) => words.contains(&w.as_str()),
-            Some(Token::Bang) => bang,
-            _ => false,
-        };
-        if hit {
-            return Err(Error::invalid_dice(
-                format!("{what} clauses are not supported on fudge dice"),
-                self.tokens[self.pos].span.clone(),
-            ));
-        }
-        Ok(())
-    }
-
-    /// Fudge dice have no success clause.
-    fn reject_comparison_on_fudge(&self) -> Result<(), Error> {
-        if self.at_comparison() {
-            return Err(Error::invalid_dice(
-                "success clauses are not supported on fudge dice",
-                self.tokens[self.pos].span.clone(),
-            ));
-        }
-        Ok(())
     }
 
     /// Optional `adv`/`dis` suffix: sugar for rolling two dice and keeping

@@ -572,7 +572,7 @@ proptest! {
     }
 }
 
-/// Advantage, disadvantage, percentile and fudge dice.
+/// Advantage, disadvantage and percentile dice.
 mod special_dice {
     use super::*;
 
@@ -631,22 +631,11 @@ mod special_dice {
             prop_assert_eq!(shape(&pct), shape(&only_roll(&format!("{n}d100"), seed)));
         }
 
-        /// Every fudge die is -1, 0 or +1, so `NdF` totals within -N..=N.
-        #[test]
-        fn fudge_dice_are_minus_one_zero_or_plus_one(n in 1i64..=100, seed in any::<u64>()) {
-            let r = only_roll(&format!("{n}dF"), seed);
-            let dice = dice_of(&r.expr);
-            prop_assert_eq!(dice.len() as i64, n);
-            prop_assert!(dice.iter().all(|d| (-1..=1).contains(&d.value)));
-            prop_assert!((-n..=n).contains(&r.total), "{} out of range for {}dF", r.total, n);
-            prop_assert_eq!(r.total, dice.iter().map(|d| d.value).sum::<i64>());
-        }
-
         /// Text dense in the new suffixes never panics, and every error span
         /// stays inside the input on char boundaries.
         #[test]
         fn special_dice_like_strings_never_panic(
-            s in "(d|D|[0-9]|%|F|f|adv|ADV|dis|DIS|dl|kh|r|!|>=|[+*, é-]){0,16}",
+            s in "(d|D|[0-9]|%|f|adv|ADV|dis|DIS|dl|kh|r|!|>=|[+*, é-]){0,16}",
         ) {
             if let Err(e) = roll(&s, &mut seeded_rng(0)) {
                 let span = e.span();

@@ -1,5 +1,0 @@
-{
-  "formula": "4dFdl1",
-  "seed": 3,
-  "expected": {"schema_version":1,"rolls":[{"formula":"4dFdl1","total":1,"expr":{"type":"dice","term":"4dFdl1","sides":3,"special":"fudge","dice":[{"value":-1,"status":"dropped"},{"value":-1,"status":"kept"},{"value":1,"status":"kept"},{"value":1,"status":"kept"}],"subtotal":1}}]}
-}
