@@ -72,6 +72,11 @@ fn main() -> ExitCode {
     let args = Args::parse();
     let mut rng = entropy_rng();
     if args.words.is_empty() {
+        // Other flags given at startup have nothing to apply to; only the
+        // seed means something to a whole session.
+        if let Some(seed) = args.seed {
+            rng = seeded_rng(seed);
+        }
         return session(&mut rng);
     }
     run_line(&args, &mut rng)

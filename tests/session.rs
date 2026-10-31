@@ -174,3 +174,13 @@ fn history_numbers_are_right_aligned_past_nine_entries() {
     assert!(run.stdout.contains("\n10  set a 10\n"), "{run:?}");
     assert!(run.stdout.ends_with("\n11  history\n"), "{run:?}");
 }
+
+#[test]
+fn a_seed_given_when_starting_the_session_seeds_its_rng_once() {
+    let run = Cli::new().run_stdin(&["--seed", "1"], "d20\nd20 --seed 1\n");
+    assert_eq!(run.stdout, "d20  [9]  →  9\nd20  [9]  →  9\n", "{run:?}");
+    let run = Cli::new().run_stdin(&["--seed", "1"], "d20\nd20\n");
+    let first = run.stdout.lines().next().unwrap().to_string();
+    assert_eq!(first, "d20  [9]  →  9", "{run:?}");
+    assert_ne!(run.stdout.lines().nth(1), Some(first.as_str()), "{run:?}");
+}
