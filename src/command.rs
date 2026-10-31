@@ -26,6 +26,8 @@ pub enum Command {
     Delete { name: String },
     /// Set a variable on a character.
     Set { name: String, value: i64 },
+    /// Remove a variable.
+    Unset { name: String },
     /// List all characters.
     Characters,
     /// Show the active character.
@@ -85,6 +87,8 @@ pub enum CommandError {
         /// An existing name within edit distance 2.
         suggestion: Option<String>,
     },
+    /// `unset` named a variable the character does not have.
+    NoSuchVariable { name: String, character: String },
     /// `char delete default`.
     CannotDeleteDefault,
     /// `char new` named a character that already exists.
@@ -125,6 +129,9 @@ impl std::fmt::Display for CommandError {
             CommandError::InvalidName(e) => write!(f, "{e}"),
             CommandError::NoSuchCharacter { name, .. } => {
                 write!(f, "no character named '{name}'")
+            }
+            CommandError::NoSuchVariable { name, character } => {
+                write!(f, "no variable named '{name}' on character '{character}'")
             }
             CommandError::CannotDeleteDefault => {
                 write!(f, "the 'default' character cannot be deleted")
@@ -192,6 +199,12 @@ pub fn parse_command(
             }
             [name] => Ok(Command::CharSwitch(name.to_lowercase())),
             _ => Err(CommandError::Usage("char [<name> | new <name>]".into())),
+        },
+        Some("unset") => match rest {
+            [name] => Ok(Command::Unset {
+                name: name.to_lowercase(),
+            }),
+            _ => Err(CommandError::Usage("unset <name>".into())),
         },
         Some("vars") => Ok(Command::Vars),
         Some("set") => match rest {
@@ -346,6 +359,11 @@ pub enum Output {
         name: String,
     },
     Imported(ImportReport),
+    /// A variable was removed from a character.
+    VarUnset {
+        name: String,
+        character: String,
+    },
     /// All characters, sorted, and which one is active.
     Characters {
         names: Vec<String>,
@@ -525,6 +543,22 @@ pub fn execute(
             characters.save(name, &Character::default())?;
             characters.set_active(name)?;
             Ok(Output::CharCreated(name.clone()))
+        }
+        Command::Unset { name } => {
+            let characters = ctx.characters()?;
+            let active = characters.active()?;
+            let mut character = characters.load(&active)?;
+            if character.vars.remove(name).is_none() {
+                return Err(CommandError::NoSuchVariable {
+                    name: name.clone(),
+                    character: active,
+                });
+            }
+            characters.save(&active, &character)?;
+            Ok(Output::VarUnset {
+                name: name.clone(),
+                character: active,
+            })
         }
         Command::Vars => {
             let characters = ctx.characters()?;

@@ -151,6 +151,7 @@ fn show(args: &Args, output: Output) {
                 report.skipped.len()
             );
         }
+        Output::VarUnset { name, character } => println!("unset {name} on '{character}'"),
         Output::Characters { names, active } => {
             for name in names {
                 let mark = if name == active { '*' } else { ' ' };

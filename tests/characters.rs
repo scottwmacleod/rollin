@@ -389,3 +389,22 @@ fn the_default_character_cannot_be_deleted_and_unknown_ones_are_errors() {
         "error: no character named 'nobody'\nhint: create it with: rollin char new nobody\n"
     );
 }
+
+#[test]
+fn unset_removes_a_variable_and_a_missing_one_is_an_error() {
+    let cli = Cli::new();
+    cli.run(&["set", "str", "3"]).assert_success();
+    cli.run(&["set", "dex", "2"]).assert_success();
+    let unset = cli.run(&["unset", "STR"]);
+    unset.assert_success();
+    assert_eq!(unset.stdout, "unset str on 'default'\n");
+    assert_eq!(cli.run(&["vars"]).stdout, "dex = 2\n");
+    let again = cli.run(&["unset", "str"]);
+    assert_eq!(again.code, 1, "{again:?}");
+    assert_eq!(
+        again.stderr,
+        "error: no variable named 'str' on character 'default'\n"
+    );
+    let usage = cli.run(&["unset"]);
+    assert_eq!(usage.stderr, "error: usage: unset <name>\n");
+}
