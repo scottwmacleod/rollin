@@ -1,5 +1,5 @@
 {
   "formula": "3d8+5",
   "seed": 3,
-  "expected": {"rolls":[{"formula":"3d8+5","total":26,"expr":{"type":"chain","first":{"type":"dice","term":"3d8","dice":[{"value":6,"status":"kept"},{"value":8,"status":"kept"},{"value":7,"status":"kept"}],"subtotal":21},"rest":[{"op":"+","node":{"type":"number","value":5}}],"total":26}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"3d8+5","total":26,"expr":{"type":"chain","first":{"type":"dice","term":"3d8","dice":[{"value":6,"status":"kept"},{"value":8,"status":"kept"},{"value":7,"status":"kept"}],"subtotal":21},"rest":[{"op":"+","node":{"type":"number","value":5}}],"total":26}}]}
 }

@@ -1,5 +1,5 @@
 {
   "formula": "3d8",
   "seed": 2024,
-  "expected": {"rolls":[{"formula":"3d8","total":15,"expr":{"type":"dice","term":"3d8","dice":[{"value":7,"status":"kept"},{"value":2,"status":"kept"},{"value":6,"status":"kept"}],"subtotal":15}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"3d8","total":15,"expr":{"type":"dice","term":"3d8","dice":[{"value":7,"status":"kept"},{"value":2,"status":"kept"},{"value":6,"status":"kept"}],"subtotal":15}}]}
 }

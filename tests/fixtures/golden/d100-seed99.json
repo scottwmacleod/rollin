@@ -1,5 +1,5 @@
 {
   "formula": "1d100",
   "seed": 99,
-  "expected": {"rolls":[{"formula":"1d100","total":65,"expr":{"type":"dice","term":"1d100","dice":[{"value":65,"status":"kept"}],"subtotal":65}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"1d100","total":65,"expr":{"type":"dice","term":"1d100","dice":[{"value":65,"status":"kept"}],"subtotal":65}}]}
 }

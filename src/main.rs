@@ -20,8 +20,13 @@ struct Args {
     json: bool,
 }
 
+/// Version of the `--json` schema (see docs/json-schema.md). Bump on any
+/// change to the shape or meaning of existing fields.
+const SCHEMA_VERSION: u32 = 1;
+
 #[derive(Serialize)]
 struct Output {
+    schema_version: u32,
     rolls: Vec<Roll>,
 }
 
@@ -89,7 +94,10 @@ fn main() -> ExitCode {
     };
     match result {
         Ok(rolls) if args.json => {
-            let out = Output { rolls };
+            let out = Output {
+                schema_version: SCHEMA_VERSION,
+                rolls,
+            };
             println!("{}", serde_json::to_string(&out).expect("serialize"));
             ExitCode::SUCCESS
         }
