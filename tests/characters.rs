@@ -773,3 +773,102 @@ fn saving_still_reports_real_syntax_errors_and_formulas_without_variables_stay_s
     }
     assert!(cli.run(&["presets"]).stdout.starts_with("No presets"));
 }
+
+#[test]
+fn a_lone_word_near_a_character_preset_suggests_it() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    cli.run(&["save", "strike", "d20"]).assert_success();
+    let run = cli.run(&["strik"]);
+    assert_eq!(run.code, 1);
+    assert_eq!(
+        run.stderr,
+        "error: 'strik' is not a valid formula or a known preset\nhint: did you mean 'strike'?\nhint: run `rollin presets` to list saved presets\n"
+    );
+    // Not visible from another character.
+    let other = cli.run(&["--char", "default", "strike"]);
+    assert!(
+        other
+            .stderr
+            .contains("is not a valid formula or a known preset"),
+        "{other:?}"
+    );
+    assert!(!other.stderr.contains("did you mean"), "{other:?}");
+    cli.run(&["--char", "grog", "strike"]).assert_success();
+}
+
+#[test]
+fn preset_commands_report_a_corrupt_state_or_character_file_and_leave_it_alone() {
+    let cli = Cli::new();
+    cli.run(&["save", "--global", "g", "d6"]).assert_success();
+    let state = write_file(&cli, "state.toml", "active = [");
+    for args in [
+        &["save", "x", "d6"][..],
+        &["presets"],
+        &["delete", "x"],
+        &["g"],
+    ] {
+        let run = cli.run(args);
+        assert_eq!(run.code, 1, "{args:?}: {run:?}");
+        assert!(
+            run.stderr.contains(&state.display().to_string()),
+            "{args:?}: {run:?}"
+        );
+        assert!(run.stderr.contains("not valid TOML"), "{args:?}: {run:?}");
+    }
+    assert_eq!(std::fs::read_to_string(&state).unwrap(), "active = [");
+
+    std::fs::write(&state, "active = \"default\"\n").unwrap();
+    let character = write_file(&cli, "characters/default.toml", "vars = [");
+    for args in [
+        &["save", "x", "d6"][..],
+        &["presets"],
+        &["delete", "x"],
+        &["g"],
+    ] {
+        let run = cli.run(args);
+        assert_eq!(run.code, 1, "{args:?}: {run:?}");
+        assert!(
+            run.stderr.contains(&character.display().to_string()),
+            "{args:?}: {run:?}"
+        );
+        assert!(run.stderr.contains("not valid TOML"), "{args:?}: {run:?}");
+    }
+    assert_eq!(std::fs::read_to_string(&character).unwrap(), "vars = [");
+    // Global commands that never touch a character still work.
+    cli.run(&["save", "--global", "h", "d8"]).assert_success();
+    cli.run(&["delete", "--global", "h"]).assert_success();
+}
+
+#[test]
+fn extreme_variable_values_overflow_as_clear_errors() {
+    let cli = Cli::new();
+    cli.run(&["set", "max", "9223372036854775807"])
+        .assert_success();
+    cli.run(&["set", "min", "-9223372036854775808"])
+        .assert_success();
+    assert_error(
+        &cli,
+        "d20+@max",
+        "error: arithmetic overflow\n  d20+@max\n  ^^^^^^^^\n",
+    );
+    assert_error(
+        &cli,
+        "(-@min)",
+        "error: arithmetic overflow\n  (-@min)\n   ^^^^^\n",
+    );
+    assert_error(&cli, "@max d6", "error: dice per term cap (1000) exceeded by '@max d6' (@max is 9223372036854775807)\n  @max d6\n  ^^^^\n");
+    let run = cli.run(&["@max", "--json", "--seed", "1"]);
+    run.assert_success();
+    assert_eq!(run.json()["rolls"][0]["total"], 9223372036854775807_i64);
+}
+
+#[test]
+fn import_accepts_formulas_that_use_variables() {
+    let cli = Cli::new();
+    let path = cli.config_dir().join("in.json");
+    std::fs::write(&path, r#"{"atk": "d20+@str", "bad": "d20+"}"#).unwrap();
+    let run = cli.run(&["import", path.to_str().unwrap()]);
+    assert!(run.stdout.contains("imported 1, skipped 1"), "{run:?}");
+    assert!(cli.run(&["presets"]).stdout.contains("d20+@str"));
+}

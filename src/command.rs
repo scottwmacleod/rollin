@@ -631,10 +631,10 @@ pub fn execute(
                     )));
                     continue;
                 };
-                if let Err(e) = crate::parser::parse(formula) {
+                if let Err(CommandError::Formula { error, .. }) = check_formula(formula) {
                     report
                         .skipped
-                        .push(skip(format!("invalid formula: {}", e.message())));
+                        .push(skip(format!("invalid formula: {}", error.message())));
                     continue;
                 }
                 if presets.contains_key(&key) && (!force || report.imported.contains(&key)) {
