@@ -14,6 +14,8 @@ pub enum Token {
     Minus,
     Star,
     Slash,
+    LParen,
+    RParen,
     Comma,
 }
 
@@ -32,6 +34,8 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, ParseError> {
             '-' => Some(Token::Minus),
             '*' => Some(Token::Star),
             '/' => Some(Token::Slash),
+            '(' => Some(Token::LParen),
+            ')' => Some(Token::RParen),
             ',' => Some(Token::Comma),
             _ => None,
         };

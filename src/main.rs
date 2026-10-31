@@ -41,6 +41,7 @@ fn render_expr(node: &Node) -> String {
             format!("[{}]", cells.join(", "))
         }
         Node::Neg { operand, .. } => format!("-{}", render_expr(operand)),
+        Node::Group { inner, .. } => format!("({})", render_expr(inner)),
         Node::Chain { first, rest, .. } => {
             let mut out = render_expr(first);
             for link in rest {
@@ -56,6 +57,7 @@ fn has_dice(node: &Node) -> bool {
         Node::Number { .. } => false,
         Node::Dice { .. } => true,
         Node::Neg { operand, .. } => has_dice(operand),
+        Node::Group { inner, .. } => has_dice(inner),
         Node::Chain { first, rest, .. } => {
             has_dice(first) || rest.iter().any(|l| has_dice(&l.node))
         }

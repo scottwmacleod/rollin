@@ -67,6 +67,11 @@ pub enum Node {
         operand: Box<Node>,
         total: i64,
     },
+    /// A parenthesised expression.
+    Group {
+        inner: Box<Node>,
+        total: i64,
+    },
     /// Operands joined by operators of one precedence level, left to right.
     Chain {
         first: Box<Node>,
@@ -88,7 +93,7 @@ impl Node {
         match self {
             Node::Number { value } => *value,
             Node::Dice { subtotal, .. } => *subtotal,
-            Node::Neg { total, .. } | Node::Chain { total, .. } => *total,
+            Node::Neg { total, .. } | Node::Group { total, .. } | Node::Chain { total, .. } => *total,
         }
     }
 }

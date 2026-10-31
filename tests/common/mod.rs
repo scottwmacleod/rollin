@@ -94,6 +94,7 @@ pub fn flat_dice(node: &serde_json::Value) -> Vec<serde_json::Value> {
 fn collect_dice(node: &serde_json::Value, out: &mut Vec<serde_json::Value>) {
     match node["type"].as_str() {
         Some("dice") => out.extend(node["dice"].as_array().expect("dice array").clone()),
+        Some("group") => collect_dice(&node["inner"], out),
         Some("neg") => collect_dice(&node["operand"], out),
         Some("chain") => {
             collect_dice(&node["first"], out);

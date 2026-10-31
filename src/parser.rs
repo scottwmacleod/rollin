@@ -151,9 +151,29 @@ impl Parser<'_> {
         }
     }
 
-    /// A number or a dice group.
+    fn parse_group(&mut self) -> Result<Expr, ParseError> {
+        let open = self.tokens[self.pos].span.clone();
+        self.pos += 1;
+        let inner = self.parse_expr(1)?;
+        match self.peek() {
+            Some(Token::RParen) => {
+                self.pos += 1;
+                Ok(Expr {
+                    kind: ExprKind::Group(Box::new(inner)),
+                    span: open.start..self.prev_end(),
+                })
+            }
+            None => Err(ParseError::new("unclosed '('", open)),
+            Some(_) => Err(self.unexpected("')'")),
+        }
+    }
+
+    /// A parenthesised expression, a number or a dice group.
     fn parse_operand(&mut self) -> Result<Expr, ParseError> {
         let start = self.pos;
+        if matches!(self.peek(), Some(Token::LParen)) {
+            return self.parse_group();
+        }
         let count = match self.peek() {
             Some(Token::Number(n)) => {
                 let n = *n;
@@ -279,6 +299,8 @@ fn describe(t: &Token) -> String {
         Token::Minus => "'-'".into(),
         Token::Star => "'*'".into(),
         Token::Slash => "'/'".into(),
+        Token::LParen => "'('".into(),
+        Token::RParen => "')'".into(),
         Token::Comma => "','".into(),
     }
 }

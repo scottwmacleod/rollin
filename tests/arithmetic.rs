@@ -116,3 +116,50 @@ fn dice_multiply_and_divide() {
     let run = cli.run(&["d20*2", "--seed", "4"]);
     assert_eq!(run.stdout, format!("d20*2  [{die}] * 2  →  {}\n", die * 2));
 }
+
+#[test]
+fn parentheses_override_precedence() {
+    let cli = Cli::new();
+    for (formula, expected) in [
+        ("(2+3)*4", 20),
+        ("2*(3+4)*5", 70),
+        ("((2+3))", 5),
+        ("-(2+3)", -5),
+        ("-(2+3)*-2", 10),
+        ("10-(4-3)", 9),
+        ("( 8 / ( 1 + 1 ) )", 4),
+    ] {
+        assert_eq!(total(&cli, formula), expected, "{formula}");
+    }
+}
+
+#[test]
+fn a_parenthesised_dice_sum_is_a_group_in_the_tree_and_the_output() {
+    let cli = Cli::new();
+    let out = cli.roll_json("(d20+5)*2", 3);
+    let roll = &out["rolls"][0];
+    let group = &roll["expr"]["first"];
+    assert_eq!(group["type"], "group");
+    let die = group["inner"]["first"]["dice"][0]["value"].as_i64().unwrap();
+    assert_eq!(group["total"], die + 5);
+    assert_eq!(roll["total"], (die + 5) * 2);
+
+    let run = cli.run(&["(d20+5)*2", "--seed", "3"]);
+    assert_eq!(
+        run.stdout,
+        format!("(d20+5)*2  ([{die}] + 5) * 2  →  {}\n", (die + 5) * 2)
+    );
+}
+
+#[test]
+fn unary_minus_applies_to_dice_and_numbers() {
+    let cli = Cli::new();
+    let out = cli.roll_json("10 + -d6", 2);
+    let roll = &out["rolls"][0];
+    let die = roll["expr"]["rest"][0]["node"]["operand"]["dice"][0]["value"]
+        .as_i64()
+        .unwrap();
+    assert_eq!(roll["total"], 10 - die);
+    let run = cli.run(&["10 + -d6", "--seed", "2"]);
+    assert_eq!(run.stdout, format!("10 + -d6  10 + -[{die}]  →  {}\n", 10 - die));
+}

@@ -44,6 +44,13 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
                 total,
             })
         }
+        ExprKind::Group(inner) => {
+            let inner = eval_expr(inner, rng)?;
+            Ok(Node::Group {
+                total: inner.total(),
+                inner: Box::new(inner),
+            })
+        }
         ExprKind::Chain { first, rest } => {
             let first = eval_expr(first, rng)?;
             let mut total = first.total();

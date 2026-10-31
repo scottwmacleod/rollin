@@ -9,6 +9,7 @@ fn dice_of(node: &Node) -> Vec<Die> {
         Node::Number { .. } => Vec::new(),
         Node::Dice { dice, .. } => dice.clone(),
         Node::Neg { operand, .. } => dice_of(operand),
+        Node::Group { inner, .. } => dice_of(inner),
         Node::Chain { first, rest, .. } => {
             let mut all = dice_of(first);
             for link in rest {

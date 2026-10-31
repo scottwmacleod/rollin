@@ -23,6 +23,8 @@ pub enum ExprKind {
     Number(i64),
     Dice(Dice),
     Neg(Box<Expr>),
+    /// A parenthesised expression.
+    Group(Box<Expr>),
     /// Operands joined by operators of one precedence level, evaluated left
     /// to right. Chains are flat so long formulas do not nest deeply.
     Chain {
