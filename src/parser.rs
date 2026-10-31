@@ -41,6 +41,12 @@ pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
         if parser.at_end() {
             break;
         }
+        if matches!(parser.peek(), Some(Token::Label(_))) {
+            return Err(Error::syntax(
+                "a label needs a roll before it, as in 'd20 # attack'",
+                parser.tokens[parser.pos].span.clone(),
+            ));
+        }
         let start = parser.here();
         parser.item_dice = 0;
         let expr = parser.parse_item()?;

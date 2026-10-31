@@ -30,3 +30,20 @@ fn an_empty_label_is_an_error_pointing_at_the_hash() {
     // The caret sits under the '#'.
     assert!(run.stderr.contains("\n  d20 #  \n      ^\n"), "{run:?}");
 }
+
+#[test]
+fn a_label_with_no_roll_is_an_error_but_empty_items_are_still_ignored() {
+    let cli = Cli::new();
+    for formula in ["# x", "d20, # x", "d20 # a, # b"] {
+        let run = cli.run(&["--seed", "1", "--", formula]);
+        assert!(!run.success(), "{formula}: {run:?}");
+        assert_eq!(run.stdout, "");
+        assert!(
+            run.stderr.contains("a label needs a roll"),
+            "{formula}: {run:?}"
+        );
+    }
+    let run = cli.run(&["--seed", "1", "d20,,d6 # x,"]);
+    run.assert_success();
+    assert_eq!(run.stdout.lines().count(), 2);
+}
