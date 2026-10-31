@@ -14,6 +14,8 @@ const MAX_DICE_PER_TERM: i64 = 1000;
 const MAX_DICE_PER_EXPRESSION: i64 = 10000;
 const MAX_DEPTH: usize = 32;
 const MAX_SIDES: i64 = 10000;
+/// `d%` is a d100.
+const PERCENTILE_SIDES: i64 = 100;
 
 use crate::lexer::{tokenize, Spanned, Token};
 
@@ -240,7 +242,12 @@ impl Parser<'_> {
         }
         let count_span = self.tokens[start].span.clone();
         let sides_start = self.pos;
-        let sides = self.number("the number of sides after 'd'")?;
+        let sides = if matches!(self.peek(), Some(Token::Percent)) {
+            self.pos += 1;
+            PERCENTILE_SIDES
+        } else {
+            self.number("the number of sides after 'd'")?
+        };
         let sides_span = self.tokens[sides_start].span.clone();
         if count > MAX_DICE_PER_TERM {
             return Err(Error::LimitExceeded {
@@ -571,6 +578,7 @@ fn describe(t: &Token) -> String {
         Token::RParen => "')'".into(),
         Token::Comma => "','".into(),
         Token::Bang => "'!'".into(),
+        Token::Percent => "'%'".into(),
         Token::Gt => "'>'".into(),
         Token::Ge => "'>='".into(),
         Token::Lt => "'<'".into(),

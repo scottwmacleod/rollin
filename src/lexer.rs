@@ -19,6 +19,8 @@ pub enum Token {
     Comma,
     /// `!`, which starts an explode clause.
     Bang,
+    /// `%`, the sides of a percentile die (`d%`).
+    Percent,
     Gt,
     Ge,
     Lt,
@@ -62,6 +64,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
             ')' => Some(Token::RParen),
             ',' => Some(Token::Comma),
             '!' => Some(Token::Bang),
+            '%' => Some(Token::Percent),
             _ => None,
         };
         if let Some(token) = single {
