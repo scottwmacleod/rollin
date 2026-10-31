@@ -4,8 +4,8 @@ use clap::Parser;
 use rand_chacha::ChaCha8Rng;
 use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
 use rollin::{
-    entropy_rng, execute, help_text, parse_command, seeded_rng, session_command, CommandError,
-    Context, Error, Output, PresetEntry, PresetSource, Roll, SessionCommand, Shadow,
+    entropy_rng, execute, format_history, help_text, parse_command, seeded_rng, session_command,
+    CommandError, Context, Error, Output, PresetEntry, PresetSource, Roll, SessionCommand, Shadow,
 };
 use serde::Serialize;
 use std::io::{BufRead, IsTerminal};
@@ -79,12 +79,24 @@ fn main() -> ExitCode {
 
 /// Reads lines from stdin and runs each as if its words were given one-shot.
 fn session(rng: &mut ChaCha8Rng) -> ExitCode {
+    let mut history: Vec<String> = Vec::new();
     for line in std::io::stdin().lock().lines().map_while(Result::ok) {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        if history.last().map(String::as_str) != Some(line) {
+            history.push(line.to_string());
+        }
         let words: Vec<&str> = line.split_whitespace().collect();
         match session_command(&words) {
             Some(SessionCommand::Quit) => break,
             Some(SessionCommand::Help) => {
                 print!("{}", help_text());
+                continue;
+            }
+            Some(SessionCommand::History) => {
+                print!("{}", format_history(history.iter().map(String::as_str)));
                 continue;
             }
             None => {}

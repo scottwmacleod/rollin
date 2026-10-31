@@ -148,3 +148,29 @@ fn help_prints_a_short_summary_of_commands_and_syntax() {
 fn help_with_more_words_is_just_a_bad_formula_like_one_shot() {
     assert_parity(&["help me", "history now", "quit later"]);
 }
+
+#[test]
+fn history_lists_the_numbered_lines_typed_so_far_newest_last() {
+    let cli = Cli::new();
+    let script = "d20 --seed 1\n\n   \n  d20 --seed 1  \nd6 --seed 1\nhistory\n";
+    let run = cli.run_stdin(&[], script);
+    assert_eq!(run.code, 0, "{run:?}");
+    assert!(
+        run.stdout
+            .ends_with("→  4\n1  d20 --seed 1\n2  d6 --seed 1\n3  history\n"),
+        "{run:?}"
+    );
+    assert!(
+        !cli.config_dir().join("rollin").join("history").exists(),
+        "a piped session must not write the history file"
+    );
+}
+
+#[test]
+fn history_numbers_are_right_aligned_past_nine_entries() {
+    let script: String = (1..=10).map(|n| format!("set a {n}\n")).collect();
+    let run = Cli::new().run_stdin(&[], &(script + "history\n"));
+    assert!(run.stdout.contains("\n 1  set a 1\n"), "{run:?}");
+    assert!(run.stdout.contains("\n10  set a 10\n"), "{run:?}");
+    assert!(run.stdout.ends_with("\n11  history\n"), "{run:?}");
+}

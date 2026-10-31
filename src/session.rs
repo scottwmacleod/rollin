@@ -7,6 +7,7 @@
 pub enum SessionCommand {
     Quit,
     Help,
+    History,
 }
 
 /// The session command a line is, if any: exactly one word, in any case.
@@ -15,6 +16,7 @@ pub fn session_command(words: &[&str]) -> Option<SessionCommand> {
         [word] => match word.to_lowercase().as_str() {
             "quit" | "exit" => Some(SessionCommand::Quit),
             "help" => Some(SessionCommand::Help),
+            "history" => Some(SessionCommand::History),
             _ => None,
         },
         _ => None,
@@ -45,4 +47,14 @@ apply to that line only.
 
 Tab completes commands, preset and character names, and @variables.
 "
+}
+
+/// The `history` listing: one numbered line per entry, oldest first, numbers
+/// right-aligned.
+pub fn format_history<'a>(entries: impl ExactSizeIterator<Item = &'a str>) -> String {
+    let width = entries.len().to_string().len();
+    entries
+        .enumerate()
+        .map(|(i, line)| format!("{:>width$}  {line}\n", i + 1))
+        .collect()
 }
