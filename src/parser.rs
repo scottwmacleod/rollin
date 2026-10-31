@@ -13,6 +13,7 @@ use crate::error::Error;
 const MAX_DICE_PER_TERM: i64 = 1000;
 const MAX_DICE_PER_EXPRESSION: i64 = 10000;
 const MAX_DEPTH: usize = 32;
+const MAX_REPEAT: i64 = 100;
 const MAX_SIDES: i64 = 10000;
 /// `d%` is a d100.
 const PERCENTILE_SIDES: i64 = 100;
@@ -42,6 +43,18 @@ pub fn parse(src: &str) -> Result<Formula, Error> {
     }, ..] = tokens.as_slice()
     {
         if w == "x" {
+            let span = tokens[0].span.start..tokens[1].span.end;
+            if *n < 1 {
+                return Err(Error::syntax("repeat count must be at least 1", span));
+            }
+            if *n > MAX_REPEAT {
+                return Err(Error::LimitExceeded {
+                    cap: "repeat",
+                    limit: MAX_REPEAT as usize,
+                    term: src[span.clone()].to_string(),
+                    span,
+                });
+            }
             repeat = Some(*n as u32);
             parser.pos = 2;
         }

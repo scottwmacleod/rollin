@@ -135,3 +135,25 @@ fn the_x_may_be_upper_case_and_spaced_or_not() {
     assert_eq!(stdout_of(&cli, 5, &["3x", "4d6dl1"]), expected);
     assert_eq!(stdout_of(&cli, 5, &["3", "x", "4d6dl1"]), expected);
 }
+
+#[test]
+fn repeat_count_above_the_cap_names_the_cap_and_points_at_it() {
+    let cli = Cli::new();
+    let run = cli.run(&["101x d20"]);
+    assert!(!run.success());
+    assert_eq!(run.stdout, "");
+    assert!(run.stderr.contains("repeat cap (100)"), "{run:?}");
+    assert!(run.stderr.contains("101x"), "{run:?}");
+    assert!(run.stderr.contains("\n  101x d20\n  ^^^^\n"), "{run:?}");
+    // The cap itself is allowed.
+    let ok = stdout_of(&cli, 1, &["-q", "100x d6"]);
+    assert_eq!(ok.lines().count(), 100);
+}
+
+#[test]
+fn repeat_count_of_zero_is_an_error_pointing_at_the_count() {
+    let run = Cli::new().run(&["0x d20"]);
+    assert!(!run.success());
+    assert!(run.stderr.contains("at least 1"), "{run:?}");
+    assert!(run.stderr.contains("\n  0x d20\n  ^^\n"), "{run:?}");
+}
