@@ -144,6 +144,13 @@ fn show(args: &Args, output: Output) {
                 report.skipped.len()
             );
         }
+        Output::Characters { names, active } => {
+            for name in names {
+                let mark = if name == active { '*' } else { ' ' };
+                println!("{mark} {name}");
+            }
+        }
+        Output::ActiveCharacter(name) => println!("active character: {name}"),
         Output::Vars(vars) if vars.is_empty() => {
             println!("No variables set. Add one with: rollin set <name> <integer>");
         }

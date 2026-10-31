@@ -247,3 +247,18 @@ fn a_malformed_at_sign_is_a_syntax_error() {
         &format!("error: {hint}\n  d20+@_x\n      ^^^\n"),
     );
 }
+
+#[test]
+fn a_fresh_install_has_only_the_virtual_default_character_active() {
+    let cli = Cli::new();
+    let list = cli.run(&["characters"]);
+    list.assert_success();
+    assert_eq!(list.stdout, "* default\n");
+    let active = cli.run(&["char"]);
+    active.assert_success();
+    assert_eq!(active.stdout, "active character: default\n");
+    assert!(
+        !cli.config_dir().join("rollin").exists(),
+        "reading must not create files"
+    );
+}

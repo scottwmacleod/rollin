@@ -26,6 +26,10 @@ pub enum Command {
     Delete { name: String },
     /// Set a variable on a character.
     Set { name: String, value: i64 },
+    /// List all characters.
+    Characters,
+    /// Show the active character.
+    CharShow,
     /// List the active character's variables.
     Vars,
 }
@@ -144,6 +148,8 @@ pub fn parse_command(
             Err(CommandError::Usage("roll <formula or preset name>".into()))
         }
         Some("roll") => roll_or_preset(rest, preset_names),
+        Some("characters") => Ok(Command::Characters),
+        Some("char") => Ok(Command::CharShow),
         Some("vars") => Ok(Command::Vars),
         Some("set") => match rest {
             [name, value] => Ok(Command::Set {
@@ -271,6 +277,13 @@ pub enum Output {
         name: String,
     },
     Imported(ImportReport),
+    /// All characters, sorted, and which one is active.
+    Characters {
+        names: Vec<String>,
+        active: String,
+    },
+    /// The active character.
+    ActiveCharacter(String),
     /// Variables as (name, value), sorted by name.
     Vars(Vec<(String, i64)>),
     VarSet {
@@ -393,6 +406,14 @@ pub fn execute(
                 character: "default".into(),
             })
         }
+        Command::Characters => {
+            let characters = ctx.characters()?;
+            Ok(Output::Characters {
+                names: characters.names()?,
+                active: characters.active()?,
+            })
+        }
+        Command::CharShow => Ok(Output::ActiveCharacter(ctx.characters()?.active()?)),
         Command::Vars => {
             let character = ctx.characters()?.load("default")?;
             Ok(Output::Vars(character.vars.into_iter().collect()))

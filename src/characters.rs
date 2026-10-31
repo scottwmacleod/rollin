@@ -5,6 +5,9 @@ use crate::presets::{write_atomic, StoreError};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
+/// The character that always exists.
+pub const DEFAULT: &str = "default";
+
 /// A character's saved data.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Character {
@@ -28,6 +31,40 @@ impl CharacterStore {
 
     fn path(&self, name: &str) -> PathBuf {
         self.dir.join(format!("{name}.toml"))
+    }
+
+    /// All character names, sorted. `default` is always one of them.
+    pub fn names(&self) -> Result<Vec<String>, StoreError> {
+        let mut names = vec![DEFAULT.to_string()];
+        match std::fs::read_dir(&self.dir) {
+            Ok(entries) => {
+                for entry in entries {
+                    let entry = entry.map_err(|e| self.dir_error(e))?;
+                    let file = entry.file_name().to_string_lossy().into_owned();
+                    if let Some(name) = file.strip_suffix(".toml") {
+                        if !names.iter().any(|n| n == name) {
+                            names.push(name.to_string());
+                        }
+                    }
+                }
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(self.dir_error(e)),
+        }
+        names.sort();
+        Ok(names)
+    }
+
+    fn dir_error(&self, e: std::io::Error) -> StoreError {
+        StoreError {
+            path: self.dir.clone(),
+            message: e.to_string(),
+        }
+    }
+
+    /// The name of the active character: `default` when no state file exists.
+    pub fn active(&self) -> Result<String, StoreError> {
+        Ok(DEFAULT.to_string())
     }
 
     /// A character's data. A missing file means an empty character.
