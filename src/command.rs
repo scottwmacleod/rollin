@@ -96,6 +96,7 @@ pub fn execute(
                 error,
             }),
         Command::Save { name, formula } => {
+            check_formula(formula)?;
             let mut presets = store.load()?;
             presets.insert(name.to_lowercase(), formula.clone());
             store.save(&presets)?;
@@ -106,4 +107,14 @@ pub fn execute(
         }
         Command::Presets => Ok(Output::Presets(store.load()?.into_iter().collect())),
     }
+}
+
+/// Whether `formula` parses (without rolling it).
+fn check_formula(formula: &str) -> Result<(), CommandError> {
+    crate::parser::parse(formula)
+        .map(|_| ())
+        .map_err(|error| CommandError::Formula {
+            source: formula.to_string(),
+            error,
+        })
 }
