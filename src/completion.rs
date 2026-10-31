@@ -52,9 +52,17 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
         i + before[i..].chars().next().map_or(1, char::len_utf8)
     });
     let typed = &line[start..pos];
-    let words = positional_words(&before[..start]);
+    let (words, pending) = positional_words(&before[..start]);
+    let chars = || {
+        data.characters
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>()
+    };
     let presets = || data.presets.iter().map(String::as_str).collect::<Vec<_>>();
     let names: Vec<&str> = match words.as_slice() {
+        _ if pending == Some("--char") => chars(),
+        _ if pending.is_some() => Vec::new(),
         [] => {
             let mut names: Vec<&str> = COMMANDS.to_vec();
             names.extend(data.session_words.iter().map(String::as_str));
@@ -62,6 +70,12 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
             names
         }
         [command] if command == "roll" || command == "delete" => presets(),
+        [command] if command == "char" => {
+            let mut names = chars();
+            names.extend(["new", "delete"]);
+            names
+        }
+        [command, sub] if command == "char" && sub == "delete" => chars(),
         _ => Vec::new(),
     };
     Completion {
@@ -73,22 +87,23 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
 /// Flags that take a value in the next word.
 const VALUE_FLAGS: [&str; 3] = ["--seed", "--char", "--color"];
 
-/// The lowercase words before the cursor that are not flags or flag values.
-fn positional_words(before: &str) -> Vec<String> {
+/// The lowercase words before the cursor that are not flags or flag values,
+/// and the value flag the cursor's word is the value of, if any.
+fn positional_words(before: &str) -> (Vec<String>, Option<&'static str>) {
     let mut words = Vec::new();
-    let mut skip_value = false;
+    let mut pending = None;
     for word in before.split_whitespace() {
         let word = word.to_lowercase();
-        if std::mem::take(&mut skip_value) {
+        if pending.take().is_some() {
             continue;
         }
         if word.starts_with('-') {
-            skip_value = VALUE_FLAGS.contains(&word.as_str());
+            pending = VALUE_FLAGS.iter().copied().find(|f| *f == word);
         } else {
             words.push(word);
         }
     }
-    words
+    (words, pending)
 }
 
 /// The names that extend `typed` (ignoring case), sorted and de-duplicated.
