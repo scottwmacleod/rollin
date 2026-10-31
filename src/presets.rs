@@ -49,11 +49,15 @@ impl Store {
             .parse()
             .map_err(|e: toml::de::Error| self.error(format!("not valid TOML: {}", e.message())))?;
         let mut presets = BTreeMap::new();
-        if let Some(section) = table.get("presets").and_then(|v| v.as_table()) {
+        if let Some(section) = table.get("presets") {
+            let section = section
+                .as_table()
+                .ok_or_else(|| self.error("`presets` must be a table".into()))?;
             for (name, formula) in section {
-                if let Some(formula) = formula.as_str() {
-                    presets.insert(name.to_lowercase(), formula.to_string());
-                }
+                let formula = formula
+                    .as_str()
+                    .ok_or_else(|| self.error(format!("preset '{name}' must be a string")))?;
+                presets.insert(name.to_lowercase(), formula.to_string());
             }
         }
         Ok(presets)

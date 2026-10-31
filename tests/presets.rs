@@ -213,3 +213,64 @@ fn v1_style_names_are_accepted() {
         cli.run(&["save", name, "d20"]).assert_success();
     }
 }
+
+/// Writes `contents` as this config dir's presets file and returns its path.
+fn write_store(cli: &Cli, contents: &str) -> std::path::PathBuf {
+    let dir = cli.config_dir().join("rollin");
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("presets.toml");
+    std::fs::write(&path, contents).unwrap();
+    path
+}
+
+#[test]
+fn a_corrupt_file_is_a_clear_error_and_is_never_overwritten() {
+    let cli = Cli::new();
+    let garbage = "[presets\nattack = = d20\n";
+    let path = write_store(&cli, garbage);
+    for args in [
+        &["presets"][..],
+        &["save", "new", "d6"],
+        &["delete", "attack"],
+        &["roll", "attack"],
+        &["attack"],
+    ] {
+        let run = cli.run(args);
+        assert_eq!(run.code, 1, "{args:?}: {run:?}");
+        assert!(run.stdout.is_empty(), "{args:?}: {run:?}");
+        assert!(
+            run.stderr
+                .starts_with(&format!("error: {}: not valid TOML: ", path.display())),
+            "{args:?}: {run:?}"
+        );
+        assert!(!run.stderr.contains("panicked"));
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), garbage, "{args:?}");
+    }
+}
+
+#[test]
+fn wrong_typed_store_contents_are_clear_errors() {
+    let cases = [
+        ("presets = \"nope\"\n", "`presets` must be a table"),
+        (
+            "[presets]\nattack = 5\n",
+            "preset 'attack' must be a string",
+        ),
+        (
+            "[presets]\nattack = [\"d20\"]\n",
+            "preset 'attack' must be a string",
+        ),
+    ];
+    for (contents, problem) in cases {
+        let cli = Cli::new();
+        let path = write_store(&cli, contents);
+        let run = cli.run(&["presets"]);
+        assert_eq!(run.code, 1, "{contents:?}: {run:?}");
+        assert_eq!(
+            run.stderr,
+            format!("error: {}: {problem}\n", path.display()),
+            "{contents:?}"
+        );
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), contents);
+    }
+}
