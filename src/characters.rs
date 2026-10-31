@@ -62,6 +62,11 @@ impl CharacterStore {
         }
     }
 
+    /// Whether a character exists (`default` always does).
+    pub fn exists(&self, name: &str) -> bool {
+        name == DEFAULT || self.path(name).is_file()
+    }
+
     /// The name of the active character: `default` when no state file exists.
     pub fn active(&self) -> Result<String, StoreError> {
         let path = self.state_path();

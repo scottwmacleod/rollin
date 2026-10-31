@@ -301,3 +301,50 @@ fn variables_belong_to_the_active_character() {
         cli.roll_json("d20+3", 2)["rolls"][0]["expr"]
     );
 }
+
+#[test]
+fn switching_to_an_unknown_character_suggests_a_near_miss_and_creation() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    let run = cli.run(&["char", "gorg"]);
+    assert_eq!(run.code, 1, "{run:?}");
+    assert_eq!(
+        run.stderr,
+        "error: no character named 'gorg'\nhint: did you mean 'grog'?\nhint: create it with: rollin char new gorg\n"
+    );
+    let far = cli.run(&["char", "zzzzzz"]);
+    assert_eq!(
+        far.stderr,
+        "error: no character named 'zzzzzz'\nhint: create it with: rollin char new zzzzzz\n"
+    );
+    assert_eq!(cli.run(&["char"]).stdout, "active character: grog\n");
+}
+
+#[test]
+fn char_new_refuses_existing_and_invalid_names() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    for (name, message) in [
+        ("grog", "character 'grog' already exists"),
+        ("GROG", "character 'grog' already exists"),
+        ("default", "character 'default' already exists"),
+        ("1x", "invalid character name '1x': names must start with a letter and use only letters, digits, '_' or '-'"),
+        ("set", "invalid character name 'set': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters)"),
+        ("new", "invalid character name 'new': 'new' is reserved for `rollin char new`"),
+    ] {
+        let run = cli.run(&["char", "new", name]);
+        assert_eq!(run.code, 1, "{name}: {run:?}");
+        assert_eq!(run.stderr, format!("error: {message}\n"), "{name}");
+    }
+    assert_eq!(cli.run(&["characters"]).stdout, "  default\n* grog\n");
+}
+
+#[test]
+fn command_words_cannot_be_preset_names() {
+    let cli = Cli::new();
+    for word in ["set", "unset", "vars", "char", "characters"] {
+        let run = cli.run(&["save", word, "d20"]);
+        assert_eq!(run.code, 1, "{word}: {run:?}");
+        assert!(run.stderr.contains("it is a command word"), "{run:?}");
+    }
+}

@@ -184,11 +184,11 @@ fn names_that_break_a_rule_are_rejected_at_save_with_the_rule() {
         ("", format!("invalid preset name '': {shape}")),
         (
             "save",
-            "invalid preset name 'save': it is a command word (save, presets, delete, import, roll)".into(),
+            "invalid preset name 'save': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters)".into(),
         ),
         (
             "PRESETS",
-            "invalid preset name 'PRESETS': it is a command word (save, presets, delete, import, roll)".into(),
+            "invalid preset name 'PRESETS': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters)".into(),
         ),
         ("adv", "invalid preset name 'adv': it is a reserved dice keyword".into()),
         ("dis", "invalid preset name 'dis': it is a reserved dice keyword".into()),
@@ -469,7 +469,7 @@ fn import_skips_bad_entries_with_reasons_and_keeps_the_good_ones() {
         "skipped 'nested': value must be a string, found an array",
         "skipped 'nothing': value must be a string, found null",
         "skipped 'number': value must be a string, found a number",
-        "skipped 'save': it is a command word (save, presets, delete, import, roll)",
+        "skipped 'save': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters)",
         "imported 2, skipped 8",
     ];
     assert_eq!(lines, expect);

@@ -3,7 +3,7 @@
 //! and the later interactive session both use it. It never prints.
 
 use crate::characters::{Character, CharacterStore};
-use crate::presets::{is_name_shaped, validate_name, NameError, Store, StoreError};
+use crate::presets::{is_name_shaped, validate_name, NameError, NameRule, Store, StoreError};
 use crate::{Error, Roll};
 use rand::Rng;
 use std::collections::BTreeMap;
@@ -77,6 +77,16 @@ pub enum CommandError {
     NoConfigDir,
     /// The file given to `import` could not be read as a v1 presets file.
     Import { path: PathBuf, message: String },
+    /// No character has this name.
+    NoSuchCharacter {
+        name: String,
+        /// An existing name within edit distance 2.
+        suggestion: Option<String>,
+    },
+    /// `char new` named a character that already exists.
+    CharacterExists(String),
+    /// A character name that breaks a naming rule.
+    InvalidCharName(NameError),
     /// A preset name that breaks a naming rule.
     InvalidName(NameError),
     /// A variable name that is not `[a-z][a-z0-9_]*`; the text is as typed.
@@ -109,6 +119,15 @@ impl std::fmt::Display for CommandError {
                 write!(f, "{}: {message}", path.display())
             }
             CommandError::InvalidName(e) => write!(f, "{e}"),
+            CommandError::NoSuchCharacter { name, .. } => {
+                write!(f, "no character named '{name}'")
+            }
+            CommandError::CharacterExists(name) => {
+                write!(f, "character '{name}' already exists")
+            }
+            CommandError::InvalidCharName(e) => {
+                write!(f, "invalid character name '{}': {}", e.name, e.reason())
+            }
             CommandError::InvalidVarName(name) => write!(
                 f,
                 "invalid variable name '{name}': names must start with a letter and use only letters, digits or '_'"
@@ -158,6 +177,9 @@ pub fn parse_command(
             [new, name] if new.eq_ignore_ascii_case("new") => {
                 Ok(Command::CharNew(name.to_lowercase()))
             }
+            [new] if new.eq_ignore_ascii_case("new") => {
+                Err(CommandError::Usage("char new <name>".into()))
+            }
             [name] => Ok(Command::CharSwitch(name.to_lowercase())),
             _ => Err(CommandError::Usage("char [<name> | new <name>]".into())),
         },
@@ -179,6 +201,17 @@ pub fn parse_command(
         },
         _ => roll_or_preset(words, preset_names),
     }
+}
+
+/// Checks a character name and returns its stored (lowercase) form.
+fn validate_char_name(raw: &str) -> Result<String, CommandError> {
+    if raw.eq_ignore_ascii_case("new") {
+        return Err(CommandError::InvalidCharName(NameError {
+            name: raw.to_string(),
+            rule: NameRule::CommandWord,
+        }));
+    }
+    validate_name(raw).map_err(CommandError::InvalidCharName)
 }
 
 /// Checks a variable name and returns its stored (lowercase) form.
@@ -431,11 +464,27 @@ pub fn execute(
         }
         Command::CharShow => Ok(Output::ActiveCharacter(ctx.characters()?.active()?)),
         Command::CharSwitch(name) => {
-            ctx.characters()?.set_active(name)?;
+            let characters = ctx.characters()?;
+            if !characters.exists(name) {
+                let suggestion = characters
+                    .names()?
+                    .into_iter()
+                    .find(|n| edit_distance(n, name) <= 2);
+                return Err(CommandError::NoSuchCharacter {
+                    name: name.clone(),
+                    suggestion,
+                });
+            }
+            characters.set_active(name)?;
             Ok(Output::CharSwitched(name.clone()))
         }
         Command::CharNew(name) => {
             let characters = ctx.characters()?;
+            let name = validate_char_name(name)?;
+            if characters.exists(&name) {
+                return Err(CommandError::CharacterExists(name));
+            }
+            let name = &name;
             characters.save(name, &Character::default())?;
             characters.set_active(name)?;
             Ok(Output::CharCreated(name.clone()))

@@ -116,7 +116,18 @@ pub(crate) fn write_atomic(path: &Path, text: &str) -> Result<(), StoreError> {
 }
 
 /// Words the command parser treats as commands.
-pub const COMMAND_WORDS: [&str; 5] = ["save", "presets", "delete", "import", "roll"];
+pub const COMMAND_WORDS: [&str; 10] = [
+    "save",
+    "presets",
+    "delete",
+    "import",
+    "roll",
+    "set",
+    "unset",
+    "vars",
+    "char",
+    "characters",
+];
 
 /// Words the formula lexer and parser treat as keywords.
 const DICE_KEYWORDS: [&str; 12] = [
@@ -147,6 +158,9 @@ impl NameError {
         match self.rule {
             NameRule::Shape => {
                 "names must start with a letter and use only letters, digits, '_' or '-'".into()
+            }
+            NameRule::CommandWord if self.name.eq_ignore_ascii_case("new") => {
+                "'new' is reserved for `rollin char new`".into()
             }
             NameRule::CommandWord => {
                 format!("it is a command word ({})", COMMAND_WORDS.join(", "))

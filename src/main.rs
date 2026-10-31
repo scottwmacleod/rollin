@@ -116,6 +116,13 @@ fn fail(e: &CommandError) -> ExitCode {
             }
             eprintln!("hint: run `rollin presets` to list saved presets");
         }
+        CommandError::NoSuchCharacter { name, suggestion } => {
+            eprintln!("error: {e}");
+            if let Some(near) = suggestion {
+                eprintln!("hint: did you mean '{near}'?");
+            }
+            eprintln!("hint: create it with: rollin char new {name}");
+        }
         other => eprintln!("error: {other}"),
     }
     ExitCode::FAILURE
