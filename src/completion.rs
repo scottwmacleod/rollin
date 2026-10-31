@@ -52,6 +52,19 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
         i + before[i..].chars().next().map_or(1, char::len_utf8)
     });
     let typed = &line[start..pos];
+    if let Some(at) = typed.rfind('@') {
+        let run = &typed[at + 1..];
+        if run.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+            let names: Vec<String> = data.variables.iter().map(|v| format!("@{v}")).collect();
+            return Completion {
+                start: start + at,
+                candidates: matching(
+                    &names.iter().map(String::as_str).collect::<Vec<_>>(),
+                    &typed[at..],
+                ),
+            };
+        }
+    }
     let (words, pending) = positional_words(&before[..start]);
     let chars = || {
         data.characters

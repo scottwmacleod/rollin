@@ -75,3 +75,17 @@ fn set_and_unset_complete_variable_names_without_the_at_sign() {
     expect("set str ", 8, &[]);
     expect("unset str d", 10, &[]);
 }
+
+#[test]
+fn an_at_sign_completes_variables_anywhere_with_the_at_prefix() {
+    expect("@", 0, &["@dex", "@stealth", "@str"]);
+    expect("@st", 0, &["@stealth", "@str"]);
+    expect("@D", 0, &["@dex"]);
+    expect("d20+@st", 4, &["@stealth", "@str"]);
+    expect("roll d20+@d", 9, &["@dex"]);
+    expect("d20+@str+@d", 9, &["@dex"]);
+    expect("4d6kh@s", 5, &["@stealth", "@str"]);
+    expect("d20 # attack @", 13, &["@dex", "@stealth", "@str"]);
+    expect("d20+@st+", 0, &[]);
+    expect("@zzz", 0, &[]);
+}
