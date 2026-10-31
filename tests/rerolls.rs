@@ -265,6 +265,6 @@ fn keep_and_drop_counts_are_still_checked_against_the_dice_written() {
     );
     assert_eq!(
         failure("4d6rr<=2kh0"),
-        "error: must keep between 1 and 3 dice from a pool of 4\n  4d6rr<=2kh0\n           ^^^\n"
+        "error: must keep between 1 and 3 dice from a pool of 4\n  4d6rr<=2kh0\n          ^^^\n"
     );
 }
