@@ -25,7 +25,7 @@ pub struct CharacterStore {
 impl CharacterStore {
     pub fn in_config_dir(config_dir: &Path) -> Self {
         CharacterStore {
-            dir: config_dir.join("rollin").join("characters"),
+            dir: crate::paths::app_dir(config_dir).join("characters"),
         }
     }
 

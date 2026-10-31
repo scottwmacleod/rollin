@@ -111,7 +111,7 @@ fn interactive(rng: &mut ChaCha8Rng) -> rustyline::Result<()> {
     }));
     let history_path = config_dir
         .as_ref()
-        .map(|d| d.join("rollin").join("history"));
+        .map(|d| rollin::app_dir(d).join("history"));
     if let Some(path) = history_path.as_ref().filter(|p| p.exists()) {
         if let Err(e) = editor.load_history(path) {
             eprintln!("warning: cannot read history {}: {e}", path.display());

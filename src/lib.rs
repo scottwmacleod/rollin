@@ -14,16 +14,18 @@ mod error;
 mod eval;
 mod lexer;
 mod parser;
+mod paths;
 mod presets;
 mod session;
 
 pub use ast::{BinOp, Special};
 pub use command::{
-    config_dir, execute, parse_command, Command, CommandError, Context, ImportReport, Output,
-    PresetEntry, PresetSource, Shadow, UndefinedVariable,
+    execute, parse_command, Command, CommandError, Context, ImportReport, Output, PresetEntry,
+    PresetSource, Shadow, UndefinedVariable,
 };
 pub use completion::{complete, Completion, CompletionData};
 pub use error::Error;
+pub use paths::{app_dir, config_dir};
 pub use presets::{validate_name, NameError, NameRule, Store, StoreError};
 pub use session::{format_history, help_text, session_command, SessionCommand};
 

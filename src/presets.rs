@@ -30,7 +30,7 @@ impl Store {
     /// The store for a config directory (the file is `rollin/presets.toml`).
     pub fn in_config_dir(config_dir: &Path) -> Self {
         Store {
-            path: config_dir.join("rollin").join("presets.toml"),
+            path: crate::paths::app_dir(config_dir).join("presets.toml"),
         }
     }
 
