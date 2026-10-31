@@ -426,6 +426,16 @@ impl Context {
         Ok(names)
     }
 
+    /// The session prompt: `rollin> ` for the `default` character, else
+    /// `rollin[<character>]> `. A broken setting gives the plain prompt (the
+    /// command that needs the character reports the error).
+    pub fn prompt(&self) -> String {
+        match self.characters().and_then(|c| Ok(c.active()?)) {
+            Ok(name) if name != DEFAULT => format!("rollin[{name}]> "),
+            _ => "rollin> ".to_string(),
+        }
+    }
+
     /// The presets store, or an error if there is no config directory.
     pub fn store(&self) -> Result<Store, CommandError> {
         self.config_dir
