@@ -273,6 +273,10 @@ impl Parser<'_> {
                 sides_span,
             ));
         }
+        if fudge {
+            self.reject_on_fudge(&["r", "rr"], false, "reroll")?;
+            self.reject_on_fudge(&[], true, "explode")?;
+        }
         let reroll = self.parse_reroll(sides)?;
         let explode = self.parse_explode(sides)?;
         let advantage = self.parse_advantage(count, sides, self.tokens[start].span.start)?;
@@ -281,6 +285,9 @@ impl Parser<'_> {
             None => (count, self.parse_select(count)?),
         };
         self.reject_select_with_advantage(advantage, select)?;
+        if fudge {
+            self.reject_comparison_on_fudge()?;
+        }
         let success = self.parse_count()?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
@@ -422,6 +429,34 @@ impl Parser<'_> {
             value,
             failure,
         }))
+    }
+
+    /// Fudge dice have no reroll or explode clause: an error at the clause's
+    /// first token (a word in `words`, or `!` when `bang` is set).
+    fn reject_on_fudge(&self, words: &[&str], bang: bool, what: &str) -> Result<(), Error> {
+        let hit = match self.peek() {
+            Some(Token::Word(w)) => words.contains(&w.as_str()),
+            Some(Token::Bang) => bang,
+            _ => false,
+        };
+        if hit {
+            return Err(Error::invalid_dice(
+                format!("{what} clauses are not supported on fudge dice"),
+                self.tokens[self.pos].span.clone(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Fudge dice have no success clause.
+    fn reject_comparison_on_fudge(&self) -> Result<(), Error> {
+        if self.at_comparison() {
+            return Err(Error::invalid_dice(
+                "success clauses are not supported on fudge dice",
+                self.tokens[self.pos].span.clone(),
+            ));
+        }
+        Ok(())
     }
 
     /// Optional `adv`/`dis` suffix: sugar for rolling two dice and keeping

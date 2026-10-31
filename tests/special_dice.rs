@@ -168,3 +168,56 @@ fn default_output_draws_fudge_dice_as_plus_zero_and_minus_and_verbose_as_numbers
     }
     assert_eq!(seen.len(), 3, "{seen:?}");
 }
+
+#[test]
+fn fudge_dice_support_keep_drop_and_advantage() {
+    let cli = Cli::new();
+    for seed in 0..30 {
+        let same = |a: &str, b: &str, shift: i64| {
+            let fudge = values(&cli, a, seed);
+            let d3: Vec<i64> = values(&cli, b, seed).iter().map(|v| v - shift).collect();
+            assert_eq!(fudge, d3, "{a} vs {b}, seed {seed}");
+        };
+        same("4dFdl1", "4d3dl1", 2);
+        same("4DFKH2", "4d3kh2", 2);
+        same("dFadv", "2d3kh1", 2);
+        same("dfdis", "2d3kl1", 2);
+        let out = cli.roll_json("4dFdl1", seed);
+        let total: i64 = flat_dice(&out["rolls"][0]["expr"])
+            .iter()
+            .filter(|d| d["status"] == "kept")
+            .map(|d| d["value"].as_i64().unwrap())
+            .sum();
+        assert_eq!(out["rolls"][0]["total"], total, "seed {seed}");
+    }
+}
+
+#[test]
+fn reroll_explode_and_success_clauses_on_fudge_dice_are_typed_errors() {
+    // (formula, byte column of the clause, width)
+    let cases = [
+        ("4dFr1", "reroll", 3, 1),
+        ("4dF rr0", "reroll", 4, 2),
+        ("4dF!", "explode", 3, 1),
+        ("4dF!!", "explode", 3, 1),
+        ("4dF>=1", "success", 3, 2),
+        ("4dFdl1=1", "success", 6, 1),
+        ("dFadv>0", "success", 5, 1),
+    ];
+    for (formula, what, col, width) in cases {
+        let run = Cli::new().run(&["--seed", "1", "--", formula]);
+        assert!(
+            !run.success() && run.stdout.is_empty(),
+            "{formula}: {run:?}"
+        );
+        assert_eq!(
+            run.stderr,
+            format!(
+                "error: {what} clauses are not supported on fudge dice\n  {formula}\n  {}{}\n",
+                " ".repeat(col),
+                "^".repeat(width)
+            ),
+            "{formula}"
+        );
+    }
+}
