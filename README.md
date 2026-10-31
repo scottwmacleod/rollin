@@ -60,7 +60,7 @@ the same thing here; arithmetic is an addition on top.
 | `4d6dl1>=5`, `6d10r1!=10kh4>=8f1` | Order of operations: reroll, explode, keep/drop, then success counting |
 | `d20adv`, `d20dis` | Advantage / disadvantage: roll two d20s and keep the highest / lowest; exactly `2d20kh1` / `2d20kl1` |
 | `d20adv+8`, `(d20dis+3)*2`, `d20r1adv`, `d10adv>=7` | `adv`/`dis` combine with modifiers: reroll and explode go before it, a success clause after |
-| `d%`, `2d%`, `d%dl1` | Percentile: `d%` is a d100, same results as `d100` under the same seed, and takes the same modifiers |
+| `d%`, `2d%`, `3d%dl1` | Percentile: `d%` is a d100, same results as `d100` under the same seed, and takes the same modifiers |
 | `4dF`, `4df`, `dF` | Fudge dice: each die is -1, 0 or +1 with equal probability |
 | `4dFdl1`, `4dFkh3`, `dFadv` | Keep/drop and `adv`/`dis` work on fudge dice |
 | `15` | A bare number is its own total |
@@ -115,7 +115,7 @@ mixed into arithmetic: `6d10>=8 + 3`, `3 + 6d10>=8`, `-6d10>=8`,
 may be parenthesised, `(6d10>=8)`, and counts and sums can sit side by side
 in a comma list: `6d10>=8, d20`.
 `adv` and `dis` are suffixes on a dice group written with exactly one die
-(`d20adv` or `1d20adv`; `2d20adv` is an error; write `3d20kh1` and the like yourself). They take the keep/drop slot, so combining them with `dl`, `dh`,
+(`d20adv` or `1d20adv`; `2d20adv` is an error; use `2d20kh1`, or `kh`/`kl` for bigger pools). They take the keep/drop slot, so combining them with `dl`, `dh`,
 `kl` or `kh` in either order (`d20advdl1`, `3d20kh1adv`) is an error. The
 output shows both dice with the loser dropped, as in `2d20kh1`; the formula
 is echoed as typed, and `d20adv` counts as two dice toward the dice limits.
