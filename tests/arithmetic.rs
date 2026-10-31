@@ -60,3 +60,59 @@ fn human_output_joins_each_groups_dice_with_the_operators() {
         format!("d20+d4-2  [{a}] + [{b}] - 2  →  {total}\n")
     );
 }
+
+/// Rolls a dice-free formula and returns its total.
+#[track_caller]
+fn total(cli: &Cli, formula: &str) -> i64 {
+    let run = cli.run(&["--seed", "1", "--json", "--", formula]);
+    run.assert_success();
+    run.json()["rolls"][0]["total"].as_i64().expect("integer total")
+}
+
+#[test]
+fn multiplication_and_division_bind_tighter_than_addition() {
+    let cli = Cli::new();
+    for (formula, expected) in [
+        ("2+3*4", 14),
+        ("2*3+4", 10),
+        ("10-4/2", 8),
+        ("10-4-3", 3),
+        ("2*3*4", 24),
+        ("100/5/2", 10),
+        ("1+2*3-4/2+5", 10),
+    ] {
+        assert_eq!(total(&cli, formula), expected, "{formula}");
+    }
+}
+
+#[test]
+fn higher_precedence_operands_nest_as_their_own_chain() {
+    let cli = Cli::new();
+    let out = cli.roll_json("2+3*4", 1);
+    let expr = &out["rolls"][0]["expr"];
+    assert_eq!(expr["total"], 14);
+    let product = &expr["rest"][0]["node"];
+    assert_eq!(expr["rest"][0]["op"], "+");
+    assert_eq!(product["type"], "chain");
+    assert_eq!(product["rest"][0]["op"], "*");
+    assert_eq!(product["total"], 12);
+}
+
+#[test]
+fn integer_division_truncates_toward_zero() {
+    let cli = Cli::new();
+    for (formula, expected) in [("7/2", 3), ("-7/2", -3), ("7/-2", -3), ("-7/-2", 3)] {
+        assert_eq!(total(&cli, formula), expected, "{formula}");
+    }
+}
+
+#[test]
+fn dice_multiply_and_divide() {
+    let cli = Cli::new();
+    let out = cli.roll_json("d20*2", 4);
+    let roll = &out["rolls"][0];
+    let die = roll["expr"]["first"]["dice"][0]["value"].as_i64().unwrap();
+    assert_eq!(roll["total"], die * 2);
+    let run = cli.run(&["d20*2", "--seed", "4"]);
+    assert_eq!(run.stdout, format!("d20*2  [{die}] * 2  →  {}\n", die * 2));
+}

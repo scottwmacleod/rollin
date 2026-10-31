@@ -66,6 +66,9 @@ fn apply(op: BinOp, lhs: i64, rhs: i64) -> Result<i64, Error> {
     match op {
         BinOp::Add => lhs.checked_add(rhs),
         BinOp::Sub => lhs.checked_sub(rhs),
+        BinOp::Mul => lhs.checked_mul(rhs),
+        // Rust integer division truncates toward zero.
+        BinOp::Div => lhs.checked_div(rhs),
     }
     .ok_or(Error::Overflow)
 }

@@ -124,6 +124,8 @@ impl Parser<'_> {
         match self.peek() {
             Some(Token::Plus) => Some(BinOp::Add),
             Some(Token::Minus) => Some(BinOp::Sub),
+            Some(Token::Star) => Some(BinOp::Mul),
+            Some(Token::Slash) => Some(BinOp::Div),
             _ => None,
         }
     }
@@ -275,6 +277,8 @@ fn describe(t: &Token) -> String {
         Token::Word(w) => format!("'{w}'"),
         Token::Plus => "'+'".into(),
         Token::Minus => "'-'".into(),
+        Token::Star => "'*'".into(),
+        Token::Slash => "'/'".into(),
         Token::Comma => "','".into(),
     }
 }

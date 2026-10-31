@@ -37,6 +37,10 @@ pub enum BinOp {
     Add,
     #[serde(rename = "-")]
     Sub,
+    #[serde(rename = "*")]
+    Mul,
+    #[serde(rename = "/")]
+    Div,
 }
 
 impl BinOp {
@@ -44,6 +48,7 @@ impl BinOp {
     pub fn precedence(self) -> u8 {
         match self {
             BinOp::Add | BinOp::Sub => 1,
+            BinOp::Mul | BinOp::Div => 2,
         }
     }
 
@@ -51,6 +56,8 @@ impl BinOp {
         match self {
             BinOp::Add => '+',
             BinOp::Sub => '-',
+            BinOp::Mul => '*',
+            BinOp::Div => '/',
         }
     }
 }

@@ -12,6 +12,8 @@ pub enum Token {
     Word(String),
     Plus,
     Minus,
+    Star,
+    Slash,
     Comma,
 }
 
@@ -28,6 +30,8 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, ParseError> {
         let single = match c {
             '+' => Some(Token::Plus),
             '-' => Some(Token::Minus),
+            '*' => Some(Token::Star),
+            '/' => Some(Token::Slash),
             ',' => Some(Token::Comma),
             _ => None,
         };
