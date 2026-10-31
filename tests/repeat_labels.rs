@@ -259,3 +259,75 @@ fn quiet_prints_one_total_per_line_across_repeats_and_lists() {
     assert_eq!(quiet.lines().count(), 6);
     assert_eq!(quiet, expected);
 }
+
+#[test]
+fn a_preset_can_hold_a_repeat_and_labels() {
+    let cli = Cli::new();
+    cli.run(&["save", "stats", "6x", "4d6dl1"]).assert_success();
+    cli.run(&["save", "strike", "d20+8 # attack, d10+5 # damage"])
+        .assert_success();
+    assert_eq!(
+        cli.run(&["presets"]).stdout,
+        "stats   6x 4d6dl1\nstrike  d20+8 # attack, d10+5 # damage\n"
+    );
+
+    let by_name = cli.run(&["stats", "--seed", "3"]);
+    by_name.assert_success();
+    let direct = stdout_of(&cli, 3, &["6x 4d6dl1"]);
+    assert_eq!(
+        by_name.stdout,
+        format!("(preset 'stats': 6x 4d6dl1)\n{direct}")
+    );
+    assert_eq!(by_name.stdout.lines().count(), 7);
+
+    let strike = cli.run(&["strike", "--seed", "3", "--json"]);
+    strike.assert_success();
+    assert_eq!(strike.json()["rolls"][1]["label"], "damage");
+}
+
+#[test]
+fn save_rejects_bad_repeats_and_labels_with_a_span_and_saves_nothing() {
+    let cli = Cli::new();
+    for formula in ["101x d20", "2x 3x d20", "d20 #"] {
+        let run = cli.run(&["save", "bad", formula]);
+        assert_eq!(run.code, 1, "{formula}: {run:?}");
+        assert!(run.stderr.contains('^'), "{formula}: {run:?}");
+    }
+    assert!(cli.run(&["presets"]).stdout.starts_with("No presets"));
+}
+
+#[test]
+fn a_lone_repeat_like_word_is_not_mistaken_for_a_preset_lookup() {
+    let cli = Cli::new();
+    cli.run(&["save", "stats", "6x 4d6dl1"]).assert_success();
+    // `6x` alone is a formula error, not an unknown preset.
+    let run = cli.run(&["6x"]);
+    assert!(run.stderr.contains("nothing to repeat"), "{run:?}");
+    // A lone word that is only a typo of a preset still suggests it.
+    let typo = cli.run(&["stat"]);
+    assert!(typo.stderr.contains("did you mean 'stats'"), "{typo:?}");
+}
+
+#[test]
+fn the_dice_cap_is_per_roll_not_per_repeat() {
+    let six_thousand = "1000d6+1000d6+1000d6+1000d6+1000d6+1000d6";
+    let out = stdout_of(&Cli::new(), 1, &["-q", &format!("3x {six_thousand}")]);
+    assert_eq!(out.lines().count(), 3);
+}
+
+#[test]
+fn success_counts_fudge_and_advantage_work_inside_a_repeat_with_labels() {
+    let cli = Cli::new();
+    let out = cli.roll_json("2x 6d10>=8f1 # pool, 4dF # fate, d20adv+5 # hit", 4);
+    let rolls = out["rolls"].as_array().unwrap();
+    assert_eq!(rolls.len(), 6);
+    assert_eq!(rolls[0]["kind"], "count");
+    assert_eq!(rolls[0]["label"], "pool");
+    assert_eq!(rolls[1]["expr"]["special"], "fudge");
+    assert_eq!(rolls[2]["label"], "hit");
+    assert_eq!(rolls[3]["iteration"], 2);
+    assert_eq!(rolls[3]["kind"], "count");
+    let text = stdout_of(&cli, 4, &["2x 6d10>=8f1 # pool, 4dF # fate"]);
+    assert!(text.lines().next().unwrap().starts_with("1: 6d10>=8f1"));
+    assert!(text.contains("success"), "{text}");
+}
