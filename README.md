@@ -191,9 +191,9 @@ character can use. The same commands work for every invocation
 (`rollin <command> ...`):
 
 ```
-$ rollin save atk d20+8
+$ rollin save atk 'd20+8'
 saved 'atk' on 'default': d20+8
-$ rollin save sneak d20+5, 2d6          # a comma list is fine
+$ rollin save sneak 'd20+5, 2d6'        # a comma list is fine
 saved 'sneak' on 'default': d20+5, 2d6
 $ rollin presets                        # the character's, then global; sorted
 atk    d20+8       [default]
@@ -271,35 +271,34 @@ is not a JSON object is an error (exit 1). Nothing is imported automatically.
 
 A **character** holds named integer **variables** and its own presets. There
 is always one active character, and a character called `default` always
-exists, so plain use needs no setup.
+exists, so plain use needs no setup. The examples from the Presets section
+through this one are a single continuous session, replayed in order.
 
 ```
-$ rollin set str 3                     # on the active character (default)
+$ rollin set str 3                      # on the active character (default)
 set str = 3 on 'default'
-$ rollin "d20+@str" --seed 1           # @str is replaced by 3
+$ rollin 'd20+@str' --seed 1            # @str is replaced by 3
 d20+@str  [9] + 3  →  12
-$ rollin char new grog                 # create and switch to a character
+$ rollin char new grog                  # create and switch to a character
 created character 'grog' and made it active
 $ rollin set str 5
 set str = 5 on 'grog'
 $ rollin set dex 2
 set dex = 2 on 'grog'
-$ rollin vars                          # sorted
+$ rollin vars                           # sorted
 dex = 2
 str = 5
-$ rollin characters                    # * marks the active one
+$ rollin characters                     # * marks the active one
   default
 * grog
-$ rollin --char default vars           # one call as another character
+$ rollin --char default vars            # one call as another character
 str = 3
-$ rollin char default                  # switch back (persists)
+$ rollin char default                   # switch back (persists)
 active character: default
 $ rollin char gorg
 error: no character named 'gorg'
 hint: did you mean 'grog'?
 hint: create it with: rollin char new gorg
-$ rollin char delete grog              # `default` cannot be deleted
-deleted character 'grog'
 ```
 
 - `set <name> <integer>`, `unset <name>`, `vars` work on the active character.
@@ -319,15 +318,33 @@ number can: modifiers, dice count and sides, keep/drop counts, explode,
 reroll and success thresholds, and the repeat count:
 
 ```
-$ rollin "@level d6" --seed 2            # 3d6 when level is 3
+$ rollin set level 3
+set level = 3 on 'default'
+$ rollin set sides 8
+set sides = 8 on 'default'
+$ rollin set n 2
+set n = 2 on 'default'
+$ rollin set keep 2
+set keep = 2 on 'default'
+$ rollin set dc 8
+set dc = 8 on 'default'
+$ rollin '@level d6' --seed 2           # 3d6 when level is 3
 @level d6  [2, 6, 4]  →  12
-$ rollin "d@sides"  --seed 2             # d8 when sides is 8
+$ rollin 'd@sides' --seed 2             # d8 when sides is 8
 d@sides  [8]  →  8
-$ rollin "@n x 4d6kh@keep"                # n=2, keep=2: two stat rolls
+$ rollin '@n x 4d6kh@keep' --seed 1     # two stat rolls
 1: 4d6kh@keep  [4, 3, (1), (2)]  →  7
 2: 4d6kh@keep  [4, 3, (2), (2)]  →  7
-$ rollin "6d10>=@dc" --seed 1            # dc=8
+$ rollin '6d10>=@dc' --seed 1           # a success pool
 6d10>=@dc  [6, 5, 3, 3, 9✓, 10✓]  →  2 successes
+$ rollin set sides 1
+set sides = 1 on 'default'
+$ rollin 'd@sides'
+error: @sides is 1 but sides must be between 2 and 10000
+  d@sides
+   ^^^^^^
+$ rollin set sides 8
+set sides = 8 on 'default'
 ```
 
 A variable is replaced by its number before the formula is parsed, so
@@ -341,34 +358,30 @@ typed negative number (`d20+@str` with `str = -1` is `d20-1`), but as a dice
 count or sides it is an error. `@` alone, or `@` followed by a digit or `_`,
 is a syntax error.
 
-Errors about a variable's value underline the `@name` and say what it was:
-
-```
-$ rollin set sides 1
-$ rollin "d@sides"
-error: @sides is 1 but sides must be between 2 and 10000
-  d@sides
-   ^^^^^^
-```
+Errors about a variable's value underline the `@name` and say what it was
+(see `d@sides` with `sides` set to 1 above).
 
 **Undefined variables** name the character, list what is defined, suggest a
 near miss (within two edits) and show the fix; `--char` appears in the fix
 only when you used it:
 
 ```
-$ rollin "d20+@dx"
+$ rollin char grog
+active character: grog
+$ rollin 'd20+@dx'
 error: undefined variable @dx on character 'grog'
   d20+@dx
       ^^^
-defined: con, dex, str
+defined: dex, str
 did you mean @dex?
 set it with: rollin set dx <value>
-$ rollin --char default "d20+@str"
-error: undefined variable @str on character 'default'
-  d20+@str
+$ rollin --char default 'd20+@dex'
+error: undefined variable @dex on character 'default'
+  d20+@dex
       ^^^^
-no variables are defined
-set it with: rollin --char default set str <value>
+defined: dc, keep, level, n, sides, str
+did you mean @dc?
+set it with: rollin --char default set dex <value>
 ```
 
 **Character presets.** A character's presets are looked up before global
@@ -376,19 +389,22 @@ ones, so a character preset shadows a global one of the same name; the
 listing says so, and `--char` or `char` shows the other side:
 
 ```
-$ rollin save atk "d20+@str"          # on grog; the variable need not exist yet
+$ rollin save atk 'd20+@str'            # on grog; the variable need not exist yet
 saved 'atk' on 'grog': d20+@str
 $ rollin save --global atk d20
 saved 'atk': d20
 $ rollin presets
-atk  d20+@str  [grog, shadows global]
-atk  d20       [global, shadowed by grog]
-$ rollin atk --seed 3                  # grog's atk, with grog's @str
+atk    d20+@str  [grog, shadows global]
+atk    d20       [global, shadowed by grog]
+house  d6        [global]
+$ rollin atk --seed 3                   # grog's atk, with grog's @str
 (preset 'atk': d20+@str)
 d20+@str  [3] + 5  →  8
-$ rollin --char default atk --seed 3   # the global one
+$ rollin --char default atk --seed 3    # the global one
 (preset 'atk': d20)
 d20  [3]  →  3
+$ rollin char delete grog               # deleting the active character falls back to default
+deleted character 'grog'; active character is now 'default'
 ```
 
 Presets resolve their variables **when rolled**, not when saved, so changing
