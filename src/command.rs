@@ -2,6 +2,7 @@
 //! and one executor that runs it against a [`Context`]. The one-shot binary
 //! and the later interactive session both use it. It never prints.
 
+use crate::characters::CharacterStore;
 use crate::presets::{is_name_shaped, validate_name, NameError, Store, StoreError};
 use crate::{Error, Roll};
 use rand::Rng;
@@ -24,6 +25,8 @@ pub enum Command {
     Delete { name: String },
     /// Set a variable on a character.
     Set { name: String, value: i64 },
+    /// List the active character's variables.
+    Vars,
 }
 
 /// Why a command could not be parsed or run.
@@ -103,6 +106,7 @@ pub fn parse_command(
             Err(CommandError::Usage("roll <formula or preset name>".into()))
         }
         Some("roll") => roll_or_preset(rest, preset_names),
+        Some("vars") => Ok(Command::Vars),
         Some("set") => match rest {
             [name, value] => Ok(Command::Set {
                 name: name.to_lowercase(),
@@ -168,6 +172,14 @@ pub struct Context {
 }
 
 impl Context {
+    /// The characters store, or an error if there is no config directory.
+    pub fn characters(&self) -> Result<CharacterStore, CommandError> {
+        self.config_dir
+            .as_deref()
+            .map(CharacterStore::in_config_dir)
+            .ok_or(CommandError::NoConfigDir)
+    }
+
     /// The presets store, or an error if there is no config directory.
     pub fn store(&self) -> Result<Store, CommandError> {
         self.config_dir
@@ -206,6 +218,8 @@ pub enum Output {
         name: String,
     },
     Imported(ImportReport),
+    /// Variables as (name, value), sorted by name.
+    Vars(Vec<(String, i64)>),
     VarSet {
         name: String,
         value: i64,
@@ -311,11 +325,21 @@ pub fn execute(
             Ok(Output::Imported(report))
         }
         Command::Presets => Ok(Output::Presets(store.load()?.into_iter().collect())),
-        Command::Set { name, value } => Ok(Output::VarSet {
-            name: name.clone(),
-            value: *value,
-            character: "default".into(),
-        }),
+        Command::Set { name, value } => {
+            let characters = ctx.characters()?;
+            let mut character = characters.load("default")?;
+            character.vars.insert(name.clone(), *value);
+            characters.save("default", &character)?;
+            Ok(Output::VarSet {
+                name: name.clone(),
+                value: *value,
+                character: "default".into(),
+            })
+        }
+        Command::Vars => {
+            let character = ctx.characters()?.load("default")?;
+            Ok(Output::Vars(character.vars.into_iter().collect()))
+        }
     }
 }
 

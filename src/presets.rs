@@ -76,20 +76,7 @@ impl Store {
     }
 
     fn write_atomic(&self, text: &str) -> Result<(), StoreError> {
-        use std::io::Write;
-        let dir = self.path.parent().expect("store path has a parent");
-        std::fs::create_dir_all(dir).map_err(|e| self.error(e.to_string()))?;
-        let tmp = dir.join(format!(".presets.toml.{}.tmp", std::process::id()));
-        let written = (|| {
-            let mut file = std::fs::File::create(&tmp)?;
-            file.write_all(text.as_bytes())?;
-            file.sync_all()?;
-            std::fs::rename(&tmp, &self.path)
-        })();
-        written.map_err(|e| {
-            let _ = std::fs::remove_file(&tmp);
-            self.error(e.to_string())
-        })
+        write_atomic(&self.path, text)
     }
 
     fn error(&self, message: String) -> StoreError {
@@ -98,6 +85,34 @@ impl Store {
             message,
         }
     }
+}
+
+/// Writes `text` to `path` atomically: a temp file in the same directory is
+/// written and synced, then renamed over the target. Creates the directory.
+pub(crate) fn write_atomic(path: &Path, text: &str) -> Result<(), StoreError> {
+    use std::io::Write;
+    let error = |message: String| StoreError {
+        path: path.to_path_buf(),
+        message,
+    };
+    let dir = path.parent().expect("store path has a parent");
+    std::fs::create_dir_all(dir).map_err(|e| error(e.to_string()))?;
+    let file_name = path.file_name().expect("store path has a file name");
+    let tmp = dir.join(format!(
+        ".{}.{}.tmp",
+        file_name.to_string_lossy(),
+        std::process::id()
+    ));
+    let written = (|| {
+        let mut file = std::fs::File::create(&tmp)?;
+        file.write_all(text.as_bytes())?;
+        file.sync_all()?;
+        std::fs::rename(&tmp, path)
+    })();
+    written.map_err(|e| {
+        let _ = std::fs::remove_file(&tmp);
+        error(e.to_string())
+    })
 }
 
 /// Words the command parser treats as commands.

@@ -7,6 +7,7 @@
 //! output stays stable. Changing it invalidates every golden fixture.
 
 mod ast;
+mod characters;
 mod command;
 mod error;
 mod eval;

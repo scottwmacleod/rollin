@@ -130,6 +130,11 @@ fn show(args: &Args, output: Output) {
                 report.skipped.len()
             );
         }
+        Output::Vars(vars) => {
+            for (name, value) in vars {
+                println!("{name} = {value}");
+            }
+        }
         Output::VarSet {
             name,
             value,
