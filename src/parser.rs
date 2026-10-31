@@ -318,6 +318,11 @@ impl Parser<'_> {
         };
         let start = self.tokens[self.pos].span.start;
         self.pos += 1;
+        if !self.at_comparison() && !matches!(self.peek(), Some(Token::Number(_))) {
+            return Err(self.unexpected(
+                "a reroll condition (a number, or a comparison such as <2, <=2, >5, >=5, =3)",
+            ));
+        }
         let (cmp, value) = self.parse_condition("a number after the reroll condition")?;
         let reroll = Reroll { mode, cmp, value };
         if mode == RerollMode::Repeat && (1..=sides).all(|face| reroll.triggers(face)) {

@@ -191,3 +191,27 @@ fn more_than_100_rerolls_of_one_die_is_an_error_naming_cap_and_term() {
         "error: rerolls per die cap (100) exceeded by 'd100rr<=99'\n  d100rr<=99\n  ^^^^^^^^^^\n"
     );
 }
+
+#[test]
+fn a_reroll_without_a_condition_is_a_parse_error() {
+    assert_eq!(
+        failure("4d6r"),
+        "error: expected a reroll condition (a number, or a comparison such as <2, <=2, >5, >=5, =3), found end of input\n  4d6r\n      ^\n"
+    );
+    assert_eq!(
+        failure("4d6rr+3"),
+        "error: expected a reroll condition (a number, or a comparison such as <2, <=2, >5, >=5, =3), found '+'\n  4d6rr+3\n       ^\n"
+    );
+    assert_eq!(
+        failure("4d6r<"),
+        "error: expected a number after the reroll condition, found end of input\n  4d6r<\n       ^\n"
+    );
+}
+
+#[test]
+fn reroll_clauses_out_of_order_or_repeated_are_parse_errors() {
+    for formula in ["4d6!r1", "4d6dl1r1", "4d6r1r1", "4d6r1rr2", "4d6rrr1"] {
+        let stderr = failure(formula);
+        assert!(stderr.starts_with("error: "), "{formula}: {stderr}");
+    }
+}
