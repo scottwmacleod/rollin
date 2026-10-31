@@ -221,3 +221,69 @@ fn reroll_explode_and_success_clauses_on_fudge_dice_are_typed_errors() {
         );
     }
 }
+
+#[track_caller]
+fn stderr_of(formula: &str) -> String {
+    let run = Cli::new().run(&["--seed", "1", "--", formula]);
+    assert!(
+        !run.success() && run.stdout.is_empty(),
+        "{formula}: {run:?}"
+    );
+    run.stderr
+}
+
+#[test]
+fn fudge_dice_count_toward_the_dice_caps() {
+    assert_eq!(
+        stderr_of("1001dF"),
+        "error: dice per term cap (1000) exceeded by '1001dF'\n  1001dF\n  ^^^^\n"
+    );
+    Cli::new().run(&["--seed", "1", "1000dF"]).assert_success();
+    let eleven = ["1000dF"; 11].join("+");
+    let err = stderr_of(&eleven);
+    assert!(
+        err.starts_with("error: dice per expression cap (10000) exceeded by '1000dF'"),
+        "{err}"
+    );
+    let ten = ["1000dF"; 10].join("+");
+    Cli::new().run(&["--seed", "1", &ten]).assert_success();
+}
+
+#[test]
+fn ordinary_dice_keep_their_sides_validation() {
+    for formula in ["d1", "d0", "d10001", "2d1"] {
+        assert!(
+            stderr_of(formula).starts_with("error: sides must be between 2 and 10000"),
+            "{formula}"
+        );
+    }
+    Cli::new()
+        .run(&["--seed", "1", "d2+d10000"])
+        .assert_success();
+}
+
+#[test]
+fn failure_clauses_and_fudge_words_still_lex_apart() {
+    let cli = Cli::new();
+    for formula in ["6d10>=8f1", "6D10>=8F1", "6d10>=8 f1", "6d10>7f<=2"] {
+        cli.run(&["--seed", "2", "--", formula]).assert_success();
+    }
+    let out = cli.roll_json("6d10>=8f1", 2);
+    assert_eq!(out["rolls"][0]["kind"], "count");
+    assert_eq!(out["rolls"][0]["expr"]["failures"], 1);
+    // `f` after a fudge group is still just a failure clause with nothing to
+    // follow, not part of the fudge word.
+    assert!(stderr_of("4dFf1").starts_with("error: a failure clause 'f' must follow"));
+}
+
+#[test]
+fn fudge_works_in_arithmetic_and_with_other_terms() {
+    let cli = Cli::new();
+    for seed in 0..20 {
+        let faces: i64 = values(&cli, "4dF", seed).iter().sum();
+        let out = cli.roll_json("4dF+3", seed);
+        assert_eq!(out["rolls"][0]["total"], faces + 3, "seed {seed}");
+        let out = cli.roll_json("4dF-5", seed);
+        assert_eq!(out["rolls"][0]["total"], faces - 5, "seed {seed}");
+    }
+}
