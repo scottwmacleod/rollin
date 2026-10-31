@@ -9,9 +9,9 @@ use crate::ast::{
     RerollMode, Select, SelectKind, Special, Success,
 };
 use crate::error::Error;
+use crate::eval::MAX_DICE_PER_EXPRESSION;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
 const MAX_DICE_PER_TERM: i64 = 1000;
-const MAX_DICE_PER_EXPRESSION: i64 = 10000;
 const MAX_DEPTH: usize = 32;
 const MAX_REPEAT: i64 = 100;
 const MAX_SIDES: i64 = 10000;
@@ -408,10 +408,10 @@ impl Parser<'_> {
         let success = self.parse_count()?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
-        if self.item_dice > MAX_DICE_PER_EXPRESSION {
+        if self.item_dice > MAX_DICE_PER_EXPRESSION as i64 {
             return Err(Error::LimitExceeded {
                 cap: "dice per expression",
-                limit: MAX_DICE_PER_EXPRESSION as usize,
+                limit: MAX_DICE_PER_EXPRESSION,
                 term: self.src[span.clone()].to_string(),
                 span,
             });

@@ -14,7 +14,7 @@ const MAX_REROLLS_PER_DIE: usize = 100;
 
 /// Hard limit (ADR 0006): dice rolled by one roll, extra explosion dice
 /// included.
-const MAX_DICE_PER_EXPRESSION: usize = 10000;
+pub(crate) const MAX_DICE_PER_EXPRESSION: usize = 10000;
 
 /// State threaded through one roll's evaluation.
 struct Ctx<'a, R> {
