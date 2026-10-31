@@ -128,7 +128,7 @@ proptest! {
 
     /// The same, from an alphabet where many strings are almost-valid.
     #[test]
-    fn dice_like_strings_never_panic(s in "[0-9dDfFkKlLhHpPrR+\\-*/() ,!<>=%aAvVsSiI]{0,40}") {
+    fn dice_like_strings_never_panic(s in "[0-9dDfFkKlLhHpPrR+\\-*/() ,!<>=%aAvVsSiI#xX]{0,40}") {
         let _ = roll(&s, &mut seeded_rng(0));
     }
 
@@ -732,6 +732,70 @@ mod presets {
             ),
         ) {
             let _ = parse_command(&words, &mut no_presets);
+        }
+    }
+}
+
+/// Repeat (`Nx`) and labels (`# text`).
+mod repeat_labels {
+    use super::*;
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(256))]
+
+        /// `Nx` over a list yields N times its rolls, with iterations
+        /// numbered 1..=N in order and no iteration field without `Nx`.
+        #[test]
+        fn repeat_yields_n_times_the_rolls_numbered_in_order(
+            n in 1u32..=100,
+            sp in "[ ]{0,2}",
+            x in prop_oneof![Just("x"), Just("X")],
+            seed in any::<u64>(),
+        ) {
+            let list = "d20+5, 2d6, 3";
+            let rolls = roll(&format!("{n}{sp}{x} {list}"), &mut seeded_rng(seed)).unwrap();
+            prop_assert_eq!(rolls.len(), 3 * n as usize);
+            for (i, r) in rolls.iter().enumerate() {
+                prop_assert_eq!(r.iteration, Some(i as u32 / 3 + 1));
+            }
+            let plain = roll(list, &mut seeded_rng(seed)).unwrap();
+            prop_assert!(plain.iter().all(|r| r.iteration.is_none()));
+        }
+
+        /// A label never changes the dice or totals: the same seed rolls the
+        /// same with and without it, repeated or not.
+        #[test]
+        fn labels_never_alter_dice_or_totals(
+            label in "[a-z0-9 ()#!é✨%x-]{0,12}",
+            n in 1u32..=5,
+            seed in any::<u64>(),
+        ) {
+            let label = format!("a{label}");
+            let bare = "4d6dl1, d20adv+5, 6d10>=8f1";
+            let tagged = "4d6dl1 # {L}, d20adv+5 #{L}, 6d10>=8f1 # {L}".replace("{L}", &label);
+            let a = roll(&format!("{n}x {bare}"), &mut seeded_rng(seed)).unwrap();
+            let b = roll(&format!("{n}x {tagged}"), &mut seeded_rng(seed)).unwrap();
+            prop_assert_eq!(a.len(), b.len());
+            for (x, y) in a.iter().zip(&b) {
+                prop_assert_eq!(x.total, y.total);
+                prop_assert_eq!(&x.expr, &y.expr);
+                prop_assert_eq!(&x.formula, &y.formula);
+                prop_assert_eq!(y.label.as_deref(), Some(label.trim()));
+                prop_assert_eq!(x.iteration, y.iteration);
+            }
+        }
+
+        /// Text dense in `#`, `x` and `,` never panics and every error span
+        /// stays inside the input on char boundaries.
+        #[test]
+        fn repeat_and_label_like_strings_never_panic(
+            s in "[0-9dDxX#,é ()+*a]{0,30}",
+        ) {
+            if let Err(e) = roll(&s, &mut seeded_rng(0)) {
+                let span = e.span();
+                prop_assert!(span.start <= span.end && span.end <= s.len(), "{:?} {:?}", s, span);
+                prop_assert!(s.is_char_boundary(span.start) && s.is_char_boundary(span.end));
+            }
         }
     }
 }
