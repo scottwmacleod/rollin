@@ -264,7 +264,7 @@ impl Parser<'_> {
         }
         let reroll = self.parse_reroll(sides)?;
         let explode = self.parse_explode(sides)?;
-        let advantage = self.parse_advantage();
+        let advantage = self.parse_advantage(count, sides, self.tokens[start].span.start)?;
         let (count, select) = match advantage {
             Some(kind) => (2, Some(Select { kind, n: 1 })),
             None => (count, self.parse_select(count)?),
@@ -413,14 +413,28 @@ impl Parser<'_> {
 
     /// Optional `adv`/`dis` suffix: sugar for rolling two dice and keeping
     /// the highest or lowest.
-    fn parse_advantage(&mut self) -> Option<SelectKind> {
-        let kind = match self.peek() {
-            Some(Token::Word(w)) if w == "adv" => SelectKind::KeepHighest,
-            Some(Token::Word(w)) if w == "dis" => SelectKind::KeepLowest,
-            _ => return None,
+    fn parse_advantage(
+        &mut self,
+        count: i64,
+        sides: i64,
+        term_start: usize,
+    ) -> Result<Option<SelectKind>, Error> {
+        let (word, kind, keep) = match self.peek() {
+            Some(Token::Word(w)) if w == "adv" => ("adv", SelectKind::KeepHighest, "highest"),
+            Some(Token::Word(w)) if w == "dis" => ("dis", SelectKind::KeepLowest, "lowest"),
+            _ => return Ok(None),
         };
         self.pos += 1;
-        Some(kind)
+        if count != 1 {
+            let letters = &kind_letters(kind);
+            return Err(Error::invalid_dice(
+                format!(
+                    "'{word}' applies to exactly one die; write d{sides}{word}, or 2d{sides}{letters}1 to keep the {keep} of two"
+                ),
+                term_start..self.prev_end(),
+            ));
+        }
+        Ok(Some(kind))
     }
 
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
@@ -463,6 +477,15 @@ impl Parser<'_> {
             ));
         }
         Ok(Some(Select { kind, n }))
+    }
+}
+
+fn kind_letters(kind: SelectKind) -> &'static str {
+    match kind {
+        SelectKind::DropLowest => "dl",
+        SelectKind::DropHighest => "dh",
+        SelectKind::KeepLowest => "kl",
+        SelectKind::KeepHighest => "kh",
     }
 }
 

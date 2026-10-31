@@ -41,3 +41,24 @@ fn disadvantage_matches_keep_lowest_of_two_under_the_same_seed() {
         assert_eq!(without_text(&dis), without_text(&kl), "seed {seed}");
     }
 }
+
+/// Runs a formula expected to fail and returns its stderr.
+#[track_caller]
+fn failure(formula: &str) -> String {
+    let run = Cli::new().run(&["--seed", "1", "--", formula]);
+    assert!(!run.success(), "{formula:?} should fail: {run:?}");
+    assert!(run.stdout.is_empty(), "{formula:?}: {run:?}");
+    run.stderr
+}
+
+#[test]
+fn advantage_on_more_than_one_die_is_an_error_underlining_the_term() {
+    assert_eq!(
+        failure("2d20adv"),
+        "error: 'adv' applies to exactly one die; write d20adv, or 2d20kh1 to keep the highest of two\n  2d20adv\n  ^^^^^^^\n"
+    );
+    assert_eq!(
+        failure("d6+3D8DIS"),
+        "error: 'dis' applies to exactly one die; write d8dis, or 2d8kl1 to keep the lowest of two\n  d6+3D8DIS\n     ^^^^^^\n"
+    );
+}
