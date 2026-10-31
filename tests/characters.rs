@@ -31,3 +31,50 @@ fn a_variable_in_a_modifier_rolls_like_its_literal() {
     assert_eq!(with_var["rolls"][0]["total"], literal["rolls"][0]["total"]);
     assert_eq!(with_var["rolls"][0]["expr"], literal["rolls"][0]["expr"]);
 }
+
+/// Each formula with `@v` must roll exactly like the same formula with the
+/// variable's value typed in, for variables in every numeric position.
+#[test]
+fn a_variable_works_in_every_position_a_literal_does() {
+    let cli = Cli::new();
+    for (name, value) in [("n", 4), ("s", 8), ("k", 2), ("x", 7), ("dc", 5), ("lv", 3)] {
+        cli.run(&["set", name, &value.to_string()]).assert_success();
+    }
+    let table = [
+        ("@lv d6", "3d6"),
+        ("@lv d6dl1", "3d6dl1"),
+        ("d@s", "d8"),
+        ("@n d@s", "4d8"),
+        ("4d6kh@k", "4d6kh2"),
+        ("4d6dl@k", "4d6dl2"),
+        ("4d6dh@k", "4d6dh2"),
+        ("4d6kl@k", "4d6kl2"),
+        ("4d8!>@x", "4d8!>7"),
+        ("4d8!!>=@x", "4d8!!>=7"),
+        ("4d8!p>@x", "4d8!p>7"),
+        ("6d8r<@k", "6d8r<2"),
+        ("6d8rr<@k", "6d8rr<2"),
+        ("6d8r@k", "6d8r2"),
+        ("6d10>=@dc", "6d10>=5"),
+        ("6d10>@dc", "6d10>5"),
+        ("6d10>=@dc f@k", "6d10>=5f2"),
+        ("6d10>=@dc f<=@k", "6d10>=5f<=2"),
+        ("@n x d20", "4x d20"),
+        ("@n x d20, d6", "4x d20, d6"),
+        ("@lv * (@n + 2) - @k / 2", "3 * (4 + 2) - 2 / 2"),
+        ("d20 + @LV", "d20 + 3"),
+    ];
+    for (with_var, literal) in table {
+        let a = cli.roll_json(with_var, 11);
+        let b = cli.roll_json(literal, 11);
+        let strip = |v: &serde_json::Value| -> Vec<(serde_json::Value, serde_json::Value)> {
+            v["rolls"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|r| (r["total"].clone(), common::flat_dice(&r["expr"]).into()))
+                .collect()
+        };
+        assert_eq!(strip(&a), strip(&b), "{with_var} vs {literal}");
+    }
+}
