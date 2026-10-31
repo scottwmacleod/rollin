@@ -156,12 +156,27 @@ impl Explode {
 pub struct Success {
     pub cmp: Cmp,
     pub value: i64,
+    pub failure: Option<Failure>,
+}
+
+/// A failure clause: `f` right after the success clause. Each counting die
+/// that matches (and is not already a success) subtracts one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Failure {
+    pub cmp: Cmp,
+    pub value: i64,
 }
 
 impl Success {
     /// Whether a counting die showing `face` is a success.
     pub fn succeeds(&self, face: i64) -> bool {
         self.cmp.test(face, self.value)
+    }
+
+    /// Whether a counting die showing `face` is a failure. A die that is a
+    /// success is never also a failure: success wins.
+    pub fn fails(&self, face: i64) -> bool {
+        !self.succeeds(face) && self.failure.is_some_and(|f| f.cmp.test(face, f.value))
     }
 }
 

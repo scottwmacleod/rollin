@@ -72,3 +72,54 @@ fn json_leaves_sum_rolls_without_count_fields() {
     }
     assert!(flat_dice(node).iter().all(|d| d.get("outcome").is_none()));
 }
+
+#[test]
+fn a_failure_clause_subtracts_and_marks_failing_dice() {
+    let cli = Cli::new();
+    type Case = (&'static str, fn(i64) -> bool, fn(i64) -> bool);
+    let cases: [Case; 6] = [
+        ("6d10>=8f1", |v| v >= 8, |v| v == 1),
+        ("6d10>7f<=2", |v| v > 7, |v| v <= 2),
+        ("6d10<=3f>9", |v| v <= 3, |v| v > 9),
+        ("6d10=10f=1", |v| v == 10, |v| v == 1),
+        ("6d10>=8 f1", |v| v >= 8, |v| v == 1),
+        ("6D10>=8 F<2", |v| v >= 8, |v| v < 2),
+    ];
+    for (formula, wins, loses) in &cases {
+        let (mut negative, mut with_failures) = (false, false);
+        for seed in SEEDS {
+            let out = cli.roll_json(formula, seed);
+            let node = &out["rolls"][0]["expr"];
+            let pool = flat_dice(node);
+            let hits = pool.iter().filter(|d| wins(value(d))).count() as i64;
+            let misses = pool.iter().filter(|d| loses(value(d))).count() as i64;
+            for d in &pool {
+                let expected = match (wins(value(d)), loses(value(d))) {
+                    (true, _) => Some("success"),
+                    (false, true) => Some("failure"),
+                    _ => None,
+                };
+                assert_eq!(
+                    d.get("outcome").and_then(Value::as_str),
+                    expected,
+                    "{formula}"
+                );
+            }
+            assert_eq!(node["successes"], hits, "{formula} seed {seed}");
+            assert_eq!(node["failures"], misses, "{formula} seed {seed}");
+            assert_eq!(
+                out["rolls"][0]["total"],
+                hits - misses,
+                "{formula} seed {seed}"
+            );
+            assert_eq!(node["subtotal"], hits - misses);
+            negative |= hits < misses;
+            with_failures |= misses > 0;
+        }
+        assert!(with_failures, "{formula}: no failures in {SEEDS:?}");
+        assert!(
+            negative || *formula == "6d10=10f=1",
+            "{formula}: never went negative"
+        );
+    }
+}

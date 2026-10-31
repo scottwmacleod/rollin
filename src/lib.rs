@@ -75,6 +75,7 @@ pub struct Die {
 #[serde(rename_all = "lowercase")]
 pub enum Outcome {
     Success,
+    Failure,
 }
 
 /// What kind of number a roll produces.

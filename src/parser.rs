@@ -5,8 +5,8 @@
 //! just the simplest such expression.
 
 use crate::ast::{
-    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Item, Reroll, RerollMode, Select,
-    SelectKind, Success,
+    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Item, Reroll, RerollMode,
+    Select, SelectKind, Success,
 };
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
@@ -379,7 +379,23 @@ impl Parser<'_> {
             return Ok(None);
         }
         let (cmp, value) = self.parse_condition("a number after the success condition")?;
-        Ok(Some(Success { cmp, value }))
+        let failure = if matches!(self.peek(), Some(Token::Word(w)) if w == "f") {
+            self.pos += 1;
+            if !self.at_comparison() && !matches!(self.peek(), Some(Token::Number(_))) {
+                return Err(self.unexpected(
+                    "a failure condition (a number, or a comparison such as <=2, >9, =1)",
+                ));
+            }
+            let (cmp, value) = self.parse_condition("a number after the failure condition")?;
+            Some(Failure { cmp, value })
+        } else {
+            None
+        };
+        Ok(Some(Success {
+            cmp,
+            value,
+            failure,
+        }))
     }
 
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).

@@ -128,19 +128,23 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
             let mut tally = None;
             let subtotal = match d.success {
                 Some(success) => {
-                    let mut successes = 0;
+                    let (mut successes, mut failures) = (0, 0);
                     for die in dice.iter_mut().filter(|d| d.status.counts()) {
-                        if success.succeeds(i64::from(die.value)) {
+                        let face = i64::from(die.value);
+                        if success.succeeds(face) {
                             die.outcome = Some(Outcome::Success);
                             successes += 1;
+                        } else if success.fails(face) {
+                            die.outcome = Some(Outcome::Failure);
+                            failures += 1;
                         }
                     }
                     tally = Some(Tally {
                         kind: Kind::Count,
                         successes,
-                        failures: 0,
+                        failures,
                     });
-                    successes
+                    successes - failures
                 }
                 None => dice
                     .iter()
