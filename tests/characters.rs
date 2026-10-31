@@ -476,3 +476,111 @@ fn the_fix_line_mentions_char_only_when_it_was_used() {
         "{plain:?}"
     );
 }
+
+fn write_file(cli: &Cli, rel: &str, text: &str) -> std::path::PathBuf {
+    let path = cli.config_dir().join("rollin").join(rel);
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(&path, text).unwrap();
+    path
+}
+
+#[test]
+fn an_active_character_with_no_file_is_a_clear_error_with_the_way_out() {
+    let cli = Cli::new();
+    write_file(&cli, "state.toml", "active = \"ghost\"\n");
+    for args in [&["d20"][..], &["vars"], &["set", "a", "1"]] {
+        let run = cli.run(args);
+        assert_eq!(run.code, 1, "{args:?}: {run:?}");
+        assert_eq!(
+            run.stderr,
+            "error: the active character 'ghost' does not exist; run `rollin char default` to switch back\n"
+        );
+    }
+    assert_eq!(
+        cli.run(&["characters"]).stdout,
+        "  default\n* ghost (missing)\n"
+    );
+    cli.run(&["char", "default"]).assert_success();
+    cli.run(&["d20"]).assert_success();
+}
+
+#[test]
+fn corrupt_state_and_character_files_are_errors_naming_the_path_and_untouched() {
+    let cli = Cli::new();
+    let state_cmds: &[&[&str]] = &[
+        &["vars"],
+        &["set", "a", "1"],
+        &["unset", "a"],
+        &["d20"],
+        &["char"],
+        &["characters"],
+        &["char", "new", "mira"],
+        &["char", "default"],
+        &["char", "grog"],
+        &["char", "delete", "grog"],
+    ];
+    let char_cmds: &[&[&str]] = &[&["vars"], &["set", "a", "1"], &["unset", "a"], &["d20"]];
+    let cases: [(&str, &str, &str, &[&[&str]]); 8] = [
+        ("state.toml", "active = [", "not valid TOML", state_cmds),
+        (
+            "state.toml",
+            "active = 3\n",
+            "`active` must be a string",
+            state_cmds,
+        ),
+        (
+            "characters/default.toml",
+            "vars = [",
+            "not valid TOML",
+            char_cmds,
+        ),
+        (
+            "characters/default.toml",
+            "vars = 3\n",
+            "`vars` must be a table",
+            char_cmds,
+        ),
+        (
+            "characters/default.toml",
+            "[vars]\nstr = \"x\"\n",
+            "variable 'str' must be an integer",
+            char_cmds,
+        ),
+        (
+            "characters/default.toml",
+            "[vars]\nstr = 1.5\n",
+            "variable 'str' must be an integer",
+            char_cmds,
+        ),
+        (
+            "characters/default.toml",
+            "presets = 3\n",
+            "`presets` must be a table",
+            char_cmds,
+        ),
+        (
+            "characters/default.toml",
+            "[presets]\natk = 3\n",
+            "preset 'atk' must be a string",
+            char_cmds,
+        ),
+    ];
+    let grog = write_file(&cli, "characters/grog.toml", "");
+    for (file, text, message, commands) in cases {
+        let path = write_file(&cli, file, text);
+        for args in commands {
+            let run = cli.run(args);
+            assert_eq!(run.code, 1, "{file} {text:?} {args:?}: {run:?}");
+            assert!(
+                run.stderr.contains(&path.display().to_string()) && run.stderr.contains(message),
+                "{file} {text:?} {args:?}: {run:?}"
+            );
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), text, "{args:?}");
+        }
+        std::fs::remove_file(&path).unwrap();
+    }
+    assert!(
+        grog.exists(),
+        "a failed delete must leave the character alone"
+    );
+}

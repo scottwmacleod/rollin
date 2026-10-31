@@ -161,9 +161,12 @@ fn show(args: &Args, output: Output) {
         }
         Output::VarUnset { name, character } => println!("unset {name} on '{character}'"),
         Output::Characters { names, active } => {
-            for name in names {
-                let mark = if name == active { '*' } else { ' ' };
+            for name in &names {
+                let mark = if *name == active { '*' } else { ' ' };
                 println!("{mark} {name}");
+            }
+            if !names.contains(&active) {
+                println!("* {active} (missing)");
             }
         }
         Output::CharDeleted {

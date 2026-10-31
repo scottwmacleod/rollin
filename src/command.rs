@@ -565,8 +565,8 @@ pub fn execute(
                 return Err(CommandError::CannotDeleteDefault);
             }
             require_character(&characters, name)?;
-            characters.delete(name)?;
             let was_active = characters.active()? == *name;
+            characters.delete(name)?;
             if was_active {
                 characters.set_active(DEFAULT)?;
             }
@@ -582,6 +582,7 @@ pub fn execute(
                 return Err(CommandError::CharacterExists(name));
             }
             let name = &name;
+            characters.active()?;
             characters.save(name, &Character::default())?;
             characters.set_active(name)?;
             Ok(Output::CharCreated(name.clone()))

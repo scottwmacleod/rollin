@@ -104,6 +104,8 @@ impl CharacterStore {
 
     /// Makes `name` the active character, atomically.
     pub fn set_active(&self, name: &str) -> Result<(), StoreError> {
+        // A corrupt state file is an error, never overwritten.
+        self.active()?;
         let path = self.state_path();
         let mut root = toml::Table::new();
         root.insert("active".into(), toml::Value::String(name.to_string()));
@@ -148,6 +150,19 @@ impl CharacterStore {
                 character.vars.insert(var.to_lowercase(), value);
             }
         }
+        if let Some(section) = table.get("presets") {
+            let section = section
+                .as_table()
+                .ok_or_else(|| error("`presets` must be a table".into()))?;
+            for (preset, formula) in section {
+                let formula = formula
+                    .as_str()
+                    .ok_or_else(|| error(format!("preset '{preset}' must be a string")))?;
+                character
+                    .presets
+                    .insert(preset.to_lowercase(), formula.to_string());
+            }
+        }
         Ok(character)
     }
 
@@ -157,8 +172,13 @@ impl CharacterStore {
         for (var, value) in &character.vars {
             vars.insert(var.clone(), toml::Value::Integer(*value));
         }
+        let mut presets = toml::Table::new();
+        for (preset, formula) in &character.presets {
+            presets.insert(preset.clone(), toml::Value::String(formula.clone()));
+        }
         let mut root = toml::Table::new();
         root.insert("vars".into(), toml::Value::Table(vars));
+        root.insert("presets".into(), toml::Value::Table(presets));
         let path = self.path(name);
         let text = toml::to_string(&root).map_err(|e| StoreError {
             path: path.clone(),
