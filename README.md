@@ -78,8 +78,6 @@ the same thing here; arithmetic is an addition on top.
 | `d20adv`, `d20dis` | Advantage / disadvantage: roll two d20s and keep the highest / lowest; exactly `2d20kh1` / `2d20kl1` |
 | `d20adv+8`, `(d20dis+3)*2`, `d20r1adv`, `d10adv>=7` | `adv`/`dis` combine with modifiers: reroll and explode go before it, a success clause after |
 | `d%`, `2d%`, `3d%dl1` | Percentile: `d%` is a d100, same results as `d100` under the same seed, and takes the same modifiers |
-| `4dF`, `4df`, `dF` | Fudge dice: each die is -1, 0 or +1 with equal probability |
-| `4dFdl1`, `4dFkh3`, `dFadv` | Keep/drop and `adv`/`dis` work on fudge dice |
 | `15` | A bare number is its own total |
 | `2d6+1d4+3`, `d20+d4-2` | Add and subtract any dice groups and numbers |
 | `d20*2`, `10/4` | Multiply and divide; they bind tighter than `+` and `-` |
@@ -99,7 +97,7 @@ or not (`6x`, `6 x`, `6X`). Output lines are numbered by iteration, see
 [Output modes](#output-modes). It is an error to use `Nx` a second time
 (`2x 3x d20`) or anywhere but the start of the formula (`d20, 3x d6`), and an
 `Nx` with nothing after it (`6x`) is an error. The 10000-dice limit below is
-per roll, not per repeat, and `Nx` over a success count, fudge or `adv`
+per roll, not per repeat, and `Nx` over a success count or `adv`
 formula works like it does without the `Nx`.
 
 **Repeat and parentheses.** `Nx` always applies to the whole rest of the
@@ -174,17 +172,6 @@ is never highlighted.
 `d%` is a d100 whose faces and RNG use are identical to `d100`; the formula
 and term are echoed as typed (`d%`), and `--json` marks the group with
 `"special": "percentile"` and `"sides": 100`.
-Fudge dice (`dF`, any letter case) draw a single uniform choice among three
-outcomes per die, exactly the same draw as a d3 shifted by two (face 1 is -1,
-2 is 0, 3 is +1). Default output shows each fudge die as `+`, `0` or `-`
-(the symbols printed on real fudge dice, readable at a glance, and distinct
-from numbers so a die's sign is never lost); `-v` shows the numeric value
-(`-1 kept`) and `--json` has the numbers -1, 0 and 1, with
-`"special": "fudge"` and `"sides": 3` on the group. The total is always
-numeric (`4dF` totals -4 to 4). Fudge dice count toward the dice limits and
-skip the sides check. Reroll (`r`, `rr`), explode (`!`) and success clauses
-are not supported on fudge dice and are errors pointing at the clause
-(`4dF!`, `4dFr1`, `4dF>=1`: "... clauses are not supported on fudge dice").
 Quote formulas containing `!` in an interactive shell (`rollin '3d6!'`), where
 `!` can trigger history expansion.
 
@@ -245,8 +232,8 @@ work. A name is rejected at `save` (and skipped by `import`) when it is a
 command word (`save presets delete import roll set unset vars char
 characters help quit exit history`; the last four are session-only, see
 [Session](#session)), a reserved dice keyword
-(`adv dis df dl dh kl kh r rr p f d`), or would itself parse as a dice formula
-(`d20`, `df`, `D6`). The error says which rule failed.
+(`adv dis dl dh kl kh r rr p f d`), or would itself parse as a dice formula
+(`d20`, `D6`). The error says which rule failed.
 
 **File.** Global presets live in `$XDG_CONFIG_HOME/rollin/presets.toml` (an empty or
 relative `XDG_CONFIG_HOME` is ignored; the default is
@@ -591,7 +578,6 @@ $ rollin -v --seed 3 4d6r<2dl1
   total: 15
 ```
 
-Fudge dice read `+`, `0` and `-` in the one-line output (`4dF  [-, -, +, +]  →  0`) and as numbers in `-v`.
 Success counts show each counting die's outcome after its value, `✓` for a
 success and `✗` for a failure, and label the total as a count so it cannot
 be mistaken for a sum: `3 successes`, `1 success`. When any die failed, the net
