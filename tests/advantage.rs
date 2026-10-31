@@ -62,3 +62,25 @@ fn advantage_on_more_than_one_die_is_an_error_underlining_the_term() {
         "error: 'dis' applies to exactly one die; write d8dis, or 2d8kl1 to keep the lowest of two\n  d6+3D8DIS\n     ^^^^^^\n"
     );
 }
+
+#[test]
+fn adv_and_dis_cannot_be_combined_with_keep_or_drop() {
+    // (formula, which suffix is named, byte column of the second clause, its width)
+    let cases = [
+        ("d20advdl1", "adv", 6, 2),
+        ("d20 dis KH1", "dis", 8, 2),
+        ("3d20kh1adv", "adv", 7, 3),
+        ("3d20DL2dis", "dis", 7, 3),
+    ];
+    for (formula, word, col, width) in cases {
+        assert_eq!(
+            failure(formula),
+            format!(
+                "error: '{word}' already keeps one die, so it cannot be combined with dl, dh, kl or kh\n  {formula}\n  {}{}\n",
+                " ".repeat(col),
+                "^".repeat(width)
+            ),
+            "{formula}"
+        );
+    }
+}

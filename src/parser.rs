@@ -269,6 +269,7 @@ impl Parser<'_> {
             Some(kind) => (2, Some(Select { kind, n: 1 })),
             None => (count, self.parse_select(count)?),
         };
+        self.reject_select_with_advantage(advantage, select)?;
         let success = self.parse_count()?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
@@ -437,6 +438,33 @@ impl Parser<'_> {
         Ok(Some(kind))
     }
 
+    /// `adv`/`dis` already keep one die, so a keep/drop clause on either side
+    /// of it is an error pointing at whichever came second.
+    fn reject_select_with_advantage(
+        &self,
+        advantage: Option<SelectKind>,
+        select: Option<Select>,
+    ) -> Result<(), Error> {
+        let word = match (advantage, select, self.peek()) {
+            // `adv` then `dl`/`dh`/`kl`/`kh`: the clause that follows.
+            (Some(kind), _, Some(Token::Word(w))) if is_select_word(w) => {
+                (kind_name(kind), self.tokens[self.pos].span.clone())
+            }
+            // `kh1` then `adv`/`dis`.
+            (None, Some(_), Some(Token::Word(w))) if w == "adv" || w == "dis" => {
+                (w.clone(), self.tokens[self.pos].span.clone())
+            }
+            _ => return Ok(()),
+        };
+        Err(Error::invalid_dice(
+            format!(
+                "'{}' already keeps one die, so it cannot be combined with dl, dh, kl or kh",
+                word.0
+            ),
+            word.1,
+        ))
+    }
+
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
     fn parse_select(&mut self, count: i64) -> Result<Option<Select>, Error> {
         let kind = match self.peek() {
@@ -477,6 +505,17 @@ impl Parser<'_> {
             ));
         }
         Ok(Some(Select { kind, n }))
+    }
+}
+
+fn is_select_word(w: &str) -> bool {
+    matches!(w, "dl" | "dh" | "kl" | "kh")
+}
+
+fn kind_name(kind: SelectKind) -> String {
+    match kind {
+        SelectKind::KeepHighest => "adv".into(),
+        _ => "dis".into(),
     }
 }
 

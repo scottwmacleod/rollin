@@ -99,10 +99,22 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
                 end = i + 1;
                 chars.next();
             }
-            out.push(Spanned {
-                token: Token::Word(src[start..end].to_ascii_lowercase()),
-                span: start..end,
-            });
+            // `adv` and `dis` end a run early so `d20advdl1` lexes as `adv`,
+            // `dl`, `1` and the parser can say what is wrong with it.
+            let word = src[start..end].to_ascii_lowercase();
+            let split = if word.starts_with("adv") || word.starts_with("dis") {
+                3
+            } else {
+                word.len()
+            };
+            for (from, to) in [(0, split), (split, word.len())] {
+                if from < to {
+                    out.push(Spanned {
+                        token: Token::Word(word[from..to].to_string()),
+                        span: start + from..start + to,
+                    });
+                }
+            }
         } else if c.is_whitespace() {
             chars.next();
         } else {
