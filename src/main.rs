@@ -147,6 +147,9 @@ fn fail(e: &CommandError) -> ExitCode {
     match e {
         CommandError::Formula { source, error } => {
             eprint!("{}", render_error(source, error, &error.to_string()));
+            if let Some(hint) = error.hint() {
+                eprintln!("hint: {hint}");
+            }
         }
         CommandError::UndefinedVariable(u) => {
             eprint!("{}", render_error(&u.source, &u.error, &e.to_string()));

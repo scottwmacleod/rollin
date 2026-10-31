@@ -143,6 +143,21 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
         }
         return Err(Error::syntax("no formulas provided", 0..src.len()));
     }
+    if repeat.is_some() && !items.iter().any(|item| item.expr.has_dice()) {
+        let span = tokens[0].span.start..tokens[1].span.end;
+        let body = src[span.end..].trim().to_string();
+        let multiplication = match items.as_slice() {
+            [Item { label: None, .. }] => {
+                Some(format!("{}*{body}", src[tokens[0].span.clone()].trim()))
+            }
+            _ => None,
+        };
+        return Err(Error::RepeatWithoutDice {
+            body,
+            multiplication,
+            span,
+        });
+    }
     Ok(Formula { repeat, items })
 }
 

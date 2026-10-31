@@ -153,3 +153,15 @@ fn very_long_flat_formulas_do_not_overflow_the_stack() {
     run.assert_success();
     assert!(run.stdout.ends_with("→  200000\n"), "{}", run.stdout.len());
 }
+
+#[test]
+fn a_repeat_of_a_plain_number_is_a_typed_error_that_points_to_multiplication() {
+    assert_eq!(
+        failure("2x3"),
+        "error: 'x' means repeat, and '3' has no dice to repeat\n  2x3\n  ^^\nhint: for multiplication use *; did you mean 2*3?\n"
+    );
+    assert_eq!(
+        failure("3x5+2"),
+        "error: 'x' means repeat, and '5+2' has no dice to repeat\n  3x5+2\n  ^^\nhint: for multiplication use *; did you mean 3*5+2?\n"
+    );
+}
