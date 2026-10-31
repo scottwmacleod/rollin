@@ -718,7 +718,9 @@ cargo clippy --all-targets -- -D warnings
 
 Behaviour tests go through the CLI seam: the compiled `rollin` binary is run
 as a process with `--seed`, `--json`, and a fresh temporary `XDG_CONFIG_HOME`
-per test. The helper is `tests/common/mod.rs` (`Cli::new()`, `cli.run(&[..])`).
+per test. `HOME` and the working directory are temporary too, so no test can
+touch your real config or the checkout, even with `XDG_CONFIG_HOME` unset;
+`tests/sandbox.rs` guards that and fails if a test spawns `rollin` by hand. The helper is `tests/common/mod.rs` (`Cli::new()`, `cli.run(&[..])`).
 
 | Test file | What it covers |
 | --- | --- |
@@ -733,7 +735,9 @@ per test. The helper is `tests/common/mod.rs` (`Cli::new()`, `cli.run(&[..])`).
 | `tests/session.rs` | The session over piped stdin: byte-for-byte parity with one-shot for a table of lines, parse errors, `help`, `quit`, `history` |
 | `tests/session_lib.rs` | Prompt text and `Context::completion_data`, at the library API |
 | `tests/completion.rs` | Tab completion as pure functions (`complete`), including `proptest` invariants |
-| `tests/pty.rs` | Three smoke tests in a real pseudo-terminal: starts and quits, Tab completes a name, history survives a restart |
+| `tests/pty.rs` | Smoke tests in a real pseudo-terminal: starts and quits, Tab completes a name, history survives a restart, Ctrl-C clears the line, Ctrl-D exits 0, an unwritable history file warns once |
+| `tests/readme_session.rs` | Replays the README's Session transcript through the binary and fails if the documented output drifts |
+| `tests/sandbox.rs` | The harness keeps every spawn off the real `HOME`/config and out of the checkout |
 | `tests/properties.rs` | `proptest` invariants at the library API, including "never panics" |
 | `tests/fixtures_present.rs` | Committed fixtures (`presets.json`) are well-formed (`tests/presets.rs` imports and rolls it) |
 
@@ -744,7 +748,7 @@ interactive session feed it the same way, through one `run_line`.
 
 The pty tests (`rexpect`) are the one exception to the CLI-seam rule: a line
 editor can only be exercised on a terminal. They use a 10 second timeout,
-`TERM=xterm` and a temporary `XDG_CONFIG_HOME`, and match plain ASCII output
+`TERM=xterm` and a temporary `HOME` and `XDG_CONFIG_HOME`, and match plain ASCII output
 (rexpect reads bytes as Latin-1, so the `→` of the default output is avoided;
 `--json` is used instead). Everything else about the session is tested with
 piped stdin.

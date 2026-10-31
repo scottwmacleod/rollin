@@ -1,5 +1,5 @@
 //! The interactive session, driven non-interactively: lines piped on stdin.
-//! (Terminal behaviour is covered by the three pty tests in `tests/pty.rs`.)
+//! (Terminal behaviour is covered by the pty tests in `tests/pty.rs`.)
 
 mod common;
 use common::Cli;
