@@ -119,3 +119,19 @@ fn json_rolls_carry_the_iteration_only_when_repeated() {
     let plain = cli.roll_json("d20+8", 1);
     assert!(plain["rolls"][0].get("iteration").is_none());
 }
+
+#[test]
+fn the_x_may_be_upper_case_and_spaced_or_not() {
+    let cli = Cli::new();
+    let expected = stdout_of(&cli, 5, &["3x 4d6dl1"]);
+    for formula in ["3 x 4d6dl1", "3X 4d6dl1", "3x4d6dl1", "3xd6+d6", "3 X d6"] {
+        let got = stdout_of(&cli, 5, &["--", formula]);
+        assert_eq!(got.lines().count(), 3, "{formula}: {got}");
+    }
+    for formula in ["3 x 4d6dl1", "3X 4d6dl1", "3x4d6dl1", " 3  x  4d6dl1"] {
+        assert_eq!(stdout_of(&cli, 5, &["--", formula]), expected, "{formula}");
+    }
+    // Separate shell words, as in `rollin 3x 4d6dl1`.
+    assert_eq!(stdout_of(&cli, 5, &["3x", "4d6dl1"]), expected);
+    assert_eq!(stdout_of(&cli, 5, &["3", "x", "4d6dl1"]), expected);
+}
