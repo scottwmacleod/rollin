@@ -264,7 +264,11 @@ impl Parser<'_> {
         }
         let reroll = self.parse_reroll(sides)?;
         let explode = self.parse_explode(sides)?;
-        let select = self.parse_select(count)?;
+        let advantage = self.parse_advantage();
+        let (count, select) = match advantage {
+            Some(kind) => (2, Some(Select { kind, n: 1 })),
+            None => (count, self.parse_select(count)?),
+        };
         let success = self.parse_count()?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
@@ -405,6 +409,18 @@ impl Parser<'_> {
             value,
             failure,
         }))
+    }
+
+    /// Optional `adv`/`dis` suffix: sugar for rolling two dice and keeping
+    /// the highest or lowest.
+    fn parse_advantage(&mut self) -> Option<SelectKind> {
+        let kind = match self.peek() {
+            Some(Token::Word(w)) if w == "adv" => SelectKind::KeepHighest,
+            Some(Token::Word(w)) if w == "dis" => SelectKind::KeepLowest,
+            _ => return None,
+        };
+        self.pos += 1;
+        Some(kind)
     }
 
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
