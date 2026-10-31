@@ -75,6 +75,9 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
             names.extend(["new", "delete"]);
             names
         }
+        [command] if command == "set" || command == "unset" => {
+            data.variables.iter().map(String::as_str).collect()
+        }
         [command, sub] if command == "char" && sub == "delete" => chars(),
         _ => Vec::new(),
     };

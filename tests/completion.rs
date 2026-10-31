@@ -66,3 +66,12 @@ fn char_completes_subcommands_and_character_names() {
     expect("--seed ", 7, &[]);
     expect("--color ", 8, &[]);
 }
+
+#[test]
+fn set_and_unset_complete_variable_names_without_the_at_sign() {
+    expect("set ", 4, &["dex", "stealth", "str"]);
+    expect("set st", 4, &["stealth", "str"]);
+    expect("unset D", 6, &["dex"]);
+    expect("set str ", 8, &[]);
+    expect("unset str d", 10, &[]);
+}
