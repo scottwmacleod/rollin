@@ -247,7 +247,7 @@ pub fn render_verbose(p: Painter, roll: &Roll) -> String {
     let nat = natural(&roll.expr);
     let mut lines = vec![roll.formula.clone()];
     verbose_node(p, &roll.expr, nat, 1, "", &mut lines);
-    lines.push(format!("  total: {}", p.bold(&roll.total.to_string())));
+    lines.push(format!("  total: {}", p.bold(&total_text(roll))));
     lines.join("\n")
 }
 
@@ -267,12 +267,18 @@ fn verbose_node(
             term,
             dice,
             subtotal,
+            tally,
             ..
         } => {
             let cells: Vec<String> = dice
                 .iter()
                 .map(|d| {
                     let mut text = format!("{} {}", d.value, status_label(d.status));
+                    match d.outcome {
+                        Some(Outcome::Success) => text.push_str(" success"),
+                        Some(Outcome::Failure) => text.push_str(" failure"),
+                        None => {}
+                    }
                     if d.parts.len() > 1 {
                         let parts: Vec<String> = d.parts.iter().map(u32::to_string).collect();
                         text.push_str(&format!(" ({})", parts.join("+")));
@@ -284,6 +290,12 @@ fn verbose_node(
                 "{pad}{lead}{term}: {} = {subtotal}",
                 cells.join(", ")
             ));
+            if let Some(t) = tally {
+                out.push(format!(
+                    "{pad}  successes: {}, failures: {}, net: {subtotal}",
+                    t.successes, t.failures
+                ));
+            }
         }
         Node::Neg { operand, total } => {
             out.push(format!("{pad}{lead}-("));

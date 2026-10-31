@@ -303,11 +303,17 @@ fn color_paints_successes_green_and_failures_red_only_when_on() {
                 _ => value(d).to_string(),
             })
             .collect();
-        let (s, f) = (node["successes"].as_i64().unwrap(), node["failures"].as_i64().unwrap());
+        let (s, f) = (
+            node["successes"].as_i64().unwrap(),
+            node["failures"].as_i64().unwrap(),
+        );
         let tail = label(s - f, (f > 0).then_some((s, f)));
         assert_eq!(
             colored,
-            format!("6d10>=8f1  [{}]  →  \x1b[1m{tail}\x1b[0m\n", cells.join(", ")),
+            format!(
+                "6d10>=8f1  [{}]  →  \x1b[1m{tail}\x1b[0m\n",
+                cells.join(", ")
+            ),
             "seed {seed}"
         );
         // Off: no escape codes at all.
@@ -328,9 +334,57 @@ fn a_natural_twenty_or_one_on_a_counting_d20_is_painted_by_outcome_not_bold() {
             continue;
         }
         let colored = human(&["--color", "always"], "d20>=15f1", seed);
-        let (code, mark) = if v == 20 { ("32", "✓") } else { ("31", "✗") };
-        assert!(colored.contains(&format!("[\x1b[{code}m{v}{mark}\x1b[0m]")), "{colored}");
+        let (code, mark) = if v == 20 {
+            ("32", "✓")
+        } else {
+            ("31", "✗")
+        };
+        assert!(
+            colored.contains(&format!("[\x1b[{code}m{v}{mark}\x1b[0m]")),
+            "{colored}"
+        );
         checked += 1;
     }
     assert!(checked >= 2, "only {checked} naturals in 200 seeds");
+}
+
+#[test]
+fn verbose_shows_per_die_outcomes_and_the_tally_breakdown() {
+    let cli = Cli::new();
+    for seed in SEEDS {
+        let out = cli.roll_json("6d10>=8f1", seed);
+        let node = &out["rolls"][0]["expr"];
+        let cells: Vec<String> = flat_dice(node)
+            .iter()
+            .map(|d| match d.get("outcome").and_then(Value::as_str) {
+                Some(o) => format!("{} kept {o}", value(d)),
+                None => format!("{} kept", value(d)),
+            })
+            .collect();
+        let (s, f) = (
+            node["successes"].as_i64().unwrap(),
+            node["failures"].as_i64().unwrap(),
+        );
+        let tail = label(s - f, (f > 0).then_some((s, f)));
+        assert_eq!(
+            human(&["-v"], "6d10>=8f1", seed),
+            format!(
+                "6d10>=8f1\n  6d10>=8f1: {} = {}\n    successes: {s}, failures: {f}, net: {}\n  total: {tail}\n",
+                cells.join(", "),
+                s - f,
+                s - f
+            ),
+            "seed {seed}"
+        );
+    }
+}
+
+#[test]
+fn verbose_sum_rolls_are_unchanged() {
+    let out = human(&["-v"], "2d6+3", 4);
+    assert!(!out.contains("successes"), "{out}");
+    assert!(out.ends_with(&format!("  total: {}\n", {
+        let j = Cli::new().roll_json("2d6+3", 4);
+        j["rolls"][0]["total"].as_i64().unwrap()
+    })));
 }
