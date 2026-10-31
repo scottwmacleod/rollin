@@ -284,14 +284,38 @@ impl Parser<'_> {
         })
     }
 
+    fn at_comparison(&self) -> bool {
+        matches!(
+            self.peek(),
+            Some(Token::Gt | Token::Ge | Token::Lt | Token::Le | Token::Eq)
+        )
+    }
+
+    /// A condition on a face: a comparison operator then a number, or a bare
+    /// number meaning equals.
+    fn parse_condition(&mut self, what: &str) -> Result<(Cmp, i64), Error> {
+        let cmp = match self.peek() {
+            Some(Token::Gt) => Cmp::Gt,
+            Some(Token::Ge) => Cmp::Ge,
+            Some(Token::Lt) => Cmp::Lt,
+            Some(Token::Le) => Cmp::Le,
+            _ => Cmp::Eq,
+        };
+        if self.at_comparison() {
+            self.pos += 1;
+        }
+        let value = self.number(what)?;
+        Ok((cmp, value))
+    }
+
     /// Optional `r` reroll clause with a condition.
     fn parse_reroll(&mut self) -> Result<Option<Reroll>, Error> {
         if !matches!(self.peek(), Some(Token::Word(w)) if w == "r") {
             return Ok(None);
         }
         self.pos += 1;
-        let value = self.number("a number after the reroll condition")?;
-        Ok(Some(Reroll { cmp: Cmp::Eq, value }))
+        let (cmp, value) = self.parse_condition("a number after the reroll condition")?;
+        Ok(Some(Reroll { cmp, value }))
     }
 
     /// Optional `!` explode clause: `!` alone explodes on the maximum face,
@@ -311,20 +335,10 @@ impl Parser<'_> {
         } else {
             ExplodeMode::Plain
         };
-        let (cmp, value) = match self.peek() {
-            Some(Token::Gt) => (Cmp::Gt, None),
-            Some(Token::Ge) => (Cmp::Ge, None),
-            Some(Token::Lt) => (Cmp::Lt, None),
-            Some(Token::Le) => (Cmp::Le, None),
-            Some(Token::Eq) => (Cmp::Eq, None),
-            _ => (Cmp::Eq, Some(sides)),
-        };
-        let value = match value {
-            Some(v) => v,
-            None => {
-                self.pos += 1;
-                self.number("a number after the explode condition")?
-            }
+        let (cmp, value) = if self.at_comparison() {
+            self.parse_condition("a number after the explode condition")?
+        } else {
+            (Cmp::Eq, sides)
         };
         let explode = Explode { mode, cmp, value };
         if (1..=sides).all(|face| explode.triggers(face)) {

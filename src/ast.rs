@@ -86,13 +86,7 @@ pub struct Reroll {
 impl Reroll {
     /// Whether a die showing `face` is rerolled.
     pub fn triggers(&self, face: i64) -> bool {
-        match self.cmp {
-            Cmp::Gt => face > self.value,
-            Cmp::Ge => face >= self.value,
-            Cmp::Lt => face < self.value,
-            Cmp::Le => face <= self.value,
-            Cmp::Eq => face == self.value,
-        }
+        self.cmp.test(face, self.value)
     }
 }
 
@@ -125,16 +119,23 @@ pub enum Cmp {
     Eq,
 }
 
+impl Cmp {
+    /// Whether `face <cmp> value` holds.
+    pub fn test(self, face: i64, value: i64) -> bool {
+        match self {
+            Cmp::Gt => face > value,
+            Cmp::Ge => face >= value,
+            Cmp::Lt => face < value,
+            Cmp::Le => face <= value,
+            Cmp::Eq => face == value,
+        }
+    }
+}
+
 impl Explode {
     /// Whether a die showing `face` explodes.
     pub fn triggers(&self, face: i64) -> bool {
-        match self.cmp {
-            Cmp::Gt => face > self.value,
-            Cmp::Ge => face >= self.value,
-            Cmp::Lt => face < self.value,
-            Cmp::Le => face <= self.value,
-            Cmp::Eq => face == self.value,
-        }
+        self.cmp.test(face, self.value)
     }
 }
 

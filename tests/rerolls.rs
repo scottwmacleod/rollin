@@ -49,3 +49,35 @@ fn r_rerolls_a_matching_die_once_and_the_second_result_stands() {
     assert!(rerolled > 0, "no seed in {SEEDS:?} rerolled");
     assert!(second_one_stood > 0, "no seed kept a second 1");
 }
+
+#[test]
+fn comparison_conditions_choose_which_faces_reroll() {
+    let cli = Cli::new();
+    type Case = (&'static str, fn(i64) -> bool);
+    let cases: [Case; 6] = [
+        ("4d6r<2", |v| v < 2),
+        ("4d6r<=2", |v| v <= 2),
+        ("4d6r>5", |v| v > 5),
+        ("4d6r>=5", |v| v >= 5),
+        ("4d6r=3", |v| v == 3),
+        ("4D6 R <= 2", |v| v <= 2),
+    ];
+    for (formula, matches) in &cases {
+        let mut rerolled = 0;
+        for seed in SEEDS {
+            let pool = dice(&cli, formula, seed);
+            rerolled += pool.iter().filter(|d| status(d) == "rerolled").count();
+            // A slot's first roll matches exactly when it was rerolled away;
+            // the replacement after it may match and stands.
+            for (j, d) in pool.iter().enumerate() {
+                if status(d) == "rerolled" {
+                    assert!(matches(value(d)), "{formula}: {pool:?}");
+                    assert_ne!(status(&pool[j + 1]), "rerolled");
+                } else if j == 0 || status(&pool[j - 1]) != "rerolled" {
+                    assert!(!matches(value(d)), "{formula}: {pool:?}");
+                }
+            }
+        }
+        assert!(rerolled > 0, "{formula}: nothing rerolled in {SEEDS:?}");
+    }
+}
