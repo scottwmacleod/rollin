@@ -133,15 +133,17 @@ pub enum SelectKind {
 }
 
 impl Dice {
-    /// How many of the lowest and highest dice this group drops.
-    pub fn drops(&self) -> (i64, i64) {
+    /// How many of the lowest and highest dice this group drops from a pool
+    /// of `pool` dice (more than `count` when dice explode).
+    pub fn drops(&self, pool: usize) -> (i64, i64) {
+        let pool = pool as i64;
         match self.select {
             None => (0, 0),
             Some(Select { kind, n }) => match kind {
                 SelectKind::DropLowest => (n, 0),
                 SelectKind::DropHighest => (0, n),
-                SelectKind::KeepHighest => (self.count - n, 0),
-                SelectKind::KeepLowest => (0, self.count - n),
+                SelectKind::KeepHighest => (pool - n, 0),
+                SelectKind::KeepLowest => (0, pool - n),
             },
         }
     }

@@ -220,3 +220,50 @@ fn an_explode_condition_needs_a_number() {
         );
     }
 }
+
+#[test]
+fn explosions_happen_before_keep_and_drop_which_see_every_die() {
+    let cli = Cli::new();
+    // (formula, number of dice kept, keeps the highest?)
+    let cases = [
+        ("4d6!dl1", None, 1),
+        ("4d6!kh2", Some(2), 0),
+        ("4d6!!kh2", Some(2), 0),
+        ("4d6!pkh2", Some(2), 0),
+        ("4d6!>4dh", None, 1),
+    ];
+    let mut bigger_pools = 0;
+    for (formula, keeps, drops) in cases {
+        for seed in SEEDS {
+            let out = cli.roll_json(formula, seed);
+            let pool = flat_dice(&out["rolls"][0]["expr"]);
+            let kept: Vec<i64> = pool
+                .iter()
+                .filter(|d| status(d) != "dropped")
+                .map(value)
+                .collect();
+            let dropped: Vec<i64> = pool
+                .iter()
+                .filter(|d| status(d) == "dropped")
+                .map(value)
+                .collect();
+            match keeps {
+                Some(k) => assert_eq!(kept.len(), k, "{formula} seed {seed}: {pool:?}"),
+                None => assert_eq!(dropped.len(), drops, "{formula} seed {seed}: {pool:?}"),
+            }
+            let (lo, hi) = (kept.iter().min(), kept.iter().max());
+            if formula.contains("dl") {
+                assert!(dropped.iter().all(|d| Some(d) <= lo), "{formula}: {pool:?}");
+            } else if formula.contains("dh") {
+                assert!(dropped.iter().all(|d| Some(d) >= hi), "{formula}: {pool:?}");
+            } else {
+                assert!(dropped.iter().all(|d| Some(d) <= lo), "{formula}: {pool:?}");
+            }
+            assert_eq!(out["rolls"][0]["total"], kept.iter().sum::<i64>());
+            if pool.len() > 4 && !formula.contains("!!") {
+                bigger_pools += 1;
+            }
+        }
+    }
+    assert!(bigger_pools > 0, "no explosion reached keep/drop");
+}

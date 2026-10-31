@@ -61,7 +61,8 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
                     }));
                 }
             }
-            apply_drops(&mut dice, d.drops());
+            let drops = d.drops(dice.len());
+            apply_drops(&mut dice, drops);
             let subtotal = dice
                 .iter()
                 .filter(|d| d.status.counts())
