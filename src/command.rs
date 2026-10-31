@@ -137,6 +137,8 @@ pub enum Output {
     Saved {
         name: String,
         formula: String,
+        /// The formula this save overwrote, if the name already existed.
+        replaced: Option<String>,
     },
     Deleted {
         name: String,
