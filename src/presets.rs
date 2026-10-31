@@ -63,20 +63,12 @@ impl Store {
         Ok(presets)
     }
 
-    /// Replaces the file's contents with `presets`, atomically.
+    /// Makes the file hold exactly `presets`, atomically. An existing file is
+    /// edited in place, so hand-written comments and layout survive.
     pub fn save(&self, presets: &BTreeMap<String, String>) -> Result<(), StoreError> {
-        let mut section = toml::Table::new();
-        for (name, formula) in presets {
-            section.insert(name.clone(), toml::Value::String(formula.clone()));
-        }
-        let mut root = toml::Table::new();
-        root.insert("presets".into(), toml::Value::Table(section));
-        let text = toml::to_string(&root).map_err(|e| self.error(e.to_string()))?;
-        self.write_atomic(&text)
-    }
-
-    fn write_atomic(&self, text: &str) -> Result<(), StoreError> {
-        write_atomic(&self.path, text)
+        edit_document(&self.path, |doc| {
+            sync_section(doc, "presets", string_values(presets))
+        })
     }
 
     fn error(&self, message: String) -> StoreError {
@@ -85,6 +77,84 @@ impl Store {
             message,
         }
     }
+}
+
+/// The values of a name-to-text map as TOML values.
+pub(crate) fn string_values(map: &BTreeMap<String, String>) -> BTreeMap<String, toml_edit::Value> {
+    map.iter()
+        .map(|(k, v)| (k.clone(), toml_edit::Value::from(v.as_str())))
+        .collect()
+}
+
+/// Reads the TOML file at `path` (empty when missing), applies `edit`, and
+/// writes the result back atomically. Untouched parts of an existing
+/// document keep their comments, order and formatting.
+pub(crate) fn edit_document(
+    path: &Path,
+    edit: impl FnOnce(&mut toml_edit::DocumentMut) -> Result<(), String>,
+) -> Result<(), StoreError> {
+    let error = |message: String| StoreError {
+        path: path.to_path_buf(),
+        message,
+    };
+    let raw = match std::fs::read_to_string(path) {
+        Ok(raw) => raw,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
+        Err(e) => return Err(error(e.to_string())),
+    };
+    let mut doc: toml_edit::DocumentMut = raw
+        .parse()
+        .map_err(|e: toml_edit::TomlError| error(format!("not valid TOML: {}", e.message())))?;
+    edit(&mut doc).map_err(error)?;
+    write_atomic(path, &doc.to_string())
+}
+
+/// Makes the `[section]` table hold exactly `entries` (keys compared in
+/// lowercase). Keys already present with the right value are left untouched;
+/// a changed value keeps its key and surrounding comments; new keys are
+/// appended; missing ones are removed.
+pub(crate) fn sync_section(
+    doc: &mut toml_edit::DocumentMut,
+    section: &str,
+    mut entries: BTreeMap<String, toml_edit::Value>,
+) -> Result<(), String> {
+    use toml_edit::{Item, Table};
+    let item = doc
+        .entry(section)
+        .or_insert_with(|| Item::Table(Table::new()));
+    let table = item
+        .as_table_like_mut()
+        .ok_or_else(|| format!("`{section}` must be a table"))?;
+    let stale: Vec<String> = table
+        .iter()
+        .map(|(key, _)| key.to_string())
+        .filter(|key| !entries.contains_key(&key.to_lowercase()))
+        .collect();
+    for key in stale {
+        table.remove(&key);
+    }
+    for (key, old) in table.iter_mut() {
+        let Some(new) = entries.remove(&key.get().to_lowercase()) else {
+            continue;
+        };
+        let unchanged = match (old.as_value(), &new) {
+            (Some(old), new) => {
+                old.as_str() == new.as_str() && old.as_integer() == new.as_integer()
+            }
+            _ => false,
+        };
+        if !unchanged {
+            let mut new = new;
+            if let Some(old) = old.as_value() {
+                *new.decor_mut() = old.decor().clone();
+            }
+            *old = Item::Value(new);
+        }
+    }
+    for (key, value) in entries {
+        table.insert(&key, Item::Value(value));
+    }
+    Ok(())
 }
 
 /// Writes `text` to `path` atomically: a temp file in the same directory is

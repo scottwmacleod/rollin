@@ -142,6 +142,9 @@ fn fail(e: &CommandError) -> ExitCode {
     match e {
         CommandError::Formula { source, error } => {
             eprint!("{}", render_error(source, error, &error.to_string()));
+            if let Some(hint) = error.hint() {
+                eprintln!("hint: {hint}");
+            }
         }
         CommandError::UndefinedVariable(u) => {
             eprint!("{}", render_error(&u.source, &u.error, &e.to_string()));
@@ -166,6 +169,12 @@ fn fail(e: &CommandError) -> ExitCode {
                 eprintln!("hint: did you mean '{name}'?");
             }
             eprintln!("hint: run `rollin presets` to list saved presets");
+        }
+        CommandError::SessionOnly { word } => {
+            eprintln!("error: {e}");
+            if word.eq_ignore_ascii_case("help") {
+                eprintln!("hint: for command-line help, run `rollin --help`");
+            }
         }
         CommandError::NoSuchCharacterPreset {
             name,
