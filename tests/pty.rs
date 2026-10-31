@@ -79,3 +79,25 @@ fn history_persists_across_restarts() {
     second.send_line("quit").unwrap();
     second.exp_eof().expect("exits on quit");
 }
+
+#[test]
+fn ctrl_c_discards_the_line_being_typed_and_the_session_continues() {
+    let cli = Cli::new();
+    let result = cli
+        .run(&["d20", "--seed", "5", "--json"])
+        .stdout
+        .trim_end()
+        .to_string();
+    let mut p = start(&cli);
+    p.exp_string("rollin> ").expect("prompt");
+    // If Ctrl-C did not clear this, it would prefix the next line and fail.
+    send(&mut p, "garbage not a roll");
+    send(&mut p, "\x03");
+    p.exp_string("rollin> ")
+        .expect("a fresh prompt after Ctrl-C");
+    p.send_line("d20 --seed 5 --json").unwrap();
+    p.exp_string(&result)
+        .expect("the next line ran on its own, with the garbage gone");
+    p.send_line("quit").unwrap();
+    p.exp_eof().expect("exits on quit");
+}
