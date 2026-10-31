@@ -65,3 +65,20 @@ fn a_label_inside_parentheses_swallows_the_close_paren() {
     assert!(run.stderr.contains("unclosed '('"), "{run:?}");
     assert!(run.stderr.contains("label"), "{run:?}");
 }
+
+#[test]
+fn verbose_shows_the_label_on_the_block_header() {
+    let run = Cli::new().run(&["-v", "--seed", "1", "d20+8 # attack"]);
+    run.assert_success();
+    let first = run.stdout.lines().next().unwrap();
+    assert_eq!(first, "d20+8  # attack");
+}
+
+#[test]
+fn color_dims_the_label_and_plain_output_has_no_escapes() {
+    let cli = Cli::new();
+    let on = cli.run(&["--color", "always", "--seed", "1", "d20+8 # attack"]);
+    assert!(on.stdout.contains("\x1b[2m# attack\x1b[0m"), "{on:?}");
+    let off = cli.run(&["--color", "never", "--seed", "1", "d20+8 # attack"]);
+    assert!(!off.stdout.contains('\x1b'), "{off:?}");
+}
