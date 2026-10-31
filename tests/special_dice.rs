@@ -132,3 +132,39 @@ fn json_marks_fudge_groups_and_totals_them() {
         assert_eq!(cli.roll_json("4dF", seed)["rolls"][0]["total"], sum);
     }
 }
+
+#[test]
+fn default_output_draws_fudge_dice_as_plus_zero_and_minus_and_verbose_as_numbers() {
+    let cli = Cli::new();
+    let mut seen = std::collections::BTreeSet::new();
+    for seed in 0..40 {
+        let faces = values(&cli, "4dF", seed);
+        let glyphs: Vec<&str> = faces
+            .iter()
+            .map(|v| match v {
+                -1 => "-",
+                0 => "0",
+                _ => "+",
+            })
+            .collect();
+        let total: i64 = faces.iter().sum();
+        let run = cli.run(&["--seed", &seed.to_string(), "4dF"]);
+        run.assert_success();
+        assert_eq!(
+            run.stdout,
+            format!("4dF  [{}]  →  {total}\n", glyphs.join(", ")),
+            "seed {seed}"
+        );
+        let verbose = cli.run(&["--seed", &seed.to_string(), "-v", "4dF"]);
+        let cells: Vec<String> = faces.iter().map(|v| format!("{v} kept")).collect();
+        assert!(
+            verbose
+                .stdout
+                .contains(&format!("4dF: {} = {total}", cells.join(", "))),
+            "seed {seed}: {}",
+            verbose.stdout
+        );
+        seen.extend(glyphs.iter().map(|g| g.to_string()));
+    }
+    assert_eq!(seen.len(), 3, "{seen:?}");
+}
