@@ -5,6 +5,7 @@
 mod common;
 
 use common::Cli;
+use rexpect::process::WaitStatus;
 use rexpect::session::{spawn_command, PtySession};
 
 /// Generous: CI machines can be slow, and a timeout is only ever a failure.
@@ -100,4 +101,17 @@ fn ctrl_c_discards_the_line_being_typed_and_the_session_continues() {
         .expect("the next line ran on its own, with the garbage gone");
     p.send_line("quit").unwrap();
     p.exp_eof().expect("exits on quit");
+}
+
+#[test]
+fn ctrl_d_at_an_empty_prompt_exits_cleanly_with_status_zero() {
+    let cli = Cli::new();
+    let mut p = start(&cli);
+    p.exp_string("rollin> ").expect("prompt");
+    send(&mut p, "\x04");
+    p.exp_eof().expect("exits on Ctrl-D");
+    match p.process().wait().expect("reap rollin") {
+        WaitStatus::Exited(_, code) => assert_eq!(code, 0, "exit status"),
+        other => panic!("rollin did not exit normally: {other:?}"),
+    }
 }
