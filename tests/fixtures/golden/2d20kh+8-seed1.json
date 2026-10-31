@@ -1,5 +1,5 @@
 {
   "formula": "2d20kh+8",
   "seed": 1,
-  "expected": {"schema_version":1,"rolls":[{"formula":"2d20kh+8","total":17,"expr":{"type":"chain","first":{"type":"dice","term":"2d20kh","dice":[{"value":9,"status":"kept"},{"value":2,"status":"dropped"}],"subtotal":9},"rest":[{"op":"+","node":{"type":"number","value":8}}],"total":17}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"2d20kh+8","total":17,"expr":{"type":"chain","first":{"type":"dice","term":"2d20kh","sides":20,"dice":[{"value":9,"status":"kept"},{"value":2,"status":"dropped"}],"subtotal":9},"rest":[{"op":"+","node":{"type":"number","value":8}}],"total":17}}]}
 }

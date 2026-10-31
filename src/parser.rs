@@ -4,7 +4,9 @@
 //! precedence climbing. The v1 shape (a dice group plus a flat modifier) is
 //! just the simplest such expression.
 
-use crate::ast::{BinOp, Dice, Expr, ExprKind, Item, Select, SelectKind};
+use crate::ast::{
+    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Item, Select, SelectKind,
+};
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
 const MAX_DICE_PER_TERM: i64 = 1000;
@@ -256,6 +258,7 @@ impl Parser<'_> {
                 sides_span,
             ));
         }
+        let explode = self.parse_explode(sides)?;
         let select = self.parse_select(count)?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
@@ -272,10 +275,55 @@ impl Parser<'_> {
                 text: self.src[span.clone()].to_string(),
                 count,
                 sides,
+                explode,
                 select,
             }),
             span,
         })
+    }
+
+    /// Optional `!` explode clause: `!` alone explodes on the maximum face,
+    /// otherwise a comparison (`>`, `>=`, `<`, `<=`, `=`) and a number follow.
+    fn parse_explode(&mut self, sides: i64) -> Result<Option<Explode>, Error> {
+        if !matches!(self.peek(), Some(Token::Bang)) {
+            return Ok(None);
+        }
+        let start = self.tokens[self.pos].span.start;
+        self.pos += 1;
+        let mode = if matches!(self.peek(), Some(Token::Bang)) {
+            self.pos += 1;
+            ExplodeMode::Compound
+        } else if matches!(self.peek(), Some(Token::Word(w)) if w == "p") {
+            self.pos += 1;
+            ExplodeMode::Penetrate
+        } else {
+            ExplodeMode::Plain
+        };
+        let (cmp, value) = match self.peek() {
+            Some(Token::Gt) => (Cmp::Gt, None),
+            Some(Token::Ge) => (Cmp::Ge, None),
+            Some(Token::Lt) => (Cmp::Lt, None),
+            Some(Token::Le) => (Cmp::Le, None),
+            Some(Token::Eq) => (Cmp::Eq, None),
+            _ => (Cmp::Eq, Some(sides)),
+        };
+        let value = match value {
+            Some(v) => v,
+            None => {
+                self.pos += 1;
+                self.number("a number after the explode condition")?
+            }
+        };
+        let explode = Explode { mode, cmp, value };
+        if (1..=sides).all(|face| explode.triggers(face)) {
+            let span = start..self.prev_end();
+            return Err(Error::InfiniteExplosion {
+                clause: self.src[span.clone()].to_string(),
+                sides,
+                span,
+            });
+        }
+        Ok(Some(explode))
     }
 
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
@@ -353,5 +401,11 @@ fn describe(t: &Token) -> String {
         Token::LParen => "'('".into(),
         Token::RParen => "')'".into(),
         Token::Comma => "','".into(),
+        Token::Bang => "'!'".into(),
+        Token::Gt => "'>'".into(),
+        Token::Ge => "'>='".into(),
+        Token::Lt => "'<'".into(),
+        Token::Le => "'<='".into(),
+        Token::Eq => "'='".into(),
     }
 }

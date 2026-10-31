@@ -18,6 +18,13 @@ pub enum Error {
         term: String,
         span: Range<usize>,
     },
+    /// An explode condition that holds for every face, so the die would
+    /// explode forever. Rejected at parse time (ADR 0006).
+    InfiniteExplosion {
+        clause: String,
+        sides: i64,
+        span: Range<usize>,
+    },
     /// Division by zero; `span` is the divisor.
     DivisionByZero { span: Range<usize> },
     /// Integer arithmetic overflowed; `span` is the operation that did.
@@ -45,6 +52,7 @@ impl Error {
             Error::Syntax { span, .. }
             | Error::InvalidDice { span, .. }
             | Error::LimitExceeded { span, .. }
+            | Error::InfiniteExplosion { span, .. }
             | Error::DivisionByZero { span }
             | Error::Overflow { span } => span.clone(),
         }
@@ -57,6 +65,9 @@ impl Error {
             Error::LimitExceeded {
                 cap, limit, term, ..
             } => format!("{cap} cap ({limit}) exceeded by '{term}'"),
+            Error::InfiniteExplosion { clause, sides, .. } => format!(
+                "explosion condition '{clause}' is true for every face of a d{sides}, so it would never stop"
+            ),
             Error::DivisionByZero { .. } => "division by zero".into(),
             Error::Overflow { .. } => "arithmetic overflow".into(),
         }

@@ -1,5 +1,5 @@
 {
   "formula": "(d20+5)*2",
   "seed": 3,
-  "expected": {"schema_version":1,"rolls":[{"formula":"(d20+5)*2","total":16,"expr":{"type":"chain","first":{"type":"group","inner":{"type":"chain","first":{"type":"dice","term":"d20","dice":[{"value":3,"status":"kept"}],"subtotal":3},"rest":[{"op":"+","node":{"type":"number","value":5}}],"total":8},"total":8},"rest":[{"op":"*","node":{"type":"number","value":2}}],"total":16}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"(d20+5)*2","total":16,"expr":{"type":"chain","first":{"type":"group","inner":{"type":"chain","first":{"type":"dice","term":"d20","sides":20,"dice":[{"value":3,"status":"kept"}],"subtotal":3},"rest":[{"op":"+","node":{"type":"number","value":5}}],"total":8},"total":8},"rest":[{"op":"*","node":{"type":"number","value":2}}],"total":16}}]}
 }

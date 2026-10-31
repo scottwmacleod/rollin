@@ -128,13 +128,13 @@ proptest! {
 
     /// The same, from an alphabet where many strings are almost-valid.
     #[test]
-    fn dice_like_strings_never_panic(s in "[0-9dDkKlLhH+\\-*/() ,!]{0,40}") {
+    fn dice_like_strings_never_panic(s in "[0-9dDkKlLhHpP+\\-*/() ,!<>=]{0,40}") {
         let _ = roll(&s, &mut seeded_rng(0));
     }
 
     /// Errors carry a span that lies inside the formula on char boundaries.
     #[test]
-    fn error_spans_lie_inside_the_input(s in "[0-9dDkKlLhH+\\-*/() ,!é]{0,40}") {
+    fn error_spans_lie_inside_the_input(s in "[0-9dDkKlLhHpP+\\-*/() ,!<>=é]{0,40}") {
         if let Err(e) = roll(&s, &mut seeded_rng(0)) {
             let span = e.span();
             prop_assert!(span.start <= span.end && span.end <= s.len(), "{:?} {:?}", s, span);
@@ -278,5 +278,82 @@ proptest! {
         let want: i64 = terms.iter().sum();
         let got = roll(&text, &mut seeded_rng(0)).unwrap();
         prop_assert_eq!(got[0].total, want, "{}", text);
+    }
+}
+
+/// An exploding formula: a count, sides, a mode (`!`, `!!`, `!p`), an
+/// optional condition and an optional drop clause over the exploded pool.
+fn gen_exploding() -> impl Strategy<Value = (String, u32, u32, usize)> {
+    (
+        1u32..=6,
+        2u32..=20,
+        0usize..3,
+        prop::option::of((0usize..5, 0u32..=22)),
+        prop::option::of(1u32..=3),
+    )
+        .prop_map(|(n, sides, mode, cond, drop)| {
+            let mode_text = ["!", "!!", "!p"][mode];
+            let cond_text = cond.map_or(String::new(), |(op, v)| {
+                format!("{}{v}", [">", ">=", "<", "<=", "="][op])
+            });
+            let drop_text = match drop {
+                Some(k) if k < n => format!("dl{k}"),
+                _ => String::new(),
+            };
+            (
+                format!("{n}d{sides}{mode_text}{cond_text}{drop_text}"),
+                n,
+                sides,
+                mode,
+            )
+        })
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(512))]
+
+    /// For arbitrary exploding formulas the total is the sum of the counted
+    /// dice as recorded, plain and penetrating dice never exceed the sides,
+    /// compounded dice equal the sum of their parts, and no die explodes more
+    /// than the cap. Only the static rejection and the caps may fail a roll.
+    #[test]
+    fn exploding_totals_agree_with_the_recorded_dice(
+        (formula, n, sides, mode) in gen_exploding(),
+        seed in any::<u64>(),
+    ) {
+        let rolls = match roll(&formula, &mut seeded_rng(seed)) {
+            Ok(rolls) => rolls,
+            Err(Error::InfiniteExplosion { .. } | Error::LimitExceeded { .. }) => return Ok(()),
+            Err(e) => return Err(TestCaseError::fail(format!("{formula}: {e}"))),
+        };
+        let r = &rolls[0];
+        let dice = dice_of(&r.expr);
+        let counted: i64 = dice
+            .iter()
+            .filter(|d| d.status.counts())
+            .map(|d| i64::from(d.value))
+            .sum();
+        prop_assert_eq!(r.total, counted, "{}", formula);
+        prop_assert_eq!(r.expr.total(), counted);
+
+        let exploded = dice.iter().filter(|d| d.status == Status::Exploded).count();
+        prop_assert!(exploded <= 100 * n as usize, "{}", formula);
+        match mode {
+            0 | 2 => {
+                for d in &dice {
+                    prop_assert!(d.value <= sides, "{}: {:?}", formula, d);
+                    prop_assert!(d.parts.is_empty());
+                }
+            }
+            _ => {
+                prop_assert_eq!(exploded, 0);
+                for d in &dice {
+                    if !d.parts.is_empty() {
+                        prop_assert_eq!(d.parts.iter().sum::<u32>(), d.value);
+                        prop_assert!(d.parts.len() <= 101);
+                    }
+                }
+            }
+        }
     }
 }

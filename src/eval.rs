@@ -1,13 +1,44 @@
 //! Evaluator: walks the AST, drawing dice from the injected RNG.
 
-use crate::ast::{BinOp, Expr, ExprKind, Item};
+use crate::ast::{BinOp, ExplodeMode, Expr, ExprKind, Item};
 use crate::error::Error;
 use crate::{Die, Link, Node, Roll, Status};
 use rand::Rng;
 use std::ops::Range;
 
+/// Hard limit (ADR 0006): extra dice one original die may roll.
+const MAX_EXPLOSIONS_PER_DIE: usize = 100;
+
+/// Hard limit (ADR 0006): dice rolled by one roll, extra explosion dice
+/// included.
+const MAX_DICE_PER_EXPRESSION: usize = 10000;
+
+/// State threaded through one roll's evaluation.
+struct Ctx<'a, R> {
+    rng: &'a mut R,
+    /// Dice rolled so far, explosions included.
+    rolled: usize,
+}
+
+impl<R: Rng> Ctx<'_, R> {
+    /// Rolls one die, counting it toward the per-expression cap.
+    fn die(&mut self, sides: i64, term: &str, span: &Range<usize>) -> Result<u32, Error> {
+        self.rolled += 1;
+        if self.rolled > MAX_DICE_PER_EXPRESSION {
+            return Err(Error::LimitExceeded {
+                cap: "dice per expression",
+                limit: MAX_DICE_PER_EXPRESSION,
+                term: term.to_string(),
+                span: span.clone(),
+            });
+        }
+        Ok(self.rng.gen_range(1..=sides as u32))
+    }
+}
+
 pub fn evaluate(item: &Item, rng: &mut impl Rng) -> Result<Roll, Error> {
-    let expr = eval_expr(&item.expr, rng)?;
+    let mut ctx = Ctx { rng, rolled: 0 };
+    let expr = eval_expr(&item.expr, &mut ctx)?;
     Ok(Roll {
         formula: item.source.clone(),
         total: expr.total(),
@@ -15,30 +46,65 @@ pub fn evaluate(item: &Item, rng: &mut impl Rng) -> Result<Roll, Error> {
     })
 }
 
-fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
+fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
     match &expr.kind {
         ExprKind::Number(n) => Ok(Node::Number { value: *n }),
         ExprKind::Dice(d) => {
-            let mut dice: Vec<Die> = (0..d.count)
-                .map(|_| Die {
-                    value: rng.gen_range(1..=d.sides as u32),
+            let mut dice = Vec::new();
+            for _ in 0..d.count {
+                let mut raw = ctx.die(d.sides, &d.text, &expr.span)?;
+                let mut die = Die {
+                    value: raw,
                     status: Status::Kept,
-                })
-                .collect();
-            apply_drops(&mut dice, d.drops());
+                    parts: Vec::new(),
+                };
+                let mut extras = Vec::new();
+                let mut explosions = 0;
+                while d.explode.is_some_and(|e| e.triggers(i64::from(raw))) {
+                    if explosions == MAX_EXPLOSIONS_PER_DIE {
+                        return Err(Error::LimitExceeded {
+                            cap: "explosions per die",
+                            limit: MAX_EXPLOSIONS_PER_DIE,
+                            term: d.text.clone(),
+                            span: expr.span.clone(),
+                        });
+                    }
+                    explosions += 1;
+                    raw = ctx.die(d.sides, &d.text, &expr.span)?;
+                    extras.push(raw);
+                }
+                if d.explode.is_some_and(|e| e.mode == ExplodeMode::Compound) && !extras.is_empty()
+                {
+                    die.parts = std::iter::once(die.value).chain(extras).collect();
+                    die.value = die.parts.iter().sum();
+                    dice.push(die);
+                } else {
+                    dice.push(die);
+                    let penetrate = d.explode.is_some_and(|e| e.mode == ExplodeMode::Penetrate);
+                    dice.extend(extras.into_iter().map(|raw| Die {
+                        // A penetrating extra die counts one less, with no floor.
+                        value: raw - u32::from(penetrate),
+                        status: Status::Exploded,
+                        parts: Vec::new(),
+                    }));
+                }
+            }
+            let drops = d.drops(dice.len());
+            apply_drops(&mut dice, drops);
             let subtotal = dice
                 .iter()
-                .filter(|d| d.status == Status::Kept)
+                .filter(|d| d.status.counts())
                 .map(|d| i64::from(d.value))
                 .sum();
             Ok(Node::Dice {
                 term: d.text.clone(),
+                sides: d.sides,
                 dice,
                 subtotal,
             })
         }
         ExprKind::Neg(inner) => {
-            let operand = eval_expr(inner, rng)?;
+            let operand = eval_expr(inner, ctx)?;
             let total = operand.total().checked_neg().ok_or(Error::Overflow {
                 span: expr.span.clone(),
             })?;
@@ -48,7 +114,7 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
             })
         }
         ExprKind::Group(inner) => {
-            let inner = eval_expr(inner, rng)?;
+            let inner = eval_expr(inner, ctx)?;
             Ok(Node::Group {
                 total: inner.total(),
                 inner: Box::new(inner),
@@ -56,11 +122,11 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
         }
         ExprKind::Chain { first, rest } => {
             let first_span = first.span.clone();
-            let first = eval_expr(first, rng)?;
+            let first = eval_expr(first, ctx)?;
             let mut total = first.total();
             let mut links = Vec::with_capacity(rest.len());
             for (op, operand) in rest {
-                let node = eval_expr(operand, rng)?;
+                let node = eval_expr(operand, ctx)?;
                 let span = first_span.start..operand.span.end;
                 total = apply(*op, total, node.total(), span, operand.span.clone())?;
                 links.push(Link { op: *op, node });

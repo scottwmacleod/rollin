@@ -75,10 +75,10 @@ fn natural(expr: &Node) -> Option<Natural> {
         }
         _ => return None,
     };
-    let Node::Dice { term, dice, .. } = dice else {
+    let Node::Dice { sides, dice, .. } = dice else {
         return None;
     };
-    if dice.len() != 1 || sides(term) != Some(20) {
+    if dice.len() != 1 || *sides != 20 || dice[0].parts.len() > 1 {
         return None;
     }
     match dice[0].value {
@@ -88,19 +88,13 @@ fn natural(expr: &Node) -> Option<Natural> {
     }
 }
 
-/// The number of sides in a term such as `d20` or `1d20kh`.
-fn sides(term: &str) -> Option<u32> {
-    let (_, rest) = term.split_once(['d', 'D'])?;
-    let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
-    digits.parse().ok()
-}
-
 /// How a die's status reads in the `-v` breakdown. Exhaustive on purpose:
 /// new statuses (exploded, rerolled) must be given a word here.
 fn status_label(status: Status) -> &'static str {
     match status {
         Status::Kept => "kept",
         Status::Dropped => "dropped",
+        Status::Exploded => "exploded",
     }
 }
 
@@ -135,9 +129,15 @@ fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
             let cells: Vec<String> = dice
                 .iter()
                 .map(|d| {
+                    // A trailing `!` marks a die that came from an explosion.
+                    let bang = if d.status == Status::Exploded || d.parts.len() > 1 {
+                        "!"
+                    } else {
+                        ""
+                    };
                     let text = match d.status {
-                        Status::Dropped => format!("({})", d.value),
-                        _ => d.value.to_string(),
+                        Status::Dropped => format!("({}{bang})", d.value),
+                        _ => format!("{}{bang}", d.value),
                     };
                     paint_die(p, d, nat, &text)
                 })
@@ -200,11 +200,16 @@ fn verbose_node(
             term,
             dice,
             subtotal,
+            ..
         } => {
             let cells: Vec<String> = dice
                 .iter()
                 .map(|d| {
-                    let text = format!("{} {}", d.value, status_label(d.status));
+                    let mut text = format!("{} {}", d.value, status_label(d.status));
+                    if d.parts.len() > 1 {
+                        let parts: Vec<String> = d.parts.iter().map(u32::to_string).collect();
+                        text.push_str(&format!(" ({})", parts.join("+")));
+                    }
                     paint_die(p, d, nat, &text)
                 })
                 .collect();

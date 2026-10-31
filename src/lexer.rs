@@ -17,6 +17,13 @@ pub enum Token {
     LParen,
     RParen,
     Comma,
+    /// `!`, which starts an explode clause.
+    Bang,
+    Gt,
+    Ge,
+    Lt,
+    Le,
+    Eq,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,7 +36,24 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
     let mut out = Vec::new();
     let mut chars = src.char_indices().peekable();
     while let Some(&(start, c)) = chars.peek() {
+        let pair = match (c, src[start..].chars().nth(1)) {
+            ('>', Some('=')) => Some(Token::Ge),
+            ('<', Some('=')) => Some(Token::Le),
+            _ => None,
+        };
+        if let Some(token) = pair {
+            chars.next();
+            chars.next();
+            out.push(Spanned {
+                token,
+                span: start..start + 2,
+            });
+            continue;
+        }
         let single = match c {
+            '>' => Some(Token::Gt),
+            '<' => Some(Token::Lt),
+            '=' => Some(Token::Eq),
             '+' => Some(Token::Plus),
             '-' => Some(Token::Minus),
             '*' => Some(Token::Star),
@@ -37,6 +61,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
             '(' => Some(Token::LParen),
             ')' => Some(Token::RParen),
             ',' => Some(Token::Comma),
+            '!' => Some(Token::Bang),
             _ => None,
         };
         if let Some(token) = single {
@@ -63,8 +88,12 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
             });
         } else if c.is_ascii_alphabetic() {
             let mut end = start;
+            // A `p` right after `!` is the penetrating marker on its own, so
+            // `!pkh2` lexes as `!`, `p`, `kh`, `2`.
+            let penetrating =
+                c.eq_ignore_ascii_case(&'p') && out.last().is_some_and(|t| t.token == Token::Bang);
             while let Some(&(i, d)) = chars.peek() {
-                if !d.is_ascii_alphabetic() {
+                if !d.is_ascii_alphabetic() || (penetrating && end > start) {
                     break;
                 }
                 end = i + 1;

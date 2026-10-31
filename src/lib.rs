@@ -40,6 +40,16 @@ pub fn entropy_rng() -> ChaCha8Rng {
 pub enum Status {
     Kept,
     Dropped,
+    /// An extra die rolled because an earlier die exploded. It counts toward
+    /// the total unless a keep/drop clause drops it.
+    Exploded,
+}
+
+impl Status {
+    /// Whether a die with this status counts toward its group's subtotal.
+    pub fn counts(self) -> bool {
+        matches!(self, Status::Kept | Status::Exploded)
+    }
 }
 
 /// One individual random value inside a roll.
@@ -47,6 +57,10 @@ pub enum Status {
 pub struct Die {
     pub value: u32,
     pub status: Status,
+    /// For a compounded exploding die (`!!`): the rolls added into `value`,
+    /// in order. Empty for every other die.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub parts: Vec<u32>,
 }
 
 /// One node of a roll's result tree. Every node carries what it contributed,
@@ -60,6 +74,7 @@ pub enum Node {
     /// A dice group: its dice and their kept sum.
     Dice {
         term: String,
+        sides: i64,
         dice: Vec<Die>,
         subtotal: i64,
     },

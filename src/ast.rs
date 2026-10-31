@@ -71,7 +71,50 @@ pub struct Dice {
     pub text: String,
     pub count: i64,
     pub sides: i64,
+    pub explode: Option<Explode>,
     pub select: Option<Select>,
+}
+
+/// An explode clause: `!` after the dice, before any keep/drop.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Explode {
+    pub mode: ExplodeMode,
+    pub cmp: Cmp,
+    pub value: i64,
+}
+
+/// What happens to the extra rolls of an exploding die.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExplodeMode {
+    /// `!`: each extra roll is a separate die in the pool.
+    Plain,
+    /// `!!`: extra rolls are added into the exploding die.
+    Compound,
+    /// `!p`: like `!`, but each extra die counts one less than it rolled.
+    Penetrate,
+}
+
+/// A comparison against a face value.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Cmp {
+    Gt,
+    Ge,
+    Lt,
+    Le,
+    Eq,
+}
+
+impl Explode {
+    /// Whether a die showing `face` explodes.
+    pub fn triggers(&self, face: i64) -> bool {
+        match self.cmp {
+            Cmp::Gt => face > self.value,
+            Cmp::Ge => face >= self.value,
+            Cmp::Lt => face < self.value,
+            Cmp::Le => face <= self.value,
+            Cmp::Eq => face == self.value,
+        }
+    }
 }
 
 /// A drop/keep clause: `dl`, `dh`, `kl` or `kh` with a count.
@@ -90,15 +133,17 @@ pub enum SelectKind {
 }
 
 impl Dice {
-    /// How many of the lowest and highest dice this group drops.
-    pub fn drops(&self) -> (i64, i64) {
+    /// How many of the lowest and highest dice this group drops from a pool
+    /// of `pool` dice (more than `count` when dice explode).
+    pub fn drops(&self, pool: usize) -> (i64, i64) {
+        let pool = pool as i64;
         match self.select {
             None => (0, 0),
             Some(Select { kind, n }) => match kind {
                 SelectKind::DropLowest => (n, 0),
                 SelectKind::DropHighest => (0, n),
-                SelectKind::KeepHighest => (self.count - n, 0),
-                SelectKind::KeepLowest => (0, self.count - n),
+                SelectKind::KeepHighest => (pool - n, 0),
+                SelectKind::KeepLowest => (0, pool - n),
             },
         }
     }
