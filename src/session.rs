@@ -31,7 +31,7 @@ pub fn help_text() -> &'static str {
     "\
 Type a formula to roll it (d20+5, 4d6dl1, 6x 4d6dl1, d20 # attack), or a
 preset name. Spaces and '#' work as typed; no quotes are needed. Flags such
-as --seed 7, -v, -q, --json, --color and --char NAME work on any line and
+as --seed 7, -q, --json, --color and --char NAME work on any line and
 apply to that line only.
 
   save <name> <formula> [--global]   save a preset
