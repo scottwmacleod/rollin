@@ -122,7 +122,7 @@ fn check_presets(cli: &Cli, c: &Case) -> Result<(), String> {
             eq(
                 "listing",
                 ok(cli, &["presets"])?.stdout,
-                "attack  d20+5\n".into(),
+                "attack  d20+5  [global]\n".into(),
             )
         }
         "presets_add_and_get_preset" => {
@@ -185,7 +185,11 @@ fn check_presets(cli: &Cli, c: &Case) -> Result<(), String> {
                     .lines()
                     .find(|l| l.starts_with(name))
                     .ok_or(format!("{name} not listed"))?;
-                eq("line", line.ends_with(formula), true)?;
+                eq(
+                    "line",
+                    line.contains(&format!("  {formula}  [global]")),
+                    true,
+                )?;
                 let run = ok(cli, &[name, "--seed", SEED, "--json"])?;
                 eq(
                     "formula",
