@@ -32,12 +32,12 @@ proptest! {
         let dice = dice_of(&r.expr);
         prop_assert_eq!(dice.len() as u32, n);
         for d in &dice {
-            prop_assert!((1..=sides).contains(&d.value));
+            prop_assert!((1..=sides).contains(&(d.value as u32)));
         }
         let kept_sum: i64 = dice
             .iter()
             .filter(|d| d.status == Status::Kept)
-            .map(|d| i64::from(d.value))
+            .map(|d| d.value)
             .sum();
         prop_assert_eq!(r.total, kept_sum);
     }
@@ -78,7 +78,7 @@ proptest! {
         let pool = &roll(&format!("{n}d{sides}"), &mut seeded_rng(seed)).unwrap()[0];
 
         let values = |status| -> Vec<u32> {
-            dice_of(&r.expr).iter().filter(|d| d.status == status).map(|d| d.value).collect()
+            dice_of(&r.expr).iter().filter(|d| d.status == status).map(|d| d.value as u32).collect()
         };
         let (kept, dropped) = (values(Status::Kept), values(Status::Dropped));
 
@@ -92,7 +92,7 @@ proptest! {
 
         // Kept values are a sub-multiset of the rolled values (and so are the
         // dropped ones, and together they are exactly the rolled values).
-        let mut rolled: Vec<u32> = dice_of(&pool.expr).iter().map(|d| d.value).collect();
+        let mut rolled: Vec<u32> = dice_of(&pool.expr).iter().map(|d| d.value as u32).collect();
         let mut all: Vec<u32> = kept.iter().chain(&dropped).copied().collect();
         rolled.sort_unstable();
         all.sort_unstable();
@@ -128,7 +128,7 @@ proptest! {
 
     /// The same, from an alphabet where many strings are almost-valid.
     #[test]
-    fn dice_like_strings_never_panic(s in "[0-9dDfFkKlLhHpPrR+\\-*/() ,!<>=]{0,40}") {
+    fn dice_like_strings_never_panic(s in "[0-9dDfFkKlLhHpPrR+\\-*/() ,!<>=%aAvVsSiI]{0,40}") {
         let _ = roll(&s, &mut seeded_rng(0));
     }
 
@@ -331,7 +331,7 @@ proptest! {
         let counted: i64 = dice
             .iter()
             .filter(|d| d.status.counts())
-            .map(|d| i64::from(d.value))
+            .map(|d| d.value)
             .sum();
         prop_assert_eq!(r.total, counted, "{}", formula);
         prop_assert_eq!(r.expr.total(), counted);
@@ -341,7 +341,7 @@ proptest! {
         match mode {
             0 | 2 => {
                 for d in &dice {
-                    prop_assert!(d.value <= sides, "{}: {:?}", formula, d);
+                    prop_assert!(d.value <= i64::from(sides), "{}: {:?}", formula, d);
                     prop_assert!(d.parts.is_empty());
                 }
             }
@@ -349,7 +349,7 @@ proptest! {
                 prop_assert_eq!(exploded, 0);
                 for d in &dice {
                     if !d.parts.is_empty() {
-                        prop_assert_eq!(d.parts.iter().sum::<u32>(), d.value);
+                        prop_assert_eq!(d.parts.iter().sum::<i64>(), d.value);
                         prop_assert!(d.parts.len() <= 101);
                     }
                 }
@@ -390,7 +390,8 @@ fn gen_reroll() -> impl Strategy<Value = (String, bool, usize, u32, u32)> {
         })
 }
 
-fn cond_matches(cmp: usize, v: u32, face: u32) -> bool {
+fn cond_matches(cmp: usize, v: u32, face: i64) -> bool {
+    let v = i64::from(v);
     match cmp {
         0 => face > v,
         1 => face >= v,
@@ -425,10 +426,10 @@ proptest! {
         let counted: i64 = dice
             .iter()
             .filter(|d| d.status.counts())
-            .map(|d| i64::from(d.value))
+            .map(|d| d.value)
             .sum();
         prop_assert_eq!(r.total, counted, "{}", formula);
-        prop_assert!(dice.iter().all(|d| (1..=sides).contains(&d.value)), "{}", formula);
+        prop_assert!(dice.iter().all(|d| (1..=sides).contains(&(d.value as u32))), "{}", formula);
 
         // Runs of rerolled dice, each ended by the die that replaced them.
         let mut run = 0usize;
@@ -556,17 +557,102 @@ proptest! {
         prop_assert_eq!((tally.successes, tally.failures), (s, f), "{}", formula);
         prop_assert_eq!(*subtotal, s - f, "{}", formula);
         prop_assert_eq!(r.total, s - f, "{}", formula);
-        prop_assert!(dice.iter().all(|d| (1..=sides).contains(&d.value)), "{}", formula);
+        prop_assert!(dice.iter().all(|d| (1..=sides).contains(&(d.value as u32))), "{}", formula);
     }
 
     /// Text built from the success/failure alphabet never panics, and
     /// every error span stays inside the input on char boundaries.
     #[test]
-    fn success_like_strings_never_panic(s in "[0-9dDfF+\\-*/(), <>=!rRkKhHlLé]{0,30}") {
+    fn success_like_strings_never_panic(s in "[0-9dDfF+\\-*/(), <>=!rRkKhHlLé%aAvVsSiI]{0,30}") {
         if let Err(e) = roll(&s, &mut seeded_rng(0)) {
             let span = e.span();
             prop_assert!(span.start <= span.end && span.end <= s.len(), "{:?} {:?}", s, span);
             prop_assert!(s.is_char_boundary(span.start) && s.is_char_boundary(span.end));
+        }
+    }
+}
+
+/// Advantage, disadvantage, percentile and fudge dice.
+mod special_dice {
+    use super::*;
+
+    fn only_roll(formula: &str, seed: u64) -> rollin::Roll {
+        roll(formula, &mut seeded_rng(seed)).unwrap().remove(0)
+    }
+
+    /// The tree and total of a roll, ignoring the text that was typed.
+    fn shape(r: &rollin::Roll) -> (Vec<Die>, i64) {
+        (dice_of(&r.expr), r.total)
+    }
+
+    proptest! {
+        /// `adv` keeps the higher of its two dice, `dis` the lower, and the
+        /// other is dropped.
+        #[test]
+        fn adv_keeps_the_max_and_dis_the_min(sides in 2u32..=1000, seed in any::<u64>()) {
+            for (suffix, keeps_max) in [("adv", true), ("dis", false)] {
+                let r = only_roll(&format!("d{sides}{suffix}"), seed);
+                let dice = dice_of(&r.expr);
+                prop_assert_eq!(dice.len(), 2);
+                let (hi, lo) = (
+                    dice.iter().map(|d| d.value).max().unwrap(),
+                    dice.iter().map(|d| d.value).min().unwrap(),
+                );
+                let kept: Vec<_> = dice.iter().filter(|d| d.status == Status::Kept).collect();
+                prop_assert_eq!(kept.len(), 1);
+                prop_assert_eq!(kept[0].value, if keeps_max { hi } else { lo });
+                prop_assert_eq!(dice.iter().filter(|d| d.status == Status::Dropped).count(), 1);
+                prop_assert_eq!(r.total, kept[0].value);
+            }
+        }
+
+        /// `dXadv` is `2dXkh1` and `dXdis` is `2dXkl1`: same dice, same total,
+        /// same RNG use (a trailing term shows the stream stays in step).
+        #[test]
+        fn adv_and_dis_equal_keep_highest_and_lowest_of_two(
+            sides in 2u32..=10_000,
+            flat in 0u32..=20,
+            seed in any::<u64>(),
+        ) {
+            for (suffix, keep) in [("adv", "kh1"), ("dis", "kl1")] {
+                let sugar = only_roll(&format!("d{sides}{suffix}+{flat}+d6"), seed);
+                let plain = only_roll(&format!("2d{sides}{keep}+{flat}+d6"), seed);
+                prop_assert_eq!(shape(&sugar), shape(&plain));
+            }
+        }
+
+        /// `d%` always rolls 1..=100 and is a d100 under the same seed.
+        #[test]
+        fn percentile_dice_are_d100s(n in 1u32..=30, seed in any::<u64>()) {
+            let pct = only_roll(&format!("{n}d%"), seed);
+            for d in dice_of(&pct.expr) {
+                prop_assert!((1..=100).contains(&d.value), "{:?}", d);
+            }
+            prop_assert_eq!(shape(&pct), shape(&only_roll(&format!("{n}d100"), seed)));
+        }
+
+        /// Every fudge die is -1, 0 or +1, so `NdF` totals within -N..=N.
+        #[test]
+        fn fudge_dice_are_minus_one_zero_or_plus_one(n in 1i64..=100, seed in any::<u64>()) {
+            let r = only_roll(&format!("{n}dF"), seed);
+            let dice = dice_of(&r.expr);
+            prop_assert_eq!(dice.len() as i64, n);
+            prop_assert!(dice.iter().all(|d| (-1..=1).contains(&d.value)));
+            prop_assert!((-n..=n).contains(&r.total), "{} out of range for {}dF", r.total, n);
+            prop_assert_eq!(r.total, dice.iter().map(|d| d.value).sum::<i64>());
+        }
+
+        /// Text dense in the new suffixes never panics, and every error span
+        /// stays inside the input on char boundaries.
+        #[test]
+        fn special_dice_like_strings_never_panic(
+            s in "(d|D|[0-9]|%|F|f|adv|ADV|dis|DIS|dl|kh|r|!|>=|[+*, é-]){0,16}",
+        ) {
+            if let Err(e) = roll(&s, &mut seeded_rng(0)) {
+                let span = e.span();
+                prop_assert!(span.start <= span.end && span.end <= s.len(), "{:?} {:?}", s, span);
+                prop_assert!(s.is_char_boundary(span.start) && s.is_char_boundary(span.end));
+            }
         }
     }
 }

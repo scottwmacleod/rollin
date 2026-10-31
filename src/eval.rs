@@ -1,6 +1,6 @@
 //! Evaluator: walks the AST, drawing dice from the injected RNG.
 
-use crate::ast::{BinOp, ExplodeMode, Expr, ExprKind, Item, RerollMode};
+use crate::ast::{BinOp, Dice, ExplodeMode, Expr, ExprKind, Item, RerollMode, Special};
 use crate::error::Error;
 use crate::{Die, Kind, Link, Node, Outcome, Roll, Status, Tally};
 use rand::Rng;
@@ -25,17 +25,23 @@ struct Ctx<'a, R> {
 
 impl<R: Rng> Ctx<'_, R> {
     /// Rolls one die, counting it toward the per-expression cap.
-    fn die(&mut self, sides: i64, term: &str, span: &Range<usize>) -> Result<u32, Error> {
+    fn die(&mut self, dice: &Dice, span: &Range<usize>) -> Result<i64, Error> {
         self.rolled += 1;
         if self.rolled > MAX_DICE_PER_EXPRESSION {
             return Err(Error::LimitExceeded {
                 cap: "dice per expression",
                 limit: MAX_DICE_PER_EXPRESSION,
-                term: term.to_string(),
+                term: dice.text.clone(),
                 span: span.clone(),
             });
         }
-        Ok(self.rng.gen_range(1..=sides as u32))
+        // A fudge die is a d3 shifted down by two: faces 1, 2, 3 read -1, 0, +1.
+        let face = i64::from(self.rng.gen_range(1..=dice.sides as u32));
+        Ok(if dice.special == Some(Special::Fudge) {
+            face - 2
+        } else {
+            face
+        })
     }
 }
 
@@ -60,10 +66,10 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
         ExprKind::Dice(d) => {
             let mut dice = Vec::new();
             for _ in 0..d.count {
-                let mut raw = ctx.die(d.sides, &d.text, &expr.span)?;
+                let mut raw = ctx.die(d, &expr.span)?;
                 if let Some(reroll) = d.reroll {
                     let mut rerolls = 0;
-                    while reroll.triggers(i64::from(raw)) {
+                    while reroll.triggers(raw) {
                         if rerolls == MAX_REROLLS_PER_DIE {
                             return Err(Error::LimitExceeded {
                                 cap: "rerolls per die",
@@ -79,7 +85,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                             parts: Vec::new(),
                             outcome: None,
                         });
-                        raw = ctx.die(d.sides, &d.text, &expr.span)?;
+                        raw = ctx.die(d, &expr.span)?;
                         if reroll.mode == RerollMode::Once {
                             break;
                         }
@@ -93,7 +99,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 };
                 let mut extras = Vec::new();
                 let mut explosions = 0;
-                while d.explode.is_some_and(|e| e.triggers(i64::from(raw))) {
+                while d.explode.is_some_and(|e| e.triggers(raw)) {
                     if explosions == MAX_EXPLOSIONS_PER_DIE {
                         return Err(Error::LimitExceeded {
                             cap: "explosions per die",
@@ -103,7 +109,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                         });
                     }
                     explosions += 1;
-                    raw = ctx.die(d.sides, &d.text, &expr.span)?;
+                    raw = ctx.die(d, &expr.span)?;
                     extras.push(raw);
                 }
                 if d.explode.is_some_and(|e| e.mode == ExplodeMode::Compound) && !extras.is_empty()
@@ -116,7 +122,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                     let penetrate = d.explode.is_some_and(|e| e.mode == ExplodeMode::Penetrate);
                     dice.extend(extras.into_iter().map(|raw| Die {
                         // A penetrating extra die counts one less, with no floor.
-                        value: raw - u32::from(penetrate),
+                        value: raw - i64::from(penetrate),
                         status: Status::Exploded,
                         parts: Vec::new(),
                         outcome: None,
@@ -130,7 +136,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 Some(success) => {
                     let (mut successes, mut failures) = (0, 0);
                     for die in dice.iter_mut().filter(|d| d.status.counts()) {
-                        let face = i64::from(die.value);
+                        let face = die.value;
                         if success.succeeds(face) {
                             die.outcome = Some(Outcome::Success);
                             successes += 1;
@@ -149,12 +155,13 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 None => dice
                     .iter()
                     .filter(|d| d.status.counts())
-                    .map(|d| i64::from(d.value))
+                    .map(|d| d.value)
                     .sum(),
             };
             Ok(Node::Dice {
                 term: d.text.clone(),
                 sides: d.sides,
+                special: d.special,
                 dice,
                 subtotal,
                 tally,

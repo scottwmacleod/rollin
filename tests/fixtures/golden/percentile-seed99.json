@@ -1,0 +1,5 @@
+{
+  "formula": "d%",
+  "seed": 99,
+  "expected": {"schema_version":1,"rolls":[{"formula":"d%","total":65,"expr":{"type":"dice","term":"d%","sides":100,"special":"percentile","dice":[{"value":65,"status":"kept"}],"subtotal":65}}]}
+}

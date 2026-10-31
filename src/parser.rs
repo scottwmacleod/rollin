@@ -6,7 +6,7 @@
 
 use crate::ast::{
     BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Item, Reroll, RerollMode,
-    Select, SelectKind, Success,
+    Select, SelectKind, Special, Success,
 };
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
@@ -14,6 +14,10 @@ const MAX_DICE_PER_TERM: i64 = 1000;
 const MAX_DICE_PER_EXPRESSION: i64 = 10000;
 const MAX_DEPTH: usize = 32;
 const MAX_SIDES: i64 = 10000;
+/// `d%` is a d100.
+const PERCENTILE_SIDES: i64 = 100;
+/// A fudge die has three outcomes, drawn like a d3 and shifted to -1, 0, +1.
+const FUDGE_SIDES: i64 = 3;
 
 use crate::lexer::{tokenize, Spanned, Token};
 
@@ -218,7 +222,7 @@ impl Parser<'_> {
             Some(Token::Number(n)) => {
                 let n = *n;
                 self.pos += 1;
-                if !matches!(self.peek(), Some(Token::Word(w)) if w == "d") {
+                if !matches!(self.peek(), Some(Token::Word(w)) if w == "d" || w == "df") {
                     return Ok(Expr {
                         kind: ExprKind::Number(n),
                         span: self.tokens[start].span.clone(),
@@ -228,19 +232,26 @@ impl Parser<'_> {
             }
             _ => 1,
         };
-        match self.bump() {
+        let fudge = match self.bump() {
             Some(Spanned {
                 token: Token::Word(w),
                 ..
-            }) if w == "d" => {}
+            }) if w == "d" || w == "df" => w == "df",
             _ => {
                 self.pos -= 1;
                 return Err(self.unexpected("a number, a dice group or '('"));
             }
-        }
+        };
         let count_span = self.tokens[start].span.clone();
-        let sides_start = self.pos;
-        let sides = self.number("the number of sides after 'd'")?;
+        let sides_start = if fudge { self.pos - 1 } else { self.pos };
+        let (sides, special) = if fudge {
+            (FUDGE_SIDES, Some(Special::Fudge))
+        } else if matches!(self.peek(), Some(Token::Percent)) {
+            self.pos += 1;
+            (PERCENTILE_SIDES, Some(Special::Percentile))
+        } else {
+            (self.number("the number of sides after 'd'")?, None)
+        };
         let sides_span = self.tokens[sides_start].span.clone();
         if count > MAX_DICE_PER_TERM {
             return Err(Error::LimitExceeded {
@@ -256,15 +267,27 @@ impl Parser<'_> {
                 count_span,
             ));
         }
-        if !(2..=MAX_SIDES).contains(&sides) {
+        if !fudge && !(2..=MAX_SIDES).contains(&sides) {
             return Err(Error::invalid_dice(
                 format!("sides must be between 2 and {MAX_SIDES}"),
                 sides_span,
             ));
         }
+        if fudge {
+            self.reject_on_fudge(&["r", "rr"], false, "reroll")?;
+            self.reject_on_fudge(&[], true, "explode")?;
+        }
         let reroll = self.parse_reroll(sides)?;
         let explode = self.parse_explode(sides)?;
-        let select = self.parse_select(count)?;
+        let advantage = self.parse_advantage(count, sides, self.tokens[start].span.start)?;
+        let (count, select) = match advantage {
+            Some(kind) => (2, Some(Select { kind, n: 1 })),
+            None => (count, self.parse_select(count)?),
+        };
+        self.reject_select_with_advantage(advantage, select)?;
+        if fudge {
+            self.reject_comparison_on_fudge()?;
+        }
         let success = self.parse_count()?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
@@ -281,6 +304,7 @@ impl Parser<'_> {
                 text: self.src[span.clone()].to_string(),
                 count,
                 sides,
+                special,
                 reroll,
                 explode,
                 select,
@@ -407,6 +431,87 @@ impl Parser<'_> {
         }))
     }
 
+    /// Fudge dice have no reroll or explode clause: an error at the clause's
+    /// first token (a word in `words`, or `!` when `bang` is set).
+    fn reject_on_fudge(&self, words: &[&str], bang: bool, what: &str) -> Result<(), Error> {
+        let hit = match self.peek() {
+            Some(Token::Word(w)) => words.contains(&w.as_str()),
+            Some(Token::Bang) => bang,
+            _ => false,
+        };
+        if hit {
+            return Err(Error::invalid_dice(
+                format!("{what} clauses are not supported on fudge dice"),
+                self.tokens[self.pos].span.clone(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Fudge dice have no success clause.
+    fn reject_comparison_on_fudge(&self) -> Result<(), Error> {
+        if self.at_comparison() {
+            return Err(Error::invalid_dice(
+                "success clauses are not supported on fudge dice",
+                self.tokens[self.pos].span.clone(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Optional `adv`/`dis` suffix: sugar for rolling two dice and keeping
+    /// the highest or lowest.
+    fn parse_advantage(
+        &mut self,
+        count: i64,
+        sides: i64,
+        term_start: usize,
+    ) -> Result<Option<SelectKind>, Error> {
+        let (word, kind, keep) = match self.peek() {
+            Some(Token::Word(w)) if w == "adv" => ("adv", SelectKind::KeepHighest, "highest"),
+            Some(Token::Word(w)) if w == "dis" => ("dis", SelectKind::KeepLowest, "lowest"),
+            _ => return Ok(None),
+        };
+        self.pos += 1;
+        if count != 1 {
+            let letters = &kind_letters(kind);
+            return Err(Error::invalid_dice(
+                format!(
+                    "'{word}' applies to exactly one die; write d{sides}{word}, or 2d{sides}{letters}1 to keep the {keep} of two"
+                ),
+                term_start..self.prev_end(),
+            ));
+        }
+        Ok(Some(kind))
+    }
+
+    /// `adv`/`dis` already keep one die, so a keep/drop clause on either side
+    /// of it is an error pointing at whichever came second.
+    fn reject_select_with_advantage(
+        &self,
+        advantage: Option<SelectKind>,
+        select: Option<Select>,
+    ) -> Result<(), Error> {
+        let word = match (advantage, select, self.peek()) {
+            // `adv` then `dl`/`dh`/`kl`/`kh`: the clause that follows.
+            (Some(kind), _, Some(Token::Word(w))) if is_select_word(w) => {
+                (kind_name(kind), self.tokens[self.pos].span.clone())
+            }
+            // `kh1` then `adv`/`dis`.
+            (None, Some(_), Some(Token::Word(w))) if w == "adv" || w == "dis" => {
+                (w.clone(), self.tokens[self.pos].span.clone())
+            }
+            _ => return Ok(()),
+        };
+        Err(Error::invalid_dice(
+            format!(
+                "'{}' already keeps one die, so it cannot be combined with dl, dh, kl or kh",
+                word.0
+            ),
+            word.1,
+        ))
+    }
+
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
     fn parse_select(&mut self, count: i64) -> Result<Option<Select>, Error> {
         let kind = match self.peek() {
@@ -447,6 +552,26 @@ impl Parser<'_> {
             ));
         }
         Ok(Some(Select { kind, n }))
+    }
+}
+
+fn is_select_word(w: &str) -> bool {
+    matches!(w, "dl" | "dh" | "kl" | "kh")
+}
+
+fn kind_name(kind: SelectKind) -> String {
+    match kind {
+        SelectKind::KeepHighest => "adv".into(),
+        _ => "dis".into(),
+    }
+}
+
+fn kind_letters(kind: SelectKind) -> &'static str {
+    match kind {
+        SelectKind::DropLowest => "dl",
+        SelectKind::DropHighest => "dh",
+        SelectKind::KeepLowest => "kl",
+        SelectKind::KeepHighest => "kh",
     }
 }
 
@@ -493,6 +618,7 @@ fn describe(t: &Token) -> String {
         Token::RParen => "')'".into(),
         Token::Comma => "','".into(),
         Token::Bang => "'!'".into(),
+        Token::Percent => "'%'".into(),
         Token::Gt => "'>'".into(),
         Token::Ge => "'>='".into(),
         Token::Lt => "'<'".into(),

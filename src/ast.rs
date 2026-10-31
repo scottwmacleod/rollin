@@ -83,10 +83,22 @@ pub struct Dice {
     pub text: String,
     pub count: i64,
     pub sides: i64,
+    /// Set for `d%` and `dF`, which are not an ordinary numbered die.
+    pub special: Option<Special>,
     pub reroll: Option<Reroll>,
     pub explode: Option<Explode>,
     pub select: Option<Select>,
     pub success: Option<Success>,
+}
+
+/// A die that is not written as `d<number>`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Special {
+    /// `d%`, a d100.
+    Percentile,
+    /// `dF`, a fudge die.
+    Fudge,
 }
 
 /// A reroll clause: `r` or `rr` after the dice, before any explode.

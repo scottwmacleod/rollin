@@ -58,6 +58,11 @@ the same thing here; arithmetic is an addition on top.
 | `6d10>=8`, `6d10>7`, `6d10<=3`, `6d10<3`, `6d10=10` | Success count: the roll is how many dice meet the condition, not a sum |
 | `6d10>=8f1`, `6d10>=8f<=2`, `6d10>=8 f1` | Failure clause: each counting die matching it (and not a success) subtracts 1 |
 | `4d6dl1>=5`, `6d10r1!=10kh4>=8f1` | Order of operations: reroll, explode, keep/drop, then success counting |
+| `d20adv`, `d20dis` | Advantage / disadvantage: roll two d20s and keep the highest / lowest; exactly `2d20kh1` / `2d20kl1` |
+| `d20adv+8`, `(d20dis+3)*2`, `d20r1adv`, `d10adv>=7` | `adv`/`dis` combine with modifiers: reroll and explode go before it, a success clause after |
+| `d%`, `2d%`, `3d%dl1` | Percentile: `d%` is a d100, same results as `d100` under the same seed, and takes the same modifiers |
+| `4dF`, `4df`, `dF` | Fudge dice: each die is -1, 0 or +1 with equal probability |
+| `4dFdl1`, `4dFkh3`, `dFadv` | Keep/drop and `adv`/`dis` work on fudge dice |
 | `15` | A bare number is its own total |
 | `2d6+1d4+3`, `d20+d4-2` | Add and subtract any dice groups and numbers |
 | `d20*2`, `10/4` | Multiply and divide; they bind tighter than `+` and `-` |
@@ -109,6 +114,27 @@ mixed into arithmetic: `6d10>=8 + 3`, `3 + 6d10>=8`, `-6d10>=8`,
 `2*6d10>=8`, `(6d10>=8)+1` and two counts added are errors. A whole roll
 may be parenthesised, `(6d10>=8)`, and counts and sums can sit side by side
 in a comma list: `6d10>=8, d20`.
+`adv` and `dis` are suffixes on a dice group written with exactly one die
+(`d20adv` or `1d20adv`; `2d20adv` is an error; use `2d20kh1`, or `kh`/`kl` for bigger pools). They take the keep/drop slot, so combining them with `dl`, `dh`,
+`kl` or `kh` in either order (`d20advdl1`, `3d20kh1adv`) is an error. The
+output shows both dice with the loser dropped, as in `2d20kh1`; the formula
+is echoed as typed, and `d20adv` counts as two dice toward the dice limits.
+A natural 20 or 1 is highlighted only on a lone single-die roll, so `d20adv`
+is never highlighted.
+`d%` is a d100 whose faces and RNG use are identical to `d100`; the formula
+and term are echoed as typed (`d%`), and `--json` marks the group with
+`"special": "percentile"` and `"sides": 100`.
+Fudge dice (`dF`, any letter case) draw a single uniform choice among three
+outcomes per die, exactly the same draw as a d3 shifted by two (face 1 is -1,
+2 is 0, 3 is +1). Default output shows each fudge die as `+`, `0` or `-`
+(the symbols printed on real fudge dice, readable at a glance, and distinct
+from numbers so a die's sign is never lost); `-v` shows the numeric value
+(`-1 kept`) and `--json` has the numbers -1, 0 and 1, with
+`"special": "fudge"` and `"sides": 3` on the group. The total is always
+numeric (`4dF` totals -4 to 4). Fudge dice count toward the dice limits and
+skip the sides check. Reroll (`r`, `rr`), explode (`!`) and success clauses
+are not supported on fudge dice and are errors pointing at the clause
+(`4dF!`, `4dFr1`, `4dF>=1`: "... clauses are not supported on fudge dice").
 Quote formulas containing `!` in an interactive shell (`rollin '3d6!'`), where
 `!` can trigger history expansion.
 
@@ -212,6 +238,7 @@ $ rollin -v --seed 3 4d6r<2dl1
   total: 15
 ```
 
+Fudge dice read `+`, `0` and `-` in the one-line output (`4dF  [-, -, +, +]  →  0`) and as numbers in `-v`.
 Success counts show each counting die's outcome after its value, `✓` for a
 success and `✗` for a failure, and label the total as a count so it cannot
 be mistaken for a sum: `3 successes`, `1 success`. When any die failed, the net
