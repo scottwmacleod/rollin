@@ -872,3 +872,63 @@ fn import_accepts_formulas_that_use_variables() {
     assert!(run.stdout.contains("imported 1, skipped 1"), "{run:?}");
     assert!(cli.run(&["presets"]).stdout.contains("d20+@str"));
 }
+
+#[test]
+fn character_names_that_are_paths_are_rejected_everywhere_and_touch_no_file() {
+    let cli = Cli::new();
+    cli.run(&["save", "--global", "g", "d6"]).assert_success();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    let presets = cli.config_dir().join("rollin/presets.toml");
+    let before = std::fs::read_to_string(&presets).unwrap();
+    for bad in ["../presets", "..", "a/b", "My Char", "Ünï"] {
+        for args in [
+            vec!["char", bad],
+            vec!["char", "delete", bad],
+            vec!["--char", bad, "vars"],
+            vec!["--char", bad, "set", "x", "1"],
+        ] {
+            let run = cli.run(&args);
+            assert_eq!(run.code, 1, "{args:?}: {run:?}");
+            assert_eq!(
+                run.stderr,
+                format!("error: invalid character name '{bad}': names must start with a letter and use only letters, digits, '_' or '-'\n"),
+                "{args:?}"
+            );
+        }
+    }
+    assert_eq!(std::fs::read_to_string(&presets).unwrap(), before);
+    assert_eq!(cli.run(&["char"]).stdout, "active character: grog\n");
+}
+
+#[test]
+fn a_state_file_naming_a_path_is_a_wrong_typed_state_error() {
+    let cli = Cli::new();
+    cli.run(&["save", "--global", "g", "d6"]).assert_success();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    let state = write_file(&cli, "state.toml", "active = \"../presets\"\n");
+    for args in [
+        &["vars"][..],
+        &["d20"],
+        &["characters"],
+        &["char", "delete", "grog"],
+    ] {
+        let run = cli.run(args);
+        assert_eq!(run.code, 1, "{args:?}: {run:?}");
+        assert!(run.stderr.contains(&state.display().to_string()), "{run:?}");
+        assert!(
+            run.stderr
+                .contains("`active` must be a valid character name"),
+            "{run:?}"
+        );
+    }
+    assert!(cli.config_dir().join("rollin/presets.toml").exists());
+}
+
+#[test]
+fn files_in_the_characters_directory_with_odd_names_are_not_characters() {
+    let cli = Cli::new();
+    write_file(&cli, "characters/My Char.toml", "");
+    write_file(&cli, "characters/grog.toml", "");
+    write_file(&cli, "characters/notes.txt", "");
+    assert_eq!(cli.run(&["characters"]).stdout, "* default\n  grog\n");
+}

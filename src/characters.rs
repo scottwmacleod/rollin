@@ -1,7 +1,7 @@
 //! Characters: one TOML file each under `rollin/characters/` (ADR 0004),
 //! holding integer variables and presets.
 
-use crate::presets::{write_atomic, StoreError};
+use crate::presets::{is_name_shaped, write_atomic, StoreError};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -42,7 +42,7 @@ impl CharacterStore {
                     let entry = entry.map_err(|e| self.dir_error(e))?;
                     let file = entry.file_name().to_string_lossy().into_owned();
                     if let Some(name) = file.strip_suffix(".toml") {
-                        if !names.iter().any(|n| n == name) {
+                        if is_name_shaped(name) && !names.iter().any(|n| n == name) {
                             names.push(name.to_string());
                         }
                     }
@@ -97,7 +97,10 @@ impl CharacterStore {
             .map_err(|e: toml::de::Error| error(format!("not valid TOML: {}", e.message())))?;
         match table.get("active") {
             None => Ok(DEFAULT.into()),
-            Some(toml::Value::String(name)) => Ok(name.clone()),
+            Some(toml::Value::String(name)) if is_name_shaped(name) => Ok(name.clone()),
+            Some(toml::Value::String(_)) => {
+                Err(error("`active` must be a valid character name".into()))
+            }
             Some(_) => Err(error("`active` must be a string".into())),
         }
     }

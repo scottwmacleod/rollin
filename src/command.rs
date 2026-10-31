@@ -215,7 +215,7 @@ pub fn parse_command(
         Some("char") => match rest {
             [] => Ok(Command::CharShow),
             [delete, name] if delete.eq_ignore_ascii_case("delete") => {
-                Ok(Command::CharDelete(name.to_lowercase()))
+                Ok(Command::CharDelete(char_name_shape(name)?))
             }
             [new, name] if new.eq_ignore_ascii_case("new") => {
                 Ok(Command::CharNew(name.to_lowercase()))
@@ -223,7 +223,7 @@ pub fn parse_command(
             [new] if new.eq_ignore_ascii_case("new") => {
                 Err(CommandError::Usage("char new <name>".into()))
             }
-            [name] => Ok(Command::CharSwitch(name.to_lowercase())),
+            [name] => Ok(Command::CharSwitch(char_name_shape(name)?)),
             _ => Err(CommandError::Usage("char [<name> | new <name>]".into())),
         },
         Some("unset") => match rest {
@@ -271,6 +271,20 @@ fn require_character(characters: &CharacterStore, name: &str) -> Result<(), Comm
         name: name.to_string(),
         suggestion,
     })
+}
+
+/// Lowercases a character name and checks it is `[a-z][a-z0-9_-]*`, so a name
+/// can never reach outside the characters directory.
+fn char_name_shape(raw: &str) -> Result<String, CommandError> {
+    let name = raw.to_lowercase();
+    if is_name_shaped(&name) {
+        Ok(name)
+    } else {
+        Err(CommandError::InvalidCharName(NameError {
+            name: raw.to_string(),
+            rule: NameRule::Shape,
+        }))
+    }
 }
 
 /// Checks a character name and returns its stored (lowercase) form.
@@ -375,7 +389,7 @@ impl Context {
     fn acting_name(&self, characters: &CharacterStore) -> Result<String, CommandError> {
         match &self.character {
             Some(name) => {
-                let name = name.to_lowercase();
+                let name = char_name_shape(name)?;
                 require_character(characters, &name)?;
                 Ok(name)
             }
