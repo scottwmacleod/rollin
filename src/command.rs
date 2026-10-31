@@ -90,6 +90,8 @@ pub enum CommandError {
         /// A saved name within edit distance 2 of `word`.
         suggestion: Option<String>,
     },
+    /// A lone session-only word (`quit`, `help`, ...) given one-shot.
+    SessionOnly { word: String },
     /// Neither `XDG_CONFIG_HOME` nor `HOME` gives a config directory.
     NoConfigDir,
     /// The file given to `import` could not be read as a v1 presets file.
@@ -135,6 +137,10 @@ impl std::fmt::Display for CommandError {
             CommandError::UnknownPreset { word, .. } => {
                 write!(f, "'{word}' is not a valid formula or a known preset")
             }
+            CommandError::SessionOnly { word } => write!(
+                f,
+                "'{word}' is a session command; run `rollin` with no arguments to start a session and type it there"
+            ),
             CommandError::NoConfigDir => {
                 write!(
                     f,
@@ -350,6 +356,9 @@ fn roll_or_preset(
 ) -> Result<Command, CommandError> {
     if let [word] = words {
         let name = word.to_lowercase();
+        if crate::session::SESSION_WORDS.contains(&name.as_str()) {
+            return Err(CommandError::SessionOnly { word: word.clone() });
+        }
         // A name-shaped word that fails to parse as a formula (a syntax
         // error, not a bad dice group like `d6dl9`) may be a preset name.
         let not_a_formula = matches!(crate::parser::parse(word), Err(Error::Syntax { .. }));

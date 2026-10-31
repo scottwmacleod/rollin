@@ -95,8 +95,10 @@ repeat cap of 100). The `x` may be lower or upper case and may touch the number
 or not (`6x`, `6 x`, `6X`). Output lines are numbered by iteration, see
 [Output modes](#output-modes). It is an error to use `Nx` a second time
 (`2x 3x d20`) or anywhere but the start of the formula (`d20, 3x d6`), and an
-`Nx` with nothing after it (`6x`) is an error. The 10000-dice limit below is
-per roll, not per repeat, and `Nx` over a success count or `adv`
+`Nx` with nothing after it (`6x`) is an error. So is `Nx` over a body that
+rolls no dice (`2x3`): `x` is repeat, not multiplication (use `*`). The
+10000-dice limit below is per roll, not per repeat, and `Nx` over a success
+count or `adv`
 formula works like it does without the `Nx`.
 
 **Repeat and parentheses.** `Nx` always applies to the whole rest of the
@@ -458,6 +460,16 @@ $ rollin "2d6+1001d6"
 error: dice per term cap (1000) exceeded by '1001d6'
   2d6+1001d6
       ^^^^
+$ rollin 2x3
+error: 'x' means repeat, and '3' has no dice to repeat
+  2x3
+  ^^
+hint: for multiplication use *; did you mean 2*3?
+$ rollin quit
+error: 'quit' is a session command; run `rollin` with no arguments to start a session and type it there
+$ rollin help
+error: 'help' is a session command; run `rollin` with no arguments to start a session and type it there
+hint: for command-line help, run `rollin --help`
 ```
 
 Exceeding a cap names the cap and the term. Other errors: `unclosed '('`,
@@ -622,10 +634,11 @@ entropy-seeded generator; a line that gives `--seed N` reseeds it, and
 
 **Session-only commands.** `help` (a short summary), `quit` or `exit` (also
 Ctrl-D), and `history` (the numbered lines typed, persisted ones first).
-Ctrl-C discards the line being typed and keeps going. They are single words:
-as one-shot words, or with other words after them, they are not special and
-give the usual `'help' is not a valid formula or a known preset` error. They
-cannot be preset or character names.
+Ctrl-C discards the line being typed and keeps going. They are single words.
+Alone as one-shot words they give an error saying they are session commands
+(`rollin help` points to `rollin --help`); with other words after them they
+are not special and give the usual `'help me' is not a valid formula` style
+error. They cannot be preset or character names.
 
 **Prompt.** `rollin> ` for the `default` character, `rollin[grog]> ` for any
 other; it changes as soon as `char` does. If the active character cannot be
