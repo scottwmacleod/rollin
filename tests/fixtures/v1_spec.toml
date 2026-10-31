@@ -1,0 +1,427 @@
+# The Python v1 test suite (git tag v1.0, tests/test_parser.py, test_roller.py,
+# test_presets.py) as a data-driven parity spec, consumed by tests/v1_spec.rs.
+#
+# Every case is run as `rollin <formula> --seed 1 --json` and checked against the
+# observable expectations below. status = "live" cases must pass;
+# status = "ignored" cases are skipped and counted, and must give a reason naming
+# the ticket that will un-ignore them. To un-ignore: fix the engine, then change
+# status to "live" and delete the reason line.
+#
+# Fields: name, source (Python test), formula, status, reason, expect (ok|error),
+# rolls, total_ranges, dice, kept, dropped, total_min, total_max, modifier
+# (total == kept sum + modifier), dropped_extreme (lowest|highest).
+
+[[case]]
+name = "simple_d20"
+source = "test_parser.py::test_simple_d20"
+formula = "d20"
+status = "live"
+dice = 1
+total_min = 1
+total_max = 20
+
+[[case]]
+name = "multiple_dice"
+source = "test_parser.py::test_multiple_dice"
+formula = "2d6"
+status = "live"
+dice = 2
+total_min = 2
+total_max = 12
+
+[[case]]
+name = "positive_modifier"
+source = "test_parser.py::test_positive_modifier"
+formula = "3d8+5"
+status = "ignored"
+reason = "#10 (v1 formula parity: +/- modifiers; arithmetic generalised in #11)"
+dice = 3
+modifier = 5
+total_min = 8
+total_max = 29
+
+[[case]]
+name = "negative_modifier"
+source = "test_parser.py::test_negative_modifier"
+formula = "2d6-2"
+status = "ignored"
+reason = "#10 (v1 formula parity: +/- modifiers; arithmetic generalised in #11)"
+dice = 2
+modifier = -2
+total_min = 0
+total_max = 10
+
+[[case]]
+name = "drop_lowest"
+source = "test_parser.py::test_drop_lowest"
+formula = "4d6dl1"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dice = 4
+dropped = 1
+kept = 3
+dropped_extreme = "lowest"
+
+[[case]]
+name = "drop_lowest_default"
+source = "test_parser.py::test_drop_lowest_default"
+formula = "4d6dl"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dice = 4
+dropped = 1
+kept = 3
+dropped_extreme = "lowest"
+
+[[case]]
+name = "drop_highest"
+source = "test_parser.py::test_drop_highest"
+formula = "4d6dh1"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dice = 4
+dropped = 1
+kept = 3
+dropped_extreme = "highest"
+
+[[case]]
+name = "keep_highest"
+source = "test_parser.py::test_keep_highest"
+formula = "4d6kh3"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dice = 4
+dropped = 1
+kept = 3
+dropped_extreme = "lowest"
+
+[[case]]
+name = "keep_lowest"
+source = "test_parser.py::test_keep_lowest"
+formula = "4d6kl2"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dice = 4
+dropped = 2
+kept = 2
+dropped_extreme = "highest"
+
+[[case]]
+name = "fixed_value"
+source = "test_parser.py::test_fixed_value"
+formula = "15"
+status = "ignored"
+reason = "#10 (v1 formula parity: comma lists and fixed values)"
+dice = 0
+total_min = 15
+total_max = 15
+
+[[case]]
+name = "case_insensitive"
+source = "test_parser.py::test_case_insensitive"
+formula = "4D6DL1"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dice = 4
+dropped = 1
+kept = 3
+dropped_extreme = "lowest"
+
+[[case]]
+name = "invalid_formula"
+source = "test_parser.py::test_invalid_formula"
+formula = "xyz"
+status = "ignored"
+reason = "#11 (typed errors for invalid formulas and hard limits)"
+expect = "error"
+
+[[case]]
+name = "sides_too_low"
+source = "test_parser.py::test_sides_too_low"
+formula = "1d1"
+status = "ignored"
+reason = "#11 (typed errors for invalid formulas and hard limits)"
+expect = "error"
+
+[[case]]
+name = "drop_equals_count"
+source = "test_parser.py::test_drop_equals_count"
+formula = "2d6dl2"
+status = "ignored"
+reason = "#11 (typed errors for invalid formulas and hard limits)"
+expect = "error"
+
+[[case]]
+name = "drop_exceeds_count"
+source = "test_parser.py::test_drop_exceeds_count"
+formula = "2d6dl3"
+status = "ignored"
+reason = "#11 (typed errors for invalid formulas and hard limits)"
+expect = "error"
+
+[[case]]
+name = "kh_keep_all"
+source = "test_parser.py::test_kh_keep_all"
+formula = "4d6kh4"
+status = "ignored"
+reason = "#11 (typed errors for invalid formulas and hard limits)"
+expect = "error"
+
+[[case]]
+name = "kh_keep_more_than_pool"
+source = "test_parser.py::test_kh_keep_more_than_pool"
+formula = "2d6kh3"
+status = "ignored"
+reason = "#11 (typed errors for invalid formulas and hard limits)"
+expect = "error"
+
+[[case]]
+name = "max_dice_limit"
+source = "test_parser.py::test_max_dice_limit"
+formula = "1001d6"
+status = "ignored"
+reason = "#11 (typed errors for invalid formulas and hard limits)"
+expect = "error"
+
+[[case]]
+name = "max_dice_limit_boundary"
+source = "test_parser.py::test_max_dice_limit_boundary"
+formula = "1000d6"
+status = "ignored"
+reason = "#11 (hard limits on dice count and sides)"
+dice = 1000
+total_min = 1000
+total_max = 6000
+
+[[case]]
+name = "max_sides_limit"
+source = "test_parser.py::test_max_sides_limit"
+formula = "1d10001"
+status = "ignored"
+reason = "#11 (typed errors for invalid formulas and hard limits)"
+expect = "error"
+
+[[case]]
+name = "max_sides_limit_boundary"
+source = "test_parser.py::test_max_sides_limit_boundary"
+formula = "1d10000"
+status = "ignored"
+reason = "#11 (hard limits on dice count and sides)"
+dice = 1
+total_min = 1
+total_max = 10000
+
+[[case]]
+name = "parse_formulas_multiple"
+source = "test_parser.py::test_parse_formulas_multiple"
+formula = "d20, 2d6+3"
+status = "ignored"
+reason = "#10 (v1 formula parity: comma lists and fixed values)"
+rolls = 2
+total_ranges = [[1, 20], [5, 15]]
+
+[[case]]
+name = "parse_formulas_single"
+source = "test_parser.py::test_parse_formulas_single"
+formula = "d20"
+status = "live"
+rolls = 1
+
+[[case]]
+name = "parse_formulas_empty"
+source = "test_parser.py::test_parse_formulas_empty"
+formula = ""
+status = "ignored"
+reason = "#11 (typed errors for invalid formulas and hard limits)"
+expect = "error"
+
+[[case]]
+name = "parse_formulas_mixed_fixed"
+source = "test_parser.py::test_parse_formulas_mixed_fixed"
+formula = "d20, 15"
+status = "ignored"
+reason = "#10 (v1 formula parity: comma lists and fixed values)"
+rolls = 2
+total_ranges = [[1, 20], [15, 15]]
+
+[[case]]
+name = "single_die_in_range"
+source = "test_roller.py::test_single_die_in_range"
+formula = "d6"
+status = "live"
+dice = 1
+total_min = 1
+total_max = 6
+
+[[case]]
+name = "modifier_applied"
+source = "test_roller.py::test_modifier_applied"
+formula = "d6+10"
+status = "ignored"
+reason = "#10 (v1 formula parity: +/- modifiers; arithmetic generalised in #11)"
+dice = 1
+modifier = 10
+total_min = 11
+total_max = 16
+
+[[case]]
+name = "negative_modifier_roll"
+source = "test_roller.py::test_negative_modifier"
+formula = "d6-1"
+status = "ignored"
+reason = "#10 (v1 formula parity: +/- modifiers; arithmetic generalised in #11)"
+dice = 1
+modifier = -1
+total_min = 0
+total_max = 5
+
+[[case]]
+name = "multiple_dice_count"
+source = "test_roller.py::test_multiple_dice_count"
+formula = "4d6"
+status = "live"
+dice = 4
+total_min = 4
+total_max = 24
+
+[[case]]
+name = "drop_lowest_count"
+source = "test_roller.py::test_drop_lowest_count"
+formula = "4d6dl1"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dice = 4
+dropped = 1
+kept = 3
+
+[[case]]
+name = "drop_lowest_is_minimum"
+source = "test_roller.py::test_drop_lowest_is_minimum"
+formula = "4d6dl1"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dropped_extreme = "lowest"
+
+[[case]]
+name = "drop_highest_count"
+source = "test_roller.py::test_drop_highest_count"
+formula = "4d6dh1"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dice = 4
+dropped = 1
+kept = 3
+
+[[case]]
+name = "drop_highest_is_maximum"
+source = "test_roller.py::test_drop_highest_is_maximum"
+formula = "4d6dh1"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dropped_extreme = "highest"
+
+[[case]]
+name = "total_excludes_dropped"
+source = "test_roller.py::test_total_excludes_dropped"
+formula = "4d6dl1"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+modifier = 0
+
+[[case]]
+name = "total_includes_modifier"
+source = "test_roller.py::test_total_includes_modifier"
+formula = "2d6+3"
+status = "ignored"
+reason = "#10 (v1 formula parity: +/- modifiers; arithmetic generalised in #11)"
+modifier = 3
+
+[[case]]
+name = "drop_two_lowest"
+source = "test_roller.py::test_drop_two_lowest"
+formula = "6d6dl2"
+status = "ignored"
+reason = "#10 (v1 formula parity: drop/keep dice)"
+dice = 6
+dropped = 2
+kept = 4
+
+[[case]]
+name = "presets_load_missing_file"
+source = "test_presets.py::test_load_missing_file"
+kind = "presets"
+behaviour = "load_presets on a missing store returns an empty set of presets"
+status = "ignored"
+reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+
+[[case]]
+name = "presets_save_and_load_roundtrip"
+source = "test_presets.py::test_save_and_load_roundtrip"
+kind = "presets"
+behaviour = "saving {attack: d20+5} then loading returns exactly {attack: d20+5}"
+status = "ignored"
+reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+
+[[case]]
+name = "presets_add_and_get_preset"
+source = "test_presets.py::test_add_and_get_preset"
+kind = "presets"
+behaviour = "adding preset 'Attack' = d20+5 then getting 'attack' returns d20+5"
+status = "ignored"
+reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+
+[[case]]
+name = "presets_get_preset_case_insensitive"
+source = "test_presets.py::test_get_preset_case_insensitive"
+kind = "presets"
+behaviour = "a preset added as 'MyRoll' is found as 'myroll' and 'MYROLL'"
+status = "ignored"
+reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+
+[[case]]
+name = "presets_delete_preset"
+source = "test_presets.py::test_delete_preset"
+kind = "presets"
+behaviour = "deleting an existing preset returns true and it is then gone"
+status = "ignored"
+reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+
+[[case]]
+name = "presets_delete_nonexistent_preset"
+source = "test_presets.py::test_delete_nonexistent_preset"
+kind = "presets"
+behaviour = "deleting a preset that does not exist returns false"
+status = "ignored"
+reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+
+[[case]]
+name = "presets_load_corrupted_json"
+source = "test_presets.py::test_load_corrupted_json"
+kind = "presets"
+behaviour = "a corrupted store file loads as an empty set of presets"
+status = "ignored"
+reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+
+[[case]]
+name = "presets_load_non_dict_json"
+source = "test_presets.py::test_load_non_dict_json"
+kind = "presets"
+behaviour = "a store file holding a JSON list loads as an empty set of presets"
+status = "ignored"
+reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+
+[[case]]
+name = "presets_load_filters_non_string_values"
+source = "test_presets.py::test_load_filters_non_string_values"
+kind = "presets"
+behaviour = "entries whose value is not a string are dropped on load"
+status = "ignored"
+reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+
+[[case]]
+name = "presets_multiple_presets"
+source = "test_presets.py::test_multiple_presets"
+kind = "presets"
+behaviour = "several presets coexist and each is retrievable by name"
+status = "ignored"
+reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
