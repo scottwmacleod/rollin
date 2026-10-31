@@ -64,6 +64,41 @@ pub struct Die {
     /// in order. Empty for every other die.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub parts: Vec<u32>,
+    /// On a success-count roll, whether this counting die was a success.
+    /// Absent on dice that matched nothing, and on every die of a sum.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub outcome: Option<Outcome>,
+}
+
+/// How a counting die scored in a success-count roll.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Outcome {
+    Success,
+}
+
+/// What kind of number a roll produces.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Kind {
+    /// A sum of faces (and flat numbers).
+    Sum,
+    /// A success count: dice meeting a condition, never mixed into arithmetic.
+    Count,
+}
+
+impl Kind {
+    fn is_sum(&self) -> bool {
+        *self == Kind::Sum
+    }
+}
+
+/// The tally of a success-count dice group.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Tally {
+    pub kind: Kind,
+    pub successes: i64,
+    pub failures: i64,
 }
 
 /// One node of a roll's result tree. Every node carries what it contributed,
@@ -79,7 +114,12 @@ pub enum Node {
         term: String,
         sides: i64,
         dice: Vec<Die>,
+        /// The sum of the counting dice, or on a success count the net
+        /// successes (successes minus failures).
         subtotal: i64,
+        /// Present only on a success count.
+        #[serde(flatten, skip_serializing_if = "Option::is_none")]
+        tally: Option<Tally>,
     },
     Neg {
         operand: Box<Node>,
@@ -106,6 +146,15 @@ pub struct Link {
 }
 
 impl Node {
+    /// Whether this node is a success count.
+    pub fn is_count(&self) -> bool {
+        match self {
+            Node::Dice { tally, .. } => tally.is_some(),
+            Node::Group { inner, .. } => inner.is_count(),
+            _ => false,
+        }
+    }
+
     /// The value this node evaluates to.
     pub fn total(&self) -> i64 {
         match self {
@@ -122,6 +171,9 @@ impl Node {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Roll {
     pub formula: String,
+    /// Omitted from JSON for an ordinary sum.
+    #[serde(skip_serializing_if = "Kind::is_sum")]
+    pub kind: Kind,
     pub total: i64,
     pub expr: Node,
 }
