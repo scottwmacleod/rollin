@@ -157,3 +157,40 @@ fn repeat_count_of_zero_is_an_error_pointing_at_the_count() {
     assert!(run.stderr.contains("at least 1"), "{run:?}");
     assert!(run.stderr.contains("\n  0x d20\n  ^^\n"), "{run:?}");
 }
+
+#[test]
+fn a_second_repeat_is_an_error_wherever_it_appears() {
+    let cli = Cli::new();
+    for (formula, underline) in [
+        ("2x 3x d20", "     ^^"),
+        ("d20, 3x d6", "       ^^"),
+        ("d20 + 3x d6", "        ^^"),
+    ] {
+        let run = cli.run(&["--", formula]);
+        assert!(!run.success(), "{formula}: {run:?}");
+        assert_eq!(run.stdout, "");
+        assert!(
+            run.stderr.contains("only once, at the very start"),
+            "{formula}: {run:?}"
+        );
+        assert!(
+            run.stderr
+                .contains(&format!("\n  {formula}\n{underline}\n")),
+            "{formula}: {run:?}"
+        );
+    }
+}
+
+#[test]
+fn a_repeat_with_nothing_after_it_is_an_error() {
+    let cli = Cli::new();
+    for formula in ["6x", "6 x", "6x ,"] {
+        let run = cli.run(&["--", formula]);
+        assert!(!run.success(), "{formula}: {run:?}");
+        assert_eq!(run.stdout, "");
+        assert!(
+            run.stderr.contains("nothing to repeat"),
+            "{formula}: {run:?}"
+        );
+    }
+}

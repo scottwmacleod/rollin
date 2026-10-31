@@ -96,6 +96,13 @@ pub fn parse(src: &str) -> Result<Formula, Error> {
         }
     }
     if items.is_empty() {
+        if repeat.is_some() {
+            let span = tokens[0].span.start..tokens[1].span.end;
+            return Err(Error::syntax(
+                format!("'{}' has nothing to repeat", &src[span.clone()]),
+                span,
+            ));
+        }
         return Err(Error::syntax("no formulas provided", 0..src.len()));
     }
     Ok(Formula { repeat, items })
@@ -268,6 +275,18 @@ impl Parser<'_> {
             Some(Token::Number(n)) => {
                 let n = *n;
                 self.pos += 1;
+                if let Some(Token::Word(w)) = self.peek() {
+                    if w == "x" {
+                        let span = self.tokens[start].span.start..self.tokens[self.pos].span.end;
+                        return Err(Error::syntax(
+                            format!(
+                                "a repeat ('{}') is allowed only once, at the very start of the formula",
+                                &self.src[span.clone()]
+                            ),
+                            span,
+                        ));
+                    }
+                }
                 if !matches!(self.peek(), Some(Token::Word(w)) if w == "d" || w == "df") {
                     return Ok(Expr {
                         kind: ExprKind::Number(n),
