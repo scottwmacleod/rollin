@@ -2,25 +2,16 @@
 
 use crate::ast::{BinOp, Dice, ExplodeMode, Expr, ExprKind, Item, RerollMode};
 use crate::error::Error;
+use crate::limits::{Cap, MAX_DICE_PER_EXPRESSION, MAX_EXPLOSIONS_PER_DIE, MAX_REROLLS_PER_DIE};
 use crate::{Die, Kind, Link, Node, Outcome, Roll, Status, Tally};
 use rand::Rng;
 use std::ops::Range;
-
-/// Hard limit (ADR 0006): extra dice one original die may roll.
-const MAX_EXPLOSIONS_PER_DIE: usize = 100;
-
-/// Hard limit (ADR 0006): rerolls of one die under `rr`.
-const MAX_REROLLS_PER_DIE: usize = 100;
-
-/// Hard limit (ADR 0006): dice rolled by one roll, extra explosion dice
-/// included.
-pub(crate) const MAX_DICE_PER_EXPRESSION: usize = 10000;
 
 /// State threaded through one roll's evaluation.
 struct Ctx<'a, R> {
     rng: &'a mut R,
     /// Dice rolled so far, explosions included.
-    rolled: usize,
+    rolled: i64,
 }
 
 impl<R: Rng> Ctx<'_, R> {
@@ -28,12 +19,11 @@ impl<R: Rng> Ctx<'_, R> {
     fn die(&mut self, dice: &Dice, span: &Range<usize>) -> Result<i64, Error> {
         self.rolled += 1;
         if self.rolled > MAX_DICE_PER_EXPRESSION {
-            return Err(Error::LimitExceeded {
-                cap: "dice per expression",
-                limit: MAX_DICE_PER_EXPRESSION,
-                term: dice.text.clone(),
-                span: span.clone(),
-            });
+            return Err(Error::limit_exceeded(
+                Cap::DicePerExpression,
+                dice.text.clone(),
+                span.clone(),
+            ));
         }
         Ok(i64::from(self.rng.gen_range(1..=dice.sides as u32)))
     }
@@ -67,12 +57,11 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                     let mut rerolls = 0;
                     while reroll.triggers(raw) {
                         if rerolls == MAX_REROLLS_PER_DIE {
-                            return Err(Error::LimitExceeded {
-                                cap: "rerolls per die",
-                                limit: MAX_REROLLS_PER_DIE,
-                                term: d.text.clone(),
-                                span: expr.span.clone(),
-                            });
+                            return Err(Error::limit_exceeded(
+                                Cap::RerollsPerDie,
+                                d.text.clone(),
+                                expr.span.clone(),
+                            ));
                         }
                         rerolls += 1;
                         dice.push(Die {
@@ -97,12 +86,11 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 let mut explosions = 0;
                 while d.explode.is_some_and(|e| e.triggers(raw)) {
                     if explosions == MAX_EXPLOSIONS_PER_DIE {
-                        return Err(Error::LimitExceeded {
-                            cap: "explosions per die",
-                            limit: MAX_EXPLOSIONS_PER_DIE,
-                            term: d.text.clone(),
-                            span: expr.span.clone(),
-                        });
+                        return Err(Error::limit_exceeded(
+                            Cap::ExplosionsPerDie,
+                            d.text.clone(),
+                            expr.span.clone(),
+                        ));
                     }
                     explosions += 1;
                     raw = ctx.die(d, &expr.span)?;

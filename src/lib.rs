@@ -13,6 +13,7 @@ mod completion;
 mod error;
 mod eval;
 mod lexer;
+mod limits;
 mod parser;
 mod paths;
 mod presets;
@@ -25,6 +26,7 @@ pub use command::{
 };
 pub use completion::{complete, Completion, CompletionData};
 pub use error::Error;
+pub use limits::Cap;
 pub use paths::{app_dir, config_dir};
 pub use presets::{validate_name, NameError, NameRule, Store, StoreError};
 pub use session::{format_history, help_text, session_command, SessionCommand};

@@ -2,7 +2,7 @@
 //! CLI seam can only hit the cap by seed hunting).
 
 use rand::RngCore;
-use rollin::{roll, Error, Node, Status};
+use rollin::{roll, Cap, Error, Node, Status};
 
 /// Yields `lows` draws that make a die show 1, then draws that make a d2 show
 /// 2.
@@ -59,7 +59,7 @@ fn the_101st_reroll_is_an_error_naming_cap_and_term() {
     assert_eq!(
         run("d2rr1", 101).unwrap_err(),
         Error::LimitExceeded {
-            cap: "rerolls per die",
+            cap: Cap::RerollsPerDie,
             limit: 100,
             term: "d2rr1".into(),
             span: 0..5,

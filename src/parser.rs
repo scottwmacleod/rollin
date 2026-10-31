@@ -9,12 +9,10 @@ use crate::ast::{
     RerollMode, Select, SelectKind, Special, Success,
 };
 use crate::error::Error;
-use crate::eval::MAX_DICE_PER_EXPRESSION;
+use crate::limits::{
+    Cap, MAX_DEPTH, MAX_DICE_PER_EXPRESSION, MAX_DICE_PER_TERM, MAX_REPEAT, MAX_SIDES,
+};
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
-const MAX_DICE_PER_TERM: i64 = 1000;
-const MAX_DEPTH: usize = 32;
-const MAX_REPEAT: i64 = 100;
-const MAX_SIDES: i64 = 10000;
 /// `d%` is a d100.
 const PERCENTILE_SIDES: i64 = 100;
 
@@ -86,12 +84,7 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
                 return Err(Error::syntax("repeat count must be at least 1", span));
             }
             if *n > MAX_REPEAT {
-                return Err(Error::LimitExceeded {
-                    cap: "repeat",
-                    limit: MAX_REPEAT as usize,
-                    term: src[span.clone()].to_string(),
-                    span,
-                });
+                return Err(Error::limit_exceeded(Cap::Repeat, &src[span.clone()], span));
             }
             repeat = Some(*n as u32);
             parser.pos = 2;
@@ -167,7 +160,7 @@ struct Parser<'a> {
     pos: usize,
     end: usize,
     /// Parentheses and unary minus signs currently open.
-    depth: usize,
+    depth: i64,
     /// Dice rolled so far by the item being parsed.
     item_dice: i64,
 }
@@ -293,12 +286,11 @@ impl Parser<'_> {
                 ""
             };
             let len = self.src[at..].chars().next().map_or(1, char::len_utf8);
-            return Err(Error::LimitExceeded {
-                cap: "nesting depth",
-                limit: MAX_DEPTH,
-                term: format!("{shown}{more}"),
-                span: at..at + len,
-            });
+            return Err(Error::limit_exceeded(
+                Cap::NestingDepth,
+                format!("{shown}{more}"),
+                at..at + len,
+            ));
         }
         Ok(())
     }
@@ -378,12 +370,11 @@ impl Parser<'_> {
         };
         let sides_span = self.tokens[sides_start].span.clone();
         if count > MAX_DICE_PER_TERM {
-            return Err(Error::LimitExceeded {
-                cap: "dice per term",
-                limit: MAX_DICE_PER_TERM as usize,
-                term: self.src[count_span.start..sides_span.end].to_string(),
-                span: count_span,
-            });
+            return Err(Error::limit_exceeded(
+                Cap::DicePerTerm,
+                &self.src[count_span.start..sides_span.end],
+                count_span,
+            ));
         }
         if count < 1 {
             return Err(Error::invalid_dice(
@@ -408,13 +399,12 @@ impl Parser<'_> {
         let success = self.parse_count()?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
-        if self.item_dice > MAX_DICE_PER_EXPRESSION as i64 {
-            return Err(Error::LimitExceeded {
-                cap: "dice per expression",
-                limit: MAX_DICE_PER_EXPRESSION,
-                term: self.src[span.clone()].to_string(),
+        if self.item_dice > MAX_DICE_PER_EXPRESSION {
+            return Err(Error::limit_exceeded(
+                Cap::DicePerExpression,
+                &self.src[span.clone()],
                 span,
-            });
+            ));
         }
         Ok(Expr {
             kind: ExprKind::Dice(Dice {
