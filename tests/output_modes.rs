@@ -124,8 +124,8 @@ fn color_never_and_no_color_turn_color_off() {
     let never = color_run(&["d20", "--seed", "1", "--color", "never"]);
     assert!(!never.stdout.contains('\x1b'));
 
-    let out = assert_cmd::Command::cargo_bin("rollin")
-        .unwrap()
+    let out = Cli::new()
+        .command()
         .env("NO_COLOR", "1")
         .args(["d20", "--seed", "1", "--color", "auto"])
         .output()
@@ -136,8 +136,8 @@ fn color_never_and_no_color_turn_color_off() {
 #[test]
 fn explicit_always_overrides_no_color_and_never_beats_it() {
     let run = |color: &str| {
-        let out = assert_cmd::Command::cargo_bin("rollin")
-            .unwrap()
+        let out = Cli::new()
+            .command()
             .env("NO_COLOR", "1")
             .args(["d20", "--seed", "1", "--color", color])
             .output()
@@ -152,8 +152,8 @@ fn explicit_always_overrides_no_color_and_never_beats_it() {
 fn empty_no_color_is_ignored() {
     // NO_COLOR only counts when non-empty; piped auto stays off anyway, so
     // check through `always`, which must still color.
-    let out = assert_cmd::Command::cargo_bin("rollin")
-        .unwrap()
+    let out = Cli::new()
+        .command()
         .env("NO_COLOR", "")
         .args(["d20", "--seed", "1", "--color", "always"])
         .output()

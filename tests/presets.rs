@@ -279,7 +279,8 @@ fn wrong_typed_store_contents_are_clear_errors() {
 
 /// Runs `rollin save k d6` with exactly the given `XDG_CONFIG_HOME` / `HOME`.
 fn save_with_env(xdg: Option<&str>, home: Option<&std::path::Path>) -> common::Run {
-    let mut cmd = assert_cmd::Command::cargo_bin("rollin").unwrap();
+    let cli = Cli::new(); // keeps the sandbox cwd alive for the spawn
+    let mut cmd = cli.command();
     cmd.env_remove("XDG_CONFIG_HOME").env_remove("HOME");
     if let Some(xdg) = xdg {
         cmd.env("XDG_CONFIG_HOME", xdg);
