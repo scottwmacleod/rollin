@@ -232,7 +232,10 @@ fn verbose_puts_an_iteration_header_before_each_repeat() {
         .lines()
         .filter(|l| l.starts_with("d20+8") || l.starts_with("d10+5"))
         .collect();
-    assert_eq!(blocks, ["d20+8  # attack", "d10+5", "d20+8  # attack", "d10+5"]);
+    assert_eq!(
+        blocks,
+        ["d20+8  # attack", "d10+5", "d20+8  # attack", "d10+5"]
+    );
     // Each header comes before its own iteration's blocks.
     let first_block = out.find("d20+8").unwrap();
     assert!(out.find("iteration 1 of 2").unwrap() < first_block);
