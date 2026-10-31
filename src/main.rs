@@ -1,6 +1,8 @@
 mod render;
+mod repl;
 
 use clap::Parser;
+use rand_chacha::ChaCha8Rng;
 use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
 use rollin::{
     entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output,
@@ -14,10 +16,10 @@ use std::process::ExitCode;
 /// A dice roller for the command line.
 #[derive(Parser)]
 #[command(version)]
-struct Args {
+pub struct Args {
     /// A formula to roll, e.g. d20 or "4d6dl1, d20+5", a preset name, or a
     /// command: save, presets, delete, import, roll, set, unset, vars, char, characters
-    #[arg(required = true, allow_negative_numbers = true)]
+    #[arg(allow_negative_numbers = true)]
     words: Vec<String>,
 
     /// Seed the random number generator for reproducible rolls
@@ -69,6 +71,21 @@ struct JsonOutput {
 
 fn main() -> ExitCode {
     let args = Args::parse();
+    let mut rng = entropy_rng();
+    if args.words.is_empty() {
+        // Other flags given at startup have nothing to apply to; only the
+        // seed means something to a whole session.
+        if let Some(seed) = args.seed {
+            rng = seeded_rng(seed);
+        }
+        return repl::session(&mut rng);
+    }
+    run_line(&args, &mut rng)
+}
+
+/// Runs one parsed command line against a fresh context, printing its
+/// output or error. The one-shot path and the session both come through here.
+pub fn run_line(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
     let mut ctx = Context::new(config_dir());
     ctx.character = args.character.clone();
     let names = &mut || ctx.preset_names();
@@ -83,13 +100,12 @@ fn main() -> ExitCode {
         Ok(command) => command,
         Err(e) => return fail(&e),
     };
-    let result = match args.seed {
-        Some(seed) => execute(&command, &ctx, &mut seeded_rng(seed)),
-        None => execute(&command, &ctx, &mut entropy_rng()),
-    };
-    match result {
+    if let Some(seed) = args.seed {
+        *rng = seeded_rng(seed);
+    }
+    match execute(&command, &ctx, rng) {
         Ok(output) => {
-            show(&args, output);
+            show(args, output);
             ExitCode::SUCCESS
         }
         Err(e) => fail(&e),
@@ -97,7 +113,7 @@ fn main() -> ExitCode {
 }
 
 /// `$XDG_CONFIG_HOME` if absolute, else `$HOME/.config`.
-fn config_dir() -> Option<PathBuf> {
+pub fn config_dir() -> Option<PathBuf> {
     let xdg = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
     let home = std::env::var_os("HOME").map(PathBuf::from);
     rollin::config_dir(xdg.as_deref(), home.as_deref())

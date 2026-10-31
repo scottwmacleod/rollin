@@ -115,8 +115,10 @@ pub(crate) fn write_atomic(path: &Path, text: &str) -> Result<(), StoreError> {
     })
 }
 
-/// Words the command parser treats as commands.
-pub const COMMAND_WORDS: [&str; 10] = [
+/// Words the command parser treats as commands, plus the session-only words
+/// (`help`, `quit`, `exit`, `history`), which are reserved so a preset can
+/// never be shadowed by one.
+pub const COMMAND_WORDS: [&str; 14] = [
     "save",
     "presets",
     "delete",
@@ -127,6 +129,10 @@ pub const COMMAND_WORDS: [&str; 10] = [
     "vars",
     "char",
     "characters",
+    "help",
+    "quit",
+    "exit",
+    "history",
 ];
 
 /// Words the formula lexer and parser treat as keywords.

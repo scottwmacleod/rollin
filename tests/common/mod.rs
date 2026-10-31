@@ -55,10 +55,16 @@ impl Cli {
 
     /// Runs `rollin` with `args`, capturing output; never panics on failure exit.
     pub fn run(&self, args: &[&str]) -> Run {
+        self.run_stdin(args, "")
+    }
+
+    /// Like [`Cli::run`], with `stdin` piped in (so not a terminal).
+    pub fn run_stdin(&self, args: &[&str], stdin: &str) -> Run {
         let out = Command::cargo_bin("rollin")
             .expect("rollin binary builds")
             .env("XDG_CONFIG_HOME", self.config_dir.path())
             .args(args)
+            .write_stdin(stdin)
             .output()
             .expect("spawn rollin");
         Run {

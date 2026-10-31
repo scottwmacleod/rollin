@@ -329,7 +329,7 @@ fn char_new_refuses_existing_and_invalid_names() {
         ("GROG", "character 'grog' already exists"),
         ("default", "character 'default' already exists"),
         ("1x", "invalid character name '1x': names must start with a letter and use only letters, digits, '_' or '-'"),
-        ("set", "invalid character name 'set': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters)"),
+        ("set", "invalid character name 'set': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters, help, quit, exit, history)"),
         ("new", "invalid character name 'new': 'new' is reserved for `rollin char new`"),
     ] {
         let run = cli.run(&["char", "new", name]);

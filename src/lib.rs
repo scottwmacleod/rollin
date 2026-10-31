@@ -9,19 +9,23 @@
 mod ast;
 mod characters;
 mod command;
+mod completion;
 mod error;
 mod eval;
 mod lexer;
 mod parser;
 mod presets;
+mod session;
 
 pub use ast::{BinOp, Special};
 pub use command::{
     config_dir, execute, parse_command, Command, CommandError, Context, ImportReport, Output,
     PresetEntry, PresetSource, Shadow, UndefinedVariable,
 };
+pub use completion::{complete, Completion, CompletionData};
 pub use error::Error;
 pub use presets::{validate_name, NameError, NameRule, Store, StoreError};
+pub use session::{format_history, help_text, session_command, SessionCommand};
 
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;

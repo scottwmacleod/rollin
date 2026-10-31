@@ -3,7 +3,9 @@
 //! and the later interactive session both use it. It never prints.
 
 use crate::characters::{Character, CharacterStore, DEFAULT};
+use crate::completion::CompletionData;
 use crate::presets::{is_name_shaped, validate_name, NameError, NameRule, Store, StoreError};
+use crate::session::SESSION_WORDS;
 use crate::{Error, Roll};
 use rand::Rng;
 use std::collections::BTreeMap;
@@ -424,6 +426,38 @@ impl Context {
         names.sort();
         names.dedup();
         Ok(names)
+    }
+
+    /// The session prompt: `rollin> ` for the `default` character, else
+    /// `rollin[<character>]> `. A broken setting gives the plain prompt (the
+    /// command that needs the character reports the error).
+    pub fn prompt(&self) -> String {
+        match self.characters().and_then(|c| Ok(c.active()?)) {
+            Ok(name) if name != DEFAULT => format!("rollin[{name}]> "),
+            _ => "rollin> ".to_string(),
+        }
+    }
+
+    /// What completion can offer right now, read fresh from the store. Each
+    /// list that fails to load is simply empty: completing never errors.
+    pub fn completion_data(&self) -> CompletionData {
+        let character = self.current().ok().and_then(|(characters, name)| {
+            Some((characters.names().ok()?, characters.load(&name).ok()?))
+        });
+        let (characters, own) = character.unwrap_or_default();
+        let global = self.store().and_then(|s| Ok(s.load()?)).unwrap_or_default();
+        let mut presets: Vec<String> = Vec::new();
+        for name in own.presets.into_keys().chain(global.into_keys()) {
+            if !presets.contains(&name) {
+                presets.push(name);
+            }
+        }
+        CompletionData {
+            presets,
+            characters,
+            variables: own.vars.into_keys().collect(),
+            session_words: SESSION_WORDS.iter().map(|w| w.to_string()).collect(),
+        }
     }
 
     /// The presets store, or an error if there is no config directory.

@@ -19,6 +19,7 @@ rollin -q 2d6+3            # just the total
 rollin -v 4d6dl1           # full breakdown
 rollin 6x 4d6dl1           # repeat: six numbered stat rolls
 rollin 'd20+8 # attack'    # a label (quote the #)
+rollin                     # no formula: start an interactive session
 ```
 
 Dropped dice are shown in parentheses and do not count toward the total.
@@ -230,7 +231,8 @@ saved 'house': d6
 `atk`) and must match `[a-z][a-z0-9_-]*`, so v1 names such as `adv-attack`
 work. A name is rejected at `save` (and skipped by `import`) when it is a
 command word (`save presets delete import roll set unset vars char
-characters`), a reserved dice keyword
+characters help quit exit history`; the last four are session-only, see
+[Session](#session)), a reserved dice keyword
 (`adv dis df dl dh kl kh r rr p f d`), or would itself parse as a dice formula
 (`d20`, `df`, `D6`). The error says which rule failed.
 
@@ -608,6 +610,98 @@ $ rollin -q "d20+8, d10+5" --seed 1
 schema and an example of every node type. `--json` wins over `-q` and `-v`
 (they are ignored). `-q` and `-v` together are an error.
 
+## Session
+
+`rollin` with no formula starts an interactive session, so you can roll
+without retyping the program name:
+
+```
+$ rollin
+rollin 0.1.0 — type 'help' for commands, 'quit' to exit
+rollin> d20+5 --seed 4
+d20+5  [15] + 5  →  20
+rollin> set str 3
+set str = 3 on 'default'
+rollin> char new grog
+created character 'grog' and made it active
+rollin[grog]> set str 5
+set str = 5 on 'grog'
+rollin[grog]> save atk d20+@str # attack
+saved 'atk' on 'grog': d20+@str # attack
+rollin[grog]> atk --seed 4
+(preset 'atk': d20+@str # attack)
+d20+@str  [15] + 5  →  20  # attack
+rollin[grog]> --char default d20+@str --seed 4
+d20+@str  [15] + 3  →  18
+rollin[grog]> d20+
+error: expected a number, a dice group or '(', found end of input
+  d20+
+      ^
+rollin[grog]> -q 2d6 --seed 1
+7
+rollin[grog]> history
+ 1  d20+5 --seed 4
+ 2  set str 3
+ 3  char new grog
+ 4  set str 5
+ 5  save atk d20+@str # attack
+ 6  atk --seed 4
+ 7  --char default d20+@str --seed 4
+ 8  d20+
+ 9  -q 2d6 --seed 1
+10  history
+rollin[grog]> quit
+```
+
+(The output lines above are real, from piping this script into `rollin`; the
+prompts and the banner only appear on a terminal.)
+
+**Every line is a one-shot command.** A line is split on whitespace into
+words and run exactly like `rollin <words>`: the same flags (`--seed N`, `-v`,
+`-q`, `--json`, `--color X`, `--char X`, ...) work and apply to that line
+only, and the output and errors are the same bytes. Quotes are unnecessary
+(and would be taken literally): `#` labels and spaces work as typed, so
+`d20+8 # attack` is the whole line. An error, including a bad flag, is printed
+and the session carries on. Without `--seed` the session draws from one
+entropy-seeded generator; a line that gives `--seed N` reseeds it, and
+`rollin --seed N` at startup seeds the session once.
+
+**Session-only commands.** `help` (a short summary), `quit` or `exit` (also
+Ctrl-D), and `history` (the numbered lines typed, persisted ones first).
+Ctrl-C discards the line being typed and keeps going. They are single words:
+as one-shot words, or with other words after them, they are not special and
+give the usual `'help' is not a valid formula or a known preset` error. They
+cannot be preset or character names.
+
+**Prompt.** `rollin> ` for the `default` character, `rollin[grog]> ` for any
+other; it changes as soon as `char` does. If the active character cannot be
+read the prompt is the plain one and the command that needs it reports the
+error.
+
+**Completion.** Tab completes (case-insensitively; several matches are listed
+and the common part inserted):
+
+- the first word: commands and preset names (`sn<Tab>` becomes `sneak`)
+- after `roll` or `delete`: preset names; after `char`: `new`, `delete` and
+  character names; after `char delete` and `--char`: character names
+- after `set` and `unset`: variable names
+- any word, or part of a formula, starting at an `@`: variable names, so
+  `d20+@st<Tab>` becomes `d20+@str`
+- a word starting with `-`: the long flags
+
+Names come from the store afresh on each Tab; if it cannot be read there are
+simply no candidates.
+
+**History.** Lines are kept in `$XDG_CONFIG_HOME/rollin/history` (default
+`~/.config/rollin/history`), a plain text file of up to 1000 lines: loaded
+at the start and appended as you go. Blank lines, consecutive repeats and
+`quit`/`exit` are not recorded. A history file that cannot be read or written
+is a warning on stderr, never a failure.
+
+**Piped input.** When stdin is not a terminal (`printf 'd20\n6x d6\n' | rollin`),
+the same loop runs with no prompt, banner, editing or history file, reading
+lines until end of input and exiting 0; `history` then lists this run's lines.
+
 ## Development
 
 Requires a stable Rust toolchain (see `rust-toolchain.toml`).
@@ -634,13 +728,24 @@ per test. The helper is `tests/common/mod.rs` (`Cli::new()`, `cli.run(&[..])`).
 | `tests/presets.rs` | Preset commands, name rules, the TOML store, `import`, against a temp config dir |
 | `tests/golden.rs` | Golden fixtures (the `--json` contract): formula + seed to expected output |
 | `tests/v1_spec.rs` | The Python v1 test cases as a parity spec |
+| `tests/session.rs` | The session over piped stdin: byte-for-byte parity with one-shot for a table of lines, parse errors, `help`, `quit`, `history` |
+| `tests/session_lib.rs` | Prompt text and `Context::completion_data`, at the library API |
+| `tests/completion.rs` | Tab completion as pure functions (`complete`), including `proptest` invariants |
+| `tests/pty.rs` | Three smoke tests in a real pseudo-terminal: starts and quits, Tab completes a name, history survives a restart |
 | `tests/properties.rs` | `proptest` invariants at the library API, including "never panics" |
 | `tests/fixtures_present.rs` | Committed fixtures (`presets.json`) are well-formed (`tests/presets.rs` imports and rolls it) |
 
 The preset commands share one command layer in the library (`parse_command`
 turns a list of words into a `Command`, `execute` runs it against a `Context`
 and returns an `Output` for the binary to print); the one-shot binary and the
-later interactive session feed it the same way.
+interactive session feed it the same way, through one `run_line`.
+
+The pty tests (`rexpect`) are the one exception to the CLI-seam rule: a line
+editor can only be exercised on a terminal. They use a 10 second timeout,
+`TERM=xterm` and a temporary `XDG_CONFIG_HOME`, and match plain ASCII output
+(rexpect reads bytes as Latin-1, so the `→` of the default output is avoided;
+`--json` is used instead). Everything else about the session is tested with
+piped stdin.
 
 Run everything with `cargo test`. The CI jobs are `lint` (`cargo fmt --check`,
 clippy with `-D warnings`) and `test` (`cargo test`).
