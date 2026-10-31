@@ -153,10 +153,12 @@ impl Name {
         Name(crate::characters::DEFAULT.to_string())
     }
 
+    /// The name as text.
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
+    /// The name as an owned `String`.
     pub fn into_string(self) -> String {
         self.0
     }
@@ -173,8 +175,9 @@ pub fn validate_name(raw: &str) -> Result<String, NameError> {
     Name::preset(raw).map(Name::into_string)
 }
 
-/// The stored form of a name: lowercase. Every lowercasing of a name goes
-/// through here.
+/// The stored form of a name: lowercase. Names are lowercased here, not with
+/// ad hoc `to_lowercase` calls (command-word matching and completion
+/// prefixes are not names and lowercase on their own).
 pub(crate) fn normalise(raw: &str) -> String {
     raw.to_lowercase()
 }

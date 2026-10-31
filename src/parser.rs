@@ -12,7 +12,6 @@ use crate::error::Error;
 use crate::limits::{
     Cap, MAX_DEPTH, MAX_DICE_PER_EXPRESSION, MAX_DICE_PER_TERM, MAX_REPEAT, MAX_SIDES,
 };
-// Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
 /// `d%` is a d100.
 const PERCENTILE_SIDES: i64 = 100;
 
