@@ -40,3 +40,14 @@ fn the_first_word_completes_to_commands_and_presets() {
     expect("h", 0, &["help", "history", "house"]);
     expect("zzz", 0, &[]);
 }
+
+#[test]
+fn roll_and_delete_complete_preset_names() {
+    expect("roll ", 5, &["atk", "house", "sneak"]);
+    expect("roll s", 5, &["sneak"]);
+    expect("ROLL A", 5, &["atk"]);
+    expect("delete ", 7, &["atk", "house", "sneak"]);
+    expect("delete --global h", 16, &["house"]);
+    expect("--seed 3 roll a", 14, &["atk"]);
+    expect("roll d20 +", 9, &[]);
+}

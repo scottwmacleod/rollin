@@ -52,13 +52,43 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
         i + before[i..].chars().next().map_or(1, char::len_utf8)
     });
     let typed = &line[start..pos];
-    let mut names: Vec<&str> = COMMANDS.to_vec();
-    names.extend(data.session_words.iter().map(String::as_str));
-    names.extend(data.presets.iter().map(String::as_str));
+    let words = positional_words(&before[..start]);
+    let presets = || data.presets.iter().map(String::as_str).collect::<Vec<_>>();
+    let names: Vec<&str> = match words.as_slice() {
+        [] => {
+            let mut names: Vec<&str> = COMMANDS.to_vec();
+            names.extend(data.session_words.iter().map(String::as_str));
+            names.extend(presets());
+            names
+        }
+        [command] if command == "roll" || command == "delete" => presets(),
+        _ => Vec::new(),
+    };
     Completion {
         start,
         candidates: matching(&names, typed),
     }
+}
+
+/// Flags that take a value in the next word.
+const VALUE_FLAGS: [&str; 3] = ["--seed", "--char", "--color"];
+
+/// The lowercase words before the cursor that are not flags or flag values.
+fn positional_words(before: &str) -> Vec<String> {
+    let mut words = Vec::new();
+    let mut skip_value = false;
+    for word in before.split_whitespace() {
+        let word = word.to_lowercase();
+        if std::mem::take(&mut skip_value) {
+            continue;
+        }
+        if word.starts_with('-') {
+            skip_value = VALUE_FLAGS.contains(&word.as_str());
+        } else {
+            words.push(word);
+        }
+    }
+    words
 }
 
 /// The names that extend `typed` (ignoring case), sorted and de-duplicated.
