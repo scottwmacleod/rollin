@@ -30,6 +30,14 @@ _Avoid_: Sum, score
 A total made of how many dice met a condition instead of a sum of faces, e.g. `6d10>=8`; failures (`f1`) subtract, so it is successes minus failures and can be zero or negative. Cannot be mixed into arithmetic.
 _Avoid_: Hits, pool result
 
+**Advantage / disadvantage**:
+The `adv` / `dis` suffix on a single die, e.g. `d20adv`: roll two dice and keep the highest (advantage) or lowest (disadvantage). Exactly `2d20kh1` / `2d20kl1`.
+_Avoid_: Roll twice, double roll
+
+**Fudge die**:
+A die written `dF` whose faces are -1, 0 and +1, shown as `-`, `0`, `+`.
+_Avoid_: Fate die, plus-minus die
+
 **Label**:
 A `#` note attached to one roll that is shown in the output, e.g. `# attack`.
 _Avoid_: Comment, tag
