@@ -9,6 +9,7 @@
 mod ast;
 mod characters;
 mod command;
+mod completion;
 mod error;
 mod eval;
 mod lexer;
@@ -21,6 +22,7 @@ pub use command::{
     config_dir, execute, parse_command, Command, CommandError, Context, ImportReport, Output,
     PresetEntry, PresetSource, Shadow, UndefinedVariable,
 };
+pub use completion::{complete, Completion, CompletionData};
 pub use error::Error;
 pub use presets::{validate_name, NameError, NameRule, Store, StoreError};
 pub use session::{format_history, help_text, session_command, SessionCommand};
