@@ -123,3 +123,79 @@ fn a_failure_clause_subtracts_and_marks_failing_dice() {
         );
     }
 }
+
+#[test]
+fn a_die_matching_both_clauses_is_a_success_only() {
+    let cli = Cli::new();
+    // Failure `>=3` overlaps success `>=5` on 5 and above.
+    for seed in SEEDS {
+        let out = cli.roll_json("8d6>=5f>=3", seed);
+        let node = &out["rolls"][0]["expr"];
+        let pool = flat_dice(node);
+        let hits = pool.iter().filter(|d| value(d) >= 5).count() as i64;
+        let misses = pool.iter().filter(|d| (3..5).contains(&value(d))).count() as i64;
+        assert_eq!(node["successes"], hits, "seed {seed}");
+        assert_eq!(node["failures"], misses, "seed {seed}");
+        assert_eq!(out["rolls"][0]["total"], hits - misses, "seed {seed}");
+    }
+    // Even when every face matches both, the roll is legal: all successes.
+    let out = cli.roll_json("4d6>=1f>=1", 1);
+    assert_eq!(out["rolls"][0]["total"], 4);
+    assert_eq!(out["rolls"][0]["expr"]["failures"], 0);
+}
+
+/// stderr of a failing run of `formula`.
+fn failure(formula: &str) -> String {
+    let run = Cli::new().run(&["--seed", "1", "--", formula]);
+    assert!(!run.success(), "{formula} should be rejected: {run:?}");
+    assert_eq!(run.stdout, "", "{formula}");
+    run.stderr
+}
+
+const MESSAGE: &str = "a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice";
+
+#[test]
+fn a_success_count_in_arithmetic_is_a_typed_error_pointing_at_the_count() {
+    // (formula, the count term the carets must underline)
+    let cases = [
+        ("6d10>=8 + 3", "6d10>=8"),
+        ("3 + 6d10>=8", "6d10>=8"),
+        ("-6d10>=8", "6d10>=8"),
+        ("2*6d10>=8", "6d10>=8"),
+        ("(6d10>=8)+1", "(6d10>=8)"),
+        ("6d10>=8 + 6d10>=8", "6d10>=8"),
+        ("1 - 4d6dl1>5f1", "4d6dl1>5f1"),
+        ("d20 + (6d10=10) / 2", "(6d10=10)"),
+    ];
+    for (formula, term) in cases {
+        let start = formula.find(term).unwrap();
+        let expected = format!(
+            "error: {MESSAGE}\n  {formula}\n  {}{}\n",
+            " ".repeat(start),
+            "^".repeat(term.len())
+        );
+        assert_eq!(failure(formula), expected, "{formula}");
+    }
+}
+
+#[test]
+fn a_lone_or_parenthesised_success_count_and_comma_lists_are_fine() {
+    let cli = Cli::new();
+    for formula in ["6d10>=8", "(6d10>=8)", "((6d10>=8))", "+6d10>=8"] {
+        let out = cli.roll_json(formula, 4);
+        assert_eq!(out["rolls"][0]["kind"], "count", "{formula}");
+    }
+    let out = cli.roll_json("6d10>=8, d20, 4d6>3f1", 4);
+    let kinds: Vec<&Value> = out["rolls"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|r| &r["kind"])
+        .collect();
+    assert_eq!(
+        kinds,
+        [&Value::from("count"), &Value::Null, &Value::from("count")]
+    );
+    // A sum next to a count in the list still sums.
+    assert_eq!(out["rolls"][1]["expr"]["type"], "dice");
+}

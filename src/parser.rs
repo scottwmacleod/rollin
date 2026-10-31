@@ -127,6 +127,8 @@ impl Parser<'_> {
             }
             self.pos += 1;
             let rhs = self.parse_expr(op.precedence() + 1)?;
+            reject_count(&lhs)?;
+            reject_count(&rhs)?;
             lhs = link(lhs, op, rhs);
         }
         Ok(lhs)
@@ -150,6 +152,7 @@ impl Parser<'_> {
                 self.enter(start)?;
                 self.pos += 1;
                 let operand = self.parse_unary()?;
+                reject_count(&operand)?;
                 self.depth -= 1;
                 let span = start..operand.span.end;
                 Ok(Expr {
@@ -439,6 +442,16 @@ impl Parser<'_> {
         }
         Ok(Some(Select { kind, n }))
     }
+}
+
+/// A success count is its own kind of result and cannot be an operand.
+fn reject_count(operand: &Expr) -> Result<(), Error> {
+    if operand.is_count() {
+        return Err(Error::CountInArithmetic {
+            span: operand.span.clone(),
+        });
+    }
+    Ok(())
 }
 
 /// Appends `op rhs` to `lhs`, extending its chain when it is one of the same

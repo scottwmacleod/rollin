@@ -33,6 +33,18 @@ pub enum ExprKind {
     },
 }
 
+impl Expr {
+    /// Whether this expression is a success count (a dice group with a
+    /// success clause, possibly parenthesised).
+    pub fn is_count(&self) -> bool {
+        match &self.kind {
+            ExprKind::Dice(d) => d.success.is_some(),
+            ExprKind::Group(inner) => inner.is_count(),
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub enum BinOp {
     #[serde(rename = "+")]
