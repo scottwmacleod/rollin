@@ -17,6 +17,8 @@ rollin 2d6+3 --seed 7      # reproducible
 rollin 2d6+3 --json        # machine-readable, with kept/dropped per die
 rollin -q 2d6+3            # just the total
 rollin -v 4d6dl1           # full breakdown
+rollin 6x 4d6dl1           # repeat: six numbered stat rolls
+rollin 'd20+8 # attack'    # a label (quote the #)
 ```
 
 Dropped dice are shown in parentheses and do not count toward the total.
@@ -69,6 +71,40 @@ the same thing here; arithmetic is an addition on top.
 | `(d20+5)*2` | Parentheses group |
 | `-d6`, `10 + -2` | Unary minus (unary `+` is accepted and ignored) |
 | `d20+8, d10+5` | Comma-separated list: each item is its own roll on its own line |
+| `6x 4d6dl1`, `6 x 4d6dl1`, `6X 4d6dl1` | Repeat: roll everything after `Nx` N times (1 to 100); the space is optional |
+| `3x d20+8, d10+5` | Repeat a whole list: each iteration rolls every item |
+| `d20+8 # attack` | Label: `#` and the rest of the item is a note shown with that roll |
+| `3x d20+8 # attack, d10+5 # damage` | Repeat and labels together |
+
+**Repeat.** A formula is `[N x] item, item, ...`. `Nx` goes at the very start
+and repeats everything after it, the whole comma list, N times; N is an
+integer from 1 to 100 (`0x` is an error, and `101x` is an error naming the
+repeat cap of 100). The `x` may be lower or upper case and may touch the number
+or not (`6x`, `6 x`, `6X`). Output lines are numbered by iteration, see
+[Output modes](#output-modes). It is an error to use `Nx` a second time
+(`2x 3x d20`) or anywhere but the start of the formula (`d20, 3x d6`), and an
+`Nx` with nothing after it (`6x`) is an error. The 10000-dice limit below is
+per roll, not per repeat, and `Nx` over a success count, fudge or `adv`
+formula works like it does without the `Nx`.
+
+**Deviation from the original ticket.** The ticket said parentheses could
+group a list after `Nx`. They cannot: a label runs to the next comma and
+would swallow a closing `)`. `Nx` always applies to the whole rest of the
+formula instead, and parentheses keep their ordinary arithmetic meaning:
+`3x (d20+5)*2` repeats the arithmetic roll `(d20+5)*2` three times.
+
+**Labels.** `#` starts a label that runs to the end of its comma-separated
+item (the next comma, or the end of the formula). The text is trimmed and
+may hold anything except a comma, unicode included (`d20 # Fireball (3d6) ✨`);
+a comma ends the label and starts the next item. A label belongs to the one
+roll before it, and must have text (`d20 #` is an error pointing at the `#`).
+A label with no roll is an error (`# x`, `d20, # x`), though empty items
+without a label are still ignored as in v1 (`d20,,d6`). Labels change nothing
+about the dice or totals. Because a label runs to the comma, put it at the
+end of an item: a `#` inside parentheses swallows the `)` and gives an
+"unclosed '('" error. Many shells treat `#` specially (bash and others read
+it as a comment when it starts a word), so quote formulas with labels:
+`rollin 'd20+8 # attack'`.
 
 Arithmetic is integer-only. Division truncates toward zero (`7/2` is 3,
 `-7/2` is -3), and `*` and `/` are applied left to right (`100/5/2` is 10).
@@ -260,6 +296,56 @@ terminal (for example piped) or when `NO_COLOR` is set to a non-empty value.
 `--color never` beats `--color always`, which beats `NO_COLOR`, which beats
 terminal detection. Errors on stderr are always plain.
 
+**Repeat and labels.** In the default output every line of a repeated formula
+starts with its iteration number and `: `, right-aligned so the lines stay
+lined up from 10 iterations up. With a list, each item's line in iteration k
+carries `k`. A label trails the line after two spaces as `# text`, dimmed when
+color is on. A formula without `Nx` or labels prints exactly as before.
+
+```
+$ rollin --seed 1 6x 4d6dl1
+1: 4d6dl1  [4, 3, (1), 2]  →  9
+2: 4d6dl1  [4, 3, (2), 2]  →  9
+3: 4d6dl1  [6, 5, 5, (1)]  →  16
+4: 4d6dl1  [6, 2, 5, (1)]  →  13
+5: 4d6dl1  [6, 4, 6, (1)]  →  16
+6: 4d6dl1  [(2), 3, 3, 3]  →  9
+$ rollin --seed 1 '3x d20+8 # attack, d10+5 # damage'
+1: d20+8  [9] + 8  →  17  # attack
+1: d10+5  [3] + 5  →  8  # damage
+2: d20+8  [5] + 8  →  13  # attack
+2: d10+5  [9] + 5  →  14  # damage
+3: d20+8  [19] + 8  →  27  # attack
+3: d10+5  [8] + 5  →  13  # damage
+$ rollin --seed 1 'd20+8 # attack'
+d20+8  [9] + 8  →  17  # attack
+```
+
+`-v` prints an `iteration k of N` line before each iteration's blocks, and a
+roll's label follows its formula on the block header (`d20+8  # attack`).
+`-q` prints one total per line, in order. `--json` adds `"iteration"` to each
+roll of a repeated formula and `"label"` to each labelled roll (see the
+schema doc); the rolls array stays flat, in the order rolled.
+
+```
+$ rollin --seed 1 -v '2x d20+8 # attack'
+iteration 1 of 2
+d20+8  # attack
+  d20: 9 kept = 9
+  + 8
+  total: 17
+
+iteration 2 of 2
+d20+8  # attack
+  d20: 2 kept = 2
+  + 8
+  total: 10
+$ rollin --seed 1 -q 3x d20+8
+17
+10
+13
+```
+
 **Verbose (`-v`, `--verbose`).** One block per roll (blank line between
 blocks) listing every die with its status, each term's subtotal, the
 operators, and the total. Nested expressions are indented and bracketed:
@@ -369,6 +455,7 @@ per test. The helper is `tests/common/mod.rs` (`Cli::new()`, `cli.run(&[..])`).
 | `tests/roll.rs` | End-to-end rolls, e.g. `rollin d20 --seed 1` |
 | `tests/arithmetic.rs` | `+ - * /`, precedence, parentheses, result tree |
 | `tests/errors.rs` | Error text with underlined spans, caps, overflow |
+| `tests/repeat_labels.rs` | `Nx` repeat and `#` labels in every output mode, caps and errors, presets |
 | `tests/output_modes.rs` | Color, `-v`, `-q` and `--json` flag behaviour |
 | `tests/presets.rs` | Preset commands, name rules, the TOML store, `import`, against a temp config dir |
 | `tests/golden.rs` | Golden fixtures (the `--json` contract): formula + seed to expected output |

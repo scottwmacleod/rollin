@@ -15,7 +15,7 @@ whenever the shape or meaning of an existing field changes or a field is
 removed. Adding a new field or a new node `type` or die `status` value is
 backwards compatible and does not bump it (exploding dice added the die
 status `exploded`, the die field `parts` and the dice-node field `sides`
-without a bump; rerolls added the die status `rerolled` the same way; success counting added the roll and dice-node field `kind`, the dice-node fields `successes` and `failures`, and the die field `outcome` the same way; percentile and fudge dice added the dice-node field `special` the same way, and fudge dice are the first dice whose `value` can be negative, which no consumer reading integers will mind), so consumers must ignore unknown
+without a bump; rerolls added the die status `rerolled` the same way; success counting added the roll and dice-node field `kind`, the dice-node fields `successes` and `failures`, and the die field `outcome` the same way; percentile and fudge dice added the dice-node field `special` the same way, and repeat and labels added the roll fields `iteration` and `label` the same way, and fudge dice are the first dice whose `value` can be negative, which no consumer reading integers will mind), so consumers must ignore unknown
 fields and treat unknown `status` values as "not counted" unless documented
 otherwise.
 
@@ -41,6 +41,13 @@ status is non-zero), so a successful run always yields a valid document.
 | `total` | integer | The roll's total; equals `expr`'s total |
 | `expr` | node | The result tree |
 | `kind` | string | `"count"` for a success count. **Absent for an ordinary sum**, so existing documents are unchanged |
+| `label` | string | The item's `# label` text, trimmed. **Absent when the item had no label** (additive) |
+| `iteration` | integer | For a formula repeated with `Nx`, which repeat (from 1) this roll belongs to. **Absent when the formula had no `Nx`** (additive) |
+
+`formula` never includes the label. A repeated formula yields N times as many
+rolls, in evaluation order: for `2x d20, d6` the rolls are iteration 1's `d20`
+and `d6`, then iteration 2's. The array stays flat; group by `iteration` to
+rebuild the repeats. These are additive changes: `schema_version` stays 1.
 
 ## Nodes
 
@@ -226,6 +233,17 @@ A higher-precedence operation appears as a nested `chain` operand.
   {"formula": "d10+5", "total": 8, "expr": {"type": "chain",
     "first": {"type": "dice", "term": "d10", "sides": 10, "dice": [{"value": 3, "status": "kept"}], "subtotal": 3},
     "rest": [{"op": "+", "node": {"type": "number", "value": 5}}], "total": 8}}
+]}
+```
+
+With repeat and labels, `rollin --seed 1 --json "2x d20+8 # attack"` adds
+`"label": "attack"` and `"iteration": 1` (then `2`) to each roll
+(`expr` shortened):
+
+```json
+{"schema_version": 1, "rolls": [
+  {"formula": "d20+8", "total": 17, "expr": {...}, "label": "attack", "iteration": 1},
+  {"formula": "d20+8", "total": 10, "expr": {...}, "label": "attack", "iteration": 2}
 ]}
 ```
 
