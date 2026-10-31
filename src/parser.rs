@@ -5,7 +5,7 @@
 //! extends [`Parser::parse_item`] into a precedence-climbing expression parser;
 //! the AST ([`Expr::Binary`]) already has room for it.
 
-use crate::ast::{BinOp, Dice, Expr, Item};
+use crate::ast::{BinOp, Dice, Expr, Item, Select, SelectKind};
 use crate::error::ParseError;
 /// v1 limits (ticket #11 reworks limits and error reporting).
 const MAX_DICE: i64 = 1000;
@@ -158,7 +158,54 @@ impl Parser<'_> {
                 sides_span,
             ));
         }
-        Ok(Expr::Dice(Dice { count, sides }))
+        let select = self.parse_select(count)?;
+        Ok(Expr::Dice(Dice {
+            count,
+            sides,
+            select,
+        }))
+    }
+
+    /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
+    fn parse_select(&mut self, count: i64) -> Result<Option<Select>, ParseError> {
+        let kind = match self.peek() {
+            Some(Token::Word(w)) => match w.as_str() {
+                "dl" => SelectKind::DropLowest,
+                "dh" => SelectKind::DropHighest,
+                "kl" => SelectKind::KeepLowest,
+                "kh" => SelectKind::KeepHighest,
+                _ => return Ok(None),
+            },
+            _ => return Ok(None),
+        };
+        let word_span = self.tokens[self.pos].span.clone();
+        self.pos += 1;
+        let n = match self.peek() {
+            Some(Token::Number(n)) => {
+                let n = *n;
+                self.pos += 1;
+                n
+            }
+            _ => 1,
+        };
+        let span = word_span.start..self.prev_end();
+        let keeps = matches!(kind, SelectKind::KeepLowest | SelectKind::KeepHighest);
+        if keeps && !(1..count).contains(&n) {
+            return Err(ParseError::new(
+                format!(
+                    "must keep between 1 and {} dice from a pool of {count}",
+                    count - 1
+                ),
+                span,
+            ));
+        }
+        if !keeps && n >= count {
+            return Err(ParseError::new(
+                format!("cannot drop {n} dice from a pool of {count}"),
+                span,
+            ));
+        }
+        Ok(Some(Select { kind, n }))
     }
 }
 

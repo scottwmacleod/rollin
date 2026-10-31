@@ -30,13 +30,18 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Evaluated, Error> {
             total: *n,
         }),
         Expr::Dice(d) => {
-            let dice: Vec<Die> = (0..d.count)
+            let mut dice: Vec<Die> = (0..d.count)
                 .map(|_| Die {
                     value: rng.gen_range(1..=d.sides as u32),
                     status: Status::Kept,
                 })
                 .collect();
-            let total = dice.iter().map(|d| i64::from(d.value)).sum();
+            apply_drops(&mut dice, d.drops());
+            let total = dice
+                .iter()
+                .filter(|d| d.status == Status::Kept)
+                .map(|d| i64::from(d.value))
+                .sum();
             Ok(Evaluated {
                 dice,
                 modifier: 0,
@@ -63,5 +68,19 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Evaluated, Error> {
                 total: total.ok_or(Error::Overflow)?,
             })
         }
+    }
+}
+
+/// Marks the lowest and highest dice as dropped. Ties are broken by roll
+/// order (stable sort), matching v1.
+fn apply_drops(dice: &mut [Die], (lowest, highest): (i64, i64)) {
+    let mut order: Vec<usize> = (0..dice.len()).collect();
+    order.sort_by_key(|&i| dice[i].value);
+    let (lowest, highest) = (lowest as usize, highest as usize);
+    for &i in order.iter().take(lowest) {
+        dice[i].status = Status::Dropped;
+    }
+    for &i in order.iter().skip(order.len() - highest) {
+        dice[i].status = Status::Dropped;
     }
 }
