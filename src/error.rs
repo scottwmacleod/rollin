@@ -46,6 +46,15 @@ pub enum Error {
     /// A formula used `@name` but no variable of that name is defined.
     /// `span` is the `@name` as written.
     UndefinedVariable { name: String, span: Range<usize> },
+    /// A leading `Nx` whose body rolls no dice, as in `2x3`, which was most
+    /// likely meant as multiplication. `span` is the `Nx`.
+    RepeatWithoutDice {
+        /// The text after the `Nx`, trimmed.
+        body: String,
+        /// The formula rewritten with `*` for `x`, when that is unambiguous.
+        multiplication: Option<String>,
+        span: Range<usize>,
+    },
     /// Integer arithmetic overflowed; `span` is the operation that did.
     Overflow { span: Range<usize> },
 }
@@ -77,6 +86,7 @@ impl Error {
             | Error::CountInArithmetic { span }
             | Error::DivisionByZero { span }
             | Error::UndefinedVariable { span, .. }
+            | Error::RepeatWithoutDice { span, .. }
             | Error::Overflow { span } => span.clone(),
         }
     }
@@ -109,7 +119,22 @@ impl Error {
             Error::CountInArithmetic { .. } => "a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice".into(),
             Error::DivisionByZero { .. } => "division by zero".into(),
             Error::UndefinedVariable { name, .. } => format!("undefined variable @{name}"),
+            Error::RepeatWithoutDice { body, .. } => {
+                format!("'x' means repeat, and '{body}' has no dice to repeat")
+            }
             Error::Overflow { .. } => "arithmetic overflow".into(),
+        }
+    }
+
+    /// A suggestion for fixing the error, if there is one.
+    pub fn hint(&self) -> Option<String> {
+        match self {
+            Error::WithVariables { inner, .. } => inner.hint(),
+            Error::RepeatWithoutDice { multiplication, .. } => Some(match multiplication {
+                Some(m) => format!("for multiplication use *; did you mean {m}?"),
+                None => "for multiplication use *".into(),
+            }),
+            _ => None,
         }
     }
 }

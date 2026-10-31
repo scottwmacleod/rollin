@@ -44,6 +44,18 @@ pub enum ExprKind {
 }
 
 impl Expr {
+    /// Whether any dice are rolled anywhere in this expression.
+    pub fn has_dice(&self) -> bool {
+        match &self.kind {
+            ExprKind::Number(_) => false,
+            ExprKind::Dice(_) => true,
+            ExprKind::Neg(inner) | ExprKind::Group(inner) => inner.has_dice(),
+            ExprKind::Chain { first, rest } => {
+                first.has_dice() || rest.iter().any(|(_, e)| e.has_dice())
+            }
+        }
+    }
+
     /// Whether this expression is a success count (a dice group with a
     /// success clause, possibly parenthesised).
     pub fn is_count(&self) -> bool {
