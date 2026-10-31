@@ -170,7 +170,8 @@ fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<Roll>) {
             println!("{}", blocks.join("\n\n"));
         } else {
             for r in &rolls {
-                println!("{}", render_line(paint, r));
+                let prefix = r.iteration.map_or(String::new(), |k| format!("{k}: "));
+                println!("{prefix}{}", render_line(paint, r));
             }
         }
     }

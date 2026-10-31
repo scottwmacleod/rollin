@@ -58,6 +58,7 @@ pub fn evaluate(item: &Item, rng: &mut impl Rng) -> Result<Roll, Error> {
         total: expr.total(),
         expr,
         label: item.label.clone(),
+        iteration: None,
     })
 }
 

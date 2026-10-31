@@ -5,8 +5,8 @@
 //! just the simplest such expression.
 
 use crate::ast::{
-    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Item, Reroll, RerollMode,
-    Select, SelectKind, Special, Success,
+    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Formula, Item, Reroll,
+    RerollMode, Select, SelectKind, Special, Success,
 };
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
@@ -22,7 +22,7 @@ const FUDGE_SIDES: i64 = 3;
 use crate::lexer::{tokenize, Spanned, Token};
 
 /// Parses a whole formula (comma-separated items) into items.
-pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
+pub fn parse(src: &str) -> Result<Formula, Error> {
     let tokens = tokenize(src)?;
     let mut parser = Parser {
         src,
@@ -32,6 +32,20 @@ pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
         depth: 0,
         item_dice: 0,
     };
+    let mut repeat = None;
+    if let [Spanned {
+        token: Token::Number(n),
+        ..
+    }, Spanned {
+        token: Token::Word(w),
+        ..
+    }, ..] = tokens.as_slice()
+    {
+        if w == "x" {
+            repeat = Some(*n as u32);
+            parser.pos = 2;
+        }
+    }
     let mut items = Vec::new();
     loop {
         // v1 ignores empty items, so `d20,,d6` and a trailing comma are fine.
@@ -71,7 +85,7 @@ pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
     if items.is_empty() {
         return Err(Error::syntax("no formulas provided", 0..src.len()));
     }
-    Ok(items)
+    Ok(Formula { repeat, items })
 }
 
 struct Parser<'a> {

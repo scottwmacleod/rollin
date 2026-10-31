@@ -82,3 +82,26 @@ fn color_dims_the_label_and_plain_output_has_no_escapes() {
     let off = cli.run(&["--color", "never", "--seed", "1", "d20+8 # attack"]);
     assert!(!off.stdout.contains('\x1b'), "{off:?}");
 }
+
+/// `rollin --seed <seed> <args...>` stdout, which must succeed.
+fn stdout_of(cli: &Cli, seed: u64, args: &[&str]) -> String {
+    let seed = seed.to_string();
+    let mut all = vec!["--seed", seed.as_str()];
+    all.extend_from_slice(args);
+    let run = cli.run(&all);
+    run.assert_success();
+    run.stdout
+}
+
+#[test]
+fn repeat_rolls_the_formula_n_times_with_numbered_lines() {
+    let cli = Cli::new();
+    let repeated = stdout_of(&cli, 1, &["3x d20+8"]);
+    let plain = stdout_of(&cli, 1, &["d20+8, d20+8, d20+8"]);
+    let expected: String = plain
+        .lines()
+        .enumerate()
+        .map(|(i, l)| format!("{}: {l}\n", i + 1))
+        .collect();
+    assert_eq!(repeated, expected);
+}

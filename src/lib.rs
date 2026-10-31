@@ -195,11 +195,22 @@ pub struct Roll {
     /// The `# text` note on this roll's item, if it had one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
+    /// For a repeated formula (`Nx`), which repeat (from 1) this roll is in.
+    #[serde(skip)]
+    pub iteration: Option<u32>,
 }
 
 /// Parses and evaluates a formula (one or more comma-separated rolls) using
 /// the injected RNG, returning one [`Roll`] per item.
 pub fn roll(formula: &str, rng: &mut impl Rng) -> Result<Vec<Roll>, Error> {
-    let items = parser::parse(formula)?;
-    items.iter().map(|item| eval::evaluate(item, rng)).collect()
+    let parsed = parser::parse(formula)?;
+    let mut rolls = Vec::new();
+    for iteration in 1..=parsed.repeat.unwrap_or(1) {
+        for item in &parsed.items {
+            let mut roll = eval::evaluate(item, rng)?;
+            roll.iteration = parsed.repeat.map(|_| iteration);
+            rolls.push(roll);
+        }
+    }
+    Ok(rolls)
 }
