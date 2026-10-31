@@ -98,3 +98,36 @@ fn more_than_100_explosions_of_one_die_is_an_error_naming_cap_and_term() {
         "error: explosions per die cap (100) exceeded by 'd100!>=2'\n  d100!>=2\n  ^^^^^^^^\n"
     );
 }
+
+#[test]
+fn double_bang_compounds_extra_rolls_into_one_die() {
+    let cli = Cli::new();
+    let cases: [(&str, fn(i64) -> bool); 3] = [
+        ("3d6!!", |v| v == 6),
+        ("3d6!!>4", |v| v > 4),
+        ("3d6!! <= 2", |v| v <= 2),
+    ];
+    for (formula, triggers) in &cases {
+        let mut compounded = 0;
+        for seed in SEEDS {
+            let out = cli.roll_json(formula, seed);
+            let pool = flat_dice(&out["rolls"][0]["expr"]);
+            assert_eq!(pool.len(), 3, "{formula} seed {seed}: one entry per die");
+            for d in &pool {
+                assert_eq!(status(d), "kept");
+                let parts: Vec<i64> = match d["parts"].as_array() {
+                    Some(p) => p.iter().map(|v| v.as_i64().unwrap()).collect(),
+                    None => vec![value(d)],
+                };
+                assert_eq!(parts.iter().sum::<i64>(), value(d), "{d}");
+                let (last, earlier) = parts.split_last().unwrap();
+                assert!(earlier.iter().all(|&p| triggers(p)), "{formula}: {d}");
+                assert!(!triggers(*last), "{formula}: {d}");
+                compounded += earlier.len();
+            }
+            let sum: i64 = pool.iter().map(value).sum();
+            assert_eq!(out["rolls"][0]["total"], sum);
+        }
+        assert!(compounded > 0, "{formula}: nothing compounded");
+    }
+}

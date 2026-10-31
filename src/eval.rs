@@ -1,6 +1,6 @@
 //! Evaluator: walks the AST, drawing dice from the injected RNG.
 
-use crate::ast::{BinOp, Expr, ExprKind, Item};
+use crate::ast::{BinOp, ExplodeMode, Expr, ExprKind, Item};
 use crate::error::Error;
 use crate::{Die, Link, Node, Roll, Status};
 use rand::Rng;
@@ -25,10 +25,12 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
             let mut dice = Vec::new();
             for _ in 0..d.count {
                 let mut value = rng.gen_range(1..=d.sides as u32);
-                dice.push(Die {
+                let mut die = Die {
                     value,
                     status: Status::Kept,
-                });
+                    parts: Vec::new(),
+                };
+                let mut extras = Vec::new();
                 let mut explosions = 0;
                 while d.explode.is_some_and(|e| e.triggers(i64::from(value))) {
                     if explosions == MAX_EXPLOSIONS_PER_DIE {
@@ -41,10 +43,20 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
                     }
                     explosions += 1;
                     value = rng.gen_range(1..=d.sides as u32);
-                    dice.push(Die {
+                    extras.push(value);
+                }
+                if d.explode.is_some_and(|e| e.mode == ExplodeMode::Compound) && !extras.is_empty()
+                {
+                    die.parts = std::iter::once(die.value).chain(extras).collect();
+                    die.value = die.parts.iter().sum();
+                    dice.push(die);
+                } else {
+                    dice.push(die);
+                    dice.extend(extras.into_iter().map(|value| Die {
                         value,
                         status: Status::Exploded,
-                    });
+                        parts: Vec::new(),
+                    }));
                 }
             }
             apply_drops(&mut dice, d.drops());

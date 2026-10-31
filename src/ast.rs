@@ -78,8 +78,18 @@ pub struct Dice {
 /// An explode clause: `!` after the dice, before any keep/drop.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Explode {
+    pub mode: ExplodeMode,
     pub cmp: Cmp,
     pub value: i64,
+}
+
+/// What happens to the extra rolls of an exploding die.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExplodeMode {
+    /// `!`: each extra roll is a separate die in the pool.
+    Plain,
+    /// `!!`: extra rolls are added into the exploding die.
+    Compound,
 }
 
 /// A comparison against a face value.

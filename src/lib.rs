@@ -57,6 +57,10 @@ impl Status {
 pub struct Die {
     pub value: u32,
     pub status: Status,
+    /// For a compounded exploding die (`!!`): the rolls added into `value`,
+    /// in order. Empty for every other die.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub parts: Vec<u32>,
 }
 
 /// One node of a roll's result tree. Every node carries what it contributed,
