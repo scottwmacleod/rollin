@@ -681,7 +681,7 @@ mod presets {
             if let Ok(stored) = validate_name(&raw) {
                 prop_assert_eq!(&stored, &raw.to_lowercase());
                 let dir = tempfile::TempDir::new().unwrap();
-                let ctx = Context { config_dir: Some(dir.path().to_path_buf()) };
+                let ctx = Context::new(Some(dir.path().to_path_buf()));
                 let mut rng = seeded_rng(seed);
                 let save = Command::Save { name: raw.clone(), formula: "2d6+1".into() };
                 execute(&save, &ctx, &mut rng).unwrap();

@@ -408,3 +408,71 @@ fn unset_removes_a_variable_and_a_missing_one_is_an_error() {
     let usage = cli.run(&["unset"]);
     assert_eq!(usage.stderr, "error: usage: unset <name>\n");
 }
+
+#[test]
+fn char_flag_overrides_for_one_call_and_never_persists() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    cli.run(&["set", "str", "5"]).assert_success();
+    cli.run(&["char", "default"]).assert_success();
+    cli.run(&["set", "str", "1"]).assert_success();
+
+    let with_flag = cli.run(&["--char", "grog", "vars"]);
+    assert_eq!(with_flag.stdout, "str = 5\n");
+    let roll = cli.run(&["--char", "GROG", "d20+@str", "--seed", "4", "--json"]);
+    roll.assert_success();
+    assert_eq!(
+        roll.json()["rolls"][0]["expr"],
+        cli.roll_json("d20+5", 4)["rolls"][0]["expr"]
+    );
+    let set = cli.run(&["set", "--char", "grog", "con", "2"]);
+    assert_eq!(set.stdout, "set con = 2 on 'grog'\n");
+
+    assert_eq!(cli.run(&["char"]).stdout, "active character: default\n");
+    assert_eq!(cli.run(&["vars"]).stdout, "str = 1\n");
+    assert_eq!(
+        cli.run(&["--char", "grog", "vars"]).stdout,
+        "con = 2\nstr = 5\n"
+    );
+    let state = std::fs::read_to_string(cli.config_dir().join("rollin/state.toml")).unwrap();
+    assert!(state.contains("\"default\""), "{state}");
+}
+
+#[test]
+fn char_flag_needs_an_existing_character_or_default() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    let run = cli.run(&["--char", "gorg", "d20"]);
+    assert_eq!(run.code, 1, "{run:?}");
+    assert_eq!(
+        run.stderr,
+        "error: no character named 'gorg'\nhint: did you mean 'grog'?\nhint: create it with: rollin char new gorg\n"
+    );
+    cli.run(&["--char", "default", "d20"]).assert_success();
+    assert_eq!(cli.run(&["char"]).stdout, "active character: grog\n");
+}
+
+#[test]
+fn the_fix_line_mentions_char_only_when_it_was_used() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    let run = cli.run(&["--char", "default", "d20+@str"]);
+    assert!(
+        run.stderr
+            .starts_with("error: undefined variable @str on character 'default'\n"),
+        "{run:?}"
+    );
+    assert!(
+        run.stderr
+            .ends_with("set it with: rollin --char default set str <value>\n"),
+        "{run:?}"
+    );
+    let plain = cli.run(&["d20+@str"]);
+    assert!(plain.stderr.contains("on character 'grog'"), "{plain:?}");
+    assert!(
+        plain
+            .stderr
+            .ends_with("set it with: rollin set str <value>\n"),
+        "{plain:?}"
+    );
+}

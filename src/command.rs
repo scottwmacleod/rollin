@@ -89,6 +89,8 @@ pub enum CommandError {
     },
     /// `unset` named a variable the character does not have.
     NoSuchVariable { name: String, character: String },
+    /// The persisted active character has no file (and is not `default`).
+    ActiveCharacterMissing(String),
     /// `char delete default`.
     CannotDeleteDefault,
     /// `char new` named a character that already exists.
@@ -133,6 +135,10 @@ impl std::fmt::Display for CommandError {
             CommandError::NoSuchVariable { name, character } => {
                 write!(f, "no variable named '{name}' on character '{character}'")
             }
+            CommandError::ActiveCharacterMissing(name) => write!(
+                f,
+                "the active character '{name}' does not exist; run `rollin char default` to switch back"
+            ),
             CommandError::CannotDeleteDefault => {
                 write!(f, "the 'default' character cannot be deleted")
             }
@@ -310,9 +316,43 @@ pub struct Context {
     /// `None` when no config directory could be found; commands that need
     /// the presets file then fail with [`CommandError::NoConfigDir`].
     pub config_dir: Option<PathBuf>,
+    /// A character chosen for this call only (`--char`); it never persists.
+    pub character: Option<String>,
 }
 
 impl Context {
+    /// A context over `config_dir` with no `--char` override.
+    pub fn new(config_dir: Option<PathBuf>) -> Self {
+        Context {
+            config_dir,
+            character: None,
+        }
+    }
+
+    /// The character this call acts on: the `--char` override (which must
+    /// exist) or else the persisted active character (not checked).
+    fn acting_name(&self, characters: &CharacterStore) -> Result<String, CommandError> {
+        match &self.character {
+            Some(name) => {
+                let name = name.to_lowercase();
+                require_character(characters, &name)?;
+                Ok(name)
+            }
+            None => Ok(characters.active()?),
+        }
+    }
+
+    /// The store and name of the character whose data this call reads and
+    /// writes. The character must exist (`default` always does).
+    fn current(&self) -> Result<(CharacterStore, String), CommandError> {
+        let characters = self.characters()?;
+        let name = self.acting_name(&characters)?;
+        if !characters.exists(&name) {
+            return Err(CommandError::ActiveCharacterMissing(name));
+        }
+        Ok((characters, name))
+    }
+
     /// The characters store, or an error if there is no config directory.
     pub fn characters(&self) -> Result<CharacterStore, CommandError> {
         self.config_dir
@@ -492,8 +532,7 @@ pub fn execute(
         }
         Command::Presets => Ok(Output::Presets(store.load()?.into_iter().collect())),
         Command::Set { name, value } => {
-            let characters = ctx.characters()?;
-            let active = characters.active()?;
+            let (characters, active) = ctx.current()?;
             let mut character = characters.load(&active)?;
             character.vars.insert(name.clone(), *value);
             characters.save(&active, &character)?;
@@ -507,10 +546,13 @@ pub fn execute(
             let characters = ctx.characters()?;
             Ok(Output::Characters {
                 names: characters.names()?,
-                active: characters.active()?,
+                active: ctx.acting_name(&characters)?,
             })
         }
-        Command::CharShow => Ok(Output::ActiveCharacter(ctx.characters()?.active()?)),
+        Command::CharShow => {
+            let characters = ctx.characters()?;
+            Ok(Output::ActiveCharacter(ctx.acting_name(&characters)?))
+        }
         Command::CharSwitch(name) => {
             let characters = ctx.characters()?;
             require_character(&characters, name)?;
@@ -545,8 +587,7 @@ pub fn execute(
             Ok(Output::CharCreated(name.clone()))
         }
         Command::Unset { name } => {
-            let characters = ctx.characters()?;
-            let active = characters.active()?;
+            let (characters, active) = ctx.current()?;
             let mut character = characters.load(&active)?;
             if character.vars.remove(name).is_none() {
                 return Err(CommandError::NoSuchVariable {
@@ -561,8 +602,8 @@ pub fn execute(
             })
         }
         Command::Vars => {
-            let characters = ctx.characters()?;
-            let character = characters.load(&characters.active()?)?;
+            let (characters, active) = ctx.current()?;
+            let character = characters.load(&active)?;
             Ok(Output::Vars(character.vars.into_iter().collect()))
         }
     }
@@ -588,13 +629,12 @@ struct Scope {
 
 impl Scope {
     fn load(ctx: &Context) -> Result<Scope, CommandError> {
-        let characters = ctx.characters()?;
-        let name = characters.active()?;
+        let (characters, name) = ctx.current()?;
         let vars = characters.load(&name)?.vars;
         Ok(Scope {
             name,
             vars,
-            explicit: false,
+            explicit: ctx.character.is_some(),
         })
     }
 

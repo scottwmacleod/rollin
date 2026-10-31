@@ -23,6 +23,10 @@ struct Args {
     #[arg(long)]
     seed: Option<u64>,
 
+    /// Use this character for this one call (never persisted)
+    #[arg(long = "char", value_name = "NAME")]
+    character: Option<String>,
+
     /// Print the result tree as JSON (ignores -q and -v)
     #[arg(long)]
     json: bool,
@@ -58,9 +62,8 @@ struct JsonOutput {
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let ctx = Context {
-        config_dir: config_dir(),
-    };
+    let mut ctx = Context::new(config_dir());
+    ctx.character = args.character.clone();
     let names = &mut || -> Result<Vec<String>, CommandError> {
         Ok(ctx.store()?.load()?.into_keys().collect())
     };
@@ -107,7 +110,12 @@ fn fail(e: &CommandError) -> ExitCode {
             if let Some(near) = &u.suggestion {
                 eprintln!("did you mean @{near}?");
             }
-            eprintln!("set it with: rollin set {} <value>", u.name);
+            let char_flag = if u.explicit {
+                format!("--char {} ", u.character)
+            } else {
+                String::new()
+            };
+            eprintln!("set it with: rollin {char_flag}set {} <value>", u.name);
         }
         CommandError::UnknownPreset { suggestion, .. } => {
             eprintln!("error: {e}");
