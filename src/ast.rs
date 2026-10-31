@@ -79,8 +79,18 @@ pub struct Dice {
 /// A reroll clause: `r` or `rr` after the dice, before any explode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Reroll {
+    pub mode: RerollMode,
     pub cmp: Cmp,
     pub value: i64,
+}
+
+/// How often a matching die is rerolled.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RerollMode {
+    /// `r`: once; the second result stands even if it matches.
+    Once,
+    /// `rr`: until the die no longer matches.
+    Repeat,
 }
 
 impl Reroll {

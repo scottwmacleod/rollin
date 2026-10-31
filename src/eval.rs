@@ -1,6 +1,6 @@
 //! Evaluator: walks the AST, drawing dice from the injected RNG.
 
-use crate::ast::{BinOp, ExplodeMode, Expr, ExprKind, Item};
+use crate::ast::{BinOp, ExplodeMode, Expr, ExprKind, Item, RerollMode};
 use crate::error::Error;
 use crate::{Die, Link, Node, Roll, Status};
 use rand::Rng;
@@ -54,13 +54,16 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
             for _ in 0..d.count {
                 let mut raw = ctx.die(d.sides, &d.text, &expr.span)?;
                 if let Some(reroll) = d.reroll {
-                    if reroll.triggers(i64::from(raw)) {
+                    while reroll.triggers(i64::from(raw)) {
                         dice.push(Die {
                             value: raw,
                             status: Status::Rerolled,
                             parts: Vec::new(),
                         });
                         raw = ctx.die(d.sides, &d.text, &expr.span)?;
+                        if reroll.mode == RerollMode::Once {
+                            break;
+                        }
                     }
                 }
                 let mut die = Die {

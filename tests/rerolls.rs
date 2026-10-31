@@ -81,3 +81,42 @@ fn comparison_conditions_choose_which_faces_reroll() {
         assert!(rerolled > 0, "{formula}: nothing rerolled in {SEEDS:?}");
     }
 }
+
+#[test]
+fn rr_rerolls_until_the_die_no_longer_matches() {
+    let cli = Cli::new();
+    type Case = (&'static str, fn(i64) -> bool);
+    let cases: [Case; 3] = [
+        ("4d6rr1", |v| v == 1),
+        ("4d6rr<=2", |v| v <= 2),
+        ("4d6RR<3", |v| v < 3),
+    ];
+    for (formula, matches) in &cases {
+        let mut chains_over_one = 0;
+        for seed in SEEDS {
+            let out = cli.roll_json(formula, seed);
+            let pool = flat_dice(&out["rolls"][0]["expr"]);
+            // Each slot is a run of rerolled dice then one standing die that
+            // no longer matches.
+            let mut run = 0;
+            let mut slots = 0;
+            for d in &pool {
+                if status(d) == "rerolled" {
+                    assert!(matches(value(d)), "{formula}: {pool:?}");
+                    run += 1;
+                } else {
+                    assert!(!matches(value(d)), "{formula}: {pool:?}");
+                    assert_eq!(status(d), "kept");
+                    slots += 1;
+                    chains_over_one += usize::from(run > 1);
+                    run = 0;
+                }
+            }
+            assert_eq!(run, 0, "pool ends on a standing die: {pool:?}");
+            assert_eq!(slots, 4, "{formula} seed {seed}");
+            let sum: i64 = pool.iter().filter(|d| status(d) != "rerolled").map(value).sum();
+            assert_eq!(out["rolls"][0]["total"], sum);
+        }
+        assert!(chains_over_one > 0, "{formula}: no multi-reroll chain");
+    }
+}
