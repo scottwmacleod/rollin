@@ -344,47 +344,6 @@ fn a_natural_twenty_or_one_on_a_counting_d20_is_painted_by_outcome_not_bold() {
 }
 
 #[test]
-fn verbose_shows_per_die_outcomes_and_the_tally_breakdown() {
-    let cli = Cli::new();
-    for seed in SEEDS {
-        let out = cli.roll_json("6d10>=8f1", seed);
-        let node = &out["rolls"][0]["expr"];
-        let cells: Vec<String> = flat_dice(node)
-            .iter()
-            .map(|d| match d.get("outcome").and_then(Value::as_str) {
-                Some(o) => format!("{} kept {o}", value(d)),
-                None => format!("{} kept", value(d)),
-            })
-            .collect();
-        let (s, f) = (
-            node["successes"].as_i64().unwrap(),
-            node["failures"].as_i64().unwrap(),
-        );
-        let tail = label(s - f, (f > 0).then_some((s, f)));
-        assert_eq!(
-            human(&["-v"], "6d10>=8f1", seed),
-            format!(
-                "6d10>=8f1\n  6d10>=8f1: {} = {}\n    successes: {s}, failures: {f}, net: {}\n  total: {tail}\n",
-                cells.join(", "),
-                s - f,
-                s - f
-            ),
-            "seed {seed}"
-        );
-    }
-}
-
-#[test]
-fn verbose_sum_rolls_are_unchanged() {
-    let out = human(&["-v"], "2d6+3", 4);
-    assert!(!out.contains("successes"), "{out}");
-    assert!(out.ends_with(&format!("  total: {}\n", {
-        let j = Cli::new().roll_json("2d6+3", 4);
-        j["rolls"][0]["total"].as_i64().unwrap()
-    })));
-}
-
-#[test]
 fn quiet_prints_the_plain_net_number() {
     let cli = Cli::new();
     for seed in 0..10 {

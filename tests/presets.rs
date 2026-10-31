@@ -65,16 +65,6 @@ fn json_and_quiet_output_for_a_preset_have_no_header() {
 }
 
 #[test]
-fn verbose_output_for_a_preset_keeps_the_header() {
-    let cli = Cli::new();
-    cli.run(&["save", "--global", "atk", "d20+5"])
-        .assert_success();
-    let run = cli.run(&["atk", "--seed", "3", "-v"]);
-    run.assert_success();
-    assert!(run.stdout.starts_with("(preset 'atk': d20+5)\n"), "{run:?}");
-}
-
-#[test]
 fn roll_command_accepts_a_formula_or_a_preset_name() {
     let cli = Cli::new();
     cli.run(&["save", "--global", "atk", "d20+5"])

@@ -1,7 +1,7 @@
 # `--json` schema
 
 `rollin --json <formula>` prints one JSON document on a single line. It is the
-stable, machine-readable form of the result tree. `-q` and `-v` are ignored
+stable, machine-readable form of the result tree. `-q` is ignored
 when `--json` is given, and `--color` has no effect (JSON is never colored).
 
 The contract is enforced by the golden fixtures in `tests/fixtures/golden/`

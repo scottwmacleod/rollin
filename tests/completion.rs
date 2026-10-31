@@ -94,14 +94,7 @@ fn an_at_sign_completes_variables_anywhere_with_the_at_prefix() {
 #[test]
 fn a_dash_completes_long_flags() {
     let all = [
-        "--char",
-        "--color",
-        "--force",
-        "--global",
-        "--json",
-        "--quiet",
-        "--seed",
-        "--verbose",
+        "--char", "--color", "--force", "--global", "--json", "--quiet", "--seed",
     ];
     expect("-", 0, &all);
     expect("--", 0, &all);
@@ -109,7 +102,7 @@ fn a_dash_completes_long_flags() {
     expect("--S", 0, &["--seed"]);
     expect("d20 --c", 4, &["--char", "--color"]);
     expect("save --g", 5, &["--global"]);
-    expect("roll d20 --v", 9, &["--verbose"]);
+    expect("roll d20 --j", 9, &["--json"]);
     expect("-q", 0, &[]);
 }
 
