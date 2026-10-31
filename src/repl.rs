@@ -130,7 +130,10 @@ fn interactive(rng: &mut ChaCha8Rng) -> rustyline::Result<()> {
                 if line.is_empty() {
                     continue;
                 }
-                if matches!(editor.add_history_entry(line), Ok(true)) && !warned {
+                // Leaving is not worth recalling; the line before it is.
+                let leaving = session_command(&line.split_whitespace().collect::<Vec<_>>())
+                    == Some(SessionCommand::Quit);
+                if !leaving && matches!(editor.add_history_entry(line), Ok(true)) && !warned {
                     if let Some(path) = &history_path {
                         warned = !save_history(&mut editor, path);
                     }
