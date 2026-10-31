@@ -115,3 +115,43 @@ fn ctrl_d_at_an_empty_prompt_exits_cleanly_with_status_zero() {
         other => panic!("rollin did not exit normally: {other:?}"),
     }
 }
+
+#[test]
+fn an_unwritable_history_file_warns_once_and_the_session_keeps_working() {
+    use std::os::unix::fs::PermissionsExt;
+    let cli = Cli::new();
+    let dir = cli.config_dir().join("rollin");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o555)).unwrap();
+    // Root ignores permission bits, so there is nothing to test.
+    if std::fs::write(dir.join(".probe"), "").is_ok() {
+        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755)).unwrap();
+        eprintln!("skipped: permissions are not enforced for this user");
+        return;
+    }
+    let roll = |seed: u32| format!("d20 --seed {seed} --json");
+    let result = |seed: u32| {
+        cli.run(&["d20", "--seed", &seed.to_string(), "--json"])
+            .stdout
+            .trim_end()
+            .to_string()
+    };
+
+    let mut p = start(&cli);
+    p.exp_string("rollin> ").expect("prompt");
+    p.send_line(&roll(1)).unwrap();
+    p.exp_string("warning: cannot write history")
+        .expect("the history failure is reported");
+    p.exp_string(&result(1)).expect("the first roll still ran");
+    p.exp_string("rollin> ").expect("prompt");
+    p.send_line(&roll(2)).unwrap();
+    let before_second = p.exp_string(&result(2)).expect("a later roll still runs");
+    assert!(
+        !before_second.contains("warning"),
+        "the warning must appear once per session: {before_second:?}"
+    );
+    p.send_line("quit").unwrap();
+    let rest = p.exp_eof().expect("exits on quit");
+    let _ = std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755));
+    assert!(!rest.contains("warning"), "{rest:?}");
+}
