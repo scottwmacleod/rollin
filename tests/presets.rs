@@ -582,16 +582,17 @@ fn session_words_cannot_be_preset_names() {
 }
 
 #[test]
-fn session_words_in_one_shot_are_not_formulas_or_presets() {
-    for word in ["help", "quit", "exit", "history"] {
+fn a_lone_session_word_in_one_shot_says_it_is_a_session_command() {
+    for word in ["quit", "exit", "history", "QUIT"] {
         let run = Cli::new().run(&[word]);
         assert_eq!(run.code, 1, "{word}: {run:?}");
         assert_eq!(run.stdout, "");
-        assert!(
-            run.stderr.starts_with(&format!(
-                "error: '{word}' is not a valid formula or a known preset\n"
-            )),
-            "{word}: {run:?}"
+        assert_eq!(
+            run.stderr,
+            format!(
+                "error: '{word}' is a session command; run `rollin` with no arguments to start a session and type it there\n"
+            ),
+            "{word}"
         );
     }
 }
