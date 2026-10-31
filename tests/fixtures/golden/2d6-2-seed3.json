@@ -1,0 +1,5 @@
+{
+  "formula": "2d6-2",
+  "seed": 3,
+  "expected": {"rolls":[{"formula":"2d6-2","dice":[{"value":1,"status":"kept"},{"value":4,"status":"kept"}],"modifier":-2,"total":3}]}
+}

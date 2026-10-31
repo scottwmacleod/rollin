@@ -1,0 +1,5 @@
+{
+  "formula": "2d20kh+8",
+  "seed": 1,
+  "expected": {"rolls":[{"formula":"2d20kh+8","dice":[{"value":9,"status":"kept"},{"value":2,"status":"dropped"}],"modifier":8,"total":17}]}
+}

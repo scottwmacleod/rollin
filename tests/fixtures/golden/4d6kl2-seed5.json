@@ -1,0 +1,5 @@
+{
+  "formula": "4d6kl2",
+  "seed": 5,
+  "expected": {"rolls":[{"formula":"4d6kl2","dice":[{"value":2,"status":"kept"},{"value":2,"status":"kept"},{"value":2,"status":"dropped"},{"value":5,"status":"dropped"}],"modifier":0,"total":4}]}
+}

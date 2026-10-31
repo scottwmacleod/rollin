@@ -1,0 +1,5 @@
+{
+  "formula": "15, d20",
+  "seed": 1,
+  "expected": {"rolls":[{"formula":"15","dice":[],"modifier":15,"total":15},{"formula":"d20","dice":[{"value":9,"status":"kept"}],"modifier":0,"total":9}]}
+}

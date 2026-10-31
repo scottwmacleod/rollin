@@ -101,6 +101,17 @@ impl Parser<'_> {
     }
 
     fn parse_item(&mut self) -> Result<Expr, ParseError> {
+        // v1 accepted a signed bare number (`-5`, `+5`) as a fixed value.
+        let sign = match self.peek() {
+            Some(Token::Plus) => Some(1),
+            Some(Token::Minus) => Some(-1),
+            _ => None,
+        };
+        if let Some(sign) = sign {
+            self.pos += 1;
+            let n = self.number("a number after the sign")?;
+            return Ok(Expr::Number(sign * n));
+        }
         let mut expr = self.parse_term()?;
         let op = match self.peek() {
             Some(Token::Plus) => Some(BinOp::Add),
