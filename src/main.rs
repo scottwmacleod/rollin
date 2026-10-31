@@ -3,7 +3,8 @@ mod render;
 use clap::Parser;
 use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
 use rollin::{
-    entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output, Roll,
+    entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output,
+    PresetEntry, PresetSource, Roll,
 };
 use serde::Serialize;
 use std::io::IsTerminal;
@@ -45,6 +46,12 @@ struct Args {
     #[arg(long, hide = true)]
     force: bool,
 
+    /// Save to the global presets instead of the active character (only for
+    /// `save`; handled by the command parser, which clap would otherwise
+    /// reject as an unknown flag)
+    #[arg(long, hide = true)]
+    global: bool,
+
     /// Show the full breakdown of each roll
     #[arg(short, long)]
     verbose: bool,
@@ -68,6 +75,9 @@ fn main() -> ExitCode {
         Ok(ctx.store()?.load()?.into_keys().collect())
     };
     let mut words = args.words.clone();
+    if args.global {
+        words.push("--global".into());
+    }
     if args.force {
         words.push("--force".into());
     }
@@ -142,13 +152,15 @@ fn show(args: &Args, output: Output) {
         Output::Saved {
             name,
             formula,
+            character,
             replaced: None,
-        } => println!("saved '{name}': {formula}"),
+        } => println!("saved '{name}'{}: {formula}", on(&character)),
         Output::Saved {
             name,
             formula,
+            character,
             replaced: Some(old),
-        } => println!("replaced '{name}' (was {old}): {formula}"),
+        } => println!("replaced '{name}'{} (was {old}): {formula}", on(&character)),
         Output::Imported(report) => {
             for (name, reason) in &report.skipped {
                 println!("skipped '{name}': {reason}");
@@ -199,12 +211,27 @@ fn show(args: &Args, output: Output) {
             println!("No presets saved. Add one with: rollin save <name> <formula>");
         }
         Output::Presets(presets) => {
-            let width = presets.iter().map(|(n, _)| n.chars().count()).max();
-            for (name, formula) in presets {
-                println!("{name:<w$}  {formula}", w = width.unwrap_or(0));
+            let width = |f: fn(&PresetEntry) -> usize| presets.iter().map(f).max().unwrap_or(0);
+            let (name_w, formula_w) = (
+                width(|p| p.name.chars().count()),
+                width(|p| p.formula.chars().count()),
+            );
+            for p in &presets {
+                let source = match &p.source {
+                    PresetSource::Character(c) => c.as_str(),
+                    PresetSource::Global => "global",
+                };
+                println!("{:<name_w$}  {:<formula_w$}  [{source}]", p.name, p.formula);
             }
         }
     }
+}
+
+/// ` on 'grog'` for a character preset, nothing for a global one.
+fn on(character: &Option<String>) -> String {
+    character
+        .as_ref()
+        .map_or(String::new(), |c| format!(" on '{c}'"))
 }
 
 fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<Roll>) {

@@ -16,8 +16,12 @@ pub enum Command {
     Roll(String),
     /// Roll a saved preset (by its lowercase name).
     RollPreset(String),
-    /// Save a global preset.
-    Save { name: String, formula: String },
+    /// Save a preset on the active character, or a global one.
+    Save {
+        name: String,
+        formula: String,
+        global: bool,
+    },
     /// List global presets.
     Presets,
     /// Merge a v1 `presets.json` into the store.
@@ -180,13 +184,19 @@ pub fn parse_command(
     let first = words.first().map(|w| w.to_lowercase());
     let rest = words.get(1..).unwrap_or_default();
     match first.as_deref() {
-        Some("save") => match rest {
-            [name, formula @ ..] if !formula.is_empty() => Ok(Command::Save {
-                name: name.clone(),
-                formula: formula.join(" "),
-            }),
-            _ => Err(CommandError::Usage("save <name> <formula>".into())),
-        },
+        Some("save") => {
+            let (rest, global) = take_flag(rest, "--global");
+            match rest.as_slice() {
+                [name, formula @ ..] if !formula.is_empty() => Ok(Command::Save {
+                    name: name.clone(),
+                    formula: formula.join(" "),
+                    global,
+                }),
+                _ => Err(CommandError::Usage(
+                    "save <name> <formula> [--global]".into(),
+                )),
+            }
+        }
         Some("roll") if rest.is_empty() => {
             Err(CommandError::Usage("roll <formula or preset name>".into()))
         }
@@ -269,6 +279,21 @@ fn validate_var_name(raw: &str) -> Result<String, CommandError> {
     } else {
         Err(CommandError::InvalidVarName(raw.to_string()))
     }
+}
+
+/// Splits `flag` (any case, anywhere) out of `words`; true if it was there.
+fn take_flag(words: &[String], flag: &str) -> (Vec<String>, bool) {
+    let mut found = false;
+    let rest = words
+        .iter()
+        .filter(|w| {
+            let is_flag = w.eq_ignore_ascii_case(flag);
+            found |= is_flag;
+            !is_flag
+        })
+        .cloned()
+        .collect();
+    (rest, found)
 }
 
 /// `import <path> [--force]`, with the flag allowed anywhere after `import`.
@@ -392,6 +417,8 @@ pub enum Output {
     Saved {
         name: String,
         formula: String,
+        /// The character it was saved on; `None` for a global preset.
+        character: Option<String>,
         /// The formula this save overwrote, if the name already existed.
         replaced: Option<String>,
     },
@@ -427,8 +454,24 @@ pub enum Output {
         value: i64,
         character: String,
     },
-    /// Presets as (name, formula), sorted by name.
-    Presets(Vec<(String, String)>),
+    /// The active character's presets, then the global ones.
+    Presets(Vec<PresetEntry>),
+}
+
+/// Where a saved preset lives.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PresetSource {
+    /// On the named character.
+    Character(String),
+    Global,
+}
+
+/// One line of the `presets` listing.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PresetEntry {
+    pub name: String,
+    pub formula: String,
+    pub source: PresetSource,
 }
 
 /// What an import did.
@@ -457,15 +500,32 @@ pub fn execute(
             let formula = store.load()?.remove(name).unwrap_or_default();
             roll_formula(&formula, Some((name.clone(), formula.clone())), &scope, rng)
         }
-        Command::Save { name, formula } => {
+        Command::Save {
+            name,
+            formula,
+            global,
+        } => {
             let name = validate_name(name).map_err(CommandError::InvalidName)?;
             check_formula(formula)?;
-            let mut presets = store.load()?;
-            let replaced = presets.insert(name.clone(), formula.clone());
-            store.save(&presets)?;
+            if *global {
+                let mut presets = store.load()?;
+                let replaced = presets.insert(name.clone(), formula.clone());
+                store.save(&presets)?;
+                return Ok(Output::Saved {
+                    name,
+                    formula: formula.clone(),
+                    character: None,
+                    replaced,
+                });
+            }
+            let (characters, active) = ctx.current()?;
+            let mut character = characters.load(&active)?;
+            let replaced = character.presets.insert(name.clone(), formula.clone());
+            characters.save(&active, &character)?;
             Ok(Output::Saved {
                 name,
                 formula: formula.clone(),
+                character: Some(active),
                 replaced,
             })
         }
@@ -530,7 +590,27 @@ pub fn execute(
             }
             Ok(Output::Imported(report))
         }
-        Command::Presets => Ok(Output::Presets(store.load()?.into_iter().collect())),
+        Command::Presets => {
+            let (characters, active) = ctx.current()?;
+            let own = characters
+                .load(&active)?
+                .presets
+                .into_iter()
+                .map(|(name, formula)| PresetEntry {
+                    name,
+                    formula,
+                    source: PresetSource::Character(active.clone()),
+                });
+            let global = store
+                .load()?
+                .into_iter()
+                .map(|(name, formula)| PresetEntry {
+                    name,
+                    formula,
+                    source: PresetSource::Global,
+                });
+            Ok(Output::Presets(own.chain(global).collect()))
+        }
         Command::Set { name, value } => {
             let (characters, active) = ctx.current()?;
             let mut character = characters.load(&active)?;
@@ -610,14 +690,22 @@ pub fn execute(
     }
 }
 
-/// Whether `formula` parses (without rolling it).
+/// Whether `formula` is acceptable to save. Variables are not known until
+/// the preset is rolled, so each `@name` stands in as 2 and any non-syntax
+/// error that touches a variable is ignored (it may only be the stand-in's
+/// fault). Real syntax errors, and every error in a formula without
+/// variables, are reported.
 fn check_formula(formula: &str) -> Result<(), CommandError> {
-    crate::parser::parse(formula)
-        .map(|_| ())
-        .map_err(|error| CommandError::Formula {
+    match crate::parser::parse_with(formula, &|_| Some(2)) {
+        Ok(_) => Ok(()),
+        Err(Error::WithVariables { inner, .. }) if !matches!(*inner, Error::Syntax { .. }) => {
+            Ok(())
+        }
+        Err(error) => Err(CommandError::Formula {
             source: formula.to_string(),
             error,
-        })
+        }),
+    }
 }
 
 /// The character whose variables a formula is rolled against.

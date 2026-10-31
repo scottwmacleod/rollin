@@ -584,3 +584,46 @@ fn corrupt_state_and_character_files_are_errors_naming_the_path_and_untouched() 
         "a failed delete must leave the character alone"
     );
 }
+
+#[test]
+fn save_goes_to_the_active_character_and_presets_marks_the_source() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    let saved = cli.run(&["save", "atk", "d20+@str"]);
+    saved.assert_success();
+    assert_eq!(saved.stdout, "saved 'atk' on 'grog': d20+@str\n");
+    assert_eq!(cli.run(&["presets"]).stdout, "atk  d20+@str  [grog]\n");
+    let file =
+        std::fs::read_to_string(cli.config_dir().join("rollin/characters/grog.toml")).unwrap();
+    assert!(file.contains("atk = \"d20+@str\""), "{file}");
+    assert!(!cli.config_dir().join("rollin/presets.toml").exists());
+    let replaced = cli.run(&["save", "ATK", "d20+1"]);
+    assert_eq!(
+        replaced.stdout,
+        "replaced 'atk' on 'grog' (was d20+@str): d20+1\n"
+    );
+}
+
+#[test]
+fn save_global_writes_the_global_file_from_anywhere_on_the_line() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    for args in [
+        &["save", "--global", "gl", "d20"][..],
+        &["save", "gl2", "d20+1", "--global"],
+        &["save", "gl3", "--global", "d20+2"],
+    ] {
+        cli.run(args).assert_success();
+    }
+    let out = cli.run(&["save", "--global", "gl4", "d6"]);
+    assert_eq!(out.stdout, "saved 'gl4': d6\n");
+    let file = std::fs::read_to_string(cli.config_dir().join("rollin/presets.toml")).unwrap();
+    assert!(
+        file.contains("gl2 = \"d20+1\"") && file.contains("gl3 = \"d20+2\""),
+        "{file}"
+    );
+    assert_eq!(
+        cli.run(&["presets"]).stdout,
+        "gl   d20    [global]\ngl2  d20+1  [global]\ngl3  d20+2  [global]\ngl4  d6     [global]\n"
+    );
+}

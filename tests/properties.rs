@@ -683,7 +683,7 @@ mod presets {
                 let dir = tempfile::TempDir::new().unwrap();
                 let ctx = Context::new(Some(dir.path().to_path_buf()));
                 let mut rng = seeded_rng(seed);
-                let save = Command::Save { name: raw.clone(), formula: "2d6+1".into() };
+                let save = Command::Save { name: raw.clone(), formula: "2d6+1".into(), global: true };
                 execute(&save, &ctx, &mut rng).unwrap();
                 let command = parse_command(
                     &[raw.to_uppercase()],

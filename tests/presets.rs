@@ -7,10 +7,11 @@ use common::Cli;
 #[test]
 fn a_saved_preset_is_listed() {
     let cli = Cli::new();
-    cli.run(&["save", "attack", "d20+5"]).assert_success();
+    cli.run(&["save", "--global", "attack", "d20+5"])
+        .assert_success();
     let listed = cli.run(&["presets"]);
     listed.assert_success();
-    assert_eq!(listed.stdout, "attack  d20+5\n");
+    assert_eq!(listed.stdout, "attack  d20+5  [global]\n");
 }
 
 #[test]
@@ -26,7 +27,7 @@ fn listing_with_no_presets_says_so() {
 #[test]
 fn saving_an_invalid_formula_shows_the_span_error_and_saves_nothing() {
     let cli = Cli::new();
-    let run = cli.run(&["save", "bad", "d20+"]);
+    let run = cli.run(&["save", "--global", "bad", "d20+"]);
     assert_eq!(run.code, 1, "{run:?}");
     assert_eq!(
         run.stderr,
@@ -39,7 +40,8 @@ fn saving_an_invalid_formula_shows_the_span_error_and_saves_nothing() {
 #[test]
 fn a_preset_rolls_by_bare_name_with_a_header() {
     let cli = Cli::new();
-    cli.run(&["save", "atk", "d20+5"]).assert_success();
+    cli.run(&["save", "--global", "atk", "d20+5"])
+        .assert_success();
     let by_name = cli.run(&["atk", "--seed", "3"]);
     by_name.assert_success();
     let direct = cli.run(&["d20+5", "--seed", "3"]);
@@ -52,7 +54,8 @@ fn a_preset_rolls_by_bare_name_with_a_header() {
 #[test]
 fn json_and_quiet_output_for_a_preset_have_no_header() {
     let cli = Cli::new();
-    cli.run(&["save", "pair", "d20+5, 2d6"]).assert_success();
+    cli.run(&["save", "--global", "pair", "d20+5, 2d6"])
+        .assert_success();
     let json = cli.run(&["pair", "--seed", "3", "--json"]);
     assert_eq!(json.json()["rolls"].as_array().unwrap().len(), 2);
     let quiet = cli.run(&["pair", "--seed", "3", "-q"]);
@@ -64,7 +67,8 @@ fn json_and_quiet_output_for_a_preset_have_no_header() {
 #[test]
 fn verbose_output_for_a_preset_keeps_the_header() {
     let cli = Cli::new();
-    cli.run(&["save", "atk", "d20+5"]).assert_success();
+    cli.run(&["save", "--global", "atk", "d20+5"])
+        .assert_success();
     let run = cli.run(&["atk", "--seed", "3", "-v"]);
     run.assert_success();
     assert!(run.stdout.starts_with("(preset 'atk': d20+5)\n"), "{run:?}");
@@ -73,7 +77,8 @@ fn verbose_output_for_a_preset_keeps_the_header() {
 #[test]
 fn roll_command_accepts_a_formula_or_a_preset_name() {
     let cli = Cli::new();
-    cli.run(&["save", "atk", "d20+5"]).assert_success();
+    cli.run(&["save", "--global", "atk", "d20+5"])
+        .assert_success();
     let formula = cli.run(&["roll", "2d6", "+", "1", "--seed", "4"]);
     let direct = cli.run(&["2d6 + 1", "--seed", "4"]);
     formula.assert_success();
@@ -100,7 +105,8 @@ fn an_unknown_lone_word_names_itself_and_suggests_presets() {
 #[test]
 fn an_unknown_word_close_to_a_preset_suggests_it() {
     let cli = Cli::new();
-    cli.run(&["save", "attack", "d20+5"]).assert_success();
+    cli.run(&["save", "--global", "attack", "d20+5"])
+        .assert_success();
     let run = cli.run(&["atack"]);
     assert_eq!(run.code, 1, "{run:?}");
     assert_eq!(
@@ -120,12 +126,14 @@ fn a_malformed_dice_word_keeps_its_formula_error() {
 #[test]
 fn delete_removes_a_preset_case_insensitively() {
     let cli = Cli::new();
-    cli.run(&["save", "atk", "d20+5"]).assert_success();
-    cli.run(&["save", "keep", "d6"]).assert_success();
+    cli.run(&["save", "--global", "atk", "d20+5"])
+        .assert_success();
+    cli.run(&["save", "--global", "keep", "d6"])
+        .assert_success();
     let run = cli.run(&["delete", "ATK"]);
     run.assert_success();
     assert_eq!(run.stdout, "deleted 'atk'\n");
-    assert_eq!(cli.run(&["presets"]).stdout, "keep  d6\n");
+    assert_eq!(cli.run(&["presets"]).stdout, "keep  d6  [global]\n");
 }
 
 #[test]
@@ -146,32 +154,36 @@ fn delete_without_a_name_prints_usage() {
 #[test]
 fn saving_over_an_existing_preset_says_so() {
     let cli = Cli::new();
-    let first = cli.run(&["save", "Atk", "d20+5"]);
+    let first = cli.run(&["save", "--global", "Atk", "d20+5"]);
     assert_eq!(first.stdout, "saved 'atk': d20+5\n");
-    let second = cli.run(&["save", "atk", "d20+7"]);
+    let second = cli.run(&["save", "--global", "atk", "d20+7"]);
     second.assert_success();
     assert_eq!(second.stdout, "replaced 'atk' (was d20+5): d20+7\n");
-    assert_eq!(cli.run(&["presets"]).stdout, "atk  d20+7\n");
+    assert_eq!(cli.run(&["presets"]).stdout, "atk  d20+7  [global]\n");
 }
 
 #[test]
 fn presets_are_listed_sorted_by_name() {
     let cli = Cli::new();
     for (name, formula) in [("zed", "d4"), ("alpha", "d6"), ("mid", "d8")] {
-        cli.run(&["save", name, formula]).assert_success();
+        cli.run(&["save", "--global", name, formula])
+            .assert_success();
     }
     assert_eq!(
         cli.run(&["presets"]).stdout,
-        "alpha  d6\nmid    d8\nzed    d4\n"
+        "alpha  d6  [global]\nmid    d8  [global]\nzed    d4  [global]\n"
     );
 }
 
 #[test]
 fn save_without_a_formula_prints_usage() {
-    for args in [&["save"][..], &["save", "lonely"]] {
+    for args in [&["save"][..], &["save", "--global", "lonely"]] {
         let run = Cli::new().run(args);
         assert_eq!(run.code, 1);
-        assert_eq!(run.stderr, "error: usage: save <name> <formula>\n");
+        assert_eq!(
+            run.stderr,
+            "error: usage: save <name> <formula> [--global]\n"
+        );
     }
 }
 
@@ -199,7 +211,7 @@ fn names_that_break_a_rule_are_rejected_at_save_with_the_rule() {
     ];
     for (name, message) in cases {
         let cli = Cli::new();
-        let run = cli.run(&["save", name, "d20"]);
+        let run = cli.run(&["save", "--global", name, "d20"]);
         assert_eq!(run.code, 1, "{name:?}: {run:?}");
         assert_eq!(run.stderr, format!("error: {message}\n"), "{name:?}");
         assert!(cli.run(&["presets"]).stdout.starts_with("No presets"));
@@ -210,7 +222,7 @@ fn names_that_break_a_rule_are_rejected_at_save_with_the_rule() {
 fn v1_style_names_are_accepted() {
     let cli = Cli::new();
     for name in ["adv-attack", "dis_attack", "braceup", "a1"] {
-        cli.run(&["save", name, "d20"]).assert_success();
+        cli.run(&["save", "--global", name, "d20"]).assert_success();
         cli.run(&[name, "--seed", "1"]).assert_success();
     }
 }
@@ -231,7 +243,7 @@ fn a_corrupt_file_is_a_clear_error_and_is_never_overwritten() {
     let path = write_store(&cli, garbage);
     for args in [
         &["presets"][..],
-        &["save", "new", "d6"],
+        &["save", "--global", "new", "d6"],
         &["delete", "attack"],
         &["roll", "attack"],
         &["attack"],
@@ -286,7 +298,7 @@ fn save_with_env(xdg: Option<&str>, home: Option<&std::path::Path>) -> common::R
     if let Some(home) = home {
         cmd.env("HOME", home);
     }
-    let out = cmd.args(["save", "k", "d6"]).output().unwrap();
+    let out = cmd.args(["save", "--global", "k", "d6"]).output().unwrap();
     common::Run {
         stdout: String::from_utf8(out.stdout).unwrap(),
         stderr: String::from_utf8(out.stderr).unwrap(),
@@ -329,8 +341,8 @@ fn no_usable_config_directory_is_a_clear_error() {
 #[test]
 fn writes_leave_only_the_presets_file_behind() {
     let cli = Cli::new();
-    cli.run(&["save", "a", "d4"]).assert_success();
-    cli.run(&["save", "b", "d6"]).assert_success();
+    cli.run(&["save", "--global", "a", "d4"]).assert_success();
+    cli.run(&["save", "--global", "b", "d6"]).assert_success();
     cli.run(&["delete", "a"]).assert_success();
     let mut names: Vec<_> = std::fs::read_dir(cli.config_dir().join("rollin"))
         .unwrap()
@@ -344,11 +356,11 @@ fn writes_leave_only_the_presets_file_behind() {
 fn a_failed_write_keeps_the_old_file_and_leaves_no_temp_file() {
     use std::os::unix::fs::PermissionsExt;
     let cli = Cli::new();
-    cli.run(&["save", "a", "d4"]).assert_success();
+    cli.run(&["save", "--global", "a", "d4"]).assert_success();
     let dir = cli.config_dir().join("rollin");
     let before = std::fs::read_to_string(dir.join("presets.toml")).unwrap();
     std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o500)).unwrap();
-    let run = cli.run(&["save", "b", "d6"]);
+    let run = cli.run(&["save", "--global", "b", "d6"]);
     std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700)).unwrap();
     assert_eq!(run.code, 1, "{run:?}");
     assert!(run.stderr.starts_with("error: "), "{run:?}");
@@ -409,7 +421,12 @@ fn formula_of(cli: &Cli, name: &str) -> String {
         .lines()
         .find(|l| l.split_whitespace().next() == Some(name))
         .unwrap_or_else(|| panic!("{name} not listed in {listed}"));
-    line[name.len()..].trim().to_string()
+    line[name.len()..]
+        .trim()
+        .strip_suffix("[global]")
+        .expect("global marker")
+        .trim()
+        .to_string()
 }
 
 #[test]
@@ -492,7 +509,8 @@ fn import_of_names_differing_only_by_case_keeps_the_first() {
 #[test]
 fn an_unusable_import_file_is_an_error_and_changes_nothing() {
     let cli = Cli::new();
-    cli.run(&["save", "keep", "d6"]).assert_success();
+    cli.run(&["save", "--global", "keep", "d6"])
+        .assert_success();
     let missing = cli.config_dir().join("nope.json");
     let run = cli.run(&["import", missing.to_str().unwrap()]);
     assert_eq!(run.code, 1);
@@ -515,7 +533,7 @@ fn an_unusable_import_file_is_an_error_and_changes_nothing() {
             "{run:?}"
         );
     }
-    assert_eq!(cli.run(&["presets"]).stdout, "keep  d6\n");
+    assert_eq!(cli.run(&["presets"]).stdout, "keep  d6  [global]\n");
 }
 
 #[test]

@@ -266,12 +266,18 @@ fn quiet_prints_one_total_per_line_across_repeats_and_lists() {
 #[test]
 fn a_preset_can_hold_a_repeat_and_labels() {
     let cli = Cli::new();
-    cli.run(&["save", "stats", "6x", "4d6dl1"]).assert_success();
-    cli.run(&["save", "strike", "d20+8 # attack, d10+5 # damage"])
+    cli.run(&["save", "--global", "stats", "6x", "4d6dl1"])
         .assert_success();
+    cli.run(&[
+        "save",
+        "--global",
+        "strike",
+        "d20+8 # attack, d10+5 # damage",
+    ])
+    .assert_success();
     assert_eq!(
         cli.run(&["presets"]).stdout,
-        "stats   6x 4d6dl1\nstrike  d20+8 # attack, d10+5 # damage\n"
+        "stats   6x 4d6dl1                       [global]\nstrike  d20+8 # attack, d10+5 # damage  [global]\n"
     );
 
     let by_name = cli.run(&["stats", "--seed", "3"]);
@@ -292,7 +298,7 @@ fn a_preset_can_hold_a_repeat_and_labels() {
 fn save_rejects_bad_repeats_and_labels_with_a_span_and_saves_nothing() {
     let cli = Cli::new();
     for formula in ["101x d20", "2x 3x d20", "d20 #"] {
-        let run = cli.run(&["save", "bad", formula]);
+        let run = cli.run(&["save", "--global", "bad", formula]);
         assert_eq!(run.code, 1, "{formula}: {run:?}");
         assert!(run.stderr.contains('^'), "{formula}: {run:?}");
     }
@@ -302,7 +308,8 @@ fn save_rejects_bad_repeats_and_labels_with_a_span_and_saves_nothing() {
 #[test]
 fn a_lone_repeat_like_word_is_not_mistaken_for_a_preset_lookup() {
     let cli = Cli::new();
-    cli.run(&["save", "stats", "6x 4d6dl1"]).assert_success();
+    cli.run(&["save", "--global", "stats", "6x 4d6dl1"])
+        .assert_success();
     // `6x` alone is a formula error, not an unknown preset.
     let run = cli.run(&["6x"]);
     assert!(run.stderr.contains("nothing to repeat"), "{run:?}");
