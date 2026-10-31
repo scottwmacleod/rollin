@@ -2,7 +2,7 @@
 //! (the CLI seam can only hit the cap by seed hunting).
 
 use rand::RngCore;
-use rollin::{roll, Error, Status};
+use rollin::{roll, Cap, Error, Status};
 
 /// Yields `lows` draws that make a die show 1, then draws that make a d2 show
 /// 2 (a plain `u32::MAX` would be rejected by the sampler forever).
@@ -57,7 +57,7 @@ fn the_101st_explosion_is_an_error_naming_cap_and_term_in_every_mode() {
         assert_eq!(
             err,
             Error::LimitExceeded {
-                cap: "explosions per die",
+                cap: Cap::ExplosionsPerDie,
                 limit: 100,
                 term: formula.to_string(),
                 span: 0..formula.len(),

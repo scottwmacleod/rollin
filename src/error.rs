@@ -1,5 +1,6 @@
 //! Typed errors for parsing and evaluating formulas.
 
+use crate::limits::Cap;
 use std::ops::Range;
 
 /// Anything that can go wrong turning a formula into rolls. Every variant
@@ -13,8 +14,8 @@ pub enum Error {
     InvalidDice { message: String, span: Range<usize> },
     /// A hard cap (ADR 0006) was exceeded. Names the cap and the term.
     LimitExceeded {
-        cap: &'static str,
-        limit: usize,
+        cap: Cap,
+        limit: i64,
         term: String,
         span: Range<usize>,
     },
@@ -70,6 +71,16 @@ impl Error {
     pub(crate) fn invalid_dice(message: impl Into<String>, span: Range<usize>) -> Self {
         Error::InvalidDice {
             message: message.into(),
+            span,
+        }
+    }
+
+    /// A [`Cap`] was exceeded by `term`; the limit is the cap's own.
+    pub(crate) fn limit_exceeded(cap: Cap, term: impl Into<String>, span: Range<usize>) -> Self {
+        Error::LimitExceeded {
+            cap,
+            limit: cap.limit(),
+            term: term.into(),
             span,
         }
     }
