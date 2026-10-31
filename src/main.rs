@@ -150,6 +150,10 @@ fn show(args: &Args, output: Output) {
                 println!("{mark} {name}");
             }
         }
+        Output::CharCreated(name) => {
+            println!("created character '{name}' and made it active");
+        }
+        Output::CharSwitched(name) => println!("active character: {name}"),
         Output::ActiveCharacter(name) => println!("active character: {name}"),
         Output::Vars(vars) if vars.is_empty() => {
             println!("No variables set. Add one with: rollin set <name> <integer>");

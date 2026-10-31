@@ -64,7 +64,43 @@ impl CharacterStore {
 
     /// The name of the active character: `default` when no state file exists.
     pub fn active(&self) -> Result<String, StoreError> {
-        Ok(DEFAULT.to_string())
+        let path = self.state_path();
+        let error = |message: String| StoreError {
+            path: path.clone(),
+            message,
+        };
+        let raw = match std::fs::read_to_string(&path) {
+            Ok(raw) => raw,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(DEFAULT.into()),
+            Err(e) => return Err(error(e.to_string())),
+        };
+        let table: toml::Table = raw
+            .parse()
+            .map_err(|e: toml::de::Error| error(format!("not valid TOML: {}", e.message())))?;
+        match table.get("active") {
+            None => Ok(DEFAULT.into()),
+            Some(toml::Value::String(name)) => Ok(name.clone()),
+            Some(_) => Err(error("`active` must be a string".into())),
+        }
+    }
+
+    /// Makes `name` the active character, atomically.
+    pub fn set_active(&self, name: &str) -> Result<(), StoreError> {
+        let path = self.state_path();
+        let mut root = toml::Table::new();
+        root.insert("active".into(), toml::Value::String(name.to_string()));
+        let text = toml::to_string(&root).map_err(|e| StoreError {
+            path: path.clone(),
+            message: e.to_string(),
+        })?;
+        write_atomic(&path, &text)
+    }
+
+    fn state_path(&self) -> PathBuf {
+        self.dir
+            .parent()
+            .expect("characters dir has a parent")
+            .join("state.toml")
     }
 
     /// A character's data. A missing file means an empty character.

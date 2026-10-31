@@ -262,3 +262,42 @@ fn a_fresh_install_has_only_the_virtual_default_character_active() {
         "reading must not create files"
     );
 }
+
+#[test]
+fn char_new_creates_an_empty_character_and_makes_it_active_across_runs() {
+    let cli = Cli::new();
+    let made = cli.run(&["char", "new", "grog"]);
+    made.assert_success();
+    assert_eq!(made.stdout, "created character 'grog' and made it active\n");
+    assert_eq!(cli.run(&["char"]).stdout, "active character: grog\n");
+    assert_eq!(cli.run(&["characters"]).stdout, "  default\n* grog\n");
+    let state = std::fs::read_to_string(cli.config_dir().join("rollin/state.toml")).unwrap();
+    assert!(state.contains("active = \"grog\""), "{state}");
+    assert!(cli
+        .config_dir()
+        .join("rollin/characters/grog.toml")
+        .is_file());
+    assert!(
+        !cli.config_dir()
+            .join("rollin/characters/default.toml")
+            .exists(),
+        "default stays virtual until written"
+    );
+}
+
+#[test]
+fn variables_belong_to_the_active_character() {
+    let cli = Cli::new();
+    cli.run(&["set", "str", "3"]).assert_success();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    assert!(cli.run(&["vars"]).stdout.starts_with("No variables"));
+    let set = cli.run(&["set", "str", "5"]);
+    assert_eq!(set.stdout, "set str = 5 on 'grog'\n");
+    assert_eq!(cli.run(&["vars"]).stdout, "str = 5\n");
+    cli.run(&["char", "default"]).assert_success();
+    assert_eq!(cli.run(&["vars"]).stdout, "str = 3\n");
+    assert_eq!(
+        cli.roll_json("d20+@str", 2)["rolls"][0]["expr"],
+        cli.roll_json("d20+3", 2)["rolls"][0]["expr"]
+    );
+}

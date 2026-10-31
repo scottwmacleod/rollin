@@ -2,7 +2,7 @@
 //! and one executor that runs it against a [`Context`]. The one-shot binary
 //! and the later interactive session both use it. It never prints.
 
-use crate::characters::CharacterStore;
+use crate::characters::{Character, CharacterStore};
 use crate::presets::{is_name_shaped, validate_name, NameError, Store, StoreError};
 use crate::{Error, Roll};
 use rand::Rng;
@@ -30,6 +30,10 @@ pub enum Command {
     Characters,
     /// Show the active character.
     CharShow,
+    /// Make an existing character active.
+    CharSwitch(String),
+    /// Create an empty character and make it active.
+    CharNew(String),
     /// List the active character's variables.
     Vars,
 }
@@ -149,7 +153,14 @@ pub fn parse_command(
         }
         Some("roll") => roll_or_preset(rest, preset_names),
         Some("characters") => Ok(Command::Characters),
-        Some("char") => Ok(Command::CharShow),
+        Some("char") => match rest {
+            [] => Ok(Command::CharShow),
+            [new, name] if new.eq_ignore_ascii_case("new") => {
+                Ok(Command::CharNew(name.to_lowercase()))
+            }
+            [name] => Ok(Command::CharSwitch(name.to_lowercase())),
+            _ => Err(CommandError::Usage("char [<name> | new <name>]".into())),
+        },
         Some("vars") => Ok(Command::Vars),
         Some("set") => match rest {
             [name, value] => Ok(Command::Set {
@@ -284,6 +295,10 @@ pub enum Output {
     },
     /// The active character.
     ActiveCharacter(String),
+    /// A character was created and made active.
+    CharCreated(String),
+    /// A different character was made active.
+    CharSwitched(String),
     /// Variables as (name, value), sorted by name.
     Vars(Vec<(String, i64)>),
     VarSet {
@@ -397,13 +412,14 @@ pub fn execute(
         Command::Presets => Ok(Output::Presets(store.load()?.into_iter().collect())),
         Command::Set { name, value } => {
             let characters = ctx.characters()?;
-            let mut character = characters.load("default")?;
+            let active = characters.active()?;
+            let mut character = characters.load(&active)?;
             character.vars.insert(name.clone(), *value);
-            characters.save("default", &character)?;
+            characters.save(&active, &character)?;
             Ok(Output::VarSet {
                 name: name.clone(),
                 value: *value,
-                character: "default".into(),
+                character: active,
             })
         }
         Command::Characters => {
@@ -414,8 +430,19 @@ pub fn execute(
             })
         }
         Command::CharShow => Ok(Output::ActiveCharacter(ctx.characters()?.active()?)),
+        Command::CharSwitch(name) => {
+            ctx.characters()?.set_active(name)?;
+            Ok(Output::CharSwitched(name.clone()))
+        }
+        Command::CharNew(name) => {
+            let characters = ctx.characters()?;
+            characters.save(name, &Character::default())?;
+            characters.set_active(name)?;
+            Ok(Output::CharCreated(name.clone()))
+        }
         Command::Vars => {
-            let character = ctx.characters()?.load("default")?;
+            let characters = ctx.characters()?;
+            let character = characters.load(&characters.active()?)?;
             Ok(Output::Vars(character.vars.into_iter().collect()))
         }
     }
@@ -441,8 +468,9 @@ struct Scope {
 
 impl Scope {
     fn load(ctx: &Context) -> Result<Scope, CommandError> {
-        let name = "default".to_string();
-        let vars = ctx.characters()?.load(&name)?.vars;
+        let characters = ctx.characters()?;
+        let name = characters.active()?;
+        let vars = characters.load(&name)?.vars;
         Ok(Scope {
             name,
             vars,
