@@ -166,7 +166,22 @@ fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<Roll>) {
             println!("(preset '{name}': {formula})");
         }
         if args.verbose {
-            let blocks: Vec<String> = rolls.iter().map(|r| render_verbose(paint, r)).collect();
+            let total = rolls.iter().filter_map(|r| r.iteration).max().unwrap_or(0);
+            let mut previous = None;
+            let blocks: Vec<String> = rolls
+                .iter()
+                .map(|r| {
+                    let block = render_verbose(paint, r);
+                    let header = match r.iteration {
+                        Some(k) if previous != Some(k) => {
+                            format!("iteration {k} of {total}\n")
+                        }
+                        _ => String::new(),
+                    };
+                    previous = r.iteration;
+                    format!("{header}{block}")
+                })
+                .collect();
             println!("{}", blocks.join("\n\n"));
         } else {
             let width = iteration_width(&rolls);

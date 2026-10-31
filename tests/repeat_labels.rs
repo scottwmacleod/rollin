@@ -222,3 +222,40 @@ fn a_list_repeats_whole_each_item_line_carries_its_iteration() {
         assert!(line.ends_with(tail), "{line}");
     }
 }
+
+#[test]
+fn verbose_puts_an_iteration_header_before_each_repeat() {
+    let out = stdout_of(&Cli::new(), 1, &["-v", "2x d20+8 # attack, d10+5"]);
+    let headers: Vec<&str> = out.lines().filter(|l| l.starts_with("iteration")).collect();
+    assert_eq!(headers, ["iteration 1 of 2", "iteration 2 of 2"]);
+    let blocks: Vec<&str> = out
+        .lines()
+        .filter(|l| l.starts_with("d20+8") || l.starts_with("d10+5"))
+        .collect();
+    assert_eq!(blocks, ["d20+8  # attack", "d10+5", "d20+8  # attack", "d10+5"]);
+    // Each header comes before its own iteration's blocks.
+    let first_block = out.find("d20+8").unwrap();
+    assert!(out.find("iteration 1 of 2").unwrap() < first_block);
+    assert!(first_block < out.find("iteration 2 of 2").unwrap());
+}
+
+#[test]
+fn verbose_without_repeat_has_no_iteration_header() {
+    let out = stdout_of(&Cli::new(), 1, &["-v", "d20+8"]);
+    assert!(!out.contains("iteration"), "{out}");
+}
+
+#[test]
+fn quiet_prints_one_total_per_line_across_repeats_and_lists() {
+    let cli = Cli::new();
+    let quiet = stdout_of(&cli, 7, &["-q", "3x d20+8, 2d6"]);
+    let json = cli.roll_json("3x d20+8, 2d6", 7);
+    let expected: String = json["rolls"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|r| format!("{}\n", r["total"]))
+        .collect();
+    assert_eq!(quiet.lines().count(), 6);
+    assert_eq!(quiet, expected);
+}
