@@ -230,7 +230,8 @@ saved 'house': d6
 `atk`) and must match `[a-z][a-z0-9_-]*`, so v1 names such as `adv-attack`
 work. A name is rejected at `save` (and skipped by `import`) when it is a
 command word (`save presets delete import roll set unset vars char
-characters`), a reserved dice keyword
+characters help quit exit history`; the last four are session-only, see
+[Session](#session)), a reserved dice keyword
 (`adv dis df dl dh kl kh r rr p f d`), or would itself parse as a dice formula
 (`d20`, `df`, `D6`). The error says which rule failed.
 

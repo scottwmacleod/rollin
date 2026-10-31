@@ -196,11 +196,11 @@ fn names_that_break_a_rule_are_rejected_at_save_with_the_rule() {
         ("", format!("invalid preset name '': {shape}")),
         (
             "save",
-            "invalid preset name 'save': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters)".into(),
+            "invalid preset name 'save': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters, help, quit, exit, history)".into(),
         ),
         (
             "PRESETS",
-            "invalid preset name 'PRESETS': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters)".into(),
+            "invalid preset name 'PRESETS': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters, help, quit, exit, history)".into(),
         ),
         ("adv", "invalid preset name 'adv': it is a reserved dice keyword".into()),
         ("dis", "invalid preset name 'dis': it is a reserved dice keyword".into()),
@@ -486,7 +486,7 @@ fn import_skips_bad_entries_with_reasons_and_keeps_the_good_ones() {
         "skipped 'nested': value must be a string, found an array",
         "skipped 'nothing': value must be a string, found null",
         "skipped 'number': value must be a string, found a number",
-        "skipped 'save': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters)",
+        "skipped 'save': it is a command word (save, presets, delete, import, roll, set, unset, vars, char, characters, help, quit, exit, history)",
         "imported 2, skipped 8",
     ];
     assert_eq!(lines, expect);
@@ -566,6 +566,33 @@ fn names_that_are_dice_syntax_but_invalid_dice_are_rejected_too() {
             run.stderr,
             format!("error: invalid preset name '{name}': it looks like dice syntax\n"),
             "{name}"
+        );
+    }
+}
+
+#[test]
+fn session_words_cannot_be_preset_names() {
+    for word in ["help", "quit", "exit", "history", "HELP"] {
+        let run = Cli::new().run(&["save", word, "d6"]);
+        assert_eq!(run.code, 1, "{word}: {run:?}");
+        assert!(
+            run.stderr.contains("it is a command word"),
+            "{word}: {run:?}"
+        );
+    }
+}
+
+#[test]
+fn session_words_in_one_shot_are_not_formulas_or_presets() {
+    for word in ["help", "quit", "exit", "history"] {
+        let run = Cli::new().run(&[word]);
+        assert_eq!(run.code, 1, "{word}: {run:?}");
+        assert_eq!(run.stdout, "");
+        assert!(
+            run.stderr.starts_with(&format!(
+                "error: '{word}' is not a valid formula or a known preset\n"
+            )),
+            "{word}: {run:?}"
         );
     }
 }
