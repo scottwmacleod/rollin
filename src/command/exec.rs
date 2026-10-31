@@ -1,11 +1,10 @@
 use super::context::require_character;
-use super::parse::validate_char_name;
 use super::{
     edit_distance, import, Command, CommandError, Context, Output, PresetEntry, PresetSource,
     Shadow, UndefinedVariable,
 };
 use crate::characters::{Character, DEFAULT};
-use crate::presets::validate_name;
+use crate::name::{normalise, Name};
 use crate::Error;
 use rand::Rng;
 use std::collections::BTreeMap;
@@ -35,7 +34,9 @@ pub fn execute(
             formula,
             global,
         } => {
-            let name = validate_name(name).map_err(CommandError::InvalidName)?;
+            let name = Name::preset(name)
+                .map_err(CommandError::InvalidName)?
+                .into_string();
             check_formula(formula)?;
             if *global {
                 let mut presets = store.load()?;
@@ -55,12 +56,12 @@ pub fn execute(
             Ok(Output::Saved {
                 name,
                 formula: formula.clone(),
-                character: Some(active),
+                character: Some(active.into_string()),
                 replaced,
             })
         }
         Command::Delete { name, global } => {
-            let name = name.to_lowercase();
+            let name = normalise(name);
             let mut globals = store.load()?;
             if *global {
                 if globals.remove(&name).is_none() {
@@ -78,13 +79,13 @@ pub fn execute(
                 return Err(CommandError::NoSuchCharacterPreset {
                     global_exists: globals.contains_key(&name),
                     name,
-                    character: active,
+                    character: active.into_string(),
                 });
             }
             characters.save(&active, &character)?;
             Ok(Output::Deleted {
                 name,
-                character: Some(active),
+                character: Some(active.into_string()),
             })
         }
         Command::Import { path, force } => import::run(path, *force, &store),
@@ -95,7 +96,7 @@ pub fn execute(
             let own = own_presets.iter().map(|(name, formula)| PresetEntry {
                 name: name.clone(),
                 formula: formula.clone(),
-                source: PresetSource::Character(active.clone()),
+                source: PresetSource::Character(active.to_string()),
                 shadow: if global_presets.contains_key(name) {
                     Shadow::Shadows
                 } else {
@@ -107,7 +108,7 @@ pub fn execute(
                 formula: formula.clone(),
                 source: PresetSource::Global,
                 shadow: if own_presets.contains_key(name) {
-                    Shadow::ShadowedBy(active.clone())
+                    Shadow::ShadowedBy(active.to_string())
                 } else {
                     Shadow::None
                 },
@@ -122,53 +123,59 @@ pub fn execute(
             Ok(Output::VarSet {
                 name: name.clone(),
                 value: *value,
-                character: active,
+                character: active.into_string(),
             })
         }
         Command::Characters => {
             let characters = ctx.characters()?;
             Ok(Output::Characters {
-                names: characters.names()?,
-                active: ctx.acting_name(&characters)?,
+                names: characters
+                    .names()?
+                    .into_iter()
+                    .map(Name::into_string)
+                    .collect(),
+                active: ctx.acting_name(&characters)?.into_string(),
             })
         }
         Command::CharShow => {
             let characters = ctx.characters()?;
-            Ok(Output::ActiveCharacter(ctx.acting_name(&characters)?))
+            Ok(Output::ActiveCharacter(
+                ctx.acting_name(&characters)?.into_string(),
+            ))
         }
         Command::CharSwitch(name) => {
             let characters = ctx.characters()?;
             require_character(&characters, name)?;
             characters.set_active(name)?;
-            Ok(Output::CharSwitched(name.clone()))
+            Ok(Output::CharSwitched(name.to_string()))
         }
         Command::CharDelete(name) => {
             let characters = ctx.characters()?;
-            if name == DEFAULT {
+            if name.as_str() == DEFAULT {
                 return Err(CommandError::CannotDeleteDefault);
             }
             require_character(&characters, name)?;
             let was_active = characters.active()? == *name;
             characters.delete(name)?;
             if was_active {
-                characters.set_active(DEFAULT)?;
+                characters.set_active(&Name::default_character())?;
             }
             Ok(Output::CharDeleted {
-                name: name.clone(),
+                name: name.to_string(),
                 was_active,
             })
         }
         Command::CharNew(name) => {
             let characters = ctx.characters()?;
-            let name = validate_char_name(name)?;
+            let name = Name::character(name).map_err(CommandError::InvalidCharName)?;
             if characters.exists(&name) {
-                return Err(CommandError::CharacterExists(name));
+                return Err(CommandError::CharacterExists(name.into_string()));
             }
             let name = &name;
             characters.active()?;
             characters.save(name, &Character::default())?;
             characters.set_active(name)?;
-            Ok(Output::CharCreated(name.clone()))
+            Ok(Output::CharCreated(name.to_string()))
         }
         Command::Unset { name } => {
             let (characters, active) = ctx.current()?;
@@ -176,13 +183,13 @@ pub fn execute(
             if character.vars.remove(name).is_none() {
                 return Err(CommandError::NoSuchVariable {
                     name: name.clone(),
-                    character: active,
+                    character: active.into_string(),
                 });
             }
             characters.save(&active, &character)?;
             Ok(Output::VarUnset {
                 name: name.clone(),
-                character: active,
+                character: active.into_string(),
             })
         }
         Command::Vars => {
@@ -218,7 +225,7 @@ pub(super) fn check_formula(formula: &str) -> Result<(), CommandError> {
 
 /// The character whose variables a formula is rolled against.
 struct Scope {
-    name: String,
+    name: Name,
     vars: BTreeMap<String, i64>,
     /// The character's own presets, which shadow global ones.
     presets: BTreeMap<String, String>,
@@ -252,7 +259,7 @@ impl Scope {
                 CommandError::UndefinedVariable(Box::new(UndefinedVariable {
                     source: source.to_string(),
                     name: name.clone(),
-                    character: self.name.clone(),
+                    character: self.name.to_string(),
                     defined: self.vars.keys().cloned().collect(),
                     suggestion,
                     explicit: self.explicit,

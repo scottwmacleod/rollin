@@ -1,5 +1,5 @@
 use super::{edit_distance, Command, CommandError};
-use crate::presets::{is_name_shaped, validate_name, NameError, NameRule};
+use crate::name::{is_name_shaped, normalise, Name};
 use crate::Error;
 use std::path::PathBuf;
 
@@ -32,28 +32,30 @@ pub fn parse_command(
         Some("characters") => Ok(Command::Characters),
         Some("char") => match rest {
             [] => Ok(Command::CharShow),
-            [delete, name] if delete.eq_ignore_ascii_case("delete") => {
-                Ok(Command::CharDelete(char_name_shape(name)?))
-            }
-            [new, name] if new.eq_ignore_ascii_case("new") => {
-                Ok(Command::CharNew(name.to_lowercase()))
-            }
+            [delete, name] if delete.eq_ignore_ascii_case("delete") => Ok(Command::CharDelete(
+                Name::shaped(name).map_err(CommandError::InvalidCharName)?,
+            )),
+            [new, name] if new.eq_ignore_ascii_case("new") => Ok(Command::CharNew(normalise(name))),
             [new] if new.eq_ignore_ascii_case("new") => {
                 Err(CommandError::Usage("char new <name>".into()))
             }
-            [name] => Ok(Command::CharSwitch(char_name_shape(name)?)),
+            [name] => Ok(Command::CharSwitch(
+                Name::shaped(name).map_err(CommandError::InvalidCharName)?,
+            )),
             _ => Err(CommandError::Usage("char [<name> | new <name>]".into())),
         },
         Some("unset") => match rest {
             [name] => Ok(Command::Unset {
-                name: name.to_lowercase(),
+                name: normalise(name),
             }),
             _ => Err(CommandError::Usage("unset <name>".into())),
         },
         Some("vars") => Ok(Command::Vars),
         Some("set") => match rest {
             [name, value] => Ok(Command::Set {
-                name: validate_var_name(name)?,
+                name: Name::variable(name)
+                    .ok_or_else(|| CommandError::InvalidVarName(name.clone()))?
+                    .into_string(),
                 value: value
                     .parse()
                     .map_err(|_| CommandError::NotAnInteger(value.clone()))?,
@@ -73,44 +75,6 @@ pub fn parse_command(
             }
         }
         _ => roll_or_preset(words, preset_names),
-    }
-}
-
-/// Lowercases a character name and checks it is `[a-z][a-z0-9_-]*`, so a name
-/// can never reach outside the characters directory.
-pub(super) fn char_name_shape(raw: &str) -> Result<String, CommandError> {
-    let name = raw.to_lowercase();
-    if is_name_shaped(&name) {
-        Ok(name)
-    } else {
-        Err(CommandError::InvalidCharName(NameError {
-            name: raw.to_string(),
-            rule: NameRule::Shape,
-        }))
-    }
-}
-
-/// Checks a character name and returns its stored (lowercase) form.
-pub(super) fn validate_char_name(raw: &str) -> Result<String, CommandError> {
-    if raw.eq_ignore_ascii_case("new") {
-        return Err(CommandError::InvalidCharName(NameError {
-            name: raw.to_string(),
-            rule: NameRule::CommandWord,
-        }));
-    }
-    validate_name(raw).map_err(CommandError::InvalidCharName)
-}
-
-/// Checks a variable name and returns its stored (lowercase) form.
-fn validate_var_name(raw: &str) -> Result<String, CommandError> {
-    let name = raw.to_lowercase();
-    let mut chars = name.chars();
-    let valid = chars.next().is_some_and(|c| c.is_ascii_lowercase())
-        && chars.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_');
-    if valid {
-        Ok(name)
-    } else {
-        Err(CommandError::InvalidVarName(raw.to_string()))
     }
 }
 
@@ -150,7 +114,7 @@ fn roll_or_preset(
     preset_names: &mut dyn FnMut() -> Result<Vec<String>, CommandError>,
 ) -> Result<Command, CommandError> {
     if let [word] = words {
-        let name = word.to_lowercase();
+        let name = normalise(word);
         if crate::session::SESSION_WORDS.contains(&name.as_str()) {
             return Err(CommandError::SessionOnly { word: word.clone() });
         }

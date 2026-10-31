@@ -1,7 +1,7 @@
-use super::parse::char_name_shape;
 use super::{edit_distance, CommandError};
 use crate::characters::{CharacterStore, DEFAULT};
 use crate::completion::CompletionData;
+use crate::name::Name;
 use crate::presets::Store;
 use crate::session::SESSION_WORDS;
 use std::path::PathBuf;
@@ -9,7 +9,7 @@ use std::path::PathBuf;
 /// Errors unless the character exists, suggesting a near miss.
 pub(super) fn require_character(
     characters: &CharacterStore,
-    name: &str,
+    name: &Name,
 ) -> Result<(), CommandError> {
     if characters.exists(name) {
         return Ok(());
@@ -17,7 +17,8 @@ pub(super) fn require_character(
     let suggestion = characters
         .names()?
         .into_iter()
-        .find(|n| edit_distance(n, name) <= 2);
+        .find(|n| edit_distance(n.as_str(), name.as_str()) <= 2)
+        .map(Name::into_string);
     Err(CommandError::NoSuchCharacter {
         name: name.to_string(),
         suggestion,
@@ -44,10 +45,10 @@ impl Context {
 
     /// The character this call acts on: the `--char` override (which must
     /// exist) or else the persisted active character (not checked).
-    pub(super) fn acting_name(&self, characters: &CharacterStore) -> Result<String, CommandError> {
+    pub(super) fn acting_name(&self, characters: &CharacterStore) -> Result<Name, CommandError> {
         match &self.character {
             Some(name) => {
-                let name = char_name_shape(name)?;
+                let name = Name::shaped(name).map_err(CommandError::InvalidCharName)?;
                 require_character(characters, &name)?;
                 Ok(name)
             }
@@ -57,11 +58,11 @@ impl Context {
 
     /// The store and name of the character whose data this call reads and
     /// writes. The character must exist (`default` always does).
-    pub(super) fn current(&self) -> Result<(CharacterStore, String), CommandError> {
+    pub(super) fn current(&self) -> Result<(CharacterStore, Name), CommandError> {
         let characters = self.characters()?;
         let name = self.acting_name(&characters)?;
         if !characters.exists(&name) {
-            return Err(CommandError::ActiveCharacterMissing(name));
+            return Err(CommandError::ActiveCharacterMissing(name.into_string()));
         }
         Ok((characters, name))
     }
@@ -89,7 +90,7 @@ impl Context {
     /// command that needs the character reports the error).
     pub fn prompt(&self) -> String {
         match self.characters().and_then(|c| Ok(c.active()?)) {
-            Ok(name) if name != DEFAULT => format!("rollin[{name}]> "),
+            Ok(name) if name.as_str() != DEFAULT => format!("rollin[{name}]> "),
             _ => "rollin> ".to_string(),
         }
     }
@@ -98,7 +99,15 @@ impl Context {
     /// list that fails to load is simply empty: completing never errors.
     pub fn completion_data(&self) -> CompletionData {
         let character = self.current().ok().and_then(|(characters, name)| {
-            Some((characters.names().ok()?, characters.load(&name).ok()?))
+            Some((
+                characters
+                    .names()
+                    .ok()?
+                    .into_iter()
+                    .map(Name::into_string)
+                    .collect(),
+                characters.load(&name).ok()?,
+            ))
         });
         let (characters, own) = character.unwrap_or_default();
         let global = self.store().and_then(|s| Ok(s.load()?)).unwrap_or_default();

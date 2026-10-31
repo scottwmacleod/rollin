@@ -1,6 +1,7 @@
 use super::exec::check_formula;
 use super::{CommandError, ImportReport, Output};
-use crate::presets::{validate_name, Store};
+use crate::name::Name;
+use crate::presets::Store;
 use std::path::Path;
 
 /// Merges a v1 `presets.json` into the global presets store.
@@ -21,8 +22,8 @@ pub(super) fn run(path: &Path, force: bool, store: &Store) -> Result<Output, Com
     let mut report = ImportReport::default();
     for (name, value) in entries {
         let skip = |reason: String| (name.clone(), reason);
-        let key = match validate_name(name) {
-            Ok(key) => key,
+        let key = match Name::preset(name) {
+            Ok(key) => key.into_string(),
             Err(e) => {
                 report.skipped.push(skip(e.reason()));
                 continue;

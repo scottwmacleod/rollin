@@ -1,5 +1,6 @@
 use super::UndefinedVariable;
-use crate::presets::{NameError, StoreError};
+use crate::name::NameError;
+use crate::presets::StoreError;
 use crate::Error;
 use std::path::PathBuf;
 

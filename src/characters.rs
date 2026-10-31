@@ -1,7 +1,10 @@
 //! Characters: one TOML file each under `rollin/characters/` (ADR 0004),
 //! holding integer variables and presets.
 
-use crate::presets::{edit_document, is_name_shaped, string_values, sync_section, StoreError};
+use crate::name::Name;
+use crate::presets::{
+    edit_document, read_presets, read_section, read_table, string_values, sync_section, StoreError,
+};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -29,21 +32,23 @@ impl CharacterStore {
         }
     }
 
-    fn path(&self, name: &str) -> PathBuf {
+    fn path(&self, name: &Name) -> PathBuf {
         self.dir.join(format!("{name}.toml"))
     }
 
     /// All character names, sorted. `default` is always one of them.
-    pub fn names(&self) -> Result<Vec<String>, StoreError> {
-        let mut names = vec![DEFAULT.to_string()];
+    pub fn names(&self) -> Result<Vec<Name>, StoreError> {
+        let mut names = vec![Name::default_character()];
         match std::fs::read_dir(&self.dir) {
             Ok(entries) => {
                 for entry in entries {
                     let entry = entry.map_err(|e| self.dir_error(e))?;
                     let file = entry.file_name().to_string_lossy().into_owned();
                     if let Some(name) = file.strip_suffix(".toml") {
-                        if is_name_shaped(name) && !names.iter().any(|n| n == name) {
-                            names.push(name.to_string());
+                        if let Some(name) = Name::stored(name) {
+                            if !names.contains(&name) {
+                                names.push(name);
+                            }
                         }
                     }
                 }
@@ -64,54 +69,39 @@ impl CharacterStore {
 
     /// Deletes a character's file. A missing file is fine (the character was
     /// virtual).
-    pub fn delete(&self, name: &str) -> Result<(), StoreError> {
+    pub fn delete(&self, name: &Name) -> Result<(), StoreError> {
         match std::fs::remove_file(self.path(name)) {
             Ok(()) => Ok(()),
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            Err(e) => Err(StoreError {
-                path: self.path(name),
-                message: e.to_string(),
-            }),
+            Err(e) => Err(StoreError::at(&self.path(name), e.to_string())),
         }
     }
 
     /// Whether a character exists (`default` always does).
-    pub fn exists(&self, name: &str) -> bool {
-        name == DEFAULT || self.path(name).is_file()
+    pub fn exists(&self, name: &Name) -> bool {
+        name.as_str() == DEFAULT || self.path(name).is_file()
     }
 
     /// The name of the active character: `default` when no state file exists.
-    pub fn active(&self) -> Result<String, StoreError> {
+    pub fn active(&self) -> Result<Name, StoreError> {
         let path = self.state_path();
-        let error = |message: String| StoreError {
-            path: path.clone(),
-            message,
-        };
-        let raw = match std::fs::read_to_string(&path) {
-            Ok(raw) => raw,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(DEFAULT.into()),
-            Err(e) => return Err(error(e.to_string())),
-        };
-        let table: toml::Table = raw
-            .parse()
-            .map_err(|e: toml::de::Error| error(format!("not valid TOML: {}", e.message())))?;
-        match table.get("active") {
-            None => Ok(DEFAULT.into()),
-            Some(toml::Value::String(name)) if is_name_shaped(name) => Ok(name.clone()),
-            Some(toml::Value::String(_)) => {
-                Err(error("`active` must be a valid character name".into()))
+        let error = |message: &str| StoreError::at(&path, message);
+        match read_table(&path)?.get("active") {
+            None => Ok(Name::default_character()),
+            Some(toml::Value::String(name)) => {
+                Name::stored(name).ok_or_else(|| error("`active` must be a valid character name"))
             }
-            Some(_) => Err(error("`active` must be a string".into())),
+            Some(_) => Err(error("`active` must be a string")),
         }
     }
 
     /// Makes `name` the active character, atomically.
-    pub fn set_active(&self, name: &str) -> Result<(), StoreError> {
+    pub fn set_active(&self, name: &Name) -> Result<(), StoreError> {
         // A corrupt state file is an error, never overwritten.
         self.active()?;
         let path = self.state_path();
         edit_document(&path, |doc| {
-            let mut new = toml_edit::Value::from(name);
+            let mut new = toml_edit::Value::from(name.as_str());
             if let Some(old) = doc.get("active").and_then(toml_edit::Item::as_value) {
                 *new.decor_mut() = old.decor().clone();
             }
@@ -128,51 +118,20 @@ impl CharacterStore {
     }
 
     /// A character's data. A missing file means an empty character.
-    pub fn load(&self, name: &str) -> Result<Character, StoreError> {
+    pub fn load(&self, name: &Name) -> Result<Character, StoreError> {
         let path = self.path(name);
-        let error = |message: String| StoreError {
-            path: path.clone(),
-            message,
-        };
-        let raw = match std::fs::read_to_string(&path) {
-            Ok(raw) => raw,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Character::default()),
-            Err(e) => return Err(error(e.to_string())),
-        };
-        let table: toml::Table = raw
-            .parse()
-            .map_err(|e: toml::de::Error| error(format!("not valid TOML: {}", e.message())))?;
-        let mut character = Character::default();
-        if let Some(section) = table.get("vars") {
-            let section = section
-                .as_table()
-                .ok_or_else(|| error("`vars` must be a table".into()))?;
-            for (var, value) in section {
-                let value = value
-                    .as_integer()
-                    .ok_or_else(|| error(format!("variable '{var}' must be an integer")))?;
-                character.vars.insert(var.to_lowercase(), value);
-            }
-        }
-        if let Some(section) = table.get("presets") {
-            let section = section
-                .as_table()
-                .ok_or_else(|| error("`presets` must be a table".into()))?;
-            for (preset, formula) in section {
-                let formula = formula
-                    .as_str()
-                    .ok_or_else(|| error(format!("preset '{preset}' must be a string")))?;
-                character
-                    .presets
-                    .insert(preset.to_lowercase(), formula.to_string());
-            }
-        }
-        Ok(character)
+        let table = read_table(&path)?;
+        Ok(Character {
+            vars: read_section(&table, &path, "vars", "variable", "an integer", |v| {
+                v.as_integer()
+            })?,
+            presets: read_presets(&table, &path)?,
+        })
     }
 
     /// Makes a character's file hold exactly `character`, atomically. An
     /// existing file is edited in place, so hand-written text survives.
-    pub fn save(&self, name: &str, character: &Character) -> Result<(), StoreError> {
+    pub fn save(&self, name: &Name, character: &Character) -> Result<(), StoreError> {
         let vars = character
             .vars
             .iter()

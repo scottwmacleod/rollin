@@ -15,6 +15,7 @@ pub use exec::execute;
 pub use output::{ImportReport, Output, PresetEntry, PresetSource, Shadow};
 pub use parse::parse_command;
 
+use crate::name::Name;
 use crate::Error;
 use std::path::PathBuf;
 
@@ -46,9 +47,9 @@ pub enum Command {
     /// Show the active character.
     CharShow,
     /// Make an existing character active.
-    CharSwitch(String),
+    CharSwitch(Name),
     /// Delete a character.
-    CharDelete(String),
+    CharDelete(Name),
     /// Create an empty character and make it active.
     CharNew(String),
     /// List the active character's variables.
