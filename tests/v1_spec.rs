@@ -187,7 +187,7 @@ fn check_presets(cli: &Cli, c: &Case) -> Result<(), String> {
                     .ok_or(format!("{name} not listed"))?;
                 eq(
                     "line",
-                    line.contains(&format!("  {formula}  [global]")),
+                    line.split_whitespace().nth(1) == Some(formula),
                     true,
                 )?;
                 let run = ok(cli, &[name, "--seed", SEED, "--json"])?;
