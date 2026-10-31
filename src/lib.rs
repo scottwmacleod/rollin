@@ -193,7 +193,7 @@ pub struct Roll {
     pub total: i64,
     pub expr: Node,
     /// The `# text` note on this roll's item, if it had one.
-    #[serde(skip)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
 }
 
