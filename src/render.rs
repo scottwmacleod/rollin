@@ -209,7 +209,7 @@ fn verbose_node(
                 })
                 .collect();
             out.push(format!(
-                "{pad}{lead}{term}: {}  = {subtotal}",
+                "{pad}{lead}{term}: {} = {subtotal}",
                 cells.join(", ")
             ));
         }

@@ -1,0 +1,5 @@
+{
+  "formula": "2+3*d4",
+  "seed": 5,
+  "expected": {"schema_version":1,"rolls":[{"formula":"2+3*d4","total":8,"expr":{"type":"chain","first":{"type":"number","value":2},"rest":[{"op":"+","node":{"type":"chain","first":{"type":"number","value":3},"rest":[{"op":"*","node":{"type":"dice","term":"d4","dice":[{"value":2,"status":"kept"}],"subtotal":2}}],"total":6}}],"total":8}}]}
+}

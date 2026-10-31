@@ -43,7 +43,7 @@ fn golden_fixtures_match() {
             }
         };
         let seed = case.seed.to_string();
-        let run = cli.run(&[&case.formula, "--seed", &seed, "--json"]);
+        let run = cli.run(&["--seed", &seed, "--json", "--", &case.formula]);
         if !run.success() {
             failures.push(format!("{name}: rollin failed: {run:?}"));
             continue;

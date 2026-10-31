@@ -1,0 +1,5 @@
+{
+  "formula": "10 + -d6",
+  "seed": 2,
+  "expected": {"schema_version":1,"rolls":[{"formula":"10 + -d6","total":8,"expr":{"type":"chain","first":{"type":"number","value":10},"rest":[{"op":"+","node":{"type":"neg","operand":{"type":"dice","term":"d6","dice":[{"value":2,"status":"kept"}],"subtotal":2},"total":-2}}],"total":8}}]}
+}
