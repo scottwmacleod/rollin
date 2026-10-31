@@ -36,13 +36,15 @@ fn main() -> ExitCode {
         None => roll(&args.formula, &mut entropy_rng()),
     };
     match result {
-        Ok(r) if args.json => {
-            let out = Output { rolls: vec![r] };
+        Ok(rolls) if args.json => {
+            let out = Output { rolls };
             println!("{}", serde_json::to_string(&out).expect("serialize"));
             ExitCode::SUCCESS
         }
-        Ok(r) => {
-            println!("{}", render(&r));
+        Ok(rolls) => {
+            for r in &rolls {
+                println!("{}", render(r));
+            }
             ExitCode::SUCCESS
         }
         Err(e) => {

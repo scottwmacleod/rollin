@@ -11,7 +11,7 @@ proptest! {
         seed in any::<u64>(),
     ) {
         let mut rng = seeded_rng(seed);
-        let r = roll(&format!("{n}d{sides}"), &mut rng).unwrap();
+        let r = &roll(&format!("{n}d{sides}"), &mut rng).unwrap()[0];
         prop_assert_eq!(r.dice.len() as u32, n);
         for d in &r.dice {
             prop_assert!((1..=sides).contains(&d.value));
