@@ -66,7 +66,12 @@ impl Cli {
     /// dir. Every spawn in the test suite must start from here, so nothing
     /// can read or write the real config or the repo checkout.
     pub fn command(&self) -> Command {
-        let mut cmd = Command::cargo_bin("rollin").expect("rollin binary builds");
+        Command::from_std(self.std_command())
+    }
+
+    /// [`Cli::command`] as a plain `std` command (for the pty tests).
+    pub fn std_command(&self) -> std::process::Command {
+        let mut cmd = std::process::Command::new(env!("CARGO_BIN_EXE_rollin"));
         cmd.env("HOME", self.home.path())
             .env("XDG_CONFIG_HOME", self.config_dir.path())
             .current_dir(self.home.path());

@@ -30,3 +30,25 @@ fn a_run_without_xdg_config_home_writes_under_the_sandbox_home_not_the_real_one(
         "the sandbox HOME did not receive the write"
     );
 }
+
+#[test]
+fn no_test_spawns_rollin_outside_the_harness() {
+    let tests = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests");
+    let mut offenders = Vec::new();
+    for entry in std::fs::read_dir(&tests).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().is_none_or(|e| e != "rs") || path.file_name().unwrap() == "sandbox.rs" {
+            continue;
+        }
+        let source = std::fs::read_to_string(&path).unwrap();
+        for needle in ["cargo_bin(", "CARGO_BIN_EXE"] {
+            if source.contains(needle) {
+                offenders.push(format!("{} uses {needle}", path.display()));
+            }
+        }
+    }
+    assert!(
+        offenders.is_empty(),
+        "spawn through common::Cli::command instead: {offenders:#?}"
+    );
+}

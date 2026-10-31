@@ -6,18 +6,13 @@ mod common;
 
 use common::Cli;
 use rexpect::session::{spawn_command, PtySession};
-use std::path::Path;
-use std::process::Command;
 
 /// Generous: CI machines can be slow, and a timeout is only ever a failure.
 const TIMEOUT_MS: u64 = 10_000;
 
-fn start(config_dir: &Path) -> PtySession {
-    let mut command = Command::new(env!("CARGO_BIN_EXE_rollin"));
-    command
-        .env("XDG_CONFIG_HOME", config_dir)
-        .env("TERM", "xterm")
-        .env_remove("NO_COLOR");
+fn start(cli: &Cli) -> PtySession {
+    let mut command = cli.std_command();
+    command.env("TERM", "xterm").env_remove("NO_COLOR");
     spawn_command(command, Some(TIMEOUT_MS)).expect("spawn rollin in a pty")
 }
 
@@ -30,7 +25,7 @@ fn send(p: &mut PtySession, keys: &str) {
 #[test]
 fn the_session_starts_shows_a_prompt_and_quits() {
     let cli = Cli::new();
-    let mut p = start(cli.config_dir());
+    let mut p = start(&cli);
     p.exp_string("type 'help' for commands, 'quit' to exit")
         .expect("banner");
     p.exp_string("rollin> ").expect("prompt");
@@ -42,7 +37,7 @@ fn the_session_starts_shows_a_prompt_and_quits() {
 fn tab_completes_a_preset_name_and_the_line_runs() {
     let cli = Cli::new();
     cli.run(&["save", "sneak", "d20+5"]).assert_success();
-    let mut p = start(cli.config_dir());
+    let mut p = start(&cli);
     p.exp_string("rollin> ").expect("prompt");
     // "sn" is a typo for a preset only if Tab did not complete it.
     send(&mut p, "sn");
@@ -67,14 +62,14 @@ fn history_persists_across_restarts() {
         .trim_end()
         .to_string();
 
-    let mut first = start(cli.config_dir());
+    let mut first = start(&cli);
     first.exp_string("rollin> ").expect("prompt");
     first.send_line(line).unwrap();
     first.exp_string(&result).expect("first roll");
     first.send_line("quit").unwrap();
     first.exp_eof().expect("exits on quit");
 
-    let mut second = start(cli.config_dir());
+    let mut second = start(&cli);
     second.exp_string("rollin> ").expect("prompt");
     send(&mut second, "\x1b[A"); // Up arrow: recall the previous line
     send(&mut second, "\r");
