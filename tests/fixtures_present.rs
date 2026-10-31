@@ -1,5 +1,5 @@
 //! Verifies committed fixtures are present and well-formed.
-//! (Importing presets is a later ticket, #17.)
+//! (`tests/presets.rs` imports it and rolls every preset.)
 
 use std::collections::BTreeMap;
 

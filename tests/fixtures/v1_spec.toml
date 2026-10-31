@@ -7,6 +7,10 @@
 # the ticket that will un-ignore them. To un-ignore: fix the engine, then change
 # status to "live" and delete the reason line.
 #
+# kind = "presets" cases drive the preset commands (save, presets, delete, roll)
+# through the CLI against a fresh config dir; tests/v1_spec.rs has one runner
+# branch per case name.
+#
 # Fields: name, source (Python test), formula, status, reason, expect (ok|error),
 # rolls, total_ranges, dice, kept, dropped, total_min, total_max, modifier
 # (total == kept sum + modifier), dropped_extreme (lowest|highest).
@@ -320,77 +324,72 @@ name = "presets_load_missing_file"
 source = "test_presets.py::test_load_missing_file"
 kind = "presets"
 behaviour = "load_presets on a missing store returns an empty set of presets"
-status = "ignored"
-reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+status = "live"
 
 [[case]]
 name = "presets_save_and_load_roundtrip"
 source = "test_presets.py::test_save_and_load_roundtrip"
 kind = "presets"
 behaviour = "saving {attack: d20+5} then loading returns exactly {attack: d20+5}"
-status = "ignored"
-reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+status = "live"
 
 [[case]]
 name = "presets_add_and_get_preset"
 source = "test_presets.py::test_add_and_get_preset"
 kind = "presets"
 behaviour = "adding preset 'Attack' = d20+5 then getting 'attack' returns d20+5"
-status = "ignored"
-reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+status = "live"
 
 [[case]]
 name = "presets_get_preset_case_insensitive"
 source = "test_presets.py::test_get_preset_case_insensitive"
 kind = "presets"
 behaviour = "a preset added as 'MyRoll' is found as 'myroll' and 'MYROLL'"
-status = "ignored"
-reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+status = "live"
 
 [[case]]
 name = "presets_delete_preset"
 source = "test_presets.py::test_delete_preset"
 kind = "presets"
 behaviour = "deleting an existing preset returns true and it is then gone"
-status = "ignored"
-reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+status = "live"
 
 [[case]]
 name = "presets_delete_nonexistent_preset"
 source = "test_presets.py::test_delete_nonexistent_preset"
 kind = "presets"
 behaviour = "deleting a preset that does not exist returns false"
-status = "ignored"
-reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+status = "live"
 
+# Adapted for v2 (ADR 0004, TOML store): a corrupt file is a clear error naming the
+# file, and the file is left untouched, instead of v1's silent empty set.
 [[case]]
 name = "presets_load_corrupted_json"
 source = "test_presets.py::test_load_corrupted_json"
 kind = "presets"
 behaviour = "a corrupted store file loads as an empty set of presets"
-status = "ignored"
-reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+status = "live"
 
+# Adapted for v2: the TOML equivalent of a non-dict (`presets = [..]`) is a clear error.
 [[case]]
 name = "presets_load_non_dict_json"
 source = "test_presets.py::test_load_non_dict_json"
 kind = "presets"
 behaviour = "a store file holding a JSON list loads as an empty set of presets"
-status = "ignored"
-reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+status = "live"
 
+# Adapted for v2: a non-string preset in the store is an error naming the entry;
+# `import` of a v1 file still drops non-string entries, each reported with a reason.
 [[case]]
 name = "presets_load_filters_non_string_values"
 source = "test_presets.py::test_load_filters_non_string_values"
 kind = "presets"
 behaviour = "entries whose value is not a string are dropped on load"
-status = "ignored"
-reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+status = "live"
 
 [[case]]
 name = "presets_multiple_presets"
 source = "test_presets.py::test_multiple_presets"
 kind = "presets"
 behaviour = "several presets coexist and each is retrievable by name"
-status = "ignored"
-reason = "#17 (global presets; v2 stores TOML per ADR 0004, so confirm the v1 behaviour still applies when un-ignoring)"
+status = "live"

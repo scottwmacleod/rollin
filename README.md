@@ -144,6 +144,81 @@ roll (one comma-separated item, explosion dice included), and nesting (parenthes
 A bare negative number needs `--` so it is not read as an option:
 `rollin -- -5`.
 
+### Presets
+
+A preset is a named formula you save once and roll by name. The same commands
+work for every invocation (`rollin <command> ...`):
+
+```
+$ rollin save atk d20+8
+saved 'atk': d20+8
+$ rollin save sneak d20+5, 2d6          # a comma list is fine
+saved 'sneak': d20+5, 2d6
+$ rollin presets                        # sorted, one per line
+atk    d20+8
+sneak  d20+5, 2d6
+$ rollin atk --seed 3                   # bare name, or: rollin roll atk
+(preset 'atk': d20+8)
+d20+8  [3] + 8  →  11
+$ rollin roll sneak --seed 3 -q         # --json and -q print no header line
+8
+5
+$ rollin delete atk
+deleted 'atk'
+```
+
+- `save <name> <formula>` checks the formula at save time (the usual error
+  with carets if it is invalid) and replaces an existing preset of that name,
+  saying `replaced 'atk' (was d20+8): d20+9`.
+- `roll <x>` takes a formula or a preset name. A bare word that is not a
+  formula is looked up as a preset; an unknown one is an error that suggests
+  `rollin presets` and, if a saved name is within two edits, `did you mean`.
+- `--seed`, `-v`, `-q`, `--json` and `--color` work with presets as with any
+  roll. The `(preset 'name': formula)` header is printed in the default and
+  `-v` modes only, so `--json` and `-q` stay machine-clean. `presets`,
+  `save`, `delete` and `import` print plain text whatever the mode.
+- `delete <name>` of a name that does not exist is an error (exit 1).
+
+**Names** are stored lowercase (`save Atk ...` and `rollin ATK` both mean
+`atk`) and must match `[a-z][a-z0-9_-]*`, so v1 names such as `adv-attack`
+work. A name is rejected at `save` (and skipped by `import`) when it is a
+command word (`save presets delete import roll`), a reserved dice keyword
+(`adv dis df dl dh kl kh r rr p f d`), or would itself parse as a dice formula
+(`d20`, `df`, `D6`). The error says which rule failed.
+
+**File.** Presets live in `$XDG_CONFIG_HOME/rollin/presets.toml` (an empty or
+relative `XDG_CONFIG_HOME` is ignored; the default is
+`~/.config/rollin/presets.toml`). It is hand-editable:
+
+```toml
+[presets]
+atk = "d20+8"
+sneak = "d20+5, 2d6"
+```
+
+Writes are atomic (a temp file in the same directory, then a rename). A
+missing file just means no presets. A file that is not valid TOML, or whose
+`presets` is not a table of strings, makes every preset command fail with an
+error naming the file; it is never overwritten by a failed command. Saving
+rewrites the file, so comments in it are not kept.
+
+**Importing v1 presets.** `rollin import presets.json` merges a v1
+`presets.json` (a flat JSON object of name to formula) into the store:
+
+```
+$ rollin import tests/fixtures/presets.json
+imported 10, skipped 0
+$ rollin import tests/fixtures/presets.json
+skipped 'adv-attack': already exists (use --force to overwrite)
+...
+imported 0, skipped 10
+```
+
+Existing names are skipped unless you add `--force`. Entries with an invalid
+name, an invalid formula or a non-string value are skipped, each reported with
+its reason; the rest are still imported. Only an unreadable file or one that
+is not a JSON object is an error (exit 1). Nothing is imported automatically.
+
 ### Errors
 
 An invalid formula prints the problem on stderr, repeats the formula with
@@ -295,10 +370,16 @@ per test. The helper is `tests/common/mod.rs` (`Cli::new()`, `cli.run(&[..])`).
 | `tests/arithmetic.rs` | `+ - * /`, precedence, parentheses, result tree |
 | `tests/errors.rs` | Error text with underlined spans, caps, overflow |
 | `tests/output_modes.rs` | Color, `-v`, `-q` and `--json` flag behaviour |
+| `tests/presets.rs` | Preset commands, name rules, the TOML store, `import`, against a temp config dir |
 | `tests/golden.rs` | Golden fixtures (the `--json` contract): formula + seed to expected output |
 | `tests/v1_spec.rs` | The Python v1 test cases as a parity spec |
 | `tests/properties.rs` | `proptest` invariants at the library API, including "never panics" |
-| `tests/fixtures_present.rs` | Committed fixtures (`presets.json`) are well-formed |
+| `tests/fixtures_present.rs` | Committed fixtures (`presets.json`) are well-formed (`tests/presets.rs` imports and rolls it) |
+
+The preset commands share one command layer in the library (`parse_command`
+turns a list of words into a `Command`, `execute` runs it against a `Context`
+and returns an `Output` for the binary to print); the one-shot binary and the
+later interactive session feed it the same way.
 
 Run everything with `cargo test`. The CI jobs are `lint` (`cargo fmt --check`,
 clippy with `-D warnings`) and `test` (`cargo test`).

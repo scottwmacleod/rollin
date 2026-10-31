@@ -2,18 +2,22 @@ mod render;
 
 use clap::Parser;
 use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
-use rollin::{entropy_rng, roll, seeded_rng, Error, Roll};
+use rollin::{
+    entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output, Roll,
+};
 use serde::Serialize;
 use std::io::IsTerminal;
+use std::path::PathBuf;
 use std::process::ExitCode;
 
 /// A dice roller for the command line.
 #[derive(Parser)]
 #[command(version)]
 struct Args {
-    /// Formula to roll, e.g. d20 or "4d6dl1, d20+5" (words are joined with spaces)
+    /// A formula to roll, e.g. d20 or "4d6dl1, d20+5", a preset name, or a
+    /// command: save, presets, delete, import, roll
     #[arg(required = true)]
-    formula: Vec<String>,
+    words: Vec<String>,
 
     /// Seed the random number generator for reproducible rolls
     #[arg(long)]
@@ -32,6 +36,11 @@ struct Args {
     #[arg(long, value_enum, default_value = "auto")]
     color: ColorChoice,
 
+    /// Overwrite existing presets (only for `import`; handled by the command
+    /// parser, which clap would otherwise reject as an unknown flag)
+    #[arg(long, hide = true)]
+    force: bool,
+
     /// Show the full breakdown of each roll
     #[arg(short, long)]
     verbose: bool,
@@ -42,54 +51,127 @@ struct Args {
 const SCHEMA_VERSION: u32 = 1;
 
 #[derive(Serialize)]
-struct Output {
+struct JsonOutput {
     schema_version: u32,
     rolls: Vec<Roll>,
 }
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let formula = args.formula.join(" ");
+    let ctx = Context {
+        config_dir: config_dir(),
+    };
+    let names = &mut || -> Result<Vec<String>, CommandError> {
+        Ok(ctx.store()?.load()?.into_keys().collect())
+    };
+    let mut words = args.words.clone();
+    if args.force {
+        words.push("--force".into());
+    }
+    let command = match parse_command(&words, names) {
+        Ok(command) => command,
+        Err(e) => return fail(&e),
+    };
     let result = match args.seed {
-        Some(seed) => roll(&formula, &mut seeded_rng(seed)),
-        None => roll(&formula, &mut entropy_rng()),
+        Some(seed) => execute(&command, &ctx, &mut seeded_rng(seed)),
+        None => execute(&command, &ctx, &mut entropy_rng()),
     };
     match result {
-        Ok(rolls) if args.json => {
-            let out = Output {
-                schema_version: SCHEMA_VERSION,
-                rolls,
-            };
-            println!("{}", serde_json::to_string(&out).expect("serialize"));
+        Ok(output) => {
+            show(&args, output);
             ExitCode::SUCCESS
         }
-        Ok(rolls) if args.quiet => {
-            for r in &rolls {
-                println!("{}", r.total);
+        Err(e) => fail(&e),
+    }
+}
+
+/// `$XDG_CONFIG_HOME` if absolute, else `$HOME/.config`.
+fn config_dir() -> Option<PathBuf> {
+    let xdg = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
+    let home = std::env::var_os("HOME").map(PathBuf::from);
+    rollin::config_dir(xdg.as_deref(), home.as_deref())
+}
+
+fn fail(e: &CommandError) -> ExitCode {
+    match e {
+        CommandError::Formula { source, error } => eprint!("{}", render_error(source, error)),
+        CommandError::UnknownPreset { suggestion, .. } => {
+            eprintln!("error: {e}");
+            if let Some(name) = suggestion {
+                eprintln!("hint: did you mean '{name}'?");
             }
-            ExitCode::SUCCESS
+            eprintln!("hint: run `rollin presets` to list saved presets");
         }
-        Ok(rolls) => {
-            let no_color = std::env::var("NO_COLOR").ok();
-            let on = color_enabled(
-                args.color,
-                no_color.as_deref(),
-                std::io::stdout().is_terminal(),
+        other => eprintln!("error: {other}"),
+    }
+    ExitCode::FAILURE
+}
+
+fn show(args: &Args, output: Output) {
+    match output {
+        Output::Rolls { preset, rolls } => show_rolls(args, preset, rolls),
+        Output::Saved {
+            name,
+            formula,
+            replaced: None,
+        } => println!("saved '{name}': {formula}"),
+        Output::Saved {
+            name,
+            formula,
+            replaced: Some(old),
+        } => println!("replaced '{name}' (was {old}): {formula}"),
+        Output::Imported(report) => {
+            for (name, reason) in &report.skipped {
+                println!("skipped '{name}': {reason}");
+            }
+            println!(
+                "imported {}, skipped {}",
+                report.imported.len(),
+                report.skipped.len()
             );
-            let paint = Painter { on };
-            if args.verbose {
-                let blocks: Vec<String> = rolls.iter().map(|r| render_verbose(paint, r)).collect();
-                println!("{}", blocks.join("\n\n"));
-            } else {
-                for r in &rolls {
-                    println!("{}", render_line(paint, r));
-                }
-            }
-            ExitCode::SUCCESS
         }
-        Err(e) => {
-            eprint!("{}", render_error(&formula, &e));
-            ExitCode::FAILURE
+        Output::Deleted { name } => println!("deleted '{name}'"),
+        Output::Presets(presets) if presets.is_empty() => {
+            println!("No presets saved. Add one with: rollin save <name> <formula>");
+        }
+        Output::Presets(presets) => {
+            let width = presets.iter().map(|(n, _)| n.chars().count()).max();
+            for (name, formula) in presets {
+                println!("{name:<w$}  {formula}", w = width.unwrap_or(0));
+            }
+        }
+    }
+}
+
+fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<Roll>) {
+    if args.json {
+        let out = JsonOutput {
+            schema_version: SCHEMA_VERSION,
+            rolls,
+        };
+        println!("{}", serde_json::to_string(&out).expect("serialize"));
+    } else if args.quiet {
+        for r in &rolls {
+            println!("{}", r.total);
+        }
+    } else {
+        let no_color = std::env::var("NO_COLOR").ok();
+        let on = color_enabled(
+            args.color,
+            no_color.as_deref(),
+            std::io::stdout().is_terminal(),
+        );
+        let paint = Painter { on };
+        if let Some((name, formula)) = preset {
+            println!("(preset '{name}': {formula})");
+        }
+        if args.verbose {
+            let blocks: Vec<String> = rolls.iter().map(|r| render_verbose(paint, r)).collect();
+            println!("{}", blocks.join("\n\n"));
+        } else {
+            for r in &rolls {
+                println!("{}", render_line(paint, r));
+            }
         }
     }
 }
