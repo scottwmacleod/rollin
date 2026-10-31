@@ -4,7 +4,6 @@ use clap::Parser;
 use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
 use rollin::{
     entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output, Roll,
-    Store,
 };
 use serde::Serialize;
 use std::io::IsTerminal;
