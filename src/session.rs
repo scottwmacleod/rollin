@@ -35,7 +35,7 @@ as --seed 7, -v, -q, --json, --color and --char NAME work on any line and
 apply to that line only.
 
   save <name> <formula> [--global]   save a preset
-  presets                            list global presets
+  presets                            list presets (the character's, then global)
   delete <name> [--global]           delete a preset
   import <path> [--force]            import a v1 presets.json
   roll <formula or preset>           roll explicitly
