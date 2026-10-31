@@ -172,6 +172,12 @@ fn fail(e: &CommandError) -> ExitCode {
             }
             eprintln!("hint: run `rollin presets` to list saved presets");
         }
+        CommandError::SessionOnly { word } => {
+            eprintln!("error: {e}");
+            if word.eq_ignore_ascii_case("help") {
+                eprintln!("hint: for command-line help, run `rollin --help`");
+            }
+        }
         CommandError::NoSuchCharacterPreset {
             name,
             global_exists: true,

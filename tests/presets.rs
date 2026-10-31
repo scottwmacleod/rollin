@@ -596,3 +596,18 @@ fn a_lone_session_word_in_one_shot_says_it_is_a_session_command() {
         );
     }
 }
+
+#[test]
+fn a_lone_help_in_one_shot_points_to_the_command_line_help() {
+    for word in ["help", "Help"] {
+        let run = Cli::new().run(&[word]);
+        assert_eq!(run.code, 1, "{word}: {run:?}");
+        assert_eq!(
+            run.stderr,
+            format!(
+                "error: '{word}' is a session command; run `rollin` with no arguments to start a session and type it there\nhint: for command-line help, run `rollin --help`\n"
+            ),
+            "{word}"
+        );
+    }
+}
