@@ -60,3 +60,32 @@ fn overwriting_a_preset_keeps_its_key_spacing_and_trailing_comment() {
         PRESETS.replace("'d20+8'   #", "\"d20+9\"   #")
     );
 }
+
+const GROG: &str = "\
+# Grog the barbarian
+
+[vars]
+str = 18   # mighty
+dex = 10
+
+# his tricks
+[presets]
+rage = \"d20+@str\"   # only on a good day
+";
+
+#[test]
+fn setting_a_variable_edits_the_character_file_in_place() {
+    let cli = Cli::new();
+    let path = write(&cli, "characters/grog.toml", GROG);
+    cli.run(&["--char", "grog", "set", "con", "14"])
+        .assert_success();
+    cli.run(&["--char", "grog", "set", "dex", "12"])
+        .assert_success();
+    cli.run(&["--char", "grog", "unset", "str"])
+        .assert_success();
+    assert_eq!(
+        std::fs::read_to_string(path).unwrap(),
+        GROG.replace("str = 18   # mighty\n", "")
+            .replace("dex = 10", "dex = 12\ncon = 14")
+    );
+}
