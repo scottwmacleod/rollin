@@ -19,6 +19,11 @@ pub enum Token {
     Comma,
     /// `!`, which starts an explode clause.
     Bang,
+    Gt,
+    Ge,
+    Lt,
+    Le,
+    Eq,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,7 +36,24 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
     let mut out = Vec::new();
     let mut chars = src.char_indices().peekable();
     while let Some(&(start, c)) = chars.peek() {
+        let pair = match (c, src[start..].chars().nth(1)) {
+            ('>', Some('=')) => Some(Token::Ge),
+            ('<', Some('=')) => Some(Token::Le),
+            _ => None,
+        };
+        if let Some(token) = pair {
+            chars.next();
+            chars.next();
+            out.push(Spanned {
+                token,
+                span: start..start + 2,
+            });
+            continue;
+        }
         let single = match c {
+            '>' => Some(Token::Gt),
+            '<' => Some(Token::Lt),
+            '=' => Some(Token::Eq),
             '+' => Some(Token::Plus),
             '-' => Some(Token::Minus),
             '*' => Some(Token::Star),

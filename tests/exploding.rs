@@ -63,3 +63,26 @@ fn bang_explodes_dice_showing_their_maximum() {
     }
     assert!(explosions > 0, "no seed in {SEEDS:?} exploded");
 }
+
+#[test]
+fn conditions_choose_which_faces_explode() {
+    let cli = Cli::new();
+    let cases: [(&str, fn(i64) -> bool); 7] = [
+        ("3d6!>5", |v| v > 5),
+        ("3d6!>=5", |v| v >= 5),
+        ("3d6!<2", |v| v < 2),
+        ("3d6!<=2", |v| v <= 2),
+        ("3d6!=3", |v| v == 3),
+        ("3D6 ! >= 5", |v| v >= 5),
+        ("3d6!>6", |_| false),
+    ];
+    for (formula, triggers) in &cases {
+        let mut explosions = 0;
+        for seed in SEEDS {
+            let pool = dice(&cli, formula, seed);
+            assert_explosion_chain(&pool, 3, 0, triggers);
+            explosions += pool.iter().filter(|d| status(d) == "exploded").count();
+        }
+        assert_eq!(explosions > 0, *formula != "3d6!>6", "{formula}");
+    }
+}

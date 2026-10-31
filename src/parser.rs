@@ -4,7 +4,7 @@
 //! precedence climbing. The v1 shape (a dice group plus a flat modifier) is
 //! just the simplest such expression.
 
-use crate::ast::{BinOp, Dice, Explode, Expr, ExprKind, Item, Select, SelectKind};
+use crate::ast::{BinOp, Cmp, Dice, Explode, Expr, ExprKind, Item, Select, SelectKind};
 use crate::error::Error;
 // Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
 const MAX_DICE_PER_TERM: i64 = 1000;
@@ -256,7 +256,7 @@ impl Parser<'_> {
                 sides_span,
             ));
         }
-        let explode = self.parse_explode();
+        let explode = self.parse_explode(sides)?;
         let select = self.parse_select(count)?;
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
@@ -280,13 +280,29 @@ impl Parser<'_> {
         })
     }
 
-    /// Optional `!` explode clause.
-    fn parse_explode(&mut self) -> Option<Explode> {
-        if matches!(self.peek(), Some(Token::Bang)) {
-            self.pos += 1;
-            return Some(Explode {});
+    /// Optional `!` explode clause: `!` alone explodes on the maximum face,
+    /// otherwise a comparison (`>`, `>=`, `<`, `<=`, `=`) and a number follow.
+    fn parse_explode(&mut self, sides: i64) -> Result<Option<Explode>, Error> {
+        if !matches!(self.peek(), Some(Token::Bang)) {
+            return Ok(None);
         }
-        None
+        self.pos += 1;
+        let cmp = match self.peek() {
+            Some(Token::Gt) => Cmp::Gt,
+            Some(Token::Ge) => Cmp::Ge,
+            Some(Token::Lt) => Cmp::Lt,
+            Some(Token::Le) => Cmp::Le,
+            Some(Token::Eq) => Cmp::Eq,
+            _ => {
+                return Ok(Some(Explode {
+                    cmp: Cmp::Eq,
+                    value: sides,
+                }))
+            }
+        };
+        self.pos += 1;
+        let value = self.number("a number after the explode condition")?;
+        Ok(Some(Explode { cmp, value }))
     }
 
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
@@ -365,5 +381,10 @@ fn describe(t: &Token) -> String {
         Token::RParen => "')'".into(),
         Token::Comma => "','".into(),
         Token::Bang => "'!'".into(),
+        Token::Gt => "'>'".into(),
+        Token::Ge => "'>='".into(),
+        Token::Lt => "'<'".into(),
+        Token::Le => "'<='".into(),
+        Token::Eq => "'='".into(),
     }
 }

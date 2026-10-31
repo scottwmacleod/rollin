@@ -26,7 +26,7 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
                     value,
                     status: Status::Kept,
                 });
-                while d.explode.is_some() && i64::from(value) == d.sides {
+                while d.explode.is_some_and(|e| e.triggers(i64::from(value))) {
                     value = rng.gen_range(1..=d.sides as u32);
                     dice.push(Die {
                         value,

@@ -77,7 +77,33 @@ pub struct Dice {
 
 /// An explode clause: `!` after the dice, before any keep/drop.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Explode {}
+pub struct Explode {
+    pub cmp: Cmp,
+    pub value: i64,
+}
+
+/// A comparison against a face value.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Cmp {
+    Gt,
+    Ge,
+    Lt,
+    Le,
+    Eq,
+}
+
+impl Explode {
+    /// Whether a die showing `face` explodes.
+    pub fn triggers(&self, face: i64) -> bool {
+        match self.cmp {
+            Cmp::Gt => face > self.value,
+            Cmp::Ge => face >= self.value,
+            Cmp::Lt => face < self.value,
+            Cmp::Le => face <= self.value,
+            Cmp::Eq => face == self.value,
+        }
+    }
+}
 
 /// A drop/keep clause: `dl`, `dh`, `kl` or `kh` with a count.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
