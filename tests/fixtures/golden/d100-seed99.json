@@ -1,0 +1,5 @@
+{
+  "formula": "1d100",
+  "seed": 99,
+  "expected": {"rolls":[{"formula":"1d100","dice":[{"value":65,"status":"kept"}],"total":65}]}
+}

@@ -10,3 +10,17 @@ path = "src/lib.rs"
 [[bin]]
 name = "rollin"
 path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.6.7", features = ["derive"] }
+rand = "0.8"
+rand_chacha = "0.3"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+
+[dev-dependencies]
+assert_cmd = "2.2.2"
+proptest = "1.12.0"
+serde = { version = "1.0.229", features = ["derive"] }
+tempfile = "3.27.0"
+toml = "1.1.8"
