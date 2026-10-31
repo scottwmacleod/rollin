@@ -27,6 +27,12 @@ pub enum CommandError {
     Usage(String),
     /// A formula that does not parse or evaluate; `source` is its text.
     Formula { source: String, error: Error },
+    /// A lone word that is neither a formula nor a saved preset.
+    UnknownPreset {
+        word: String,
+        /// A saved name within edit distance 2 of `word`.
+        suggestion: Option<String>,
+    },
     /// The presets file could not be read or written.
     Store(StoreError),
 }
@@ -36,6 +42,9 @@ impl std::fmt::Display for CommandError {
         match self {
             CommandError::Usage(usage) => write!(f, "usage: {usage}"),
             CommandError::Formula { error, .. } => write!(f, "{error}"),
+            CommandError::UnknownPreset { word, .. } => {
+                write!(f, "'{word}' is not a valid formula or a known preset")
+            }
             CommandError::Store(e) => write!(f, "{e}"),
         }
     }
@@ -82,8 +91,22 @@ fn roll_or_preset(
 ) -> Result<Command, CommandError> {
     if let [word] = words {
         let name = word.to_lowercase();
-        if crate::parser::parse(word).is_err() && preset_names()?.contains(&name) {
-            return Ok(Command::RollPreset(name));
+        // Only a word that does not even start like a formula can be a preset
+        // name; `d6dl9` stays a formula error.
+        let not_a_formula = matches!(
+            crate::parser::parse(word),
+            Err(Error::Syntax { span, .. }) if span.start == 0
+        );
+        if not_a_formula && is_name_shaped(&name) {
+            let names = preset_names()?;
+            if names.contains(&name) {
+                return Ok(Command::RollPreset(name));
+            }
+            let suggestion = names.into_iter().find(|n| edit_distance(n, &name) <= 2);
+            return Err(CommandError::UnknownPreset {
+                word: word.clone(),
+                suggestion,
+            });
         }
     }
     Ok(Command::Roll(words.join(" ")))
@@ -158,4 +181,27 @@ fn roll_formula(
             source: formula.to_string(),
             error,
         })
+}
+
+/// Levenshtein distance between two strings.
+fn edit_distance(a: &str, b: &str) -> usize {
+    let b: Vec<char> = b.chars().collect();
+    let mut row: Vec<usize> = (0..=b.len()).collect();
+    for (i, ca) in a.chars().enumerate() {
+        let mut diag = row[0];
+        row[0] = i + 1;
+        for (j, cb) in b.iter().enumerate() {
+            let up = row[j + 1];
+            row[j + 1] = (diag + usize::from(ca != *cb)).min(up + 1).min(row[j] + 1);
+            diag = up;
+        }
+    }
+    row[b.len()]
+}
+
+/// Whether `name` matches `[a-z][a-z0-9_-]*`.
+fn is_name_shaped(name: &str) -> bool {
+    let mut chars = name.chars();
+    chars.next().is_some_and(|c| c.is_ascii_lowercase())
+        && chars.all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '-')
 }

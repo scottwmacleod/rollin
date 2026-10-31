@@ -87,6 +87,13 @@ fn config_dir() -> PathBuf {
 fn fail(e: &CommandError) -> ExitCode {
     match e {
         CommandError::Formula { source, error } => eprint!("{}", render_error(source, error)),
+        CommandError::UnknownPreset { suggestion, .. } => {
+            eprintln!("error: {e}");
+            if let Some(name) = suggestion {
+                eprintln!("hint: did you mean '{name}'?");
+            }
+            eprintln!("hint: run `rollin presets` to list saved presets");
+        }
         other => eprintln!("error: {other}"),
     }
     ExitCode::FAILURE

@@ -82,3 +82,37 @@ fn roll_command_accepts_a_formula_or_a_preset_name() {
     preset.assert_success();
     assert_eq!(preset.stdout, cli.run(&["atk", "--seed", "4"]).stdout);
 }
+
+#[test]
+fn an_unknown_lone_word_names_itself_and_suggests_presets() {
+    let cli = Cli::new();
+    for args in [&["nosuch"][..], &["roll", "nosuch"]] {
+        let run = cli.run(args);
+        assert_eq!(run.code, 1, "{run:?}");
+        assert!(run.stdout.is_empty());
+        assert_eq!(
+            run.stderr,
+            "error: 'nosuch' is not a valid formula or a known preset\nhint: run `rollin presets` to list saved presets\n"
+        );
+    }
+}
+
+#[test]
+fn an_unknown_word_close_to_a_preset_suggests_it() {
+    let cli = Cli::new();
+    cli.run(&["save", "attack", "d20+5"]).assert_success();
+    let run = cli.run(&["atack"]);
+    assert_eq!(run.code, 1, "{run:?}");
+    assert_eq!(
+        run.stderr,
+        "error: 'atack' is not a valid formula or a known preset\nhint: did you mean 'attack'?\nhint: run `rollin presets` to list saved presets\n"
+    );
+}
+
+#[test]
+fn a_malformed_dice_word_keeps_its_formula_error() {
+    let run = Cli::new().run(&["d6dl9"]);
+    assert_eq!(run.code, 1);
+    assert!(run.stderr.contains("^"), "{run:?}");
+    assert!(!run.stderr.contains("known preset"), "{run:?}");
+}
