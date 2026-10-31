@@ -33,7 +33,8 @@ $ rollin 2d6+1d4+3 --seed 3
 
 ### Formula syntax
 
-Formulas are case-insensitive and spaces are ignored. Every v1 formula means
+Formulas are case-insensitive and spaces are ignored (except that a space
+ends a `@variable` name; see [Characters and variables](#characters-and-variables)). Every v1 formula means
 the same thing here; arithmetic is an addition on top.
 
 | Formula | Meaning |
@@ -177,22 +178,26 @@ Quote formulas containing `!` in an interactive shell (`rollin '3d6!'`), where
 Limits: 1 to 1000 dice per term, 2 to 10000 sides, 10000 dice rolled per
 roll (one comma-separated item, explosion dice included), and nesting (parentheses and unary minus)
 32 deep. Dropping or keeping that leaves no dice is an error.
-A bare negative number needs `--` so it is not read as an option:
-`rollin -- -5`.
+A bare negative number works (`rollin -5`), but a formula that starts with a
+minus sign and goes on (`-3+d6`) needs `--` so it is not read as an option:
+`rollin -- -3+d6` (flags such as `--seed` must then come before the `--`).
 
 ### Presets
 
-A preset is a named formula you save once and roll by name. The same commands
-work for every invocation (`rollin <command> ...`):
+A preset is a named formula you save once and roll by name. By default a
+preset belongs to the active [character](#characters-and-variables) (the
+`default` character if you never made one); `--global` saves one every
+character can use. The same commands work for every invocation
+(`rollin <command> ...`):
 
 ```
-$ rollin save atk d20+8
-saved 'atk': d20+8
-$ rollin save sneak d20+5, 2d6          # a comma list is fine
-saved 'sneak': d20+5, 2d6
-$ rollin presets                        # sorted, one per line
-atk    d20+8
-sneak  d20+5, 2d6
+$ rollin save atk 'd20+8'
+saved 'atk' on 'default': d20+8
+$ rollin save sneak 'd20+5, 2d6'        # a comma list is fine
+saved 'sneak' on 'default': d20+5, 2d6
+$ rollin presets                        # the character's, then global; sorted
+atk    d20+8       [default]
+sneak  d20+5, 2d6  [default]
 $ rollin atk --seed 3                   # bare name, or: rollin roll atk
 (preset 'atk': d20+8)
 d20+8  [3] + 8  →  11
@@ -200,12 +205,16 @@ $ rollin roll sneak --seed 3 -q         # --json and -q print no header line
 8
 5
 $ rollin delete atk
-deleted 'atk'
+deleted 'atk' from 'default'
+$ rollin save --global house d6         # global; also: delete --global house
+saved 'house': d6
 ```
 
-- `save <name> <formula>` checks the formula at save time (the usual error
-  with carets if it is invalid) and replaces an existing preset of that name,
-  saying `replaced 'atk' (was d20+8): d20+9`.
+- `save <name> <formula> [--global]` checks the formula at save time (the
+  usual error with carets if it is invalid) and replaces an existing preset
+  of that name, saying `replaced 'atk' on 'default' (was d20+8): d20+9`. A
+  formula with `@variables` is only syntax-checked (see below). `--global`
+  may go anywhere after `save`.
 - `roll <x>` takes a formula or a preset name. A bare word that is not a
   formula is looked up as a preset; an unknown one is an error that suggests
   `rollin presets` and, if a saved name is within two edits, `did you mean`.
@@ -213,16 +222,19 @@ deleted 'atk'
   roll. The `(preset 'name': formula)` header is printed in the default and
   `-v` modes only, so `--json` and `-q` stay machine-clean. `presets`,
   `save`, `delete` and `import` print plain text whatever the mode.
-- `delete <name>` of a name that does not exist is an error (exit 1).
+- `delete <name> [--global]` removes the preset from the active character.
+  A name the character does not have is an error (exit 1); if a global preset
+  has that name the error says to use `delete --global <name>`.
 
 **Names** are stored lowercase (`save Atk ...` and `rollin ATK` both mean
 `atk`) and must match `[a-z][a-z0-9_-]*`, so v1 names such as `adv-attack`
 work. A name is rejected at `save` (and skipped by `import`) when it is a
-command word (`save presets delete import roll`), a reserved dice keyword
+command word (`save presets delete import roll set unset vars char
+characters`), a reserved dice keyword
 (`adv dis df dl dh kl kh r rr p f d`), or would itself parse as a dice formula
 (`d20`, `df`, `D6`). The error says which rule failed.
 
-**File.** Presets live in `$XDG_CONFIG_HOME/rollin/presets.toml` (an empty or
+**File.** Global presets live in `$XDG_CONFIG_HOME/rollin/presets.toml` (an empty or
 relative `XDG_CONFIG_HOME` is ignored; the default is
 `~/.config/rollin/presets.toml`). It is hand-editable:
 
@@ -254,6 +266,168 @@ Existing names are skipped unless you add `--force`. Entries with an invalid
 name, an invalid formula or a non-string value are skipped, each reported with
 its reason; the rest are still imported. Only an unreadable file or one that
 is not a JSON object is an error (exit 1). Nothing is imported automatically.
+
+### Characters and variables
+
+A **character** holds named integer **variables** and its own presets. There
+is always one active character, and a character called `default` always
+exists, so plain use needs no setup. The examples from the Presets section
+through this one are a single continuous session, replayed in order.
+
+```
+$ rollin set str 3                      # on the active character (default)
+set str = 3 on 'default'
+$ rollin 'd20+@str' --seed 1            # @str is replaced by 3
+d20+@str  [9] + 3  →  12
+$ rollin char new grog                  # create and switch to a character
+created character 'grog' and made it active
+$ rollin set str 5
+set str = 5 on 'grog'
+$ rollin set dex 2
+set dex = 2 on 'grog'
+$ rollin vars                           # sorted
+dex = 2
+str = 5
+$ rollin characters                     # * marks the active one
+  default
+* grog
+$ rollin --char default vars            # one call as another character
+str = 3
+$ rollin char default                   # switch back (persists)
+active character: default
+$ rollin char gorg
+error: no character named 'gorg'
+hint: did you mean 'grog'?
+hint: create it with: rollin char new gorg
+```
+
+- `set <name> <integer>`, `unset <name>`, `vars` work on the active character.
+  A value must be a whole number that fits in a 64-bit signed integer
+  (`-1` is fine; `3.5`, `abc` and overflow are rejected). Names are
+  case-insensitive, stored lowercase, and match `[a-z][a-z0-9_]*`.
+- `characters` lists every character; `char` shows the active one;
+  `char <name>` switches to an existing character; `char new <name>` creates
+  an empty one and switches to it; `char delete <name>` removes one (deleting
+  the active character switches back to `default`).
+- `--char <name>` runs one command as another character and never changes
+  the active one. It applies to rolls, presets and variables. The character
+  must exist (or be `default`).
+
+**Variables in formulas.** `@name` (any letter case) can be used anywhere a
+number can: modifiers, dice count and sides, keep/drop counts, explode,
+reroll and success thresholds, and the repeat count:
+
+```
+$ rollin set level 3
+set level = 3 on 'default'
+$ rollin set sides 8
+set sides = 8 on 'default'
+$ rollin set n 2
+set n = 2 on 'default'
+$ rollin set keep 2
+set keep = 2 on 'default'
+$ rollin set dc 8
+set dc = 8 on 'default'
+$ rollin '@level d6' --seed 2           # 3d6 when level is 3
+@level d6  [2, 6, 4]  →  12
+$ rollin 'd@sides' --seed 2             # d8 when sides is 8
+d@sides  [8]  →  8
+$ rollin '@n x 4d6kh@keep' --seed 1     # two stat rolls
+1: 4d6kh@keep  [4, 3, (1), (2)]  →  7
+2: 4d6kh@keep  [4, 3, (2), (2)]  →  7
+$ rollin '6d10>=@dc' --seed 1           # a success pool
+6d10>=@dc  [6, 5, 3, 3, 9✓, 10✓]  →  2 successes
+$ rollin set sides 1
+set sides = 1 on 'default'
+$ rollin 'd@sides'
+error: @sides is 1 but sides must be between 2 and 10000
+  d@sides
+   ^^^^^^
+$ rollin set sides 8
+set sides = 8 on 'default'
+```
+
+A variable is replaced by its number before the formula is parsed, so
+`d20+@str` rolls exactly like `d20+5`. A variable name takes every letter,
+digit and `_` after the `@`, so **put a space between a variable and a dice
+letter that follows it**: write `@level d6`, not `@leveld6` (which is the
+variable `leveld6`). After the `d` the name ends at the next character that
+cannot be in a name, so `d@sides+1`, `d@sides!` and `(d@sides)` are fine, but
+`d@sideskh1` is the variable `sideskh1`. A negative variable acts like a
+typed negative number (`d20+@str` with `str = -1` is `d20-1`), but as a dice
+count or sides it is an error. `@` alone, or `@` followed by a digit or `_`,
+is a syntax error.
+
+Errors about a variable's value underline the `@name` and say what it was
+(see `d@sides` with `sides` set to 1 above).
+
+**Undefined variables** name the character, list what is defined, suggest a
+near miss (within two edits) and show the fix; `--char` appears in the fix
+only when you used it:
+
+```
+$ rollin char grog
+active character: grog
+$ rollin 'd20+@dx'
+error: undefined variable @dx on character 'grog'
+  d20+@dx
+      ^^^
+defined: dex, str
+did you mean @dex?
+set it with: rollin set dx <value>
+$ rollin --char default 'd20+@dex'
+error: undefined variable @dex on character 'default'
+  d20+@dex
+      ^^^^
+defined: dc, keep, level, n, sides, str
+did you mean @dc?
+set it with: rollin --char default set dex <value>
+```
+
+**Character presets.** A character's presets are looked up before global
+ones, so a character preset shadows a global one of the same name; the
+listing says so, and `--char` or `char` shows the other side:
+
+```
+$ rollin save atk 'd20+@str'            # on grog; the variable need not exist yet
+saved 'atk' on 'grog': d20+@str
+$ rollin save --global atk d20
+saved 'atk': d20
+$ rollin presets
+atk    d20+@str  [grog, shadows global]
+atk    d20       [global, shadowed by grog]
+house  d6        [global]
+$ rollin atk --seed 3                   # grog's atk, with grog's @str
+(preset 'atk': d20+@str)
+d20+@str  [3] + 5  →  8
+$ rollin --char default atk --seed 3    # the global one
+(preset 'atk': d20)
+d20  [3]  →  3
+$ rollin char delete grog               # deleting the active character falls back to default
+deleted character 'grog'; active character is now 'default'
+```
+
+Presets resolve their variables **when rolled**, not when saved, so changing
+`str` changes `atk`. Because the variables may not exist yet, `save` only
+checks a formula that uses `@` for syntax: it tries each `@name` as `2` and
+ignores any other error that involves a variable (a bad side count, say),
+which is reported when the preset is rolled. Formulas without `@` are checked
+fully, as before. `import` writes global presets and applies the same check.
+
+**Files.** Under `$XDG_CONFIG_HOME/rollin` (default `~/.config/rollin`):
+
+```
+presets.toml            global presets        [presets]
+state.toml              active = "grog"
+characters/grog.toml    [vars] str = 5        [presets] atk = "d20+@str"
+```
+
+All are hand-editable TOML and written atomically. `default` is virtual until
+something is saved on it: it appears in `characters` and can be used with no
+file. If `state.toml` names a character whose file is gone, commands fail
+with a message suggesting `rollin char default`. A file that is not valid
+TOML or has the wrong types (a non-integer variable, say) is an error naming
+the file; it is never overwritten by a failed command.
 
 ### Errors
 

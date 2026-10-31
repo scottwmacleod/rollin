@@ -76,20 +76,7 @@ impl Store {
     }
 
     fn write_atomic(&self, text: &str) -> Result<(), StoreError> {
-        use std::io::Write;
-        let dir = self.path.parent().expect("store path has a parent");
-        std::fs::create_dir_all(dir).map_err(|e| self.error(e.to_string()))?;
-        let tmp = dir.join(format!(".presets.toml.{}.tmp", std::process::id()));
-        let written = (|| {
-            let mut file = std::fs::File::create(&tmp)?;
-            file.write_all(text.as_bytes())?;
-            file.sync_all()?;
-            std::fs::rename(&tmp, &self.path)
-        })();
-        written.map_err(|e| {
-            let _ = std::fs::remove_file(&tmp);
-            self.error(e.to_string())
-        })
+        write_atomic(&self.path, text)
     }
 
     fn error(&self, message: String) -> StoreError {
@@ -100,8 +87,47 @@ impl Store {
     }
 }
 
+/// Writes `text` to `path` atomically: a temp file in the same directory is
+/// written and synced, then renamed over the target. Creates the directory.
+pub(crate) fn write_atomic(path: &Path, text: &str) -> Result<(), StoreError> {
+    use std::io::Write;
+    let error = |message: String| StoreError {
+        path: path.to_path_buf(),
+        message,
+    };
+    let dir = path.parent().expect("store path has a parent");
+    std::fs::create_dir_all(dir).map_err(|e| error(e.to_string()))?;
+    let file_name = path.file_name().expect("store path has a file name");
+    let tmp = dir.join(format!(
+        ".{}.{}.tmp",
+        file_name.to_string_lossy(),
+        std::process::id()
+    ));
+    let written = (|| {
+        let mut file = std::fs::File::create(&tmp)?;
+        file.write_all(text.as_bytes())?;
+        file.sync_all()?;
+        std::fs::rename(&tmp, path)
+    })();
+    written.map_err(|e| {
+        let _ = std::fs::remove_file(&tmp);
+        error(e.to_string())
+    })
+}
+
 /// Words the command parser treats as commands.
-pub const COMMAND_WORDS: [&str; 5] = ["save", "presets", "delete", "import", "roll"];
+pub const COMMAND_WORDS: [&str; 10] = [
+    "save",
+    "presets",
+    "delete",
+    "import",
+    "roll",
+    "set",
+    "unset",
+    "vars",
+    "char",
+    "characters",
+];
 
 /// Words the formula lexer and parser treat as keywords.
 const DICE_KEYWORDS: [&str; 12] = [
@@ -124,6 +150,9 @@ pub enum NameRule {
     DiceKeyword,
     /// The name parses as a complete dice formula.
     ParsesAsFormula,
+    /// The name is dice syntax with invalid values (`d0`), so it could never
+    /// be rolled by name.
+    LooksLikeDice,
 }
 
 impl NameError {
@@ -133,10 +162,14 @@ impl NameError {
             NameRule::Shape => {
                 "names must start with a letter and use only letters, digits, '_' or '-'".into()
             }
+            NameRule::CommandWord if self.name.eq_ignore_ascii_case("new") => {
+                "'new' is reserved for `rollin char new`".into()
+            }
             NameRule::CommandWord => {
                 format!("it is a command word ({})", COMMAND_WORDS.join(", "))
             }
             NameRule::DiceKeyword => "it is a reserved dice keyword".into(),
+            NameRule::LooksLikeDice => "it looks like dice syntax".into(),
             NameRule::ParsesAsFormula => {
                 format!("it would parse as the dice formula {}", self.name)
             }
@@ -165,10 +198,12 @@ pub fn validate_name(raw: &str) -> Result<String, NameError> {
         Err(fail(NameRule::CommandWord))
     } else if DICE_KEYWORDS.contains(&name.as_str()) {
         Err(fail(NameRule::DiceKeyword))
-    } else if crate::parser::parse(&name).is_ok() {
-        Err(fail(NameRule::ParsesAsFormula))
     } else {
-        Ok(name)
+        match crate::parser::parse(&name) {
+            Ok(_) => Err(fail(NameRule::ParsesAsFormula)),
+            Err(crate::Error::Syntax { .. }) => Ok(name),
+            Err(_) => Err(fail(NameRule::LooksLikeDice)),
+        }
     }
 }
 

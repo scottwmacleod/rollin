@@ -3,7 +3,8 @@ mod render;
 use clap::Parser;
 use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
 use rollin::{
-    entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output, Roll,
+    entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output,
+    PresetEntry, PresetSource, Roll, Shadow,
 };
 use serde::Serialize;
 use std::io::IsTerminal;
@@ -15,13 +16,17 @@ use std::process::ExitCode;
 #[command(version)]
 struct Args {
     /// A formula to roll, e.g. d20 or "4d6dl1, d20+5", a preset name, or a
-    /// command: save, presets, delete, import, roll
-    #[arg(required = true)]
+    /// command: save, presets, delete, import, roll, set, unset, vars, char, characters
+    #[arg(required = true, allow_negative_numbers = true)]
     words: Vec<String>,
 
     /// Seed the random number generator for reproducible rolls
     #[arg(long)]
     seed: Option<u64>,
+
+    /// Use this character for this one call (never persisted)
+    #[arg(long = "char", value_name = "NAME")]
+    character: Option<String>,
 
     /// Print the result tree as JSON (ignores -q and -v)
     #[arg(long)]
@@ -41,6 +46,12 @@ struct Args {
     #[arg(long, hide = true)]
     force: bool,
 
+    /// Save to the global presets instead of the active character (only for
+    /// `save`; handled by the command parser, which clap would otherwise
+    /// reject as an unknown flag)
+    #[arg(long, hide = true)]
+    global: bool,
+
     /// Show the full breakdown of each roll
     #[arg(short, long)]
     verbose: bool,
@@ -58,13 +69,13 @@ struct JsonOutput {
 
 fn main() -> ExitCode {
     let args = Args::parse();
-    let ctx = Context {
-        config_dir: config_dir(),
-    };
-    let names = &mut || -> Result<Vec<String>, CommandError> {
-        Ok(ctx.store()?.load()?.into_keys().collect())
-    };
+    let mut ctx = Context::new(config_dir());
+    ctx.character = args.character.clone();
+    let names = &mut || ctx.preset_names();
     let mut words = args.words.clone();
+    if args.global {
+        words.push("--global".into());
+    }
     if args.force {
         words.push("--force".into());
     }
@@ -94,13 +105,47 @@ fn config_dir() -> Option<PathBuf> {
 
 fn fail(e: &CommandError) -> ExitCode {
     match e {
-        CommandError::Formula { source, error } => eprint!("{}", render_error(source, error)),
+        CommandError::Formula { source, error } => {
+            eprint!("{}", render_error(source, error, &error.to_string()));
+        }
+        CommandError::UndefinedVariable(u) => {
+            eprint!("{}", render_error(&u.source, &u.error, &e.to_string()));
+            if u.defined.is_empty() {
+                eprintln!("no variables are defined");
+            } else {
+                eprintln!("defined: {}", u.defined.join(", "));
+            }
+            if let Some(near) = &u.suggestion {
+                eprintln!("did you mean @{near}?");
+            }
+            let char_flag = if u.explicit {
+                format!("--char {} ", u.character)
+            } else {
+                String::new()
+            };
+            eprintln!("set it with: rollin {char_flag}set {} <value>", u.name);
+        }
         CommandError::UnknownPreset { suggestion, .. } => {
             eprintln!("error: {e}");
             if let Some(name) = suggestion {
                 eprintln!("hint: did you mean '{name}'?");
             }
             eprintln!("hint: run `rollin presets` to list saved presets");
+        }
+        CommandError::NoSuchCharacterPreset {
+            name,
+            global_exists: true,
+            ..
+        } => {
+            eprintln!("error: {e}");
+            eprintln!("hint: it is a global preset; delete it with: rollin delete --global {name}");
+        }
+        CommandError::NoSuchCharacter { name, suggestion } => {
+            eprintln!("error: {e}");
+            if let Some(near) = suggestion {
+                eprintln!("hint: did you mean '{near}'?");
+            }
+            eprintln!("hint: create it with: rollin char new {name}");
         }
         other => eprintln!("error: {other}"),
     }
@@ -113,13 +158,15 @@ fn show(args: &Args, output: Output) {
         Output::Saved {
             name,
             formula,
+            character,
             replaced: None,
-        } => println!("saved '{name}': {formula}"),
+        } => println!("saved '{name}'{}: {formula}", on(&character)),
         Output::Saved {
             name,
             formula,
+            character,
             replaced: Some(old),
-        } => println!("replaced '{name}' (was {old}): {formula}"),
+        } => println!("replaced '{name}'{} (was {old}): {formula}", on(&character)),
         Output::Imported(report) => {
             for (name, reason) in &report.skipped {
                 println!("skipped '{name}': {reason}");
@@ -130,17 +177,82 @@ fn show(args: &Args, output: Output) {
                 report.skipped.len()
             );
         }
-        Output::Deleted { name } => println!("deleted '{name}'"),
+        Output::VarUnset { name, character } => println!("unset {name} on '{character}'"),
+        Output::Characters { names, active } => {
+            for name in &names {
+                let mark = if *name == active { '*' } else { ' ' };
+                println!("{mark} {name}");
+            }
+            if !names.contains(&active) {
+                println!("* {active} (missing)");
+            }
+        }
+        Output::CharDeleted {
+            name,
+            was_active: false,
+        } => println!("deleted character '{name}'"),
+        Output::CharDeleted { name, .. } => {
+            println!("deleted character '{name}'; active character is now 'default'");
+        }
+        Output::CharCreated(name) => {
+            println!("created character '{name}' and made it active");
+        }
+        Output::CharSwitched(name) => println!("active character: {name}"),
+        Output::ActiveCharacter(name) => println!("active character: {name}"),
+        Output::Vars(vars) if vars.is_empty() => {
+            println!("No variables set. Add one with: rollin set <name> <integer>");
+        }
+        Output::Vars(vars) => {
+            for (name, value) in vars {
+                println!("{name} = {value}");
+            }
+        }
+        Output::VarSet {
+            name,
+            value,
+            character,
+        } => println!("set {name} = {value} on '{character}'"),
+        Output::Deleted {
+            name,
+            character: None,
+        } => println!("deleted '{name}'"),
+        Output::Deleted {
+            name,
+            character: Some(character),
+        } => println!("deleted '{name}' from '{character}'"),
         Output::Presets(presets) if presets.is_empty() => {
             println!("No presets saved. Add one with: rollin save <name> <formula>");
         }
         Output::Presets(presets) => {
-            let width = presets.iter().map(|(n, _)| n.chars().count()).max();
-            for (name, formula) in presets {
-                println!("{name:<w$}  {formula}", w = width.unwrap_or(0));
+            let width = |f: fn(&PresetEntry) -> usize| presets.iter().map(f).max().unwrap_or(0);
+            let (name_w, formula_w) = (
+                width(|p| p.name.chars().count()),
+                width(|p| p.formula.chars().count()),
+            );
+            for p in &presets {
+                let source = match &p.source {
+                    PresetSource::Character(c) => c.as_str(),
+                    PresetSource::Global => "global",
+                };
+                let note = match &p.shadow {
+                    Shadow::None => String::new(),
+                    Shadow::Shadows => ", shadows global".to_string(),
+                    Shadow::ShadowedBy(c) => format!(", shadowed by {c}"),
+                };
+                println!(
+                    "{:<name_w$}  {:<formula_w$}  [{source}{note}]",
+                    p.name, p.formula
+                );
             }
         }
     }
+}
+
+/// ` on 'grog'` for a character preset, nothing for a global one.
+fn on(character: &Option<String>) -> String {
+    character
+        .as_ref()
+        .map_or(String::new(), |c| format!(" on '{c}'"))
 }
 
 fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<Roll>) {
@@ -202,7 +314,7 @@ fn iteration_width(rolls: &[Roll]) -> usize {
 }
 
 /// The message, the formula, and carets under the offending span.
-fn render_error(formula: &str, error: &Error) -> String {
+fn render_error(formula: &str, error: &Error, message: &str) -> String {
     let span = error.span();
     // Show control characters (e.g. a newline) as spaces so the line and the
     // carets stay aligned.
@@ -213,7 +325,7 @@ fn render_error(formula: &str, error: &Error) -> String {
     let start = formula[..span.start].chars().count();
     let len = formula[span.start..span.end].chars().count().max(1);
     format!(
-        "error: {error}\n  {line}\n  {}{}\n",
+        "error: {message}\n  {line}\n  {}{}\n",
         " ".repeat(start),
         "^".repeat(len)
     )

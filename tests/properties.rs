@@ -681,9 +681,9 @@ mod presets {
             if let Ok(stored) = validate_name(&raw) {
                 prop_assert_eq!(&stored, &raw.to_lowercase());
                 let dir = tempfile::TempDir::new().unwrap();
-                let ctx = Context { config_dir: Some(dir.path().to_path_buf()) };
+                let ctx = Context::new(Some(dir.path().to_path_buf()));
                 let mut rng = seeded_rng(seed);
-                let save = Command::Save { name: raw.clone(), formula: "2d6+1".into() };
+                let save = Command::Save { name: raw.clone(), formula: "2d6+1".into(), global: true };
                 execute(&save, &ctx, &mut rng).unwrap();
                 let command = parse_command(
                     &[raw.to_uppercase()],
@@ -795,6 +795,175 @@ mod repeat_labels {
                 let span = e.span();
                 prop_assert!(span.start <= span.end && span.end <= s.len(), "{:?} {:?}", s, span);
                 prop_assert!(s.is_char_boundary(span.start) && s.is_char_boundary(span.end));
+            }
+        }
+    }
+}
+
+// ---- Variables (library seam, invariants only) ----
+
+mod variables {
+    use proptest::prelude::*;
+    use rollin::{
+        execute, parse_command, roll, roll_with, seeded_rng, Command, CommandError, Context, Node,
+        Output, Status,
+    };
+    use std::collections::BTreeMap;
+
+    /// Every die of a node as (value, status), in roll order.
+    fn dice(node: &Node, out: &mut Vec<(i64, Status)>) {
+        match node {
+            Node::Dice { dice, .. } => out.extend(dice.iter().map(|d| (d.value, d.status))),
+            Node::Group { inner, .. } => dice(inner, out),
+            Node::Neg { operand, .. } => dice(operand, out),
+            Node::Chain { first, rest, .. } => {
+                dice(first, out);
+                for link in rest {
+                    dice(&link.node, out);
+                }
+            }
+            Node::Number { .. } => {}
+        }
+    }
+
+    fn shape(rolls: &[rollin::Roll]) -> Vec<(i64, Vec<(i64, Status)>)> {
+        rolls
+            .iter()
+            .map(|r| {
+                let mut d = Vec::new();
+                dice(&r.expr, &mut d);
+                (r.total, d)
+            })
+            .collect()
+    }
+
+    /// Formulas with variable slots `{a}` `{b}` `{c}` in numeric positions.
+    /// A slot followed by a letter needs a space: `@a d6` (not `@ad6`).
+    const TEMPLATES: [&str; 10] = [
+        "{a} d{b}",
+        "{a} d{b}+{c}",
+        "{a} d{b} kh{c}",
+        "{a} d{b} dl{c}",
+        "{a} d{b}!>{c}",
+        "{a} d{b} r<{c}",
+        "{a} d{b} rr{c}",
+        "{a} d{b}>={c} f{a}",
+        "{a} x d{b}",
+        "{c} - {a} d{b} / 2",
+    ];
+
+    /// Formulas where a variable is only ever an operand, so a negative
+    /// value must behave like a typed negative number.
+    const SIGNED_TEMPLATES: [&str; 5] = [
+        "d20+{a}",
+        "d20-{a}",
+        "({a}+{b})*{c}-d6",
+        "{a} * d6 / {b} + {c}",
+        "2d6 + {a} - {b}",
+    ];
+
+    fn fill(template: &str, vars: [i64; 3], symbolic: bool) -> String {
+        let mut text = template.to_string();
+        for (name, value) in ["a", "b", "c"].iter().zip(vars) {
+            let with = if symbolic {
+                format!("@{name}")
+            } else {
+                value.to_string()
+            };
+            text = text.replace(&format!("{{{name}}}"), &with);
+        }
+        text
+    }
+
+    fn assert_like_literal(template: &str, vars: [i64; 3], seed: u64) -> Result<(), TestCaseError> {
+        let map: BTreeMap<String, i64> = ["a", "b", "c"]
+            .iter()
+            .zip(vars)
+            .map(|(n, v)| (n.to_string(), v))
+            .collect();
+        let symbolic = fill(template, vars, true);
+        let literal = fill(template, vars, false);
+        let with = roll_with(&symbolic, &|n| map.get(n).copied(), &mut seeded_rng(seed));
+        let without = roll(&literal, &mut seeded_rng(seed));
+        prop_assert_eq!(with.is_ok(), without.is_ok(), "{} vs {}", symbolic, literal);
+        if let (Ok(with), Ok(without)) = (with, without) {
+            prop_assert_eq!(shape(&with), shape(&without));
+        }
+        Ok(())
+    }
+
+    /// With no lookup, a variable is an undefined-variable error that names
+    /// no character and underlines the `@name`.
+    #[test]
+    fn a_variable_with_no_lookup_is_undefined_without_a_character() {
+        let err = roll("d20 + @Str", &mut seeded_rng(0)).unwrap_err();
+        assert_eq!(err.message(), "undefined variable @str");
+        assert_eq!(err.span(), 6..10);
+    }
+
+    proptest! {
+        /// A formula with `@x` rolls exactly like the same formula with the
+        /// variable's value typed in: same dice, statuses and totals, and it
+        /// fails exactly when the literal formula fails.
+        #[test]
+        fn a_variable_rolls_like_its_literal(
+            t in 0..TEMPLATES.len(),
+            a in 0i64..12,
+            b in 0i64..14,
+            c in 0i64..14,
+            seed in any::<u64>(),
+        ) {
+            // A negative count or sides is an error as a variable but a
+            // negated term as typed (`-1 d2`), so only non-negative values
+            // are compared here; see the signed property below.
+            assert_like_literal(TEMPLATES[t], [a, b, c], seed)?;
+        }
+
+        /// As an operand, a negative variable acts like a typed negative.
+        #[test]
+        fn a_negative_operand_variable_rolls_like_its_literal(
+            t in 0..SIGNED_TEMPLATES.len(),
+            a in -50i64..50,
+            b in -5i64..9,
+            c in -50i64..50,
+            seed in any::<u64>(),
+        ) {
+            assert_like_literal(SIGNED_TEMPLATES[t], [a, b, c], seed)?;
+        }
+
+        /// Nothing made of `@`, name characters and operators panics, with
+        /// or without a lookup.
+        #[test]
+        fn parsing_at_signs_and_name_characters_never_panics(
+            src in "[@a-z0-9_ +*/()d!>=<#,%-]{0,24}",
+            value in any::<i64>(),
+            seed in any::<u64>(),
+        ) {
+            let _ = roll(&src, &mut seeded_rng(seed));
+            let _ = roll_with(&src, &|_| Some(value), &mut seeded_rng(seed));
+        }
+
+        /// Variable names are stored lowercase whatever the case typed, and
+        /// the value round-trips through `vars` and through `@name`.
+        #[test]
+        fn variable_names_are_stored_lowercase_and_round_trip(
+            raw in "[A-Za-z][A-Za-z0-9_]{0,8}",
+            value in any::<i64>(),
+        ) {
+            let dir = tempfile::TempDir::new().unwrap();
+            let ctx = Context::new(Some(dir.path().to_path_buf()));
+            let mut rng = seeded_rng(0);
+            let no_presets = &mut || -> Result<Vec<String>, CommandError> { Ok(Vec::new()) };
+            let words: Vec<String> = ["set", &raw, &value.to_string()].map(String::from).to_vec();
+            let set = parse_command(&words, no_presets).unwrap();
+            prop_assert_eq!(&set, &Command::Set { name: raw.to_lowercase(), value });
+            execute(&set, &ctx, &mut rng).unwrap();
+            let vars = execute(&Command::Vars, &ctx, &mut rng).unwrap();
+            prop_assert_eq!(vars, Output::Vars(vec![(raw.to_lowercase(), value)]));
+            let upper = Command::Roll(format!("@{}", raw.to_uppercase()));
+            match execute(&upper, &ctx, &mut rng).unwrap() {
+                Output::Rolls { rolls, .. } => prop_assert_eq!(rolls[0].total, value),
+                other => prop_assert!(false, "unexpected {:?}", other),
             }
         }
     }

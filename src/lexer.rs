@@ -26,6 +26,8 @@ pub enum Token {
     Lt,
     Le,
     Eq,
+    /// `@name`: a variable reference, lowercased, without the `@`.
+    Var(String),
     /// `#` and the text after it, up to (not including) the next comma.
     Label(String),
 }
@@ -109,6 +111,27 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
                 token: Token::Number(n),
                 span: start..end,
             });
+        } else if c == '@' {
+            chars.next();
+            let mut end = start + 1;
+            while let Some(&(i, d)) = chars.peek() {
+                if !(d.is_ascii_alphanumeric() || d == '_') {
+                    break;
+                }
+                end = i + 1;
+                chars.next();
+            }
+            let name = src[start + 1..end].to_ascii_lowercase();
+            if !name.starts_with(|c: char| c.is_ascii_lowercase()) {
+                return Err(Error::syntax(
+                    "'@' must be followed by a variable name that starts with a letter, as in '@str'",
+                    start..end,
+                ));
+            }
+            out.push(Spanned {
+                token: Token::Var(name),
+                span: start..end,
+            });
         } else if c.is_ascii_alphabetic() {
             let mut end = start;
             // A `p` right after `!` is the penetrating marker on its own, so
@@ -130,7 +153,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
             } else if word.starts_with("df") {
                 2
             } else if word.starts_with('x')
-                && matches!(out.last(), Some(t) if matches!(t.token, Token::Number(_)) && (t.span.end == start || word == "x"))
+                && matches!(out.last(), Some(t) if matches!(t.token, Token::Number(_) | Token::Var(_)) && (t.span.end == start || word == "x"))
             {
                 // The `x` of `3xd20` (a repeat) ends right after the number.
                 1

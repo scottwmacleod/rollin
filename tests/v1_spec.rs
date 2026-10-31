@@ -118,15 +118,15 @@ fn check_presets(cli: &Cli, c: &Case) -> Result<(), String> {
             eq("listing", run.stdout.starts_with("No presets saved."), true)
         }
         "presets_save_and_load_roundtrip" => {
-            ok(cli, &["save", "attack", "d20+5"])?;
+            ok(cli, &["save", "--global", "attack", "d20+5"])?;
             eq(
                 "listing",
                 ok(cli, &["presets"])?.stdout,
-                "attack  d20+5\n".into(),
+                "attack  d20+5  [global]\n".into(),
             )
         }
         "presets_add_and_get_preset" => {
-            ok(cli, &["save", "Attack", "d20+5"])?;
+            ok(cli, &["save", "--global", "Attack", "d20+5"])?;
             let run = ok(cli, &["attack", "--seed", SEED, "--json"])?;
             eq(
                 "formula",
@@ -135,13 +135,13 @@ fn check_presets(cli: &Cli, c: &Case) -> Result<(), String> {
             )
         }
         "presets_get_preset_case_insensitive" => {
-            ok(cli, &["save", "MyRoll", "d20"])?;
+            ok(cli, &["save", "--global", "MyRoll", "d20"])?;
             ok(cli, &["myroll", "--seed", SEED])?;
             ok(cli, &["MYROLL", "--seed", SEED]).map(|_| ())
         }
         "presets_delete_preset" => {
-            ok(cli, &["save", "gone", "d6"])?;
-            ok(cli, &["delete", "gone"])?;
+            ok(cli, &["save", "--global", "gone", "d6"])?;
+            ok(cli, &["delete", "--global", "gone"])?;
             clean_error(cli, &["gone"], "'gone'")?;
             eq(
                 "listing",
@@ -157,7 +157,7 @@ fn check_presets(cli: &Cli, c: &Case) -> Result<(), String> {
         "presets_load_corrupted_json" => {
             let text = hand_written_store(cli, "[presets\nbroken = = 1\n");
             clean_error(cli, &["presets"], "presets.toml: not valid TOML")?;
-            clean_error(cli, &["save", "x", "d6"], "not valid TOML")?;
+            clean_error(cli, &["save", "--global", "x", "d6"], "not valid TOML")?;
             eq("file", store_text(cli), text)
         }
         // v1: a JSON list loaded as empty. v2: a `presets` value of the
@@ -177,7 +177,7 @@ fn check_presets(cli: &Cli, c: &Case) -> Result<(), String> {
         "presets_multiple_presets" => {
             let all = [("first", "d4"), ("second", "2d6+1"), ("third", "4d6dl1")];
             for (name, formula) in all {
-                ok(cli, &["save", name, formula])?;
+                ok(cli, &["save", "--global", name, formula])?;
             }
             let listing = ok(cli, &["presets"])?.stdout;
             for (name, formula) in all {
@@ -185,7 +185,11 @@ fn check_presets(cli: &Cli, c: &Case) -> Result<(), String> {
                     .lines()
                     .find(|l| l.starts_with(name))
                     .ok_or(format!("{name} not listed"))?;
-                eq("line", line.ends_with(formula), true)?;
+                eq(
+                    "line",
+                    line.split_whitespace().nth(1) == Some(formula),
+                    true,
+                )?;
                 let run = ok(cli, &[name, "--seed", SEED, "--json"])?;
                 eq(
                     "formula",

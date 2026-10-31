@@ -24,7 +24,47 @@ use crate::lexer::{tokenize, Spanned, Token};
 
 /// Parses a whole formula (comma-separated items) into items.
 pub fn parse(src: &str) -> Result<Formula, Error> {
-    let tokens = tokenize(src)?;
+    parse_with(src, &|_| None)
+}
+
+/// A variable lookup: lowercase name to value.
+pub type Lookup<'a> = &'a dyn Fn(&str) -> Option<i64>;
+
+/// Like [`parse`], with `@name` variables resolved through `vars` before
+/// parsing. A resolved variable becomes a number token that keeps the span of
+/// the `@name`, so errors still underline it.
+pub fn parse_with(src: &str, vars: Lookup<'_>) -> Result<Formula, Error> {
+    let mut tokens = tokenize(src)?;
+    let mut bound = Vec::new();
+    for t in &mut tokens {
+        if let Token::Var(name) = &t.token {
+            let value = vars(name).ok_or_else(|| Error::UndefinedVariable {
+                name: name.clone(),
+                span: t.span.clone(),
+            })?;
+            bound.push((name.clone(), value, t.span.clone()));
+            t.token = Token::Number(value);
+        }
+    }
+    parse_tokens(src, tokens).map_err(|error| {
+        let span = error.span();
+        let bindings: Vec<(String, i64)> = bound
+            .iter()
+            .filter(|(_, _, at)| at.start < span.end && span.start < at.end)
+            .map(|(name, value, _)| (name.clone(), *value))
+            .collect();
+        if bindings.is_empty() {
+            error
+        } else {
+            Error::WithVariables {
+                inner: Box::new(error),
+                bindings,
+            }
+        }
+    })
+}
+
+fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
     let mut parser = Parser {
         src,
         tokens: &tokens,
@@ -144,10 +184,18 @@ impl Parser<'_> {
 
     fn unexpected(&self, expected: &str) -> Error {
         match self.tokens.get(self.pos) {
-            Some(t) => Error::syntax(
-                format!("expected {expected}, found {}", describe(&t.token)),
-                t.span.clone(),
-            ),
+            Some(t) => {
+                // A variable already resolved to a number is still a variable
+                // to the person who typed it.
+                let found = match self.src.get(t.span.clone()) {
+                    Some(text) if text.starts_with('@') => format!("variable {text}"),
+                    _ => describe(&t.token),
+                };
+                Error::syntax(
+                    format!("expected {expected}, found {found}"),
+                    t.span.clone(),
+                )
+            }
             None => Error::syntax(
                 format!("expected {expected}, found end of input"),
                 self.end..self.end,
@@ -689,6 +737,7 @@ fn describe(t: &Token) -> String {
         Token::Lt => "'<'".into(),
         Token::Le => "'<='".into(),
         Token::Eq => "'='".into(),
+        Token::Var(name) => format!("variable @{name}"),
         Token::Label(_) => "a label".into(),
     }
 }
