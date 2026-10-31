@@ -2,10 +2,23 @@
 
 A dice roller for the command line.
 
-## Status
+## Install
 
-Version 2 is a rewrite in Rust and is in progress. The original Python
-implementation (v1) is preserved at the git tag `v1.0`.
+rollin is a Rust program (macOS is the supported platform for now; it is not
+published to crates.io or packaged anywhere yet). Build it from a checkout:
+
+```sh
+cargo build --release          # binary at target/release/rollin
+cargo install --path .         # or install it onto your PATH
+```
+
+This is version 2.0.0, a rewrite of the original Python v1 (preserved at the
+git tag `v1.0`). Every v1 formula and preset works unchanged, `roll <formula>`
+and `roll <name>` still work, and `rollin import presets.json` brings v1
+presets across (see [Importing v1 presets](#presets)). What changed is the
+interface: there is a one-shot mode, the output format is new, and presets
+live in TOML files instead of the source tree. `rollin --help` lists every
+flag with examples.
 
 ## Usage
 
@@ -89,11 +102,10 @@ or not (`6x`, `6 x`, `6X`). Output lines are numbered by iteration, see
 per roll, not per repeat, and `Nx` over a success count, fudge or `adv`
 formula works like it does without the `Nx`.
 
-**Deviation from the original ticket.** The ticket said parentheses could
-group a list after `Nx`. They cannot: a label runs to the next comma and
-would swallow a closing `)`. `Nx` always applies to the whole rest of the
-formula instead, and parentheses keep their ordinary arithmetic meaning:
-`3x (d20+5)*2` repeats the arithmetic roll `(d20+5)*2` three times.
+**Repeat and parentheses.** `Nx` always applies to the whole rest of the
+formula; it cannot wrap a parenthesised group, because a label runs to the
+next comma and would swallow a closing `)`. Parentheses keep their ordinary
+arithmetic meaning: `3x (d20+5)*2` repeats the roll `(d20+5)*2` three times.
 
 **Labels.** `#` starts a label that runs to the end of its comma-separated
 item (the next comma, or the end of the formula). The text is trimmed and
@@ -263,6 +275,10 @@ skipped 'adv-attack': already exists (use --force to overwrite)
 ...
 imported 0, skipped 10
 ```
+
+(Run these two in a scratch config directory, for example with
+`XDG_CONFIG_HOME=$(mktemp -d)`, if you are replaying the examples in order:
+the imported presets would otherwise appear in the later `presets` listing.)
 
 Existing names are skipped unless you add `--force`. Entries with an invalid
 name, an invalid formula or a non-string value are skipped, each reported with
@@ -617,7 +633,7 @@ without retyping the program name:
 
 ```
 $ rollin
-rollin 0.1.0 — type 'help' for commands, 'quit' to exit
+rollin 2.0.0 — type 'help' for commands, 'quit' to exit
 rollin> d20+5 --seed 4
 d20+5  [15] + 5  →  20
 rollin> set str 3
@@ -778,3 +794,40 @@ ticket that owns them. When that ticket's feature works, change the case to
 `status = "live"` and delete its `reason` line. Live cases must pass; ignored
 cases are skipped and counted (run `cargo test --test v1_spec -- --nocapture`
 to see the live/ignored totals).
+
+## Data files
+
+Everything rollin stores lives under `$XDG_CONFIG_HOME/rollin` (default
+`~/.config/rollin`; an empty or relative `XDG_CONFIG_HOME` is ignored):
+
+| Path | Contents |
+| --- | --- |
+| `presets.toml` | Global presets |
+| `state.toml` | The active character |
+| `characters/<name>.toml` | One character's variables and presets |
+| `history` | Interactive-session history |
+
+The TOML files are hand-editable and written atomically; see
+[Presets](#presets) and [Characters and variables](#characters-and-variables)
+for their layout. Set `XDG_CONFIG_HOME` to a scratch directory to try rollin
+without touching your real data.
+
+## Development
+
+The crate is a library core (tokenizer, parser, evaluator with an injected
+RNG, which never prints) plus a binary that owns arguments, rendering and
+I/O. Design decisions are in [docs/adr](docs/adr), the glossary in
+[CONTEXT.md](CONTEXT.md), and the `--json` schema in
+[docs/json-schema.md](docs/json-schema.md).
+
+```sh
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+```
+
+CI runs these three on every pull request into `main`. Tests drive the
+compiled binary as a process with `--seed` and a temporary
+`XDG_CONFIG_HOME` (see `tests/common/mod.rs`); `proptest` covers library
+invariants, and a pty test covers the interactive session. The formula
+fixtures live in `tests/fixtures`.

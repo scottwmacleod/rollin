@@ -13,9 +13,33 @@ use std::io::IsTerminal;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
+const EXAMPLES: &str = "\
+Examples:
+  $ rollin d20+5                        roll a d20 and add 5
+  $ rollin 4d6dl1                       roll 4d6, drop the lowest
+  $ rollin 'd20+8, d10+5'               a comma list: one roll per item
+  $ rollin '3d6!'                       exploding dice
+  $ rollin 4d6r1                        reroll 1s once
+  $ rollin 6d10>=8f1                    count successes, 1s are failures
+  $ rollin d20adv+8                     advantage with a modifier
+  $ rollin 6x 4d6dl1                    repeat: a full stat block
+  $ rollin 'd20+8 # attack'             label a roll (quote the #)
+  $ rollin 2d6+3 --seed 7               reproducible
+  $ rollin 2d6+3 --json                 machine-readable
+  $ rollin -q 2d6+3                     only the total
+  $ rollin -v 4d6dl1                    full breakdown
+  $ rollin set str 3                    set a variable on the active character
+  $ rollin 'd20+@str'                   use it in a formula
+  $ rollin save atk 'd20+@str'          save a preset (roll it with: rollin atk)
+  $ rollin char new grog                create a character and switch to it
+  $ rollin                              no formula: start an interactive session
+
+Run `rollin` with no arguments for a session, and see the README for the full
+formula syntax.";
+
 /// A dice roller for the command line.
 #[derive(Parser)]
-#[command(version)]
+#[command(version, after_help = EXAMPLES)]
 pub struct Args {
     /// A formula to roll, e.g. d20 or "4d6dl1, d20+5", a preset name, or a
     /// command: save, presets, delete, import, roll, set, unset, vars, char, characters
