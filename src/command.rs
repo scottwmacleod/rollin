@@ -5,7 +5,7 @@
 use crate::presets::{is_name_shaped, validate_name, NameError, Store, StoreError};
 use crate::{Error, Roll};
 use rand::Rng;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// What the user asked for.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,6 +37,8 @@ pub enum CommandError {
         /// A saved name within edit distance 2 of `word`.
         suggestion: Option<String>,
     },
+    /// Neither `XDG_CONFIG_HOME` nor `HOME` gives a config directory.
+    NoConfigDir,
     /// A preset name that breaks a naming rule.
     InvalidName(NameError),
     /// The presets file could not be read or written.
@@ -51,6 +53,12 @@ impl std::fmt::Display for CommandError {
             CommandError::NoSuchPreset(name) => write!(f, "no preset named '{name}'"),
             CommandError::UnknownPreset { word, .. } => {
                 write!(f, "'{word}' is not a valid formula or a known preset")
+            }
+            CommandError::NoConfigDir => {
+                write!(
+                    f,
+                    "cannot find a config directory: set XDG_CONFIG_HOME or HOME"
+                )
             }
             CommandError::InvalidName(e) => write!(f, "{e}"),
             CommandError::Store(e) => write!(f, "{e}"),
@@ -70,7 +78,7 @@ impl From<StoreError> for CommandError {
 /// preset names; it is only called when a lone word might be a preset name.
 pub fn parse_command(
     words: &[String],
-    preset_names: &mut dyn FnMut() -> Result<Vec<String>, StoreError>,
+    preset_names: &mut dyn FnMut() -> Result<Vec<String>, CommandError>,
 ) -> Result<Command, CommandError> {
     let first = words.first().map(|w| w.to_lowercase());
     let rest = words.get(1..).unwrap_or_default();
@@ -99,7 +107,7 @@ pub fn parse_command(
 /// preset; anything else is a formula.
 fn roll_or_preset(
     words: &[String],
-    preset_names: &mut dyn FnMut() -> Result<Vec<String>, StoreError>,
+    preset_names: &mut dyn FnMut() -> Result<Vec<String>, CommandError>,
 ) -> Result<Command, CommandError> {
     if let [word] = words {
         let name = word.to_lowercase();
@@ -126,7 +134,30 @@ fn roll_or_preset(
 
 /// Where commands run: the config directory holding the presets file.
 pub struct Context {
-    pub config_dir: PathBuf,
+    /// `None` when no config directory could be found; commands that need
+    /// the presets file then fail with [`CommandError::NoConfigDir`].
+    pub config_dir: Option<PathBuf>,
+}
+
+impl Context {
+    /// The presets store, or an error if there is no config directory.
+    pub fn store(&self) -> Result<Store, CommandError> {
+        self.config_dir
+            .as_deref()
+            .map(Store::in_config_dir)
+            .ok_or(CommandError::NoConfigDir)
+    }
+}
+
+/// The config directory per the XDG spec: an absolute `xdg_config_home`,
+/// else `home/.config`. An empty or relative `xdg_config_home` is ignored.
+pub fn config_dir(xdg_config_home: Option<&Path>, home: Option<&Path>) -> Option<PathBuf> {
+    match xdg_config_home {
+        Some(dir) if dir.is_absolute() => Some(dir.to_path_buf()),
+        _ => home
+            .filter(|h| !h.as_os_str().is_empty())
+            .map(|h| h.join(".config")),
+    }
 }
 
 /// What a command produced, for the caller to render.
@@ -156,7 +187,7 @@ pub fn execute(
     ctx: &Context,
     rng: &mut impl Rng,
 ) -> Result<Output, CommandError> {
-    let store = Store::in_config_dir(&ctx.config_dir);
+    let store = ctx.store()?;
     match command {
         Command::Roll(formula) => roll_formula(formula, None, rng),
         Command::RollPreset(name) => {

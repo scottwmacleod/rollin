@@ -274,3 +274,53 @@ fn wrong_typed_store_contents_are_clear_errors() {
         assert_eq!(std::fs::read_to_string(&path).unwrap(), contents);
     }
 }
+
+/// Runs `rollin save k d6` with exactly the given `XDG_CONFIG_HOME` / `HOME`.
+fn save_with_env(xdg: Option<&str>, home: Option<&std::path::Path>) -> common::Run {
+    let mut cmd = assert_cmd::Command::cargo_bin("rollin").unwrap();
+    cmd.env_remove("XDG_CONFIG_HOME").env_remove("HOME");
+    if let Some(xdg) = xdg {
+        cmd.env("XDG_CONFIG_HOME", xdg);
+    }
+    if let Some(home) = home {
+        cmd.env("HOME", home);
+    }
+    let out = cmd.args(["save", "k", "d6"]).output().unwrap();
+    common::Run {
+        stdout: String::from_utf8(out.stdout).unwrap(),
+        stderr: String::from_utf8(out.stderr).unwrap(),
+        code: out.status.code().unwrap_or(-1),
+    }
+}
+
+#[test]
+fn an_empty_or_relative_xdg_config_home_falls_back_to_home_config() {
+    for xdg in [None, Some(""), Some("relative/dir")] {
+        let home = tempfile::TempDir::new().unwrap();
+        save_with_env(xdg, Some(home.path())).assert_success();
+        assert!(
+            home.path().join(".config/rollin/presets.toml").is_file(),
+            "XDG_CONFIG_HOME={xdg:?}"
+        );
+    }
+}
+
+#[test]
+fn an_absolute_xdg_config_home_wins_and_holds_toml() {
+    let xdg = tempfile::TempDir::new().unwrap();
+    let home = tempfile::TempDir::new().unwrap();
+    save_with_env(xdg.path().to_str(), Some(home.path())).assert_success();
+    let raw = std::fs::read_to_string(xdg.path().join("rollin/presets.toml")).unwrap();
+    assert_eq!(raw, "[presets]\nk = \"d6\"\n");
+    assert!(!home.path().join(".config").exists());
+}
+
+#[test]
+fn no_usable_config_directory_is_a_clear_error() {
+    let run = save_with_env(None, None);
+    assert_eq!(run.code, 1, "{run:?}");
+    assert_eq!(
+        run.stderr,
+        "error: cannot find a config directory: set XDG_CONFIG_HOME or HOME\n"
+    );
+}

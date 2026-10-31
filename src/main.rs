@@ -57,8 +57,9 @@ fn main() -> ExitCode {
     let ctx = Context {
         config_dir: config_dir(),
     };
-    let store = Store::in_config_dir(&ctx.config_dir);
-    let names = &mut || store.load().map(|p| p.into_keys().collect());
+    let names = &mut || -> Result<Vec<String>, CommandError> {
+        Ok(ctx.store()?.load()?.into_keys().collect())
+    };
     let command = match parse_command(&args.words, names) {
         Ok(command) => command,
         Err(e) => return fail(&e),
@@ -76,12 +77,11 @@ fn main() -> ExitCode {
     }
 }
 
-/// `$XDG_CONFIG_HOME`, else `$HOME/.config`.
-fn config_dir() -> PathBuf {
-    if let Some(dir) = std::env::var_os("XDG_CONFIG_HOME") {
-        return PathBuf::from(dir);
-    }
-    PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".config")
+/// `$XDG_CONFIG_HOME` if absolute, else `$HOME/.config`.
+fn config_dir() -> Option<PathBuf> {
+    let xdg = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
+    let home = std::env::var_os("HOME").map(PathBuf::from);
+    rollin::config_dir(xdg.as_deref(), home.as_deref())
 }
 
 fn fail(e: &CommandError) -> ExitCode {
