@@ -12,7 +12,7 @@ cargo build --release          # binary at target/release/rollin
 cargo install --path .         # or install it onto your PATH
 ```
 
-This is version 2.0.0, a rewrite of the original Python v1 (preserved at the
+This is version 2.0.1, a rewrite of the original Python v1 (preserved at the
 git tag `v1.0`). Every v1 formula and preset works unchanged, `roll <formula>`
 and `roll <name>` still work, and `rollin import presets.json` brings v1
 presets across (see [Importing v1 presets](#presets)). What changed is the
@@ -583,7 +583,7 @@ without retyping the program name:
 
 ```
 $ rollin
-rollin 2.0.0 — type 'help' for commands, 'quit' to exit
+rollin 2.0.1 — type 'help' for commands, 'quit' to exit
 rollin> d20+5 --seed 4
 d20+5  [15] + 5  →  20
 rollin> set str 3
