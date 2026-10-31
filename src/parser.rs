@@ -259,7 +259,7 @@ impl Parser<'_> {
                 sides_span,
             ));
         }
-        let reroll = self.parse_reroll()?;
+        let reroll = self.parse_reroll(sides)?;
         let explode = self.parse_explode(sides)?;
         let select = self.parse_select(count)?;
         let span = self.tokens[start].span.start..self.prev_end();
@@ -310,15 +310,25 @@ impl Parser<'_> {
     }
 
     /// Optional `r` reroll clause with a condition.
-    fn parse_reroll(&mut self) -> Result<Option<Reroll>, Error> {
+    fn parse_reroll(&mut self, sides: i64) -> Result<Option<Reroll>, Error> {
         let mode = match self.peek() {
             Some(Token::Word(w)) if w == "r" => RerollMode::Once,
             Some(Token::Word(w)) if w == "rr" => RerollMode::Repeat,
             _ => return Ok(None),
         };
+        let start = self.tokens[self.pos].span.start;
         self.pos += 1;
         let (cmp, value) = self.parse_condition("a number after the reroll condition")?;
-        Ok(Some(Reroll { mode, cmp, value }))
+        let reroll = Reroll { mode, cmp, value };
+        if mode == RerollMode::Repeat && (1..=sides).all(|face| reroll.triggers(face)) {
+            let span = start..self.prev_end();
+            return Err(Error::InfiniteReroll {
+                clause: self.src[span.clone()].to_string(),
+                sides,
+                span,
+            });
+        }
+        Ok(Some(reroll))
     }
 
     /// Optional `!` explode clause: `!` alone explodes on the maximum face,

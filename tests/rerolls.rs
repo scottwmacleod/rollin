@@ -120,3 +120,47 @@ fn rr_rerolls_until_the_die_no_longer_matches() {
         assert!(chains_over_one > 0, "{formula}: no multi-reroll chain");
     }
 }
+
+fn failure(formula: &str) -> String {
+    let run = Cli::new().run(&["--seed", "1", "--", formula]);
+    assert!(!run.success(), "{formula} should fail: {run:?}");
+    assert_eq!(run.stdout, "");
+    run.stderr
+}
+
+#[test]
+fn rr_that_matches_every_face_is_rejected_before_rolling() {
+    assert_eq!(
+        failure("2d6+d6rr<=6"),
+        "error: reroll condition 'rr<=6' is true for every face of a d6, so it would never stop\n  2d6+d6rr<=6\n        ^^^^^\n"
+    );
+    for formula in ["d6rr>=1", "d6rr<7", "d6 RR > 0", "d20rr<=20"] {
+        let stderr = failure(formula);
+        assert!(
+            stderr.contains("is true for every face"),
+            "{formula}: {stderr}"
+        );
+    }
+}
+
+#[test]
+fn r_with_an_always_true_condition_is_allowed_and_rerolls_every_die_once() {
+    let cli = Cli::new();
+    let pool = dice(&cli, "3d6r<=6", 4);
+    assert_eq!(pool.len(), 6);
+    assert_eq!(
+        pool.iter().filter(|d| status(d) == "rerolled").count(),
+        3,
+        "{pool:?}"
+    );
+}
+
+#[test]
+fn a_condition_that_never_matches_is_a_no_op() {
+    let cli = Cli::new();
+    for formula in ["4d6r>6", "4d6rr>6", "4d6r=0", "4d6rr<1"] {
+        let pool = dice(&cli, formula, 3);
+        assert_eq!(pool.len(), 4, "{formula}");
+        assert!(pool.iter().all(|d| status(d) == "kept"), "{formula}");
+    }
+}

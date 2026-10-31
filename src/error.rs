@@ -25,6 +25,13 @@ pub enum Error {
         sides: i64,
         span: Range<usize>,
     },
+    /// An `rr` condition that holds for every face, so the die would be
+    /// rerolled forever. Rejected at parse time (ADR 0006).
+    InfiniteReroll {
+        clause: String,
+        sides: i64,
+        span: Range<usize>,
+    },
     /// Division by zero; `span` is the divisor.
     DivisionByZero { span: Range<usize> },
     /// Integer arithmetic overflowed; `span` is the operation that did.
@@ -53,6 +60,7 @@ impl Error {
             | Error::InvalidDice { span, .. }
             | Error::LimitExceeded { span, .. }
             | Error::InfiniteExplosion { span, .. }
+            | Error::InfiniteReroll { span, .. }
             | Error::DivisionByZero { span }
             | Error::Overflow { span } => span.clone(),
         }
@@ -67,6 +75,9 @@ impl Error {
             } => format!("{cap} cap ({limit}) exceeded by '{term}'"),
             Error::InfiniteExplosion { clause, sides, .. } => format!(
                 "explosion condition '{clause}' is true for every face of a d{sides}, so it would never stop"
+            ),
+            Error::InfiniteReroll { clause, sides, .. } => format!(
+                "reroll condition '{clause}' is true for every face of a d{sides}, so it would never stop"
             ),
             Error::DivisionByZero { .. } => "division by zero".into(),
             Error::Overflow { .. } => "arithmetic overflow".into(),
