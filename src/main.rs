@@ -102,14 +102,24 @@ fn fail(e: &CommandError) -> ExitCode {
 fn show(args: &Args, output: Output) {
     match output {
         Output::Rolls { preset, rolls } => show_rolls(args, preset, rolls),
-        Output::Saved { name, formula } => println!("saved '{name}': {formula}"),
+        Output::Saved {
+            name,
+            formula,
+            replaced: None,
+        } => println!("saved '{name}': {formula}"),
+        Output::Saved {
+            name,
+            formula,
+            replaced: Some(old),
+        } => println!("replaced '{name}' (was {old}): {formula}"),
         Output::Deleted { name } => println!("deleted '{name}'"),
         Output::Presets(presets) if presets.is_empty() => {
             println!("No presets saved. Add one with: rollin save <name> <formula>");
         }
         Output::Presets(presets) => {
+            let width = presets.iter().map(|(n, _)| n.chars().count()).max();
             for (name, formula) in presets {
-                println!("{name}  {formula}");
+                println!("{name:<w$}  {formula}", w = width.unwrap_or(0));
             }
         }
     }

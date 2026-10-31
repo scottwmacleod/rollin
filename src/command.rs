@@ -161,11 +161,13 @@ pub fn execute(
         Command::Save { name, formula } => {
             check_formula(formula)?;
             let mut presets = store.load()?;
-            presets.insert(name.to_lowercase(), formula.clone());
+            let name = name.to_lowercase();
+            let replaced = presets.insert(name.clone(), formula.clone());
             store.save(&presets)?;
             Ok(Output::Saved {
-                name: name.to_lowercase(),
+                name,
                 formula: formula.clone(),
+                replaced,
             })
         }
         Command::Delete { name } => {

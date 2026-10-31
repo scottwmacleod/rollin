@@ -142,3 +142,35 @@ fn delete_without_a_name_prints_usage() {
     assert_eq!(run.code, 1);
     assert_eq!(run.stderr, "error: usage: delete <name>\n");
 }
+
+#[test]
+fn saving_over_an_existing_preset_says_so() {
+    let cli = Cli::new();
+    let first = cli.run(&["save", "Atk", "d20+5"]);
+    assert_eq!(first.stdout, "saved 'atk': d20+5\n");
+    let second = cli.run(&["save", "atk", "d20+7"]);
+    second.assert_success();
+    assert_eq!(second.stdout, "replaced 'atk' (was d20+5): d20+7\n");
+    assert_eq!(cli.run(&["presets"]).stdout, "atk  d20+7\n");
+}
+
+#[test]
+fn presets_are_listed_sorted_by_name() {
+    let cli = Cli::new();
+    for (name, formula) in [("zed", "d4"), ("alpha", "d6"), ("mid", "d8")] {
+        cli.run(&["save", name, formula]).assert_success();
+    }
+    assert_eq!(
+        cli.run(&["presets"]).stdout,
+        "alpha  d6\nmid    d8\nzed    d4\n"
+    );
+}
+
+#[test]
+fn save_without_a_formula_prints_usage() {
+    for args in [&["save"][..], &["save", "lonely"]] {
+        let run = Cli::new().run(args);
+        assert_eq!(run.code, 1);
+        assert_eq!(run.stderr, "error: usage: save <name> <formula>\n");
+    }
+}
