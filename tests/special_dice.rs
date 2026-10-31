@@ -53,7 +53,11 @@ fn percentile_dice_roll_one_to_one_hundred() {
             seen.insert(v);
         }
     }
-    assert!(seen.len() > 50, "suspiciously few distinct values: {}", seen.len());
+    assert!(
+        seen.len() > 50,
+        "suspiciously few distinct values: {}",
+        seen.len()
+    );
 }
 
 #[test]
@@ -89,4 +93,42 @@ fn default_and_verbose_output_echo_percentile_as_typed() {
     let run = cli.run(&["--seed", "99", "-v", "d%"]);
     run.assert_success();
     assert!(run.stdout.contains("d%: "), "{}", run.stdout);
+}
+
+fn values(cli: &Cli, formula: &str, seed: u64) -> Vec<i64> {
+    flat_dice(&cli.roll_json(formula, seed)["rolls"][0]["expr"])
+        .iter()
+        .map(|d| d["value"].as_i64().unwrap())
+        .collect()
+}
+
+#[test]
+fn a_fudge_die_is_one_uniform_draw_among_minus_one_zero_and_plus_one() {
+    // Documented RNG use: each die is the same single draw as a d3, minus 2,
+    // so the faces 1, 2, 3 read -1, 0, +1.
+    let cli = Cli::new();
+    let mut seen = std::collections::BTreeSet::new();
+    for seed in 0..60 {
+        for spelling in ["4dF", "4df", "4DF"] {
+            let fudge = values(&cli, spelling, seed);
+            let d3: Vec<i64> = values(&cli, "4d3", seed).iter().map(|v| v - 2).collect();
+            assert_eq!(fudge, d3, "{spelling}, seed {seed}");
+            seen.extend(fudge);
+        }
+    }
+    assert_eq!(seen.into_iter().collect::<Vec<_>>(), vec![-1, 0, 1]);
+}
+
+#[test]
+fn json_marks_fudge_groups_and_totals_them() {
+    let cli = Cli::new();
+    for seed in 0..30 {
+        let out = cli.roll_json("1dF", seed);
+        let node = &out["rolls"][0]["expr"];
+        assert_eq!(node["special"], "fudge");
+        assert_eq!(node["term"], "1dF");
+        assert_eq!(node["sides"], 3);
+        let sum: i64 = values(&cli, "4dF", seed).iter().sum();
+        assert_eq!(cli.roll_json("4dF", seed)["rolls"][0]["total"], sum);
+    }
 }

@@ -102,11 +102,13 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
                 end = i + 1;
                 chars.next();
             }
-            // `adv` and `dis` end a run early so `d20advdl1` lexes as `adv`,
-            // `dl`, `1` and the parser can say what is wrong with it.
+            // `adv`, `dis` and `df` (fudge) end a run early, so `d20advdl1`
+            // lexes as `adv`, `dl`, `1` and `4dFdl1` as `df`, `dl`, `1`.
             let word = src[start..end].to_ascii_lowercase();
             let split = if word.starts_with("adv") || word.starts_with("dis") {
                 3
+            } else if word.starts_with("df") {
+                2
             } else {
                 word.len()
             };

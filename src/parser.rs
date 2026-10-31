@@ -16,6 +16,8 @@ const MAX_DEPTH: usize = 32;
 const MAX_SIDES: i64 = 10000;
 /// `d%` is a d100.
 const PERCENTILE_SIDES: i64 = 100;
+/// A fudge die has three outcomes, drawn like a d3 and shifted to -1, 0, +1.
+const FUDGE_SIDES: i64 = 3;
 
 use crate::lexer::{tokenize, Spanned, Token};
 
@@ -220,7 +222,7 @@ impl Parser<'_> {
             Some(Token::Number(n)) => {
                 let n = *n;
                 self.pos += 1;
-                if !matches!(self.peek(), Some(Token::Word(w)) if w == "d") {
+                if !matches!(self.peek(), Some(Token::Word(w)) if w == "d" || w == "df") {
                     return Ok(Expr {
                         kind: ExprKind::Number(n),
                         span: self.tokens[start].span.clone(),
@@ -230,19 +232,21 @@ impl Parser<'_> {
             }
             _ => 1,
         };
-        match self.bump() {
+        let fudge = match self.bump() {
             Some(Spanned {
                 token: Token::Word(w),
                 ..
-            }) if w == "d" => {}
+            }) if w == "d" || w == "df" => w == "df",
             _ => {
                 self.pos -= 1;
                 return Err(self.unexpected("a number, a dice group or '('"));
             }
-        }
+        };
         let count_span = self.tokens[start].span.clone();
-        let sides_start = self.pos;
-        let (sides, special) = if matches!(self.peek(), Some(Token::Percent)) {
+        let sides_start = if fudge { self.pos - 1 } else { self.pos };
+        let (sides, special) = if fudge {
+            (FUDGE_SIDES, Some(Special::Fudge))
+        } else if matches!(self.peek(), Some(Token::Percent)) {
             self.pos += 1;
             (PERCENTILE_SIDES, Some(Special::Percentile))
         } else {
@@ -263,7 +267,7 @@ impl Parser<'_> {
                 count_span,
             ));
         }
-        if !(2..=MAX_SIDES).contains(&sides) {
+        if !fudge && !(2..=MAX_SIDES).contains(&sides) {
             return Err(Error::invalid_dice(
                 format!("sides must be between 2 and {MAX_SIDES}"),
                 sides_span,
