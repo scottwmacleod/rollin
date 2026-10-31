@@ -1,13 +1,14 @@
 mod render;
 
 use clap::Parser;
+use rand_chacha::ChaCha8Rng;
 use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
 use rollin::{
     entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output,
     PresetEntry, PresetSource, Roll, Shadow,
 };
 use serde::Serialize;
-use std::io::IsTerminal;
+use std::io::{BufRead, IsTerminal};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -17,7 +18,7 @@ use std::process::ExitCode;
 struct Args {
     /// A formula to roll, e.g. d20 or "4d6dl1, d20+5", a preset name, or a
     /// command: save, presets, delete, import, roll, set, unset, vars, char, characters
-    #[arg(required = true, allow_negative_numbers = true)]
+    #[arg(allow_negative_numbers = true)]
     words: Vec<String>,
 
     /// Seed the random number generator for reproducible rolls
@@ -69,6 +70,28 @@ struct JsonOutput {
 
 fn main() -> ExitCode {
     let args = Args::parse();
+    let mut rng = entropy_rng();
+    if args.words.is_empty() {
+        return session(&mut rng);
+    }
+    run_line(&args, &mut rng)
+}
+
+/// Reads lines from stdin and runs each as if its words were given one-shot.
+fn session(rng: &mut ChaCha8Rng) -> ExitCode {
+    for line in std::io::stdin().lock().lines().map_while(Result::ok) {
+        let words: Vec<&str> = line.split_whitespace().collect();
+        let args = Args::parse_from(std::iter::once("rollin").chain(words));
+        if !args.words.is_empty() {
+            run_line(&args, rng);
+        }
+    }
+    ExitCode::SUCCESS
+}
+
+/// Runs one parsed command line against a fresh context, printing its
+/// output or error. The one-shot path and the session both come through here.
+fn run_line(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
     let mut ctx = Context::new(config_dir());
     ctx.character = args.character.clone();
     let names = &mut || ctx.preset_names();
@@ -83,13 +106,12 @@ fn main() -> ExitCode {
         Ok(command) => command,
         Err(e) => return fail(&e),
     };
-    let result = match args.seed {
-        Some(seed) => execute(&command, &ctx, &mut seeded_rng(seed)),
-        None => execute(&command, &ctx, &mut entropy_rng()),
-    };
-    match result {
+    if let Some(seed) = args.seed {
+        *rng = seeded_rng(seed);
+    }
+    match execute(&command, &ctx, rng) {
         Ok(output) => {
-            show(&args, output);
+            show(args, output);
             ExitCode::SUCCESS
         }
         Err(e) => fail(&e),
