@@ -51,6 +51,8 @@ pub enum CommandError {
     Import { path: PathBuf, message: String },
     /// A preset name that breaks a naming rule.
     InvalidName(NameError),
+    /// `set` was given a value that is not an `i64`.
+    NotAnInteger(String),
     /// The presets file could not be read or written.
     Store(StoreError),
 }
@@ -74,6 +76,12 @@ impl std::fmt::Display for CommandError {
                 write!(f, "{}: {message}", path.display())
             }
             CommandError::InvalidName(e) => write!(f, "{e}"),
+            CommandError::NotAnInteger(value) => write!(
+                f,
+                "'{value}' is not an integer; variables hold whole numbers from {} to {}",
+                i64::MIN,
+                i64::MAX
+            ),
             CommandError::Store(e) => write!(f, "{e}"),
         }
     }
@@ -111,7 +119,9 @@ pub fn parse_command(
         Some("set") => match rest {
             [name, value] => Ok(Command::Set {
                 name: name.to_lowercase(),
-                value: value.parse().unwrap_or(0),
+                value: value
+                    .parse()
+                    .map_err(|_| CommandError::NotAnInteger(value.clone()))?,
             }),
             _ => Err(CommandError::Usage("set <name> <integer>".into())),
         },

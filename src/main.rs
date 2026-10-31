@@ -130,6 +130,9 @@ fn show(args: &Args, output: Output) {
                 report.skipped.len()
             );
         }
+        Output::Vars(vars) if vars.is_empty() => {
+            println!("No variables set. Add one with: rollin set <name> <integer>");
+        }
         Output::Vars(vars) => {
             for (name, value) in vars {
                 println!("{name} = {value}");

@@ -78,3 +78,27 @@ fn a_variable_works_in_every_position_a_literal_does() {
         assert_eq!(strip(&a), strip(&b), "{with_var} vs {literal}");
     }
 }
+
+#[test]
+fn set_rejects_values_that_are_not_i64_integers_and_stores_nothing() {
+    let cli = Cli::new();
+    for bad in [
+        "3.5",
+        "abc",
+        "",
+        "9223372036854775808",
+        "0x10",
+        "1e3",
+        "+-1",
+    ] {
+        let run = cli.run(&["set", "str", bad]);
+        assert_eq!(run.code, 1, "{bad:?}: {run:?}");
+        assert_eq!(
+            run.stderr,
+            format!("error: '{bad}' is not an integer; variables hold whole numbers from -9223372036854775808 to 9223372036854775807\n"),
+            "{bad:?}"
+        );
+        assert!(run.stdout.is_empty());
+    }
+    assert!(cli.run(&["vars"]).stdout.starts_with("No variables"));
+}
