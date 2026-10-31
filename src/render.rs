@@ -280,7 +280,7 @@ fn verbose_node(
                         None => {}
                     }
                     if d.parts.len() > 1 {
-                        let parts: Vec<String> = d.parts.iter().map(u32::to_string).collect();
+                        let parts: Vec<String> = d.parts.iter().map(i64::to_string).collect();
                         text.push_str(&format!(" ({})", parts.join("+")));
                     }
                     paint_die(p, d, nat, &text)

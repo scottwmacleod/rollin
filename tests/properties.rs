@@ -32,12 +32,12 @@ proptest! {
         let dice = dice_of(&r.expr);
         prop_assert_eq!(dice.len() as u32, n);
         for d in &dice {
-            prop_assert!((1..=sides).contains(&d.value));
+            prop_assert!((1..=sides).contains(&(d.value as u32)));
         }
         let kept_sum: i64 = dice
             .iter()
             .filter(|d| d.status == Status::Kept)
-            .map(|d| i64::from(d.value))
+            .map(|d| d.value)
             .sum();
         prop_assert_eq!(r.total, kept_sum);
     }
@@ -78,7 +78,7 @@ proptest! {
         let pool = &roll(&format!("{n}d{sides}"), &mut seeded_rng(seed)).unwrap()[0];
 
         let values = |status| -> Vec<u32> {
-            dice_of(&r.expr).iter().filter(|d| d.status == status).map(|d| d.value).collect()
+            dice_of(&r.expr).iter().filter(|d| d.status == status).map(|d| d.value as u32).collect()
         };
         let (kept, dropped) = (values(Status::Kept), values(Status::Dropped));
 
@@ -92,7 +92,7 @@ proptest! {
 
         // Kept values are a sub-multiset of the rolled values (and so are the
         // dropped ones, and together they are exactly the rolled values).
-        let mut rolled: Vec<u32> = dice_of(&pool.expr).iter().map(|d| d.value).collect();
+        let mut rolled: Vec<u32> = dice_of(&pool.expr).iter().map(|d| d.value as u32).collect();
         let mut all: Vec<u32> = kept.iter().chain(&dropped).copied().collect();
         rolled.sort_unstable();
         all.sort_unstable();
@@ -331,7 +331,7 @@ proptest! {
         let counted: i64 = dice
             .iter()
             .filter(|d| d.status.counts())
-            .map(|d| i64::from(d.value))
+            .map(|d| d.value)
             .sum();
         prop_assert_eq!(r.total, counted, "{}", formula);
         prop_assert_eq!(r.expr.total(), counted);
@@ -341,7 +341,7 @@ proptest! {
         match mode {
             0 | 2 => {
                 for d in &dice {
-                    prop_assert!(d.value <= sides, "{}: {:?}", formula, d);
+                    prop_assert!(d.value <= i64::from(sides), "{}: {:?}", formula, d);
                     prop_assert!(d.parts.is_empty());
                 }
             }
@@ -349,7 +349,7 @@ proptest! {
                 prop_assert_eq!(exploded, 0);
                 for d in &dice {
                     if !d.parts.is_empty() {
-                        prop_assert_eq!(d.parts.iter().sum::<u32>(), d.value);
+                        prop_assert_eq!(d.parts.iter().sum::<i64>(), d.value);
                         prop_assert!(d.parts.len() <= 101);
                     }
                 }
@@ -390,7 +390,8 @@ fn gen_reroll() -> impl Strategy<Value = (String, bool, usize, u32, u32)> {
         })
 }
 
-fn cond_matches(cmp: usize, v: u32, face: u32) -> bool {
+fn cond_matches(cmp: usize, v: u32, face: i64) -> bool {
+    let v = i64::from(v);
     match cmp {
         0 => face > v,
         1 => face >= v,
@@ -425,10 +426,10 @@ proptest! {
         let counted: i64 = dice
             .iter()
             .filter(|d| d.status.counts())
-            .map(|d| i64::from(d.value))
+            .map(|d| d.value)
             .sum();
         prop_assert_eq!(r.total, counted, "{}", formula);
-        prop_assert!(dice.iter().all(|d| (1..=sides).contains(&d.value)), "{}", formula);
+        prop_assert!(dice.iter().all(|d| (1..=sides).contains(&(d.value as u32))), "{}", formula);
 
         // Runs of rerolled dice, each ended by the die that replaced them.
         let mut run = 0usize;
@@ -556,7 +557,7 @@ proptest! {
         prop_assert_eq!((tally.successes, tally.failures), (s, f), "{}", formula);
         prop_assert_eq!(*subtotal, s - f, "{}", formula);
         prop_assert_eq!(r.total, s - f, "{}", formula);
-        prop_assert!(dice.iter().all(|d| (1..=sides).contains(&d.value)), "{}", formula);
+        prop_assert!(dice.iter().all(|d| (1..=sides).contains(&(d.value as u32))), "{}", formula);
     }
 
     /// Text built from the success/failure alphabet never panics, and

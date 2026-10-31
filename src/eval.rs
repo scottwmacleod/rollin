@@ -25,7 +25,7 @@ struct Ctx<'a, R> {
 
 impl<R: Rng> Ctx<'_, R> {
     /// Rolls one die, counting it toward the per-expression cap.
-    fn die(&mut self, sides: i64, term: &str, span: &Range<usize>) -> Result<u32, Error> {
+    fn die(&mut self, sides: i64, term: &str, span: &Range<usize>) -> Result<i64, Error> {
         self.rolled += 1;
         if self.rolled > MAX_DICE_PER_EXPRESSION {
             return Err(Error::LimitExceeded {
@@ -35,7 +35,7 @@ impl<R: Rng> Ctx<'_, R> {
                 span: span.clone(),
             });
         }
-        Ok(self.rng.gen_range(1..=sides as u32))
+        Ok(i64::from(self.rng.gen_range(1..=sides as u32)))
     }
 }
 
@@ -63,7 +63,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 let mut raw = ctx.die(d.sides, &d.text, &expr.span)?;
                 if let Some(reroll) = d.reroll {
                     let mut rerolls = 0;
-                    while reroll.triggers(i64::from(raw)) {
+                    while reroll.triggers(raw) {
                         if rerolls == MAX_REROLLS_PER_DIE {
                             return Err(Error::LimitExceeded {
                                 cap: "rerolls per die",
@@ -93,7 +93,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 };
                 let mut extras = Vec::new();
                 let mut explosions = 0;
-                while d.explode.is_some_and(|e| e.triggers(i64::from(raw))) {
+                while d.explode.is_some_and(|e| e.triggers(raw)) {
                     if explosions == MAX_EXPLOSIONS_PER_DIE {
                         return Err(Error::LimitExceeded {
                             cap: "explosions per die",
@@ -116,7 +116,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                     let penetrate = d.explode.is_some_and(|e| e.mode == ExplodeMode::Penetrate);
                     dice.extend(extras.into_iter().map(|raw| Die {
                         // A penetrating extra die counts one less, with no floor.
-                        value: raw - u32::from(penetrate),
+                        value: raw - i64::from(penetrate),
                         status: Status::Exploded,
                         parts: Vec::new(),
                         outcome: None,
@@ -130,7 +130,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 Some(success) => {
                     let (mut successes, mut failures) = (0, 0);
                     for die in dice.iter_mut().filter(|d| d.status.counts()) {
-                        let face = i64::from(die.value);
+                        let face = die.value;
                         if success.succeeds(face) {
                             die.outcome = Some(Outcome::Success);
                             successes += 1;
@@ -149,7 +149,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 None => dice
                     .iter()
                     .filter(|d| d.status.counts())
-                    .map(|d| i64::from(d.value))
+                    .map(|d| d.value)
                     .sum(),
             };
             Ok(Node::Dice {

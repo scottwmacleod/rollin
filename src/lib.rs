@@ -58,12 +58,12 @@ impl Status {
 /// One individual random value inside a roll.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Die {
-    pub value: u32,
+    pub value: i64,
     pub status: Status,
     /// For a compounded exploding die (`!!`): the rolls added into `value`,
     /// in order. Empty for every other die.
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub parts: Vec<u32>,
+    pub parts: Vec<i64>,
     /// On a success-count roll, whether this counting die was a success.
     /// Absent on dice that matched nothing, and on every die of a sum.
     #[serde(skip_serializing_if = "Option::is_none")]
