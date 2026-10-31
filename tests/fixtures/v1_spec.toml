@@ -122,64 +122,56 @@ dropped_extreme = "lowest"
 name = "invalid_formula"
 source = "test_parser.py::test_invalid_formula"
 formula = "xyz"
-status = "ignored"
-reason = "#11 (typed errors for invalid formulas and hard limits)"
+status = "live"
 expect = "error"
 
 [[case]]
 name = "sides_too_low"
 source = "test_parser.py::test_sides_too_low"
 formula = "1d1"
-status = "ignored"
-reason = "#11 (typed errors for invalid formulas and hard limits)"
+status = "live"
 expect = "error"
 
 [[case]]
 name = "drop_equals_count"
 source = "test_parser.py::test_drop_equals_count"
 formula = "2d6dl2"
-status = "ignored"
-reason = "#11 (typed errors for invalid formulas and hard limits)"
+status = "live"
 expect = "error"
 
 [[case]]
 name = "drop_exceeds_count"
 source = "test_parser.py::test_drop_exceeds_count"
 formula = "2d6dl3"
-status = "ignored"
-reason = "#11 (typed errors for invalid formulas and hard limits)"
+status = "live"
 expect = "error"
 
 [[case]]
 name = "kh_keep_all"
 source = "test_parser.py::test_kh_keep_all"
 formula = "4d6kh4"
-status = "ignored"
-reason = "#11 (typed errors for invalid formulas and hard limits)"
+status = "live"
 expect = "error"
 
 [[case]]
 name = "kh_keep_more_than_pool"
 source = "test_parser.py::test_kh_keep_more_than_pool"
 formula = "2d6kh3"
-status = "ignored"
-reason = "#11 (typed errors for invalid formulas and hard limits)"
+status = "live"
 expect = "error"
 
 [[case]]
 name = "max_dice_limit"
 source = "test_parser.py::test_max_dice_limit"
 formula = "1001d6"
-status = "ignored"
-reason = "#11 (typed errors for invalid formulas and hard limits)"
+status = "live"
 expect = "error"
 
 [[case]]
 name = "max_dice_limit_boundary"
 source = "test_parser.py::test_max_dice_limit_boundary"
 formula = "1000d6"
-status = "ignored"
-reason = "#11 (hard limits on dice count and sides)"
+status = "live"
 dice = 1000
 total_min = 1000
 total_max = 6000
@@ -188,16 +180,14 @@ total_max = 6000
 name = "max_sides_limit"
 source = "test_parser.py::test_max_sides_limit"
 formula = "1d10001"
-status = "ignored"
-reason = "#11 (typed errors for invalid formulas and hard limits)"
+status = "live"
 expect = "error"
 
 [[case]]
 name = "max_sides_limit_boundary"
 source = "test_parser.py::test_max_sides_limit_boundary"
 formula = "1d10000"
-status = "ignored"
-reason = "#11 (hard limits on dice count and sides)"
+status = "live"
 dice = 1
 total_min = 1
 total_max = 10000
@@ -221,8 +211,7 @@ rolls = 1
 name = "parse_formulas_empty"
 source = "test_parser.py::test_parse_formulas_empty"
 formula = ""
-status = "ignored"
-reason = "#11 (typed errors for invalid formulas and hard limits)"
+status = "live"
 expect = "error"
 
 [[case]]

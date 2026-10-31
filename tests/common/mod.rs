@@ -83,3 +83,25 @@ impl Default for Cli {
         Self::new()
     }
 }
+
+/// Every die in a roll's result tree, in roll order (`--json` shape).
+pub fn flat_dice(node: &serde_json::Value) -> Vec<serde_json::Value> {
+    let mut out = Vec::new();
+    collect_dice(node, &mut out);
+    out
+}
+
+fn collect_dice(node: &serde_json::Value, out: &mut Vec<serde_json::Value>) {
+    match node["type"].as_str() {
+        Some("dice") => out.extend(node["dice"].as_array().expect("dice array").clone()),
+        Some("group") => collect_dice(&node["inner"], out),
+        Some("neg") => collect_dice(&node["operand"], out),
+        Some("chain") => {
+            collect_dice(&node["first"], out);
+            for link in node["rest"].as_array().expect("rest array") {
+                collect_dice(&link["node"], out);
+            }
+        }
+        _ => {}
+    }
+}

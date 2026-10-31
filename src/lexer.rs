@@ -1,7 +1,7 @@
 //! Tokenizer: turns formula text into spanned tokens. Whitespace is skipped
 //! and letters are lowercased, so `4D6 DL1` lexes like `4d6dl1`.
 
-use crate::error::ParseError;
+use crate::error::Error;
 use std::ops::Range;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -12,6 +12,10 @@ pub enum Token {
     Word(String),
     Plus,
     Minus,
+    Star,
+    Slash,
+    LParen,
+    RParen,
     Comma,
 }
 
@@ -21,13 +25,17 @@ pub struct Spanned {
     pub span: Range<usize>,
 }
 
-pub fn tokenize(src: &str) -> Result<Vec<Spanned>, ParseError> {
+pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
     let mut out = Vec::new();
     let mut chars = src.char_indices().peekable();
     while let Some(&(start, c)) = chars.peek() {
         let single = match c {
             '+' => Some(Token::Plus),
             '-' => Some(Token::Minus),
+            '*' => Some(Token::Star),
+            '/' => Some(Token::Slash),
+            '(' => Some(Token::LParen),
+            ')' => Some(Token::RParen),
             ',' => Some(Token::Comma),
             _ => None,
         };
@@ -48,7 +56,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, ParseError> {
             }
             let n = src[start..end]
                 .parse::<i64>()
-                .map_err(|_| ParseError::new("number is too large", start..end))?;
+                .map_err(|_| Error::syntax("number is too large", start..end))?;
             out.push(Spanned {
                 token: Token::Number(n),
                 span: start..end,
@@ -69,7 +77,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, ParseError> {
         } else if c.is_whitespace() {
             chars.next();
         } else {
-            return Err(ParseError::new(
+            return Err(Error::syntax(
                 format!("unexpected character '{c}'"),
                 start..start + c.len_utf8(),
             ));

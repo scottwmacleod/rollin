@@ -2,51 +2,71 @@
 
 use std::ops::Range;
 
-/// A formula could not be parsed. `span` is a byte range into the input.
+/// Anything that can go wrong turning a formula into rolls. Every variant
+/// carries the byte range of the offending input (into the formula as given),
+/// so callers can point at it.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ParseError {
-    pub message: String,
-    pub span: Range<usize>,
+pub enum Error {
+    /// The text is not a well-formed formula.
+    Syntax { message: String, span: Range<usize> },
+    /// A dice group with out-of-range counts, sides, or drop/keep amounts.
+    InvalidDice { message: String, span: Range<usize> },
+    /// A hard cap (ADR 0006) was exceeded. Names the cap and the term.
+    LimitExceeded {
+        cap: &'static str,
+        limit: usize,
+        term: String,
+        span: Range<usize>,
+    },
+    /// Division by zero; `span` is the divisor.
+    DivisionByZero { span: Range<usize> },
+    /// Integer arithmetic overflowed; `span` is the operation that did.
+    Overflow { span: Range<usize> },
 }
 
-impl ParseError {
-    pub(crate) fn new(message: impl Into<String>, span: Range<usize>) -> Self {
-        ParseError {
+impl Error {
+    pub(crate) fn syntax(message: impl Into<String>, span: Range<usize>) -> Self {
+        Error::Syntax {
             message: message.into(),
             span,
         }
     }
-}
 
-impl std::fmt::Display for ParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.message)
+    pub(crate) fn invalid_dice(message: impl Into<String>, span: Range<usize>) -> Self {
+        Error::InvalidDice {
+            message: message.into(),
+            span,
+        }
     }
-}
 
-impl std::error::Error for ParseError {}
-
-/// Anything that can go wrong turning a formula into rolls.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Error {
-    Parse(ParseError),
-    /// Integer arithmetic overflowed while computing a total.
-    Overflow,
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    /// The byte range of the offending input.
+    pub fn span(&self) -> Range<usize> {
         match self {
-            Error::Parse(e) => write!(f, "invalid formula: {e}"),
-            Error::Overflow => write!(f, "arithmetic overflow while computing the total"),
+            Error::Syntax { span, .. }
+            | Error::InvalidDice { span, .. }
+            | Error::LimitExceeded { span, .. }
+            | Error::DivisionByZero { span }
+            | Error::Overflow { span } => span.clone(),
+        }
+    }
+
+    /// A readable description of what went wrong.
+    pub fn message(&self) -> String {
+        match self {
+            Error::Syntax { message, .. } | Error::InvalidDice { message, .. } => message.clone(),
+            Error::LimitExceeded {
+                cap, limit, term, ..
+            } => format!("{cap} cap ({limit}) exceeded by '{term}'"),
+            Error::DivisionByZero { .. } => "division by zero".into(),
+            Error::Overflow { .. } => "arithmetic overflow".into(),
         }
     }
 }
 
-impl std::error::Error for Error {}
-
-impl From<ParseError> for Error {
-    fn from(e: ParseError) -> Self {
-        Error::Parse(e)
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message())
     }
 }
+
+impl std::error::Error for Error {}

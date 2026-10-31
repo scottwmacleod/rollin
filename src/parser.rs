@@ -1,25 +1,29 @@
 //! Parser: tokens to [`Item`]s.
 //!
-//! v1 shape only: an item is a dice group or number optionally followed by one
-//! flat `+N` / `-N` modifier. Arithmetic between dice groups (ticket #11)
-//! extends [`Parser::parse_item`] into a precedence-climbing expression parser;
-//! the AST ([`Expr::Binary`]) already has room for it.
+//! An item is an arithmetic expression over dice groups and numbers, parsed by
+//! precedence climbing. The v1 shape (a dice group plus a flat modifier) is
+//! just the simplest such expression.
 
-use crate::ast::{BinOp, Dice, Expr, Item, Select, SelectKind};
-use crate::error::ParseError;
-/// v1 limits (ticket #11 reworks limits and error reporting).
-const MAX_DICE: i64 = 1000;
+use crate::ast::{BinOp, Dice, Expr, ExprKind, Item, Select, SelectKind};
+use crate::error::Error;
+// Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
+const MAX_DICE_PER_TERM: i64 = 1000;
+const MAX_DICE_PER_EXPRESSION: i64 = 10000;
+const MAX_DEPTH: usize = 32;
 const MAX_SIDES: i64 = 10000;
 
 use crate::lexer::{tokenize, Spanned, Token};
 
 /// Parses a whole formula (comma-separated items) into items.
-pub fn parse(src: &str) -> Result<Vec<Item>, ParseError> {
+pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
     let tokens = tokenize(src)?;
     let mut parser = Parser {
+        src,
         tokens: &tokens,
         pos: 0,
         end: src.len(),
+        depth: 0,
+        item_dice: 0,
     };
     let mut items = Vec::new();
     loop {
@@ -31,6 +35,7 @@ pub fn parse(src: &str) -> Result<Vec<Item>, ParseError> {
             break;
         }
         let start = parser.here();
+        parser.item_dice = 0;
         let expr = parser.parse_item()?;
         let stop = parser.prev_end();
         items.push(Item {
@@ -42,15 +47,20 @@ pub fn parse(src: &str) -> Result<Vec<Item>, ParseError> {
         }
     }
     if items.is_empty() {
-        return Err(ParseError::new("no formulas provided", 0..src.len()));
+        return Err(Error::syntax("no formulas provided", 0..src.len()));
     }
     Ok(items)
 }
 
 struct Parser<'a> {
+    src: &'a str,
     tokens: &'a [Spanned],
     pos: usize,
     end: usize,
+    /// Parentheses and unary minus signs currently open.
+    depth: usize,
+    /// Dice rolled so far by the item being parsed.
+    item_dice: i64,
 }
 
 impl Parser<'_> {
@@ -76,20 +86,20 @@ impl Parser<'_> {
         t
     }
 
-    fn unexpected(&self, expected: &str) -> ParseError {
+    fn unexpected(&self, expected: &str) -> Error {
         match self.tokens.get(self.pos) {
-            Some(t) => ParseError::new(
+            Some(t) => Error::syntax(
                 format!("expected {expected}, found {}", describe(&t.token)),
                 t.span.clone(),
             ),
-            None => ParseError::new(
+            None => Error::syntax(
                 format!("expected {expected}, found end of input"),
                 self.end..self.end,
             ),
         }
     }
 
-    fn number(&mut self, what: &str) -> Result<i64, ParseError> {
+    fn number(&mut self, what: &str) -> Result<i64, Error> {
         match self.peek() {
             Some(Token::Number(n)) => {
                 let n = *n;
@@ -100,44 +110,113 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_item(&mut self) -> Result<Expr, ParseError> {
-        // v1 accepted a signed bare number (`-5`, `+5`) as a fixed value.
-        let sign = match self.peek() {
-            Some(Token::Plus) => Some(1),
-            Some(Token::Minus) => Some(-1),
-            _ => None,
-        };
-        if let Some(sign) = sign {
-            self.pos += 1;
-            let n = self.number("a number after the sign")?;
-            return Ok(Expr::Number(sign * n));
-        }
-        let mut expr = self.parse_term()?;
-        let op = match self.peek() {
-            Some(Token::Plus) => Some(BinOp::Add),
-            Some(Token::Minus) => Some(BinOp::Sub),
-            _ => None,
-        };
-        if let Some(op) = op {
-            self.pos += 1;
-            let n = self.number("a number after the modifier sign")?;
-            expr = Expr::Binary {
-                op,
-                lhs: Box::new(expr),
-                rhs: Box::new(Expr::Number(n)),
-            };
-        }
-        Ok(expr)
+    fn parse_item(&mut self) -> Result<Expr, Error> {
+        self.parse_expr(1)
     }
 
-    fn parse_term(&mut self) -> Result<Expr, ParseError> {
+    /// Precedence climbing: parses operators binding at least as tightly as
+    /// `min_prec`. Operators of one level extend a single flat chain.
+    fn parse_expr(&mut self, min_prec: u8) -> Result<Expr, Error> {
+        let mut lhs = self.parse_unary()?;
+        while let Some(op) = self.peek_binop() {
+            if op.precedence() < min_prec {
+                break;
+            }
+            self.pos += 1;
+            let rhs = self.parse_expr(op.precedence() + 1)?;
+            lhs = link(lhs, op, rhs);
+        }
+        Ok(lhs)
+    }
+
+    fn peek_binop(&self) -> Option<BinOp> {
+        match self.peek() {
+            Some(Token::Plus) => Some(BinOp::Add),
+            Some(Token::Minus) => Some(BinOp::Sub),
+            Some(Token::Star) => Some(BinOp::Mul),
+            Some(Token::Slash) => Some(BinOp::Div),
+            _ => None,
+        }
+    }
+
+    /// Unary `-` negates and unary `+` is a no-op (v1 accepted `+5`).
+    fn parse_unary(&mut self) -> Result<Expr, Error> {
+        match self.peek() {
+            Some(Token::Minus) => {
+                let start = self.tokens[self.pos].span.start;
+                self.enter(start)?;
+                self.pos += 1;
+                let operand = self.parse_unary()?;
+                self.depth -= 1;
+                let span = start..operand.span.end;
+                Ok(Expr {
+                    kind: ExprKind::Neg(Box::new(operand)),
+                    span,
+                })
+            }
+            Some(Token::Plus) => {
+                self.pos += 1;
+                self.parse_unary()
+            }
+            _ => self.parse_operand(),
+        }
+    }
+
+    /// Opens one more level of nesting at byte offset `at`.
+    fn enter(&mut self, at: usize) -> Result<(), Error> {
+        self.depth += 1;
+        if self.depth > MAX_DEPTH {
+            let shown: String = self.src[at..].chars().take(16).collect();
+            let more = if self.src[at..].chars().count() > 16 {
+                "…"
+            } else {
+                ""
+            };
+            let len = self.src[at..].chars().next().map_or(1, char::len_utf8);
+            return Err(Error::LimitExceeded {
+                cap: "nesting depth",
+                limit: MAX_DEPTH,
+                term: format!("{shown}{more}"),
+                span: at..at + len,
+            });
+        }
+        Ok(())
+    }
+
+    fn parse_group(&mut self) -> Result<Expr, Error> {
+        let open = self.tokens[self.pos].span.clone();
+        self.enter(open.start)?;
+        self.pos += 1;
+        let inner = self.parse_expr(1)?;
+        self.depth -= 1;
+        match self.peek() {
+            Some(Token::RParen) => {
+                self.pos += 1;
+                Ok(Expr {
+                    kind: ExprKind::Group(Box::new(inner)),
+                    span: open.start..self.prev_end(),
+                })
+            }
+            None => Err(Error::syntax("unclosed '('", open)),
+            Some(_) => Err(self.unexpected("')'")),
+        }
+    }
+
+    /// A parenthesised expression, a number or a dice group.
+    fn parse_operand(&mut self) -> Result<Expr, Error> {
         let start = self.pos;
+        if matches!(self.peek(), Some(Token::LParen)) {
+            return self.parse_group();
+        }
         let count = match self.peek() {
             Some(Token::Number(n)) => {
                 let n = *n;
                 self.pos += 1;
                 if !matches!(self.peek(), Some(Token::Word(w)) if w == "d") {
-                    return Ok(Expr::Number(n));
+                    return Ok(Expr {
+                        kind: ExprKind::Number(n),
+                        span: self.tokens[start].span.clone(),
+                    });
                 }
                 n
             }
@@ -150,35 +229,57 @@ impl Parser<'_> {
             }) if w == "d" => {}
             _ => {
                 self.pos -= 1;
-                return Err(self.unexpected("a dice group like d20 or 2d6"));
+                return Err(self.unexpected("a number, a dice group or '('"));
             }
         }
         let count_span = self.tokens[start].span.clone();
         let sides_start = self.pos;
         let sides = self.number("the number of sides after 'd'")?;
         let sides_span = self.tokens[sides_start].span.clone();
-        if !(1..=MAX_DICE).contains(&count) {
-            return Err(ParseError::new(
-                format!("dice count must be between 1 and {MAX_DICE}"),
+        if count > MAX_DICE_PER_TERM {
+            return Err(Error::LimitExceeded {
+                cap: "dice per term",
+                limit: MAX_DICE_PER_TERM as usize,
+                term: self.src[count_span.start..sides_span.end].to_string(),
+                span: count_span,
+            });
+        }
+        if count < 1 {
+            return Err(Error::invalid_dice(
+                "dice count must be at least 1",
                 count_span,
             ));
         }
         if !(2..=MAX_SIDES).contains(&sides) {
-            return Err(ParseError::new(
+            return Err(Error::invalid_dice(
                 format!("sides must be between 2 and {MAX_SIDES}"),
                 sides_span,
             ));
         }
         let select = self.parse_select(count)?;
-        Ok(Expr::Dice(Dice {
-            count,
-            sides,
-            select,
-        }))
+        let span = self.tokens[start].span.start..self.prev_end();
+        self.item_dice += count;
+        if self.item_dice > MAX_DICE_PER_EXPRESSION {
+            return Err(Error::LimitExceeded {
+                cap: "dice per expression",
+                limit: MAX_DICE_PER_EXPRESSION as usize,
+                term: self.src[span.clone()].to_string(),
+                span,
+            });
+        }
+        Ok(Expr {
+            kind: ExprKind::Dice(Dice {
+                text: self.src[span.clone()].to_string(),
+                count,
+                sides,
+                select,
+            }),
+            span,
+        })
     }
 
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).
-    fn parse_select(&mut self, count: i64) -> Result<Option<Select>, ParseError> {
+    fn parse_select(&mut self, count: i64) -> Result<Option<Select>, Error> {
         let kind = match self.peek() {
             Some(Token::Word(w)) => match w.as_str() {
                 "dl" => SelectKind::DropLowest,
@@ -202,7 +303,7 @@ impl Parser<'_> {
         let span = word_span.start..self.prev_end();
         let keeps = matches!(kind, SelectKind::KeepLowest | SelectKind::KeepHighest);
         if keeps && !(1..count).contains(&n) {
-            return Err(ParseError::new(
+            return Err(Error::invalid_dice(
                 format!(
                     "must keep between 1 and {} dice from a pool of {count}",
                     count - 1
@@ -211,12 +312,33 @@ impl Parser<'_> {
             ));
         }
         if !keeps && n >= count {
-            return Err(ParseError::new(
+            return Err(Error::invalid_dice(
                 format!("cannot drop {n} dice from a pool of {count}"),
                 span,
             ));
         }
         Ok(Some(Select { kind, n }))
+    }
+}
+
+/// Appends `op rhs` to `lhs`, extending its chain when it is one of the same
+/// precedence level.
+fn link(mut lhs: Expr, op: BinOp, rhs: Expr) -> Expr {
+    let end = rhs.span.end;
+    if let ExprKind::Chain { rest, .. } = &mut lhs.kind {
+        if rest[0].0.precedence() == op.precedence() {
+            rest.push((op, rhs));
+            lhs.span.end = end;
+            return lhs;
+        }
+    }
+    let span = lhs.span.start..end;
+    Expr {
+        kind: ExprKind::Chain {
+            first: Box::new(lhs),
+            rest: vec![(op, rhs)],
+        },
+        span,
     }
 }
 
@@ -226,6 +348,10 @@ fn describe(t: &Token) -> String {
         Token::Word(w) => format!("'{w}'"),
         Token::Plus => "'+'".into(),
         Token::Minus => "'-'".into(),
+        Token::Star => "'*'".into(),
+        Token::Slash => "'/'".into(),
+        Token::LParen => "'('".into(),
+        Token::RParen => "')'".into(),
         Token::Comma => "','".into(),
     }
 }
