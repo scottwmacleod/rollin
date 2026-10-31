@@ -6,6 +6,7 @@ use crate::characters::CharacterStore;
 use crate::presets::{is_name_shaped, validate_name, NameError, Store, StoreError};
 use crate::{Error, Roll};
 use rand::Rng;
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 /// What the user asked for.
@@ -245,11 +246,12 @@ pub fn execute(
     rng: &mut impl Rng,
 ) -> Result<Output, CommandError> {
     let store = ctx.store()?;
+    let vars = ctx.characters()?.load("default")?.vars;
     match command {
-        Command::Roll(formula) => roll_formula(formula, None, rng),
+        Command::Roll(formula) => roll_formula(formula, None, &vars, rng),
         Command::RollPreset(name) => {
             let formula = store.load()?.remove(name).unwrap_or_default();
-            roll_formula(&formula, Some((name.clone(), formula.clone())), rng)
+            roll_formula(&formula, Some((name.clone(), formula.clone())), &vars, rng)
         }
         Command::Save { name, formula } => {
             let name = validate_name(name).map_err(CommandError::InvalidName)?;
@@ -356,9 +358,10 @@ fn check_formula(formula: &str) -> Result<(), CommandError> {
 fn roll_formula(
     formula: &str,
     preset: Option<(String, String)>,
+    vars: &BTreeMap<String, i64>,
     rng: &mut impl Rng,
 ) -> Result<Output, CommandError> {
-    crate::roll(formula, rng)
+    crate::roll_with(formula, &|name| vars.get(name).copied(), rng)
         .map(|rolls| Output::Rolls { preset, rolls })
         .map_err(|error| CommandError::Formula {
             source: formula.to_string(),

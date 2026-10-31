@@ -21,3 +21,13 @@ fn vars_lists_what_an_earlier_run_set_sorted() {
     vars.assert_success();
     assert_eq!(vars.stdout, "dex = 2\nstr = 3\n");
 }
+
+#[test]
+fn a_variable_in_a_modifier_rolls_like_its_literal() {
+    let cli = Cli::new();
+    cli.run(&["set", "str", "3"]).assert_success();
+    let with_var = cli.roll_json("d20+@str", 7);
+    let literal = cli.roll_json("d20+3", 7);
+    assert_eq!(with_var["rolls"][0]["total"], literal["rolls"][0]["total"]);
+    assert_eq!(with_var["rolls"][0]["expr"], literal["rolls"][0]["expr"]);
+}

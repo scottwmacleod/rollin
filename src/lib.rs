@@ -204,7 +204,18 @@ pub struct Roll {
 /// Parses and evaluates a formula (one or more comma-separated rolls) using
 /// the injected RNG, returning one [`Roll`] per item.
 pub fn roll(formula: &str, rng: &mut impl Rng) -> Result<Vec<Roll>, Error> {
-    let parsed = parser::parse(formula)?;
+    roll_with(formula, &|_| None, rng)
+}
+
+/// Like [`roll`], resolving `@name` variables through `vars` (given the
+/// lowercase name, returns its value). A name `vars` does not know is an
+/// [`Error::UndefinedVariable`] underlining the `@name`.
+pub fn roll_with(
+    formula: &str,
+    vars: &dyn Fn(&str) -> Option<i64>,
+    rng: &mut impl Rng,
+) -> Result<Vec<Roll>, Error> {
+    let parsed = parser::parse_with(formula, vars)?;
     let mut rolls = Vec::new();
     for iteration in 1..=parsed.repeat.unwrap_or(1) {
         for item in &parsed.items {

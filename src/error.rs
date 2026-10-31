@@ -36,6 +36,9 @@ pub enum Error {
     CountInArithmetic { span: Range<usize> },
     /// Division by zero; `span` is the divisor.
     DivisionByZero { span: Range<usize> },
+    /// A formula used `@name` but no variable of that name is defined.
+    /// `span` is the `@name` as written.
+    UndefinedVariable { name: String, span: Range<usize> },
     /// Integer arithmetic overflowed; `span` is the operation that did.
     Overflow { span: Range<usize> },
 }
@@ -65,6 +68,7 @@ impl Error {
             | Error::InfiniteReroll { span, .. }
             | Error::CountInArithmetic { span }
             | Error::DivisionByZero { span }
+            | Error::UndefinedVariable { span, .. }
             | Error::Overflow { span } => span.clone(),
         }
     }
@@ -84,6 +88,7 @@ impl Error {
             ),
             Error::CountInArithmetic { .. } => "a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice".into(),
             Error::DivisionByZero { .. } => "division by zero".into(),
+            Error::UndefinedVariable { name, .. } => format!("undefined variable @{name}"),
             Error::Overflow { .. } => "arithmetic overflow".into(),
         }
     }

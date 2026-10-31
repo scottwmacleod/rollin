@@ -24,7 +24,26 @@ use crate::lexer::{tokenize, Spanned, Token};
 
 /// Parses a whole formula (comma-separated items) into items.
 pub fn parse(src: &str) -> Result<Formula, Error> {
-    let tokens = tokenize(src)?;
+    parse_with(src, &|_| None)
+}
+
+/// A variable lookup: lowercase name to value.
+pub type Lookup<'a> = &'a dyn Fn(&str) -> Option<i64>;
+
+/// Like [`parse`], with `@name` variables resolved through `vars` before
+/// parsing. A resolved variable becomes a number token that keeps the span of
+/// the `@name`, so errors still underline it.
+pub fn parse_with(src: &str, vars: Lookup<'_>) -> Result<Formula, Error> {
+    let mut tokens = tokenize(src)?;
+    for t in &mut tokens {
+        if let Token::Var(name) = &t.token {
+            let value = vars(name).ok_or_else(|| Error::UndefinedVariable {
+                name: name.clone(),
+                span: t.span.clone(),
+            })?;
+            t.token = Token::Number(value);
+        }
+    }
     let mut parser = Parser {
         src,
         tokens: &tokens,
@@ -689,6 +708,7 @@ fn describe(t: &Token) -> String {
         Token::Lt => "'<'".into(),
         Token::Le => "'<='".into(),
         Token::Eq => "'='".into(),
+        Token::Var(name) => format!("variable @{name}"),
         Token::Label(_) => "a label".into(),
     }
 }
