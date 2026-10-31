@@ -6,8 +6,10 @@
 
 use crate::ast::{BinOp, Dice, Expr, ExprKind, Item, Select, SelectKind};
 use crate::error::Error;
-/// v1 limits (ticket #11 reworks limits and error reporting).
-const MAX_DICE: i64 = 1000;
+// Hard limits (ADR 0006). Sides is a v1 rule, kept as an invalid-dice error.
+const MAX_DICE_PER_TERM: i64 = 1000;
+const MAX_DICE_PER_EXPRESSION: i64 = 10000;
+const MAX_DEPTH: usize = 32;
 const MAX_SIDES: i64 = 10000;
 
 use crate::lexer::{tokenize, Spanned, Token};
@@ -20,6 +22,8 @@ pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
         tokens: &tokens,
         pos: 0,
         end: src.len(),
+        depth: 0,
+        item_dice: 0,
     };
     let mut items = Vec::new();
     loop {
@@ -31,6 +35,7 @@ pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
             break;
         }
         let start = parser.here();
+        parser.item_dice = 0;
         let expr = parser.parse_item()?;
         let stop = parser.prev_end();
         items.push(Item {
@@ -52,6 +57,10 @@ struct Parser<'a> {
     tokens: &'a [Spanned],
     pos: usize,
     end: usize,
+    /// Parentheses and unary minus signs currently open.
+    depth: usize,
+    /// Dice rolled so far by the item being parsed.
+    item_dice: i64,
 }
 
 impl Parser<'_> {
@@ -135,8 +144,10 @@ impl Parser<'_> {
         match self.peek() {
             Some(Token::Minus) => {
                 let start = self.tokens[self.pos].span.start;
+                self.enter(start)?;
                 self.pos += 1;
                 let operand = self.parse_unary()?;
+                self.depth -= 1;
                 let span = start..operand.span.end;
                 Ok(Expr {
                     kind: ExprKind::Neg(Box::new(operand)),
@@ -151,10 +162,33 @@ impl Parser<'_> {
         }
     }
 
+    /// Opens one more level of nesting at byte offset `at`.
+    fn enter(&mut self, at: usize) -> Result<(), Error> {
+        self.depth += 1;
+        if self.depth > MAX_DEPTH {
+            let shown: String = self.src[at..].chars().take(16).collect();
+            let more = if self.src[at..].chars().count() > 16 {
+                "…"
+            } else {
+                ""
+            };
+            let len = self.src[at..].chars().next().map_or(1, char::len_utf8);
+            return Err(Error::LimitExceeded {
+                cap: "nesting depth",
+                limit: MAX_DEPTH,
+                term: format!("{shown}{more}"),
+                span: at..at + len,
+            });
+        }
+        Ok(())
+    }
+
     fn parse_group(&mut self) -> Result<Expr, Error> {
         let open = self.tokens[self.pos].span.clone();
+        self.enter(open.start)?;
         self.pos += 1;
         let inner = self.parse_expr(1)?;
+        self.depth -= 1;
         match self.peek() {
             Some(Token::RParen) => {
                 self.pos += 1;
@@ -202,9 +236,17 @@ impl Parser<'_> {
         let sides_start = self.pos;
         let sides = self.number("the number of sides after 'd'")?;
         let sides_span = self.tokens[sides_start].span.clone();
-        if !(1..=MAX_DICE).contains(&count) {
+        if count > MAX_DICE_PER_TERM {
+            return Err(Error::LimitExceeded {
+                cap: "dice per term",
+                limit: MAX_DICE_PER_TERM as usize,
+                term: self.src[count_span.start..sides_span.end].to_string(),
+                span: count_span,
+            });
+        }
+        if count < 1 {
             return Err(Error::invalid_dice(
-                format!("dice count must be between 1 and {MAX_DICE}"),
+                "dice count must be at least 1",
                 count_span,
             ));
         }
@@ -216,6 +258,15 @@ impl Parser<'_> {
         }
         let select = self.parse_select(count)?;
         let span = self.tokens[start].span.start..self.prev_end();
+        self.item_dice += count;
+        if self.item_dice > MAX_DICE_PER_EXPRESSION {
+            return Err(Error::LimitExceeded {
+                cap: "dice per expression",
+                limit: MAX_DICE_PER_EXPRESSION as usize,
+                term: self.src[span.clone()].to_string(),
+                span,
+            });
+        }
         Ok(Expr {
             kind: ExprKind::Dice(Dice {
                 text: self.src[span.clone()].to_string(),

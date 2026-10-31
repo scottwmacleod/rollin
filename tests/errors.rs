@@ -91,3 +91,65 @@ fn v1_rejections_still_fail_with_a_span() {
         "error: number is too large\n  99999999999999999999d6\n  ^^^^^^^^^^^^^^^^^^^^\n"
     );
 }
+
+#[test]
+fn too_many_dice_in_a_term_names_the_cap_and_the_term() {
+    assert_eq!(
+        failure("2+1001d6"),
+        "error: dice per term cap (1000) exceeded by '1001d6'\n  2+1001d6\n    ^^^^\n"
+    );
+    Cli::new().run(&["1000d6", "--seed", "1"]).assert_success();
+}
+
+#[test]
+fn too_many_dice_in_an_expression_names_the_cap_and_the_term() {
+    let ten = vec!["1000d6"; 10].join("+");
+    let cli = Cli::new();
+    cli.run(&[&ten, "--seed", "1"]).assert_success();
+    // The cap is per roll: the same ten groups in two comma items are fine.
+    cli.run(&[&format!("{ten}, {ten}"), "--seed", "1"])
+        .assert_success();
+
+    let eleven = format!("{ten}+1d4");
+    let stderr = failure(&eleven);
+    let first_line = stderr.lines().next().unwrap();
+    assert_eq!(
+        first_line,
+        "error: dice per expression cap (10000) exceeded by '1d4'"
+    );
+    // The caret sits under the term that went over.
+    let caret_col = stderr.lines().nth(2).unwrap().find('^').unwrap();
+    assert_eq!(caret_col, 2 + ten.len() + 1);
+}
+
+#[test]
+fn nesting_deeper_than_32_is_an_error() {
+    let nest = |n: usize| format!("{}d20{}", "(".repeat(n), ")".repeat(n));
+    let cli = Cli::new();
+    cli.run(&[&nest(32), "--seed", "1"]).assert_success();
+
+    let stderr = failure(&nest(33));
+    assert_eq!(
+        stderr.lines().next().unwrap(),
+        "error: nesting depth cap (32) exceeded by '(d20))))))))))))…'"
+    );
+    // The caret is under the 33rd opening parenthesis.
+    assert_eq!(
+        stderr.lines().nth(2).unwrap(),
+        format!("  {}^", " ".repeat(32))
+    );
+
+    // Unary minus nests too.
+    cli.run(&["--seed", "1", "--", &format!("{}d20", "-".repeat(32))])
+        .assert_success();
+    failure(&format!("{}d20", "-".repeat(33)));
+}
+
+#[test]
+fn very_long_flat_formulas_do_not_overflow_the_stack() {
+    let cli = Cli::new();
+    let long = vec!["1"; 200_000].join("+");
+    let run = cli.run(&[&long, "--seed", "1"]);
+    run.assert_success();
+    assert!(run.stdout.ends_with("→  200000\n"), "{}", run.stdout.len());
+}

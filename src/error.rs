@@ -11,6 +11,13 @@ pub enum Error {
     Syntax { message: String, span: Range<usize> },
     /// A dice group with out-of-range counts, sides, or drop/keep amounts.
     InvalidDice { message: String, span: Range<usize> },
+    /// A hard cap (ADR 0006) was exceeded. Names the cap and the term.
+    LimitExceeded {
+        cap: &'static str,
+        limit: usize,
+        term: String,
+        span: Range<usize>,
+    },
     /// Division by zero; `span` is the divisor.
     DivisionByZero { span: Range<usize> },
     /// Integer arithmetic overflowed; `span` is the operation that did.
@@ -37,6 +44,7 @@ impl Error {
         match self {
             Error::Syntax { span, .. }
             | Error::InvalidDice { span, .. }
+            | Error::LimitExceeded { span, .. }
             | Error::DivisionByZero { span }
             | Error::Overflow { span } => span.clone(),
         }
@@ -46,6 +54,9 @@ impl Error {
     pub fn message(&self) -> String {
         match self {
             Error::Syntax { message, .. } | Error::InvalidDice { message, .. } => message.clone(),
+            Error::LimitExceeded {
+                cap, limit, term, ..
+            } => format!("{cap} cap ({limit}) exceeded by '{term}'"),
             Error::DivisionByZero { .. } => "division by zero".into(),
             Error::Overflow { .. } => "arithmetic overflow".into(),
         }
