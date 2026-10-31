@@ -64,9 +64,142 @@ fn default_expect() -> String {
 const SEED: &str = "1";
 
 fn check(cli: &Cli, c: &Case) -> Result<(), String> {
-    if c.kind != "roll" {
-        return Err(format!("no runner for kind {:?}", c.kind));
+    match c.kind.as_str() {
+        "roll" => check_roll(cli, c),
+        // Each presets case gets its own empty config dir.
+        "presets" => check_presets(&Cli::new(), c),
+        other => Err(format!("no runner for kind {other:?}")),
     }
+}
+
+/// Runs `args` and fails unless it exited 0.
+fn ok(cli: &Cli, args: &[&str]) -> Result<common::Run, String> {
+    let run = cli.run(args);
+    if run.success() {
+        Ok(run)
+    } else {
+        Err(format!("{args:?} should succeed, got {run:?}"))
+    }
+}
+
+/// Runs `args` and fails unless it is a clean error (exit 1, message on
+/// stderr, nothing on stdout) containing `needle`.
+fn clean_error(cli: &Cli, args: &[&str], needle: &str) -> Result<(), String> {
+    let run = cli.run(args);
+    if run.code != 1 || !run.stdout.is_empty() || run.stderr.contains("panicked") {
+        return Err(format!("{args:?} should be a clean error, got {run:?}"));
+    }
+    if !run.stderr.starts_with("error: ") || !run.stderr.contains(needle) {
+        return Err(format!("{args:?}: stderr lacks {needle:?}: {run:?}"));
+    }
+    Ok(())
+}
+
+/// Writes the presets file by hand (for the corrupt-store cases) and returns
+/// its text, to check it is never rewritten.
+fn hand_written_store(cli: &Cli, contents: &str) -> String {
+    let dir = cli.config_dir().join("rollin");
+    std::fs::create_dir_all(&dir).expect("create config dir");
+    std::fs::write(dir.join("presets.toml"), contents).expect("write store");
+    contents.to_string()
+}
+
+fn store_text(cli: &Cli) -> String {
+    std::fs::read_to_string(cli.config_dir().join("rollin/presets.toml")).expect("read store")
+}
+
+/// The v1 preset-store tests, driven through the CLI against the TOML store.
+/// Three cases adapt v1 on purpose (ADR 0004 moves storage to TOML and the
+/// v2 spec makes a bad store a clear error instead of silently empty).
+fn check_presets(cli: &Cli, c: &Case) -> Result<(), String> {
+    match c.name.as_str() {
+        "presets_load_missing_file" => {
+            let run = ok(cli, &["presets"])?;
+            eq("listing", run.stdout.starts_with("No presets saved."), true)
+        }
+        "presets_save_and_load_roundtrip" => {
+            ok(cli, &["save", "attack", "d20+5"])?;
+            eq(
+                "listing",
+                ok(cli, &["presets"])?.stdout,
+                "attack  d20+5\n".into(),
+            )
+        }
+        "presets_add_and_get_preset" => {
+            ok(cli, &["save", "Attack", "d20+5"])?;
+            let run = ok(cli, &["attack", "--seed", SEED, "--json"])?;
+            eq(
+                "formula",
+                run.json()["rolls"][0]["formula"].clone(),
+                "d20+5".into(),
+            )
+        }
+        "presets_get_preset_case_insensitive" => {
+            ok(cli, &["save", "MyRoll", "d20"])?;
+            ok(cli, &["myroll", "--seed", SEED])?;
+            ok(cli, &["MYROLL", "--seed", SEED]).map(|_| ())
+        }
+        "presets_delete_preset" => {
+            ok(cli, &["save", "gone", "d6"])?;
+            ok(cli, &["delete", "gone"])?;
+            clean_error(cli, &["gone"], "'gone'")?;
+            eq(
+                "listing",
+                ok(cli, &["presets"])?.stdout.starts_with("No presets"),
+                true,
+            )
+        }
+        "presets_delete_nonexistent_preset" => {
+            clean_error(cli, &["delete", "ghost"], "no preset named 'ghost'")
+        }
+        // v1 loaded a corrupt file as empty (and the next save overwrote it).
+        // v2 reports the file and leaves it alone.
+        "presets_load_corrupted_json" => {
+            let text = hand_written_store(cli, "[presets\nbroken = = 1\n");
+            clean_error(cli, &["presets"], "presets.toml: not valid TOML")?;
+            clean_error(cli, &["save", "x", "d6"], "not valid TOML")?;
+            eq("file", store_text(cli), text)
+        }
+        // v1: a JSON list loaded as empty. v2: a `presets` value of the
+        // wrong shape is an error.
+        "presets_load_non_dict_json" => {
+            let text = hand_written_store(cli, "presets = [\"d20\"]\n");
+            clean_error(cli, &["presets"], "`presets` must be a table")?;
+            eq("file", store_text(cli), text)
+        }
+        // v1 dropped non-string values on load. v2 refuses the file and names
+        // the entry (`import` still drops them, with a reason per entry).
+        "presets_load_filters_non_string_values" => {
+            let text = hand_written_store(cli, "[presets]\ngood = \"d6\"\nbad = 5\n");
+            clean_error(cli, &["presets"], "preset 'bad' must be a string")?;
+            eq("file", store_text(cli), text)
+        }
+        "presets_multiple_presets" => {
+            let all = [("first", "d4"), ("second", "2d6+1"), ("third", "4d6dl1")];
+            for (name, formula) in all {
+                ok(cli, &["save", name, formula])?;
+            }
+            let listing = ok(cli, &["presets"])?.stdout;
+            for (name, formula) in all {
+                let line = listing
+                    .lines()
+                    .find(|l| l.starts_with(name))
+                    .ok_or(format!("{name} not listed"))?;
+                eq("line", line.ends_with(formula), true)?;
+                let run = ok(cli, &[name, "--seed", SEED, "--json"])?;
+                eq(
+                    "formula",
+                    run.json()["rolls"][0]["formula"].clone(),
+                    formula.into(),
+                )?;
+            }
+            Ok(())
+        }
+        other => Err(format!("no runner for presets case {other:?}")),
+    }
+}
+
+fn check_roll(cli: &Cli, c: &Case) -> Result<(), String> {
     let run = cli.run(&[&c.formula, "--seed", SEED, "--json"]);
     if c.expect == "error" {
         if run.success() {
