@@ -279,3 +279,58 @@ fn label(total: i64, tally: Option<(i64, i64)>) -> String {
         }
     }
 }
+
+#[test]
+fn color_paints_successes_green_and_failures_red_only_when_on() {
+    let cli = Cli::new();
+    let (mut greens, mut reds) = (0, 0);
+    for seed in SEEDS {
+        let out = cli.roll_json("6d10>=8f1", seed);
+        let node = &out["rolls"][0]["expr"];
+        let pool = flat_dice(node);
+        let colored = human(&["--color", "always"], "6d10>=8f1", seed);
+        let cells: Vec<String> = pool
+            .iter()
+            .map(|d| match d.get("outcome").and_then(Value::as_str) {
+                Some("success") => {
+                    greens += 1;
+                    format!("\x1b[32m{}✓\x1b[0m", value(d))
+                }
+                Some("failure") => {
+                    reds += 1;
+                    format!("\x1b[31m{}✗\x1b[0m", value(d))
+                }
+                _ => value(d).to_string(),
+            })
+            .collect();
+        let (s, f) = (node["successes"].as_i64().unwrap(), node["failures"].as_i64().unwrap());
+        let tail = label(s - f, (f > 0).then_some((s, f)));
+        assert_eq!(
+            colored,
+            format!("6d10>=8f1  [{}]  →  \x1b[1m{tail}\x1b[0m\n", cells.join(", ")),
+            "seed {seed}"
+        );
+        // Off: no escape codes at all.
+        let plain = human(&["--color", "never"], "6d10>=8f1", seed);
+        assert!(!plain.contains('\x1b'), "{plain}");
+    }
+    assert!(greens > 0 && reds > 0, "greens {greens}, reds {reds}");
+}
+
+#[test]
+fn a_natural_twenty_or_one_on_a_counting_d20_is_painted_by_outcome_not_bold() {
+    let cli = Cli::new();
+    let mut checked = 0;
+    for seed in 0..200 {
+        let out = cli.roll_json("d20>=15f1", seed);
+        let v = value(&flat_dice(&out["rolls"][0]["expr"])[0]);
+        if v != 20 && v != 1 {
+            continue;
+        }
+        let colored = human(&["--color", "always"], "d20>=15f1", seed);
+        let (code, mark) = if v == 20 { ("32", "✓") } else { ("31", "✗") };
+        assert!(colored.contains(&format!("[\x1b[{code}m{v}{mark}\x1b[0m]")), "{colored}");
+        checked += 1;
+    }
+    assert!(checked >= 2, "only {checked} naturals in 200 seeds");
+}
