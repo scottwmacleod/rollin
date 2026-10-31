@@ -45,9 +45,18 @@ pub fn parse(src: &str) -> Result<Vec<Item>, Error> {
         parser.item_dice = 0;
         let expr = parser.parse_item()?;
         let stop = parser.prev_end();
+        let label = match parser.peek() {
+            Some(Token::Label(text)) => {
+                let text = text.clone();
+                parser.pos += 1;
+                Some(text)
+            }
+            _ => None,
+        };
         items.push(Item {
             source: src[start..stop].trim().to_string(),
             expr,
+            label,
         });
         if !parser.at_end() && !matches!(parser.peek(), Some(Token::Comma)) {
             return Err(parser.unexpected("',' or the end of the formula"));
@@ -624,5 +633,6 @@ fn describe(t: &Token) -> String {
         Token::Lt => "'<'".into(),
         Token::Le => "'<='".into(),
         Token::Eq => "'='".into(),
+        Token::Label(_) => "a label".into(),
     }
 }

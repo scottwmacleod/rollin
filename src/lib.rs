@@ -192,6 +192,9 @@ pub struct Roll {
     pub kind: Kind,
     pub total: i64,
     pub expr: Node,
+    /// The `# text` note on this roll's item, if it had one.
+    #[serde(skip)]
+    pub label: Option<String>,
 }
 
 /// Parses and evaluates a formula (one or more comma-separated rolls) using

@@ -9,6 +9,8 @@ pub struct Item {
     /// The item's source text, trimmed.
     pub source: String,
     pub expr: Expr,
+    /// The `# text` note on this item, trimmed.
+    pub label: Option<String>,
 }
 
 /// An expression with the byte range of the source it came from.

@@ -26,6 +26,8 @@ pub enum Token {
     Lt,
     Le,
     Eq,
+    /// `#` and the text after it, up to (not including) the next comma.
+    Label(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -49,6 +51,17 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
             out.push(Spanned {
                 token,
                 span: start..start + 2,
+            });
+            continue;
+        }
+        if c == '#' {
+            let end = src[start..].find(',').map_or(src.len(), |i| start + i);
+            while chars.peek().is_some_and(|&(i, _)| i < end) {
+                chars.next();
+            }
+            out.push(Spanned {
+                token: Token::Label(src[start + 1..end].trim().to_string()),
+                span: start..end,
             });
             continue;
         }

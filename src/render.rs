@@ -241,12 +241,16 @@ fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
 /// The default output: one line per roll.
 pub fn render_line(p: Painter, roll: &Roll) -> String {
     let total = p.bold(&total_text(roll));
+    let label = roll
+        .label
+        .as_ref()
+        .map_or(String::new(), |l| format!("  # {l}"));
     if !has_dice(&roll.expr) {
-        return format!("{}  →  {total}", roll.formula);
+        return format!("{}  →  {total}{label}", roll.formula);
     }
     let nat = natural(&roll.expr);
     format!(
-        "{}  {}  →  {total}",
+        "{}  {}  →  {total}{label}",
         roll.formula,
         expr_line(p, &roll.expr, nat)
     )
