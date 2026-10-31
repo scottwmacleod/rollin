@@ -288,6 +288,7 @@ impl Parser<'_> {
         if !matches!(self.peek(), Some(Token::Bang)) {
             return Ok(None);
         }
+        let start = self.tokens[self.pos].span.start;
         self.pos += 1;
         let mode = if matches!(self.peek(), Some(Token::Bang)) {
             self.pos += 1;
@@ -298,23 +299,31 @@ impl Parser<'_> {
         } else {
             ExplodeMode::Plain
         };
-        let cmp = match self.peek() {
-            Some(Token::Gt) => Cmp::Gt,
-            Some(Token::Ge) => Cmp::Ge,
-            Some(Token::Lt) => Cmp::Lt,
-            Some(Token::Le) => Cmp::Le,
-            Some(Token::Eq) => Cmp::Eq,
-            _ => {
-                return Ok(Some(Explode {
-                    mode,
-                    cmp: Cmp::Eq,
-                    value: sides,
-                }))
+        let (cmp, value) = match self.peek() {
+            Some(Token::Gt) => (Cmp::Gt, None),
+            Some(Token::Ge) => (Cmp::Ge, None),
+            Some(Token::Lt) => (Cmp::Lt, None),
+            Some(Token::Le) => (Cmp::Le, None),
+            Some(Token::Eq) => (Cmp::Eq, None),
+            _ => (Cmp::Eq, Some(sides)),
+        };
+        let value = match value {
+            Some(v) => v,
+            None => {
+                self.pos += 1;
+                self.number("a number after the explode condition")?
             }
         };
-        self.pos += 1;
-        let value = self.number("a number after the explode condition")?;
-        Ok(Some(Explode { mode, cmp, value }))
+        let explode = Explode { mode, cmp, value };
+        if (1..=sides).all(|face| explode.triggers(face)) {
+            let span = start..self.prev_end();
+            return Err(Error::InfiniteExplosion {
+                clause: self.src[span.clone()].to_string(),
+                sides,
+                span,
+            });
+        }
+        Ok(Some(explode))
     }
 
     /// Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1).

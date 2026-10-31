@@ -154,3 +154,69 @@ fn bang_p_penetrates_so_each_extra_roll_counts_one_less() {
         assert!(extras > 0, "{formula}: nothing penetrated");
     }
 }
+
+/// Runs a formula expected to fail and returns its stderr.
+#[track_caller]
+fn failure(formula: &str) -> String {
+    let run = Cli::new().run(&["--seed", "1", "--", formula]);
+    assert!(!run.success(), "{formula:?} should fail: {run:?}");
+    assert!(run.stdout.is_empty(), "{formula:?}: {run:?}");
+    run.stderr
+}
+
+#[test]
+fn conditions_true_on_every_face_are_rejected_before_rolling() {
+    for formula in [
+        "d6!>0", "d6!>=1", "d6!<7", "d6!<=6", "d6!>=0", "d2!<=2", "d6!!>=1", "d6!!<7", "d6!p>=1",
+        "d6!p<=6", "3d6!<=6",
+    ] {
+        let err = failure(formula);
+        assert!(
+            err.starts_with("error: ") && err.contains("every face"),
+            "{formula}: {err}"
+        );
+    }
+}
+
+#[test]
+fn the_always_exploding_error_underlines_the_explode_clause() {
+    assert_eq!(
+        failure("2d6+d6!>=1"),
+        "error: explosion condition '!>=1' is true for every face of a d6, so it would never stop\n  2d6+d6!>=1\n        ^^^^\n"
+    );
+    assert_eq!(
+        failure("d6 !! < 7"),
+        "error: explosion condition '!! < 7' is true for every face of a d6, so it would never stop\n  d6 !! < 7\n     ^^^^^^\n"
+    );
+}
+
+#[test]
+fn a_d1_that_always_explodes_is_rejected_statically() {
+    assert_eq!(
+        failure("d1!"),
+        "error: sides must be between 2 and 10000\n  d1!\n   ^\n"
+    );
+}
+
+#[test]
+fn conditions_that_never_hold_are_allowed_and_never_explode() {
+    let cli = Cli::new();
+    for formula in ["d6!>6", "d6!<1", "d6!=7", "d6!!>6", "d6!p=0"] {
+        for seed in 0..20 {
+            let pool = dice(&cli, formula, seed);
+            assert_eq!(pool.len(), 1, "{formula}");
+            assert_eq!(status(&pool[0]), "kept");
+        }
+    }
+}
+
+#[test]
+fn an_explode_condition_needs_a_number() {
+    for formula in ["d6!>", "d6!=", "d6!!<=", "d6!p>="] {
+        let err = failure(formula);
+        assert!(
+            err.contains("expected a number after the explode condition"),
+            "{formula}: {err}"
+        );
+    }
+}
