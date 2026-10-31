@@ -113,3 +113,38 @@ fn quit_and_exit_end_the_session_in_any_case() {
         assert_eq!(run.stderr, "", "{word}");
     }
 }
+
+#[test]
+fn help_prints_a_short_summary_of_commands_and_syntax() {
+    let run = Cli::new().run_stdin(&[], "help\nHELP\n");
+    assert_eq!(run.code, 0, "{run:?}");
+    assert_eq!(run.stderr, "");
+    let (first, second) = run.stdout.split_at(run.stdout.len() / 2);
+    assert_eq!(first, second, "help is case-insensitive and repeatable");
+    for needle in [
+        "save <name> <formula>",
+        "presets",
+        "delete <name>",
+        "import <path>",
+        "set <name> <integer>",
+        "unset <name>",
+        "vars",
+        "characters",
+        "char ",
+        "history",
+        "quit",
+        "--seed",
+        "Tab",
+    ] {
+        assert!(first.contains(needle), "help lacks {needle:?}: {first}");
+    }
+    assert!(
+        first.lines().count() <= 20,
+        "help should stay short: {first}"
+    );
+}
+
+#[test]
+fn help_with_more_words_is_just_a_bad_formula_like_one_shot() {
+    assert_parity(&["help me", "history now", "quit later"]);
+}

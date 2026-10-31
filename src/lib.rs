@@ -23,7 +23,7 @@ pub use command::{
 };
 pub use error::Error;
 pub use presets::{validate_name, NameError, NameRule, Store, StoreError};
-pub use session::{session_command, SessionCommand};
+pub use session::{help_text, session_command, SessionCommand};
 
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
