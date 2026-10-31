@@ -35,3 +35,16 @@ fn saving_an_invalid_formula_shows_the_span_error_and_saves_nothing() {
     assert!(run.stdout.is_empty());
     assert!(cli.run(&["presets"]).stdout.starts_with("No presets"));
 }
+
+#[test]
+fn a_preset_rolls_by_bare_name_with_a_header() {
+    let cli = Cli::new();
+    cli.run(&["save", "atk", "d20+5"]).assert_success();
+    let by_name = cli.run(&["atk", "--seed", "3"]);
+    by_name.assert_success();
+    let direct = cli.run(&["d20+5", "--seed", "3"]);
+    assert_eq!(
+        by_name.stdout,
+        format!("(preset 'atk': d20+5)\n{}", direct.stdout)
+    );
+}

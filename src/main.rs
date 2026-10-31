@@ -4,6 +4,7 @@ use clap::Parser;
 use render::{color_enabled, render_line, render_verbose, ColorChoice, Painter};
 use rollin::{
     entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Output, Roll,
+    Store,
 };
 use serde::Serialize;
 use std::io::IsTerminal;
@@ -56,7 +57,9 @@ fn main() -> ExitCode {
     let ctx = Context {
         config_dir: config_dir(),
     };
-    let command = match parse_command(&args.words) {
+    let store = Store::in_config_dir(&ctx.config_dir);
+    let names = &mut || store.load().map(|p| p.into_keys().collect());
+    let command = match parse_command(&args.words, names) {
         Ok(command) => command,
         Err(e) => return fail(&e),
     };
@@ -91,7 +94,7 @@ fn fail(e: &CommandError) -> ExitCode {
 
 fn show(args: &Args, output: Output) {
     match output {
-        Output::Rolls(rolls) => show_rolls(args, rolls),
+        Output::Rolls { preset, rolls } => show_rolls(args, preset, rolls),
         Output::Saved { name, formula } => println!("saved '{name}': {formula}"),
         Output::Presets(presets) if presets.is_empty() => {
             println!("No presets saved. Add one with: rollin save <name> <formula>");
@@ -104,7 +107,7 @@ fn show(args: &Args, output: Output) {
     }
 }
 
-fn show_rolls(args: &Args, rolls: Vec<Roll>) {
+fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<Roll>) {
     if args.json {
         let out = JsonOutput {
             schema_version: SCHEMA_VERSION,
@@ -123,6 +126,9 @@ fn show_rolls(args: &Args, rolls: Vec<Roll>) {
             std::io::stdout().is_terminal(),
         );
         let paint = Painter { on };
+        if let Some((name, formula)) = preset {
+            println!("(preset '{name}': {formula})");
+        }
         if args.verbose {
             let blocks: Vec<String> = rolls.iter().map(|r| render_verbose(paint, r)).collect();
             println!("{}", blocks.join("\n\n"));
