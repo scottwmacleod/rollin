@@ -286,3 +286,47 @@ fn compounded_extra_rolls_count_toward_the_dice_per_expression_cap() {
         "{err}"
     );
 }
+
+#[test]
+fn default_output_marks_exploded_dice_with_a_bang() {
+    let cli = Cli::new();
+    let run = cli.run(&["--seed", "2", "3d6!"]);
+    assert_eq!(run.stdout, "3d6!  [2, 6, 4!, 4]  →  16\n");
+    let run = cli.run(&["--seed", "2", "3d6!p"]);
+    assert_eq!(run.stdout, "3d6!p  [2, 6, 3!, 4]  →  15\n");
+    // A compounded die is one entry, marked as having exploded.
+    let run = cli.run(&["--seed", "2", "3d6!!"]);
+    assert_eq!(run.stdout, "3d6!!  [2, 10!, 4]  →  16\n");
+}
+
+#[test]
+fn verbose_output_labels_exploded_dice_and_shows_compound_parts() {
+    let cli = Cli::new();
+    let run = cli.run(&["-v", "--seed", "2", "3d6!"]);
+    assert_eq!(
+        run.stdout,
+        "3d6!\n  3d6!: 2 kept, 6 kept, 4 exploded, 4 kept = 16\n  total: 16\n"
+    );
+    let run = cli.run(&["-v", "--seed", "2", "3d6!!"]);
+    assert_eq!(
+        run.stdout,
+        "3d6!!\n  3d6!!: 2 kept, 10 kept (6+4), 4 kept = 16\n  total: 16\n"
+    );
+}
+
+#[test]
+fn json_records_exploded_status_and_compound_parts() {
+    let cli = Cli::new();
+    let plain = cli.roll_json("3d6!", 2);
+    let node = &plain["rolls"][0]["expr"];
+    assert_eq!(
+        node["dice"][2],
+        serde_json::json!({"value": 4, "status": "exploded"})
+    );
+    let compound = cli.roll_json("3d6!!", 2);
+    let node = &compound["rolls"][0]["expr"];
+    assert_eq!(
+        node["dice"][1],
+        serde_json::json!({"value": 10, "status": "kept", "parts": [6, 4]})
+    );
+}

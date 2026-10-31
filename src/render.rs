@@ -129,9 +129,15 @@ fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
             let cells: Vec<String> = dice
                 .iter()
                 .map(|d| {
+                    // A trailing `!` marks a die that came from an explosion.
+                    let bang = if d.status == Status::Exploded || d.parts.len() > 1 {
+                        "!"
+                    } else {
+                        ""
+                    };
                     let text = match d.status {
-                        Status::Dropped => format!("({})", d.value),
-                        _ => d.value.to_string(),
+                        Status::Dropped => format!("({}{bang})", d.value),
+                        _ => format!("{}{bang}", d.value),
                     };
                     paint_die(p, d, nat, &text)
                 })
@@ -199,7 +205,11 @@ fn verbose_node(
             let cells: Vec<String> = dice
                 .iter()
                 .map(|d| {
-                    let text = format!("{} {}", d.value, status_label(d.status));
+                    let mut text = format!("{} {}", d.value, status_label(d.status));
+                    if d.parts.len() > 1 {
+                        let parts: Vec<String> = d.parts.iter().map(u32::to_string).collect();
+                        text.push_str(&format!(" ({})", parts.join("+")));
+                    }
                     paint_die(p, d, nat, &text)
                 })
                 .collect();
