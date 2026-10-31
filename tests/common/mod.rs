@@ -1,7 +1,8 @@
 //! CLI-seam test helper: runs the compiled `rollin` binary as a process.
 //!
-//! Every [`Cli`] owns a fresh temporary `XDG_CONFIG_HOME`, so tests never
-//! touch the real user config and never see each other's state.
+//! Every [`Cli`] owns a fresh temporary `XDG_CONFIG_HOME` and `HOME` (also the
+//! working directory), so tests never touch the real user config or the
+//! checkout and never see each other's state.
 
 #![allow(dead_code)] // each test crate uses a different subset
 
@@ -40,17 +41,36 @@ impl Run {
 /// A sandboxed `rollin` command runner with its own config directory.
 pub struct Cli {
     config_dir: TempDir,
+    home: TempDir,
 }
 
 impl Cli {
     pub fn new() -> Self {
         Cli {
             config_dir: TempDir::new().expect("create temp config dir"),
+            home: TempDir::new().expect("create temp home"),
         }
+    }
+
+    /// The sandbox `HOME`.
+    pub fn home_dir(&self) -> &std::path::Path {
+        self.home.path()
     }
 
     pub fn config_dir(&self) -> &std::path::Path {
         self.config_dir.path()
+    }
+
+    /// A `rollin` command sandboxed to this `Cli`: `HOME` and the working
+    /// directory are a temp dir, and `XDG_CONFIG_HOME` is the temp config
+    /// dir. Every spawn in the test suite must start from here, so nothing
+    /// can read or write the real config or the repo checkout.
+    pub fn command(&self) -> Command {
+        let mut cmd = Command::cargo_bin("rollin").expect("rollin binary builds");
+        cmd.env("HOME", self.home.path())
+            .env("XDG_CONFIG_HOME", self.config_dir.path())
+            .current_dir(self.home.path());
+        cmd
     }
 
     /// Runs `rollin` with `args`, capturing output; never panics on failure exit.
@@ -58,11 +78,26 @@ impl Cli {
         self.run_stdin(args, "")
     }
 
+    /// Like [`Cli::run`], but with `XDG_CONFIG_HOME` unset so `rollin` falls
+    /// back to `$HOME/.config`. Used to prove HOME is sandboxed too.
+    pub fn run_without_xdg(&self, args: &[&str]) -> Run {
+        let out = self
+            .command()
+            .env_remove("XDG_CONFIG_HOME")
+            .args(args)
+            .output()
+            .expect("spawn rollin");
+        Run {
+            stdout: String::from_utf8(out.stdout).expect("utf-8 stdout"),
+            stderr: String::from_utf8(out.stderr).expect("utf-8 stderr"),
+            code: out.status.code().unwrap_or(-1),
+        }
+    }
+
     /// Like [`Cli::run`], with `stdin` piped in (so not a terminal).
     pub fn run_stdin(&self, args: &[&str], stdin: &str) -> Run {
-        let out = Command::cargo_bin("rollin")
-            .expect("rollin binary builds")
-            .env("XDG_CONFIG_HOME", self.config_dir.path())
+        let out = self
+            .command()
             .args(args)
             .write_stdin(stdin)
             .output()
