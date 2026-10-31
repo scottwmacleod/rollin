@@ -184,10 +184,18 @@ impl Parser<'_> {
 
     fn unexpected(&self, expected: &str) -> Error {
         match self.tokens.get(self.pos) {
-            Some(t) => Error::syntax(
-                format!("expected {expected}, found {}", describe(&t.token)),
-                t.span.clone(),
-            ),
+            Some(t) => {
+                // A variable already resolved to a number is still a variable
+                // to the person who typed it.
+                let found = match self.src.get(t.span.clone()) {
+                    Some(text) if text.starts_with('@') => format!("variable {text}"),
+                    _ => describe(&t.token),
+                };
+                Error::syntax(
+                    format!("expected {expected}, found {found}"),
+                    t.span.clone(),
+                )
+            }
             None => Error::syntax(
                 format!("expected {expected}, found end of input"),
                 self.end..self.end,

@@ -764,9 +764,14 @@ pub fn execute(
 fn check_formula(formula: &str) -> Result<(), CommandError> {
     match crate::parser::parse_with(formula, &|_| Some(2)) {
         Ok(_) => Ok(()),
-        Err(Error::WithVariables { inner, .. }) if !matches!(*inner, Error::Syntax { .. }) => {
-            Ok(())
-        }
+        Err(Error::WithVariables { inner, .. }) => match *inner {
+            Error::Syntax { .. } => Err(CommandError::Formula {
+                source: formula.to_string(),
+                // Without the stand-in value, which the user never typed.
+                error: *inner,
+            }),
+            _ => Ok(()),
+        },
         Err(error) => Err(CommandError::Formula {
             source: formula.to_string(),
             error,

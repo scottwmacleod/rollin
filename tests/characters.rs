@@ -732,3 +732,44 @@ fn delete_removes_from_the_character_and_needs_global_for_global_presets() {
     assert_eq!(again.stderr, "error: no preset named 'only'\n");
     assert!(cli.run(&["presets"]).stdout.starts_with("No presets"));
 }
+
+#[test]
+fn saving_a_formula_with_variables_ignores_errors_caused_by_the_stand_in_value() {
+    let cli = Cli::new();
+    for (name, formula) in [
+        ("sides", "d@sides"),
+        ("pool", "@n d@s!>@x"),
+        ("keep", "@n d6kh@k"),
+        ("rep", "@n x d20"),
+        ("rerolls", "4d6rr<@x"),
+        ("count", "6d10>=@dc f@fail"),
+        ("mixed", "d20+@str, 2d6+@dmg # damage"),
+    ] {
+        cli.run(&["save", name, formula]).assert_success();
+    }
+    // Rolled for real, a bad value is reported then, against the real value.
+    cli.run(&["set", "sides", "1"]).assert_success();
+    let run = cli.run(&["sides"]);
+    assert_eq!(
+        run.stderr,
+        "error: @sides is 1 but sides must be between 2 and 10000\n  d@sides\n   ^^^^^^\n"
+    );
+}
+
+#[test]
+fn saving_still_reports_real_syntax_errors_and_formulas_without_variables_stay_strict() {
+    let cli = Cli::new();
+    for (formula, stderr) in [
+        ("d20+@str+", "error: expected a number, a dice group or '(', found end of input\n  d20+@str+\n           ^\n"),
+        ("d20 @a", "error: expected ',' or the end of the formula, found variable @a\n  d20 @a\n      ^^\n"),
+        ("@a @b", "error: expected ',' or the end of the formula, found variable @b\n  @a @b\n     ^^\n"),
+        ("d1!", "error: sides must be between 2 and 10000\n  d1!\n   ^\n"),
+        ("6d6!>0", "error: explosion condition '!>0' is true for every face of a d6, so it would never stop\n  6d6!>0\n     ^^^\n"),
+        ("d6dl9", "error: cannot drop 9 dice from a pool of 1\n  d6dl9\n    ^^^\n"),
+    ] {
+        let run = cli.run(&["save", "bad", formula]);
+        assert_eq!(run.code, 1, "{formula}: {run:?}");
+        assert_eq!(run.stderr, stderr, "{formula}");
+    }
+    assert!(cli.run(&["presets"]).stdout.starts_with("No presets"));
+}
