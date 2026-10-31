@@ -88,8 +88,12 @@ pub fn tokenize(src: &str) -> Result<Vec<Spanned>, Error> {
             });
         } else if c.is_ascii_alphabetic() {
             let mut end = start;
+            // A `p` right after `!` is the penetrating marker on its own, so
+            // `!pkh2` lexes as `!`, `p`, `kh`, `2`.
+            let penetrating =
+                c.eq_ignore_ascii_case(&'p') && out.last().is_some_and(|t| t.token == Token::Bang);
             while let Some(&(i, d)) = chars.peek() {
-                if !d.is_ascii_alphabetic() {
+                if !d.is_ascii_alphabetic() || (penetrating && end > start) {
                     break;
                 }
                 end = i + 1;

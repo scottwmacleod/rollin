@@ -292,6 +292,9 @@ impl Parser<'_> {
         let mode = if matches!(self.peek(), Some(Token::Bang)) {
             self.pos += 1;
             ExplodeMode::Compound
+        } else if matches!(self.peek(), Some(Token::Word(w)) if w == "p") {
+            self.pos += 1;
+            ExplodeMode::Penetrate
         } else {
             ExplodeMode::Plain
         };

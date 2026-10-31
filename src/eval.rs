@@ -24,15 +24,15 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
         ExprKind::Dice(d) => {
             let mut dice = Vec::new();
             for _ in 0..d.count {
-                let mut value = rng.gen_range(1..=d.sides as u32);
+                let mut raw = rng.gen_range(1..=d.sides as u32);
                 let mut die = Die {
-                    value,
+                    value: raw,
                     status: Status::Kept,
                     parts: Vec::new(),
                 };
                 let mut extras = Vec::new();
                 let mut explosions = 0;
-                while d.explode.is_some_and(|e| e.triggers(i64::from(value))) {
+                while d.explode.is_some_and(|e| e.triggers(i64::from(raw))) {
                     if explosions == MAX_EXPLOSIONS_PER_DIE {
                         return Err(Error::LimitExceeded {
                             cap: "explosions per die",
@@ -42,8 +42,8 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
                         });
                     }
                     explosions += 1;
-                    value = rng.gen_range(1..=d.sides as u32);
-                    extras.push(value);
+                    raw = rng.gen_range(1..=d.sides as u32);
+                    extras.push(raw);
                 }
                 if d.explode.is_some_and(|e| e.mode == ExplodeMode::Compound) && !extras.is_empty()
                 {
@@ -52,8 +52,10 @@ fn eval_expr(expr: &Expr, rng: &mut impl Rng) -> Result<Node, Error> {
                     dice.push(die);
                 } else {
                     dice.push(die);
-                    dice.extend(extras.into_iter().map(|value| Die {
-                        value,
+                    let penetrate = d.explode.is_some_and(|e| e.mode == ExplodeMode::Penetrate);
+                    dice.extend(extras.into_iter().map(|raw| Die {
+                        // A penetrating extra die counts one less, with no floor.
+                        value: raw - u32::from(penetrate),
                         status: Status::Exploded,
                         parts: Vec::new(),
                     }));

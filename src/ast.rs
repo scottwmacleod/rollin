@@ -90,6 +90,8 @@ pub enum ExplodeMode {
     Plain,
     /// `!!`: extra rolls are added into the exploding die.
     Compound,
+    /// `!p`: like `!`, but each extra die counts one less than it rolled.
+    Penetrate,
 }
 
 /// A comparison against a face value.
