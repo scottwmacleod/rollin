@@ -19,3 +19,14 @@ Single-context: one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/ag
 ### Implement loop
 
 Repo rules for `/implement`: queue, branch/PR/merge mechanics, limits, and human-stop triggers. See `docs/agents/implement.md`.
+
+## Commands
+
+- `just fmt`: format the code with `cargo fmt`.
+- `just lint`: run clippy as CI does (`cargo clippy --all-targets -- -D warnings`).
+- `just test`: run the full test suite with `cargo test`.
+- `just check`: run `cargo fmt --check`, then `just lint`, then `just test`; the same gates as CI.
+
+## Definition of done
+
+Work is done when `just check` passes.
