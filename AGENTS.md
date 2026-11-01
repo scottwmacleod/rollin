@@ -15,3 +15,7 @@ Default five-label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, 
 ### Domain docs
 
 Single-context: one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Implement loop
+
+Repo rules for `/implement`: queue, branch/PR/merge mechanics, limits, and human-stop triggers. See `docs/agents/implement.md`.
