@@ -37,7 +37,17 @@
       "Bash(gh pr close *)",
       "Bash(gh run view *)",
       "Bash(gh run list *)",
-      "Bash(gh run rerun *)"
+      "Bash(gh run rerun *)",
+      "Bash(just *)",
+      "Bash(cargo deny *)",
+      "Bash(cargo +* test *)",
+      "Bash(cargo +* build *)",
+      "Bash(cargo +* check *)",
+      "Bash(rustup toolchain *)",
+      "Bash(rustup show *)",
+      "Bash(git rm *)",
+      "Bash(git mv *)",
+      "Bash(git restore *)"
     ],
     "deny": [
       "Bash(git push *--force*)",
