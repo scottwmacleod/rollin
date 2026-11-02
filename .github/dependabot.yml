@@ -4,6 +4,12 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Major bumps change --seed output (ADR 0003) and must move together; see #71.
+    ignore:
+      - dependency-name: "rand"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "rand_chacha"
+        update-types: ["version-update:semver-major"]
     groups:
       cargo-minor-patch:
         patterns:
