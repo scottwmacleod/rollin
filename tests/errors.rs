@@ -149,8 +149,10 @@ fn nesting_deeper_than_32_is_an_error() {
 fn very_long_flat_formulas_do_not_overflow_the_stack() {
     let cli = Cli::new();
     let long = vec!["1"; 200_000].join("+");
-    let run = cli.run(&[&long, "--seed", "1"]);
+    // Piped as a session line: Linux caps a single argv string at 128 KiB.
+    let run = cli.run_stdin(&[], &format!("{long} --seed 1\n"));
     run.assert_success();
+    assert_eq!(run.stderr, "");
     assert!(run.stdout.ends_with("→  200000\n"), "{}", run.stdout.len());
 }
 
