@@ -72,6 +72,8 @@ jobs:
         run: npm --prefix apps/desktop ci
       - name: Build front end
         run: npm --prefix apps/desktop run build
+      - name: Test front end
+        run: npm --prefix apps/desktop test
       - name: Clippy
         run: cargo clippy -p rollin-desktop --all-targets --locked -- -D warnings
       - name: Build app
