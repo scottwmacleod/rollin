@@ -582,7 +582,13 @@ mod special_dice {
 
     /// The tree and total of a roll, ignoring the text that was typed.
     fn shape(r: &rollin::Roll) -> (Vec<Die>, i64) {
-        (dice_of(&r.expr), r.total)
+        // The reason names the clause as written (`adv` vs `kh1`), so it is
+        // not part of the shape.
+        let mut dice = dice_of(&r.expr);
+        for d in &mut dice {
+            d.reason = None;
+        }
+        (dice, r.total)
     }
 
     proptest! {

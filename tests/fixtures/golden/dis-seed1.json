@@ -1,5 +1,5 @@
 {
   "formula": "d20dis",
   "seed": 1,
-  "expected": {"schema_version":1,"rolls":[{"formula":"d20dis","total":2,"expr":{"type":"dice","term":"d20dis","sides":20,"dice":[{"value":9,"status":"dropped"},{"value":2,"status":"kept"}],"subtotal":2}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"d20dis","total":2,"expr":{"type":"dice","term":"d20dis","sides":20,"modifiers":["dis"],"dice":[{"value":9,"status":"dropped","reason":{"clause":"dis"}},{"value":2,"status":"kept"}],"subtotal":2}}]}
 }

@@ -3,7 +3,7 @@
 use crate::ast::{BinOp, Dice, ExplodeMode, Expr, ExprKind, Item, RerollMode};
 use crate::error::Error;
 use crate::limits::{Cap, MAX_DICE_PER_EXPRESSION, MAX_EXPLOSIONS_PER_DIE, MAX_REROLLS_PER_DIE};
-use crate::{Die, Kind, Link, Node, Outcome, Roll, Status, Tally};
+use crate::{Die, Kind, Link, Node, Outcome, Reason, Roll, Status, Tally};
 use rand::Rng;
 use std::ops::Range;
 
@@ -51,8 +51,11 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
         ExprKind::Number(n) => Ok(Node::Number { value: *n }),
         ExprKind::Dice(d) => {
             let mut dice = Vec::new();
+            let reroll_reason = d.clauses.reroll.clone();
             for _ in 0..d.count {
                 let mut raw = ctx.die(d, &expr.span)?;
+                // The index of the last die this one's reroll replaced.
+                let mut replaced = None;
                 if let Some(reroll) = d.reroll {
                     let mut rerolls = 0;
                     while reroll.triggers(raw) {
@@ -69,7 +72,9 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                             status: Status::Rerolled,
                             parts: Vec::new(),
                             outcome: None,
+                            reason: reroll_reason.clone().map(|c| Reason::new(&c, None)),
                         });
+                        replaced = Some(dice.len() - 1);
                         raw = ctx.die(d, &expr.span)?;
                         if reroll.mode == RerollMode::Once {
                             break;
@@ -81,7 +86,10 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                     status: Status::Kept,
                     parts: Vec::new(),
                     outcome: None,
+                    reason: replaced
+                        .and_then(|i| Some(Reason::new(reroll_reason.as_deref()?, Some(i)))),
                 };
+                let die_index = dice.len();
                 let mut extras = Vec::new();
                 let mut explosions = 0;
                 while d.explode.is_some_and(|e| e.triggers(raw)) {
@@ -100,21 +108,34 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 {
                     die.parts = std::iter::once(die.value).chain(extras).collect();
                     die.value = die.parts.iter().sum();
+                    die.reason = d.clauses.explode.as_deref().map(|c| Reason::new(c, None));
                     dice.push(die);
                 } else {
                     dice.push(die);
                     let penetrate = d.explode.is_some_and(|e| e.mode == ExplodeMode::Penetrate);
-                    dice.extend(extras.into_iter().map(|raw| Die {
-                        // A penetrating extra die counts one less, with no floor.
-                        value: raw - i64::from(penetrate),
-                        status: Status::Exploded,
-                        parts: Vec::new(),
-                        outcome: None,
+                    dice.extend(extras.into_iter().enumerate().map(|(n, raw)| {
+                        Die {
+                            // A penetrating extra die counts one less, with no floor.
+                            value: raw - i64::from(penetrate),
+                            status: Status::Exploded,
+                            parts: Vec::new(),
+                            outcome: None,
+                            // Each extra die exploded from the die just before it.
+                            reason: d
+                                .clauses
+                                .explode
+                                .as_deref()
+                                .map(|c| Reason::new(c, Some(die_index + n))),
+                        }
                     }));
                 }
             }
             let pool = dice.iter().filter(|d| d.status != Status::Rerolled).count();
-            apply_drops(&mut dice, d.drops(pool));
+            apply_drops(
+                &mut dice,
+                d.drops(pool),
+                d.clauses.select.as_deref().unwrap_or_default(),
+            );
             let mut tally = None;
             let subtotal = match d.success {
                 Some(success) => {
@@ -145,6 +166,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
             Ok(Node::Dice {
                 term: d.text.clone(),
                 sides: d.sides,
+                modifiers: d.clauses.list(),
                 special: d.special,
                 dice,
                 subtotal,
@@ -213,7 +235,7 @@ pub(crate) fn apply(
 
 /// Marks the lowest and highest dice as dropped. Ties are broken by roll
 /// order (stable sort), matching v1.
-fn apply_drops(dice: &mut [Die], (lowest, highest): (i64, i64)) {
+fn apply_drops(dice: &mut [Die], (lowest, highest): (i64, i64), clause: &str) {
     let mut order: Vec<usize> = (0..dice.len())
         .filter(|&i| dice[i].status != Status::Rerolled)
         .collect();
@@ -221,8 +243,10 @@ fn apply_drops(dice: &mut [Die], (lowest, highest): (i64, i64)) {
     let (lowest, highest) = (lowest as usize, highest as usize);
     for &i in order.iter().take(lowest) {
         dice[i].status = Status::Dropped;
+        dice[i].reason = Some(Reason::new(clause, None));
     }
     for &i in order.iter().skip(order.len() - highest) {
         dice[i].status = Status::Dropped;
+        dice[i].reason = Some(Reason::new(clause, None));
     }
 }

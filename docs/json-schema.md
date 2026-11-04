@@ -81,9 +81,10 @@ the dice whose status counts (`kept` and `exploded`).
 | `dice` | array of die | Every die rolled |
 | `subtotal` | integer | Sum of the dice whose status counts |
 | `special` | string | `"percentile"` for `d%`. **Absent on ordinary dice**, so existing documents are unchanged (additive) |
+| `modifiers` | array of string | The term's modifier clauses as written, in the order they apply: reroll, explode, keep/drop (or `adv`/`dis`), then success. **Absent when the term has none** (additive; see "Why a die is what it is") |
 
 A die is `{"value": <integer>, "status": <string>}`, plus an optional `parts`
-array. Statuses:
+array, an optional `outcome` and an optional `reason`. Statuses:
 
 | Status | Counts toward `subtotal` | Meaning |
 | --- | --- | --- |
@@ -98,6 +99,78 @@ as not counting.
 `parts` is present only on a compounded die (`!!`) that actually exploded: the
 rolls added together into `value`, in order, so `value` is their sum. A
 compounded die that did not explode has no `parts`.
+
+#### Why a die is what it is
+
+A consumer can explain every die without re-parsing the term. The dice node
+lists its `modifiers` as written (`["r1", "!", "dl1"]` for `4d6r1!dl1`; a
+success clause is one entry, `">=8f1"`), and a die touched by a clause carries
+`reason`:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `clause` | string | The clause as written, one of the node's `modifiers` |
+| `from` | integer | Index into the same node's `dice` of the die that caused this one. **Absent when there is no such die** |
+
+`reason` is absent on a die no clause touched. A die has one reason; a
+`dropped` die always gets the keep/drop clause (as `dropped` wins over the
+other statuses), even if it was also a reroll replacement or an extra die.
+
+| Clause family | Die | `reason` |
+| --- | --- | --- |
+| reroll (`r`, `rr`) | the `rerolled` die | `{"clause": "r1"}` |
+| reroll | the die that replaced it | `{"clause": "r1", "from": <index of the rerolled die>}` |
+| explode (`!`) and penetrate (`!p`) | each `exploded` extra die | `{"clause": "!", "from": <index of the die it exploded from>}`; a chained extra points at the extra before it |
+| compound (`!!`) | the one die that exploded (it has `parts`) | `{"clause": "!!"}` |
+| keep/drop (`dl`, `dh`, `kl`, `kh`, `adv`, `dis`) | each `dropped` die | `{"clause": "kh2"}` |
+
+Success counting keeps using `outcome`. Examples (shortened, `rollin --json`):
+
+Reroll, `rollin --seed 3 --json 4d6r1`: the first die showed 1 and was
+rerolled into a 4.
+
+```json
+{"type": "dice", "term": "4d6r1", "sides": 6, "modifiers": ["r1"],
+ "dice": [{"value": 1, "status": "rerolled", "reason": {"clause": "r1"}},
+          {"value": 4, "status": "kept", "reason": {"clause": "r1", "from": 0}},
+          ...]}
+```
+
+Explode, `rollin --seed 2 --json 3d6!`: the extra die at index 2 exploded from
+the 6 at index 1.
+
+```json
+{"type": "dice", "term": "3d6!", "sides": 6, "modifiers": ["!"],
+ "dice": [{"value": 2, "status": "kept"}, {"value": 6, "status": "kept"},
+          {"value": 4, "status": "exploded", "reason": {"clause": "!", "from": 1}},
+          {"value": 4, "status": "kept"}],
+ "subtotal": 16}
+```
+
+Compound, `rollin --seed 2 --json 3d6!!`:
+
+```json
+{"value": 10, "status": "kept", "parts": [6, 4], "reason": {"clause": "!!"}}
+```
+
+Penetrate, `rollin --seed 2 --json 3d6!p`: as for `!`, with the clause `!p`.
+
+```json
+{"value": 3, "status": "exploded", "reason": {"clause": "!p", "from": 1}}
+```
+
+Keep/drop, `rollin --seed 3 --json 4d6dl1`:
+
+```json
+{"type": "dice", "term": "4d6dl1", "sides": 6, "modifiers": ["dl1"],
+ "dice": [{"value": 1, "status": "dropped", "reason": {"clause": "dl1"}},
+          {"value": 4, "status": "kept"}, {"value": 1, "status": "kept"},
+          {"value": 6, "status": "kept"}],
+ "subtotal": 11}
+```
+
+`d20dis` gives `"modifiers": ["dis"]` and a dropped die with
+`{"clause": "dis"}`. This is an additive change: `schema_version` stays 1.
 
 #### Exploding dice
 

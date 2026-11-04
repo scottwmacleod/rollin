@@ -1,0 +1,5 @@
+{
+  "formula": "3d6!!",
+  "seed": 2,
+  "expected": {"schema_version":1,"rolls":[{"formula":"3d6!!","total":16,"expr":{"type":"dice","term":"3d6!!","sides":6,"modifiers":["!!"],"dice":[{"value":2,"status":"kept"},{"value":10,"status":"kept","parts":[6,4],"reason":{"clause":"!!"}},{"value":4,"status":"kept"}],"subtotal":16}}]}
+}

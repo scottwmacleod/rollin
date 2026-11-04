@@ -12,7 +12,7 @@ fn without_text(node: &Value) -> Value {
     match node {
         Value::Object(map) => Value::Object(
             map.iter()
-                .filter(|(k, _)| !matches!(k.as_str(), "formula" | "term"))
+                .filter(|(k, _)| !matches!(k.as_str(), "formula" | "term" | "modifiers" | "reason"))
                 .map(|(k, v)| (k.clone(), without_text(v)))
                 .collect(),
         ),
