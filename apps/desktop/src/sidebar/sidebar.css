@@ -1,0 +1,110 @@
+.sidebar-root { padding: var(--space-3) 0; }
+
+.sb-header {
+  margin: var(--space-4) var(--space-3) var(--space-1);
+  font: 500 11px/16px var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sb-header:first-child { margin-top: 0; }
+
+.sb-list { list-style: none; margin: 0; padding: 0; }
+.sb-row { display: flex; align-items: center; padding: 0 var(--space-1); }
+
+.sb-var, .sb-preset, .sb-add {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-1);
+  cursor: pointer;
+}
+.sb-var:hover, .sb-preset:hover, .sb-add:hover { background: var(--surface-hover); }
+.sb-var:focus-visible, .sb-preset:focus-visible, .sb-add:focus-visible,
+.sb-menu-item:focus-visible { outline: 2px solid var(--signal-ink); outline-offset: -2px; }
+
+.sb-var { justify-content: space-between; font-family: var(--font-mono); }
+.sb-var-name { color: var(--text-2); }
+.sb-add { color: var(--muted); }
+
+.sb-play { width: 10px; font-size: 9px; color: var(--signal-ink); visibility: hidden; }
+.sb-preset:hover .sb-play, .sb-preset:focus-visible .sb-play { visibility: visible; }
+.sb-preset-name { flex: none; }
+.sb-preset-formula {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+.sb-preset.is-shadowed { opacity: 0.5; cursor: default; }
+.sb-preset.is-shadowed:hover { background: none; }
+.sb-preset.is-shadowed .sb-play { visibility: hidden; }
+
+.sb-input {
+  width: 100%;
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-family: var(--font-mono);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--signal-ink);
+  border-radius: var(--radius-1);
+  user-select: text;
+  -webkit-user-select: text;
+}
+.sb-error { margin: var(--space-3); font-size: 12px; color: var(--danger); user-select: text; }
+.sb-error:empty { display: none; }
+
+.sb-menu {
+  position: fixed;
+  z-index: 20;
+  min-width: 140px;
+  padding: var(--space-1);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-2);
+}
+.sb-menu-item {
+  all: unset;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px var(--space-2);
+  border-radius: var(--radius-1);
+  cursor: pointer;
+}
+.sb-menu-item:hover { background: var(--surface-hover); }
+
+/* ⌘B: hide the column on wide windows. */
+#app.sidebar-collapsed { grid-template-columns: 0 minmax(0, 1fr); }
+#app.sidebar-collapsed .sidebar { visibility: hidden; overflow: hidden; }
+
+/* Below 960px the sidebar floats over the log instead of taking a column. */
+@media (max-width: 959px) {
+  #app, #app.sidebar-collapsed { grid-template-columns: minmax(0, 1fr); grid-template-areas:
+    "toolbar" "roll-log" "formula" "status"; }
+  #app .sidebar, #app.sidebar-collapsed .sidebar {
+    position: fixed;
+    z-index: 10;
+    top: var(--size-toolbar);
+    bottom: var(--size-status);
+    left: 0;
+    width: var(--size-sidebar);
+    visibility: hidden; /* off-screen rows must not take Tab */
+    transform: translateX(-100%);
+    transition: transform 150ms ease, visibility 150ms;
+  }
+  #app.sidebar-open .sidebar { visibility: visible; transform: none; box-shadow: 0 0 24px rgba(0, 0, 0, 0.4); }
+}
+@media (prefers-reduced-motion: reduce) { .sidebar { transition: none !important; } }
