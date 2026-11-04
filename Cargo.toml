@@ -2,6 +2,7 @@
 name = "rollin"
 version = "2.0.1"
 edition = "2021"
+license = "MIT"
 
 [lib]
 name = "rollin"
