@@ -76,7 +76,9 @@ fn a_variable_works_in_every_position_a_literal_does() {
                     // A reason names the clause as written (`kh@k` vs `kh2`).
                     let mut dice = common::flat_dice(&r["expr"]);
                     for d in &mut dice {
-                        d.as_object_mut().unwrap().remove("reason");
+                        if let Some(r) = d.get_mut("reason").and_then(|r| r.as_object_mut()) {
+                            r.remove("clause");
+                        }
                     }
                     (r["total"].clone(), dice.into())
                 })

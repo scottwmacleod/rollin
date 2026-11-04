@@ -586,7 +586,9 @@ mod special_dice {
         // not part of the shape.
         let mut dice = dice_of(&r.expr);
         for d in &mut dice {
-            d.reason = None;
+            if let Some(r) = &mut d.reason {
+                r.clause.clear();
+            }
         }
         (dice, r.total)
     }

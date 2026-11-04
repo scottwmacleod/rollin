@@ -72,7 +72,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                             status: Status::Rerolled,
                             parts: Vec::new(),
                             outcome: None,
-                            reason: reroll_reason.clone().map(|c| Reason::new(&c, None)),
+                            reason: reroll_reason.clone().map(|c| Reason::new(&c, replaced)),
                         });
                         replaced = Some(dice.len() - 1);
                         raw = ctx.die(d, &expr.span)?;
@@ -108,7 +108,15 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 {
                     die.parts = std::iter::once(die.value).chain(extras).collect();
                     die.value = die.parts.iter().sum();
-                    die.reason = d.clauses.explode.as_deref().map(|c| Reason::new(c, None));
+                    // A reroll replacement keeps its reroll reason (so the link
+                    // back survives) and records the compound clause as `also`.
+                    die.reason = match die.reason.take() {
+                        Some(mut r) => {
+                            r.also = d.clauses.explode.clone();
+                            Some(r)
+                        }
+                        None => d.clauses.explode.as_deref().map(|c| Reason::new(c, None)),
+                    };
                     dice.push(die);
                 } else {
                     dice.push(die);

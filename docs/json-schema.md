@@ -111,17 +111,18 @@ success clause is one entry, `">=8f1"`), and a die touched by a clause carries
 | --- | --- | --- |
 | `clause` | string | The clause as written, one of the node's `modifiers` |
 | `from` | integer | Index into the same node's `dice` of the die that caused this one. **Absent when there is no such die** |
+| `also` | string | A second clause that shaped the same die: `"!!"` on a compounded die that is also a reroll replacement. **Absent otherwise** |
 
 `reason` is absent on a die no clause touched. A die has one reason; a
 `dropped` die always gets the keep/drop clause (as `dropped` wins over the
-other statuses), even if it was also a reroll replacement or an extra die.
+other statuses), even if it was also a reroll replacement or an extra die. A compounded (`!!`) die that is also a reroll replacement keeps the reroll reason, so its `from` link survives, and names the compound clause in `also`.
 
 | Clause family | Die | `reason` |
 | --- | --- | --- |
 | reroll (`r`, `rr`) | the `rerolled` die | `{"clause": "r1"}` |
-| reroll | the die that replaced it | `{"clause": "r1", "from": <index of the rerolled die>}` |
+| reroll | the die that replaced it | `{"clause": "r1", "from": <index of the rerolled die>}`; with `rr`, a replacement that is itself rerolled also carries `from`, so a chain links die to die |
 | explode (`!`) and penetrate (`!p`) | each `exploded` extra die | `{"clause": "!", "from": <index of the die it exploded from>}`; a chained extra points at the extra before it |
-| compound (`!!`) | the one die that exploded (it has `parts`) | `{"clause": "!!"}` |
+| compound (`!!`) | the one die that exploded (it has `parts`) | `{"clause": "!!"}`; if it is also a reroll replacement, `{"clause": "r1", "from": <index>, "also": "!!"}` |
 | keep/drop (`dl`, `dh`, `kl`, `kh`, `adv`, `dis`) | each `dropped` die | `{"clause": "kh2"}` |
 
 Success counting keeps using `outcome`. Examples (shortened, `rollin --json`):

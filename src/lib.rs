@@ -105,6 +105,10 @@ pub struct Reason {
     /// from.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub from: Option<usize>,
+    /// A second clause that also shaped this die: the compound `!!` on a die
+    /// that is also a reroll replacement.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub also: Option<String>,
 }
 
 impl Reason {
@@ -112,6 +116,7 @@ impl Reason {
         Reason {
             clause: clause.to_string(),
             from,
+            also: None,
         }
     }
 }
