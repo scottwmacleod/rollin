@@ -50,6 +50,33 @@ jobs:
       - name: Test
         run: cargo test --locked
 
+  desktop:
+    # Builds the Tauri app (ADR-0007). Workspace default-members keep it out of
+    # the jobs above, so this is the only job that compiles it.
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --check -p rollin-desktop
+      - name: Install front-end dependencies
+        run: npm --prefix apps/desktop ci
+      - name: Build front end
+        run: npm --prefix apps/desktop run build
+      - name: Clippy
+        run: cargo clippy -p rollin-desktop --all-targets --locked -- -D warnings
+      - name: Build app
+        run: cargo build -p rollin-desktop --locked
+
   msrv:
     # Builds and tests with exactly the compiler declared as `rust-version` in
     # Cargo.toml. rust-toolchain.toml (channel = "stable") would otherwise win

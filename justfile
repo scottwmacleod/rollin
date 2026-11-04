@@ -19,6 +19,21 @@ tokens-check:
 
 check:
     cargo fmt --check
+    cargo fmt --check -p rollin-desktop
     just lint
     just tokens-check
     just test
+
+# Desktop app (ADR-0007): needs Node, and webkit packages on Linux. Not part of
+# `check`, which stays buildable without them; CI runs the same steps on macOS.
+desktop-check:
+    cargo fmt --check -p rollin-desktop
+    npm --prefix apps/desktop ci
+    npm --prefix apps/desktop run build
+    cargo clippy -p rollin-desktop --all-targets --locked -- -D warnings
+    cargo build -p rollin-desktop --locked
+
+# Run the desktop app in dev mode.
+desktop-dev:
+    npm --prefix apps/desktop ci
+    npm --prefix apps/desktop run tauri -- dev
