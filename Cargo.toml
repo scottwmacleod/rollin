@@ -2,6 +2,7 @@
 name = "rollin"
 version = "2.0.1"
 edition = "2021"
+rust-version = "1.95.0"
 license = "MIT"
 
 [lib]
