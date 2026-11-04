@@ -62,7 +62,30 @@ pub enum CommandError {
     Store(StoreError),
 }
 
+/// A [`CommandError`] with its neutral message and hints alongside, for
+/// callers that send errors over a wire (the desktop app). The error's
+/// fields and `kind` tag stay at the top level; `message` and `hints` are
+/// added.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ErrorReport<'a> {
+    #[serde(flatten)]
+    pub error: &'a CommandError,
+    /// [`CommandError::message`].
+    pub message: String,
+    /// [`CommandError::hints`].
+    pub hints: Vec<Hint>,
+}
+
 impl CommandError {
+    /// This error with its message and hints, ready to serialise.
+    pub fn report(&self) -> ErrorReport<'_> {
+        ErrorReport {
+            error: self,
+            message: self.message(),
+            hints: self.hints(),
+        }
+    }
+
     /// A neutral one-line description of what went wrong. For formula
     /// errors the caller points at the span; see [`Error::span`].
     pub fn message(&self) -> String {

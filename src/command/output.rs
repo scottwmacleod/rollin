@@ -145,6 +145,15 @@ impl Output {
         }
     }
 
+    /// This output with its text and hints, ready to serialise.
+    pub fn report(&self) -> OutputReport<'_> {
+        OutputReport {
+            output: self,
+            lines: self.lines(),
+            hints: self.hints(),
+        }
+    }
+
     /// Follow-up suggestions: how to fill an empty list.
     pub fn hints(&self) -> Vec<Hint> {
         match self {
@@ -153,6 +162,19 @@ impl Output {
             _ => vec![],
         }
     }
+}
+
+/// An [`Output`] with its neutral text and hints alongside, for callers
+/// that send results over a wire (the desktop app). The output's fields
+/// and `kind` tag stay at the top level; `lines` and `hints` are added.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct OutputReport<'a> {
+    #[serde(flatten)]
+    pub output: &'a Output,
+    /// [`Output::lines`].
+    pub lines: Vec<String>,
+    /// [`Output::hints`].
+    pub hints: Vec<Hint>,
 }
 
 /// Where a saved preset lives.
