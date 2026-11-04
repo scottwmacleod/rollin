@@ -86,6 +86,7 @@
   --size-sidebar: 240px;
   --size-icon: 16px;
   --size-window-min: 720px;
+  --size-window-min-height: 480px;
   --duration-enter: 120ms;
 }
 
