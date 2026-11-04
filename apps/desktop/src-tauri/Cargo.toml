@@ -10,4 +10,5 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 rollin = { path = "../../.." }
+rollin-desktop-core = { path = "core" }
 tauri = { version = "2", features = [] }

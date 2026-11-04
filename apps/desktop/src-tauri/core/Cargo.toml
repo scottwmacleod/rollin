@@ -1,0 +1,17 @@
+[package]
+name = "rollin-desktop-core"
+version = "0.0.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "Session state and command logic behind the desktop app's Tauri commands (no Tauri dependency, so it builds and tests anywhere)."
+
+[dependencies]
+rollin = { path = "../../../.." }
+rand_chacha = "0.3"
+serde = { version = "1.0.229", features = ["derive"] }
+
+[dev-dependencies]
+assert_cmd = "2.2.2"
+serde_json = "1.0.154"
+tempfile = "3.27.0"
