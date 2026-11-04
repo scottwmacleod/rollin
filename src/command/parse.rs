@@ -109,7 +109,7 @@ fn parse_import(rest: &[String]) -> Result<Command, CommandError> {
 
 /// A lone word that is not a formula but names a saved preset rolls that
 /// preset; anything else is a formula.
-fn roll_or_preset(
+pub(super) fn roll_or_preset(
     words: &[String],
     preset_names: &mut dyn FnMut() -> Result<Vec<String>, CommandError>,
 ) -> Result<Command, CommandError> {
