@@ -1,12 +1,15 @@
 //! Typed errors for parsing and evaluating formulas.
 
 use crate::limits::Cap;
+use crate::Hint;
+use serde::Serialize;
 use std::ops::Range;
 
 /// Anything that can go wrong turning a formula into rolls. Every variant
 /// carries the byte range of the offending input (into the formula as given),
 /// so callers can point at it.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Error {
     /// The text is not a well-formed formula.
     Syntax { message: String, span: Range<usize> },
@@ -137,15 +140,14 @@ impl Error {
         }
     }
 
-    /// A suggestion for fixing the error, if there is one.
-    pub fn hint(&self) -> Option<String> {
+    /// Suggestions for fixing the error, as data.
+    pub fn hints(&self) -> Vec<Hint> {
         match self {
-            Error::WithVariables { inner, .. } => inner.hint(),
-            Error::RepeatWithoutDice { multiplication, .. } => Some(match multiplication {
-                Some(m) => format!("for multiplication use *; did you mean {m}?"),
-                None => "for multiplication use *".into(),
-            }),
-            _ => None,
+            Error::WithVariables { inner, .. } => inner.hints(),
+            Error::RepeatWithoutDice { multiplication, .. } => vec![Hint::UseMultiplication {
+                suggestion: multiplication.clone(),
+            }],
+            _ => vec![],
         }
     }
 }

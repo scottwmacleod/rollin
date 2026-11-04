@@ -66,7 +66,7 @@ pub fn execute(
             let mut globals = store.load()?;
             if *global {
                 if globals.remove(&name).is_none() {
-                    return Err(CommandError::NoSuchPreset(name));
+                    return Err(CommandError::NoSuchPreset { name });
                 }
                 store.save(&globals)?;
                 return Ok(Output::Deleted {
@@ -114,7 +114,9 @@ pub fn execute(
                     Shadow::None
                 },
             });
-            Ok(Output::Presets(own.chain(global).collect()))
+            Ok(Output::Presets {
+                presets: own.chain(global).collect(),
+            })
         }
         Command::Set { name, value } => {
             let (characters, active) = ctx.current()?;
@@ -140,15 +142,17 @@ pub fn execute(
         }
         Command::CharShow => {
             let characters = ctx.characters()?;
-            Ok(Output::ActiveCharacter(
-                ctx.acting_name(&characters)?.into_string(),
-            ))
+            Ok(Output::ActiveCharacter {
+                name: ctx.acting_name(&characters)?.into_string(),
+            })
         }
         Command::CharSwitch(name) => {
             let characters = ctx.characters()?;
             require_character(&characters, name)?;
             characters.set_active(name)?;
-            Ok(Output::CharSwitched(name.to_string()))
+            Ok(Output::CharSwitched {
+                name: name.to_string(),
+            })
         }
         Command::CharDelete(name) => {
             let characters = ctx.characters()?;
@@ -170,13 +174,17 @@ pub fn execute(
             let characters = ctx.characters()?;
             let name = Name::character(name).map_err(CommandError::InvalidCharName)?;
             if characters.exists(&name) {
-                return Err(CommandError::CharacterExists(name.into_string()));
+                return Err(CommandError::CharacterExists {
+                    name: name.into_string(),
+                });
             }
             let name = &name;
             characters.active()?;
             characters.save(name, &Character::default())?;
             characters.set_active(name)?;
-            Ok(Output::CharCreated(name.to_string()))
+            Ok(Output::CharCreated {
+                name: name.to_string(),
+            })
         }
         Command::Unset { name } => {
             let (characters, active) = ctx.current()?;
@@ -196,7 +204,9 @@ pub fn execute(
         Command::Vars => {
             let (characters, active) = ctx.current()?;
             let character = characters.load(&active)?;
-            Ok(Output::Vars(character.vars.into_iter().collect()))
+            Ok(Output::Vars {
+                vars: character.vars.into_iter().collect(),
+            })
         }
     }
 }

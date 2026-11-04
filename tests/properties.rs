@@ -948,7 +948,9 @@ mod variables {
             prop_assert_eq!(&set, &Command::Set { name: raw.to_lowercase(), value });
             execute(&set, &ctx, &mut rng).unwrap();
             let vars = execute(&Command::Vars, &ctx, &mut rng).unwrap();
-            prop_assert_eq!(vars, Output::Vars(vec![(raw.to_lowercase(), value)]));
+            prop_assert_eq!(vars, Output::Vars {
+                    vars: vec![(raw.to_lowercase(), value)]
+                });
             let upper = Command::Roll(format!("@{}", raw.to_uppercase()));
             match execute(&upper, &ctx, &mut rng).unwrap() {
                 Output::Rolls { rolls, .. } => prop_assert_eq!(rolls[0].total, value),

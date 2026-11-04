@@ -158,8 +158,10 @@ fn a_repeat_of_plain_numbers_keeps_its_multiplication_hint() {
     let (_dir, ctx) = sandbox();
     let e = same_failure(&ctx, "2x3");
     assert_eq!(
-        formula_error(&e).hint().as_deref(),
-        Some("for multiplication use *; did you mean 2*3?")
+        formula_error(&e).hints(),
+        vec![rollin::Hint::UseMultiplication {
+            suggestion: Some("2*3".into())
+        }]
     );
 }
 

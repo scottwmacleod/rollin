@@ -29,14 +29,15 @@ const DICE_KEYWORDS: [&str; 11] = [
 ];
 
 /// Why a string cannot be a preset name. The name is as the user typed it.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct NameError {
     pub name: String,
     pub rule: NameRule,
 }
 
 /// The rule a rejected name broke.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum NameRule {
     /// Not `[a-z][a-z0-9_-]*` after lowercasing.
     Shape,
