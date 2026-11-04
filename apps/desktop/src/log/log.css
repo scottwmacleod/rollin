@@ -1,0 +1,215 @@
+/* Roll log. Colours come from the design tokens only. */
+
+.roll-log-region { display: flex; flex-direction: column; }
+
+/* Entries sit at the bottom; the wrapper (not the scroller) is pushed down
+   so overflow still scrolls from the top. */
+.log-entries {
+  margin-top: auto;
+  padding: var(--space-3) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.log-entry { border-radius: var(--radius-2); }
+.log-entry.entering { animation: log-enter var(--duration-enter) ease-out; }
+@keyframes log-enter { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .log-entry.entering { animation: none; } }
+
+.entry-head {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--muted);
+}
+.entry-input { color: var(--text-2); white-space: nowrap; }
+.entry-preset { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+.roll-row {
+  --formula-col: 200px;
+  display: grid;
+  grid-template-columns: 28px var(--formula-col) minmax(0, 1fr) 120px;
+  align-items: center;
+  column-gap: var(--space-2);
+  height: var(--size-roll-row);
+  padding: 0 var(--space-2);
+}
+[data-compact] .roll-row { height: 30px; }
+@media (max-width: 799px) { .roll-row { --formula-col: 140px; } }
+
+.roll-iteration {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.roll-formula {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+  align-items: baseline;
+}
+.roll-formula-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.roll-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 100000 auto;
+  min-width: 0;
+}
+
+.roll-breakdown {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.roll-total {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text);
+  white-space: nowrap; /* never truncated */
+}
+
+/* Die glyphs. Every state carries a mark besides colour: (n) dropped,
+   strike-through rerolled, ↻ replacement, ✓ ✗ outcome, ! exploded, a chip
+   or outline for naturals. */
+.die-dropped { color: var(--muted); }
+.die-rerolled { color: var(--muted); text-decoration: line-through; }
+.die-replacement { color: var(--text); }
+.die-exploded { color: var(--text); }
+.die-success { color: var(--signal-ink); font-weight: 600; }
+.die-failure { color: var(--danger); }
+.die-nat20 {
+  background: var(--signal);
+  color: var(--on-signal);
+  font-weight: 600;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-1);
+}
+.die-nat1 {
+  color: var(--danger);
+  box-shadow: inset 0 0 0 1px var(--danger);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-1);
+}
+
+.entry-error {
+  background: var(--danger-tint);
+  padding-bottom: var(--space-2);
+}
+.error-message {
+  margin: 0;
+  padding: var(--space-1) var(--space-2) 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--danger);
+  user-select: text;
+}
+.error-caret {
+  margin: 0;
+  padding: 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--danger);
+  user-select: text;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Keyboard mode. */
+.roll-log-region:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: -2px;
+}
+.log-entry { position: relative; }
+.log-entry.selected { background: var(--signal-tint); }
+.log-entry.selected::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--signal);
+  border-radius: var(--radius-2) 0 0 var(--radius-2);
+}
+.entry-actions { display: none; margin-left: auto; gap: var(--space-1); }
+.log-entry.selected .entry-actions { display: flex; }
+.entry-action {
+  font: inherit;
+  font-size: 11px;
+  line-height: 16px;
+  padding: 0 var(--space-2);
+  color: var(--text-2);
+  background: transparent;
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-1);
+  cursor: pointer;
+}
+.entry-action:hover { color: var(--text); }
+.entry-action:focus-visible { outline: 2px solid var(--signal); outline-offset: 1px; }
+
+/* Die tree. */
+.entry-trees { display: flex; flex-direction: column; gap: var(--space-2); margin: var(--space-1) var(--space-2) 0; }
+.die-tree { background: var(--sunken); border-radius: var(--radius-1); padding: var(--space-2) var(--space-3); }
+.die-tree-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-2);
+}
+.die-tree-table caption { text-align: left; color: var(--muted); padding-bottom: var(--space-1); }
+.die-tree-table th { text-align: left; font-weight: 400; color: var(--muted); }
+.die-tree-table th, .die-tree-table td { padding: 0 var(--space-3) 0 0; }
+.tree-die, .tree-rolled, .tree-counts { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tree-step { color: var(--text); width: 100%; }
+.die-tree-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+.tree-total { color: var(--text); font-weight: 600; white-space: nowrap; }
