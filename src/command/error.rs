@@ -1,20 +1,22 @@
 use super::UndefinedVariable;
 use crate::name::NameError;
 use crate::presets::StoreError;
-use crate::Error;
+use crate::{Error, Hint};
+use serde::Serialize;
 use std::path::PathBuf;
 
 /// Why a command could not be parsed or run.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
 pub enum CommandError {
     /// Wrong arguments for a command; the text is the usage line.
-    Usage(String),
+    Usage { usage: String },
     /// A formula that does not parse or evaluate; `source` is its text.
     Formula { source: String, error: Error },
     /// A formula used `@name` and the character has no such variable.
     UndefinedVariable(Box<UndefinedVariable>),
     /// `delete` named a preset that does not exist.
-    NoSuchPreset(String),
+    NoSuchPreset { name: String },
     /// `delete` named a preset the character does not have.
     NoSuchCharacterPreset {
         name: String,
@@ -43,32 +45,85 @@ pub enum CommandError {
     /// `unset` named a variable the character does not have.
     NoSuchVariable { name: String, character: String },
     /// The persisted active character has no file (and is not `default`).
-    ActiveCharacterMissing(String),
+    ActiveCharacterMissing { name: String },
     /// `char delete default`.
     CannotDeleteDefault,
     /// `char new` named a character that already exists.
-    CharacterExists(String),
+    CharacterExists { name: String },
     /// A character name that breaks a naming rule.
     InvalidCharName(NameError),
     /// A preset name that breaks a naming rule.
     InvalidName(NameError),
     /// A variable name that is not `[a-z][a-z0-9_]*`; the text is as typed.
-    InvalidVarName(String),
+    InvalidVarName { name: String },
     /// `set` was given a value that is not an `i64`.
-    NotAnInteger(String),
+    NotAnInteger { value: String },
     /// The presets file could not be read or written.
     Store(StoreError),
+}
+
+impl CommandError {
+    /// A neutral one-line description of what went wrong. For formula
+    /// errors the caller points at the span; see [`Error::span`].
+    pub fn message(&self) -> String {
+        self.to_string()
+    }
+
+    /// Suggestions for fixing the error, as data. The caller words them.
+    pub fn hints(&self) -> Vec<Hint> {
+        let did_you_mean = |name: &Option<String>| {
+            name.iter()
+                .map(|name| Hint::DidYouMean { name: name.clone() })
+                .collect::<Vec<_>>()
+        };
+        match self {
+            CommandError::Formula { error, .. } => error.hints(),
+            CommandError::UndefinedVariable(u) => {
+                let mut hints = vec![Hint::DefinedVariables {
+                    names: u.defined.clone(),
+                }];
+                if let Some(name) = &u.suggestion {
+                    hints.push(Hint::DidYouMeanVariable { name: name.clone() });
+                }
+                hints.push(Hint::SetVariable {
+                    character: u.character.clone(),
+                    name: u.name.clone(),
+                    explicit: u.explicit,
+                });
+                hints
+            }
+            CommandError::UnknownPreset { suggestion, .. } => {
+                let mut hints = did_you_mean(suggestion);
+                hints.push(Hint::ListPresets);
+                hints
+            }
+            CommandError::SessionOnly { word } if word.eq_ignore_ascii_case("help") => {
+                vec![Hint::UseHelpFlag]
+            }
+            CommandError::NoSuchCharacterPreset {
+                name,
+                global_exists: true,
+                ..
+            } => vec![Hint::DeleteGlobalPreset { name: name.clone() }],
+            CommandError::NoSuchCharacter { name, suggestion } => {
+                let mut hints = did_you_mean(suggestion);
+                hints.push(Hint::CreateCharacter { name: name.clone() });
+                hints
+            }
+            _ => vec![],
+        }
+    }
 }
 
 impl std::fmt::Display for CommandError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            CommandError::Usage(usage) => write!(f, "usage: {usage}"),
+            CommandError::Usage { usage } => write!(f, "usage: {usage}"),
             CommandError::Formula { error, .. } => write!(f, "{error}"),
             CommandError::UndefinedVariable(u) => {
                 write!(f, "{} on character '{}'", u.error, u.character)
             }
-            CommandError::NoSuchPreset(name) => write!(f, "no preset named '{name}'"),
+            CommandError::NoSuchPreset { name } => write!(f, "no preset named '{name}'"),
             CommandError::NoSuchCharacterPreset {
                 name, character, ..
             } => write!(f, "no preset named '{name}' on character '{character}'"),
@@ -95,24 +150,24 @@ impl std::fmt::Display for CommandError {
             CommandError::NoSuchVariable { name, character } => {
                 write!(f, "no variable named '{name}' on character '{character}'")
             }
-            CommandError::ActiveCharacterMissing(name) => write!(
+            CommandError::ActiveCharacterMissing { name } => write!(
                 f,
                 "the active character '{name}' does not exist; run `rollin char default` to switch back"
             ),
             CommandError::CannotDeleteDefault => {
                 write!(f, "the 'default' character cannot be deleted")
             }
-            CommandError::CharacterExists(name) => {
+            CommandError::CharacterExists { name } => {
                 write!(f, "character '{name}' already exists")
             }
             CommandError::InvalidCharName(e) => {
                 write!(f, "invalid character name '{}': {}", e.name, e.reason())
             }
-            CommandError::InvalidVarName(name) => write!(
+            CommandError::InvalidVarName { name } => write!(
                 f,
                 "invalid variable name '{name}': names must start with a letter and use only letters, digits or '_'"
             ),
-            CommandError::NotAnInteger(value) => write!(
+            CommandError::NotAnInteger { value } => write!(
                 f,
                 "'{value}' is not an integer; variables hold whole numbers from {} to {}",
                 i64::MIN,

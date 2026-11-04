@@ -12,6 +12,7 @@ mod command;
 mod completion;
 mod error;
 mod eval;
+mod hint;
 mod lexer;
 mod limits;
 mod name;
@@ -27,6 +28,7 @@ pub use command::{
 };
 pub use completion::{complete, Completion, CompletionData};
 pub use error::Error;
+pub use hint::Hint;
 pub use limits::Cap;
 pub use name::{validate_name, Name, NameError, NameRule};
 pub use paths::{app_dir, config_dir};

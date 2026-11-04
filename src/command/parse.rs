@@ -20,14 +20,14 @@ pub fn parse_command(
                     formula: formula.join(" "),
                     global,
                 }),
-                _ => Err(CommandError::Usage(
-                    "save <name> <formula> [--global]".into(),
-                )),
+                _ => Err(CommandError::Usage {
+                    usage: "save <name> <formula> [--global]".into(),
+                }),
             }
         }
-        Some("roll") if rest.is_empty() => {
-            Err(CommandError::Usage("roll <formula or preset name>".into()))
-        }
+        Some("roll") if rest.is_empty() => Err(CommandError::Usage {
+            usage: "roll <formula or preset name>".into(),
+        }),
         Some("roll") => roll_or_preset(rest, preset_names),
         Some("characters") => Ok(Command::Characters),
         Some("char") => match rest {
@@ -36,31 +36,37 @@ pub fn parse_command(
                 Name::shaped(name).map_err(CommandError::InvalidCharName)?,
             )),
             [new, name] if new.eq_ignore_ascii_case("new") => Ok(Command::CharNew(normalise(name))),
-            [new] if new.eq_ignore_ascii_case("new") => {
-                Err(CommandError::Usage("char new <name>".into()))
-            }
+            [new] if new.eq_ignore_ascii_case("new") => Err(CommandError::Usage {
+                usage: "char new <name>".into(),
+            }),
             [name] => Ok(Command::CharSwitch(
                 Name::shaped(name).map_err(CommandError::InvalidCharName)?,
             )),
-            _ => Err(CommandError::Usage("char [<name> | new <name>]".into())),
+            _ => Err(CommandError::Usage {
+                usage: "char [<name> | new <name>]".into(),
+            }),
         },
         Some("unset") => match rest {
             [name] => Ok(Command::Unset {
                 name: normalise(name),
             }),
-            _ => Err(CommandError::Usage("unset <name>".into())),
+            _ => Err(CommandError::Usage {
+                usage: "unset <name>".into(),
+            }),
         },
         Some("vars") => Ok(Command::Vars),
         Some("set") => match rest {
             [name, value] => Ok(Command::Set {
                 name: Name::variable(name)
-                    .ok_or_else(|| CommandError::InvalidVarName(name.clone()))?
+                    .ok_or_else(|| CommandError::InvalidVarName { name: name.clone() })?
                     .into_string(),
-                value: value
-                    .parse()
-                    .map_err(|_| CommandError::NotAnInteger(value.clone()))?,
+                value: value.parse().map_err(|_| CommandError::NotAnInteger {
+                    value: value.clone(),
+                })?,
             }),
-            _ => Err(CommandError::Usage("set <name> <integer>".into())),
+            _ => Err(CommandError::Usage {
+                usage: "set <name> <integer>".into(),
+            }),
         },
         Some("presets") => Ok(Command::Presets),
         Some("import") => parse_import(rest),
@@ -71,7 +77,9 @@ pub fn parse_command(
                     name: name.clone(),
                     global,
                 }),
-                _ => Err(CommandError::Usage("delete <name> [--global]".into())),
+                _ => Err(CommandError::Usage {
+                    usage: "delete <name> [--global]".into(),
+                }),
             }
         }
         _ => roll_or_preset(words, preset_names),
@@ -95,7 +103,9 @@ fn take_flag(words: &[String], flag: &str) -> (Vec<String>, bool) {
 
 /// `import <path> [--force]`, with the flag allowed anywhere after `import`.
 fn parse_import(rest: &[String]) -> Result<Command, CommandError> {
-    let usage = || CommandError::Usage("import <path> [--force]".into());
+    let usage = || CommandError::Usage {
+        usage: "import <path> [--force]".into(),
+    };
     let force = rest.iter().any(|w| w.eq_ignore_ascii_case("--force"));
     let mut paths = rest.iter().filter(|w| !w.eq_ignore_ascii_case("--force"));
     match (paths.next(), paths.next()) {

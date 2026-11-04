@@ -57,7 +57,7 @@ pub enum Command {
 }
 
 /// Details of an undefined variable, for a helpful message.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct UndefinedVariable {
     /// The formula text.
     pub source: String,

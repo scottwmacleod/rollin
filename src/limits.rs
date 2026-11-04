@@ -30,7 +30,8 @@ pub(crate) const MAX_SIDES: i64 = 10000;
 /// can name. Adding a cap means adding a variant here and a constant above;
 /// [`limit`](Cap::limit) and the display text are exhaustive matches, so a
 /// missing one does not compile.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Cap {
     DicePerTerm,
     ExplosionsPerDie,

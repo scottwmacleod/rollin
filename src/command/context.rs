@@ -62,7 +62,9 @@ impl Context {
         let characters = self.characters()?;
         let name = self.acting_name(&characters)?;
         if !characters.exists(&name) {
-            return Err(CommandError::ActiveCharacterMissing(name.into_string()));
+            return Err(CommandError::ActiveCharacterMissing {
+                name: name.into_string(),
+            });
         }
         Ok((characters, name))
     }
