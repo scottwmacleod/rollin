@@ -609,6 +609,7 @@ dependencies = [
  "tempfile",
  "toml",
  "toml_edit",
+ "xtask",
 ]
 
 [[package]]
@@ -892,6 +893,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23b97319f7b8343df12cc98938e5c3eb436064524c8d2b4e30a1d3a36eecdf81"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "xtask"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
