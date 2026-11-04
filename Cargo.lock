@@ -2895,8 +2895,21 @@ name = "rollin-desktop"
 version = "0.0.0"
 dependencies = [
  "rollin",
+ "rollin-desktop-core",
  "tauri",
  "tauri-build",
+]
+
+[[package]]
+name = "rollin-desktop-core"
+version = "0.0.0"
+dependencies = [
+ "assert_cmd",
+ "rand_chacha",
+ "rollin",
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]
