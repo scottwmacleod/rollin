@@ -1,5 +1,5 @@
 {
   "formula": "3d6!>4",
   "seed": 2,
-  "expected": {"schema_version":1,"rolls":[{"formula":"3d6!>4","total":16,"expr":{"type":"dice","term":"3d6!>4","sides":6,"dice":[{"value":2,"status":"kept"},{"value":6,"status":"kept"},{"value":4,"status":"exploded"},{"value":4,"status":"kept"}],"subtotal":16}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"3d6!>4","total":16,"expr":{"type":"dice","term":"3d6!>4","sides":6,"modifiers":["!>4"],"dice":[{"value":2,"status":"kept"},{"value":6,"status":"kept"},{"value":4,"status":"exploded","reason":{"clause":"!>4","from":1}},{"value":4,"status":"kept"}],"subtotal":16}}]}
 }

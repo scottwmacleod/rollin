@@ -309,13 +309,13 @@ fn json_records_exploded_status_and_compound_parts() {
     let node = &plain["rolls"][0]["expr"];
     assert_eq!(
         node["dice"][2],
-        serde_json::json!({"value": 4, "status": "exploded"})
+        serde_json::json!({"value": 4, "status": "exploded", "reason": {"clause": "!", "from": 1}})
     );
     let compound = cli.roll_json("3d6!!", 2);
     let node = &compound["rolls"][0]["expr"];
     assert_eq!(
         node["dice"][1],
-        serde_json::json!({"value": 10, "status": "kept", "parts": [6, 4]})
+        serde_json::json!({"value": 10, "status": "kept", "parts": [6, 4], "reason": {"clause": "!!"}})
     );
 }
 

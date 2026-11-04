@@ -111,6 +111,29 @@ pub struct Dice {
     pub explode: Option<Explode>,
     pub select: Option<Select>,
     pub success: Option<Success>,
+    /// The source text of each clause, for reporting why a die is what it is.
+    pub clauses: Clauses,
+}
+
+/// The modifiers of a dice group as written, e.g. `r1`, `!`, `kh2`, `>=8f1`.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Clauses {
+    pub reroll: Option<String>,
+    pub explode: Option<String>,
+    /// The keep/drop clause, or `adv` / `dis`.
+    pub select: Option<String>,
+    pub success: Option<String>,
+}
+
+impl Clauses {
+    /// Every clause present, in the order they are applied.
+    pub fn list(&self) -> Vec<String> {
+        [&self.reroll, &self.explode, &self.select, &self.success]
+            .into_iter()
+            .flatten()
+            .cloned()
+            .collect()
+    }
 }
 
 /// A die that is not written as `d<number>`.

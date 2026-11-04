@@ -72,7 +72,16 @@ fn a_variable_works_in_every_position_a_literal_does() {
                 .as_array()
                 .unwrap()
                 .iter()
-                .map(|r| (r["total"].clone(), common::flat_dice(&r["expr"]).into()))
+                .map(|r| {
+                    // A reason names the clause as written (`kh@k` vs `kh2`).
+                    let mut dice = common::flat_dice(&r["expr"]);
+                    for d in &mut dice {
+                        if let Some(r) = d.get_mut("reason").and_then(|r| r.as_object_mut()) {
+                            r.remove("clause");
+                        }
+                    }
+                    (r["total"].clone(), dice.into())
+                })
                 .collect()
         };
         assert_eq!(strip(&a), strip(&b), "{with_var} vs {literal}");

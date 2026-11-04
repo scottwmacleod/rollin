@@ -9,9 +9,18 @@ use serde_json::Value;
 /// between spellings removed.
 fn without_text(node: &Value) -> Value {
     match node {
+        // A reason names the clause as written, but its `from` is compared.
+        Value::Object(map) if map.contains_key("clause") => Value::Object(
+            map.iter()
+                .filter(|(k, _)| k.as_str() != "clause")
+                .map(|(k, v)| (k.clone(), without_text(v)))
+                .collect(),
+        ),
         Value::Object(map) => Value::Object(
             map.iter()
-                .filter(|(k, _)| !matches!(k.as_str(), "formula" | "term" | "special"))
+                .filter(|(k, _)| {
+                    !matches!(k.as_str(), "formula" | "term" | "special" | "modifiers")
+                })
                 .map(|(k, v)| (k.clone(), without_text(v)))
                 .collect(),
         ),

@@ -5,8 +5,8 @@
 //! just the simplest such expression.
 
 use crate::ast::{
-    BinOp, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Formula, Item, Reroll,
-    RerollMode, Select, SelectKind, Special, Success,
+    BinOp, Clauses, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Formula, Item,
+    Reroll, RerollMode, Select, SelectKind, Special, Success,
 };
 use crate::error::Error;
 use crate::eval::apply;
@@ -433,15 +433,23 @@ impl Parser<'_> {
                 sides_span,
             ));
         }
+        let reroll_start = self.next_start();
         let reroll = self.parse_reroll(sides)?;
+        let reroll_text = self.clause_text(reroll_start, reroll.is_some());
+        let explode_start = self.next_start();
         let explode = self.parse_explode(sides)?;
+        let explode_text = self.clause_text(explode_start, explode.is_some());
+        let select_start = self.next_start();
         let advantage = self.parse_advantage(count, sides, self.tokens[start].span.start)?;
         let (count, select) = match advantage {
             Some(kind) => (2, Some(Select { kind, n: 1 })),
             None => (count, self.parse_select(count)?),
         };
+        let select_text = self.clause_text(select_start, select.is_some());
         self.reject_select_with_advantage(advantage, select)?;
+        let success_start = self.next_start();
         let success = self.parse_count()?;
+        let success_text = self.clause_text(success_start, success.is_some());
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
         if self.item_dice > MAX_DICE_PER_EXPRESSION {
@@ -461,9 +469,28 @@ impl Parser<'_> {
                 explode,
                 select,
                 success,
+                clauses: Clauses {
+                    reroll: reroll_text,
+                    explode: explode_text,
+                    select: select_text,
+                    success: success_text,
+                },
             }),
             span,
         })
+    }
+
+    /// Byte offset where the next token starts (the end of the source when
+    /// there is none).
+    fn next_start(&self) -> usize {
+        self.tokens
+            .get(self.pos)
+            .map_or(self.src.len(), |t| t.span.start)
+    }
+
+    /// The source of the clause parsed since `start`, if there was one.
+    fn clause_text(&self, start: usize, present: bool) -> Option<String> {
+        present.then(|| self.src[start..self.prev_end()].to_string())
     }
 
     fn at_comparison(&self) -> bool {

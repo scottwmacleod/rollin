@@ -88,6 +88,37 @@ pub struct Die {
     /// Absent on dice that matched nothing, and on every die of a sum.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub outcome: Option<Outcome>,
+    /// The clause that made this die what it is: the reroll that replaced or
+    /// was replaced, the explosion that added it, or the keep/drop that
+    /// dropped it. Absent on a die no clause touched.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<Reason>,
+}
+
+/// Why a die is in the pool or out of it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Reason {
+    /// The clause as written in the term, e.g. `r1`, `!`, `dl1`.
+    pub clause: String,
+    /// The index in the group's `dice` of the die that caused this one: the
+    /// rerolled die a replacement follows, or the die an extra die exploded
+    /// from.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from: Option<usize>,
+    /// A second clause that also shaped this die: the compound `!!` on a die
+    /// that is also a reroll replacement.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub also: Option<String>,
+}
+
+impl Reason {
+    pub(crate) fn new(clause: &str, from: Option<usize>) -> Self {
+        Reason {
+            clause: clause.to_string(),
+            from,
+            also: None,
+        }
+    }
 }
 
 /// How a counting die scored in a success-count roll.
@@ -134,6 +165,10 @@ pub enum Node {
     Dice {
         term: String,
         sides: i64,
+        /// The group's modifiers as written, in the order they apply.
+        /// Absent when the group has none.
+        #[serde(skip_serializing_if = "Vec::is_empty")]
+        modifiers: Vec<String>,
         /// Present only for `d%`; absent on ordinary dice.
         #[serde(skip_serializing_if = "Option::is_none")]
         special: Option<Special>,
