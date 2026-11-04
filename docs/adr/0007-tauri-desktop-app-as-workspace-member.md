@@ -1,0 +1,9 @@
+# The Tauri desktop app is a workspace member; the library owns message text and typed hints
+
+The v3 desktop app lives in this repository at `apps/desktop` (its `src-tauri` crate depends on `rollin` by path). The root `Cargo.toml` stays the `rollin` package and gains `[workspace] members = ["apps/desktop/src-tauri"]` with `default-members = ["."]`, so `just check` and the existing CI jobs build exactly what they build today and the app has its own recipe and CI job (it needs Node, and webkit packages on Linux). A virtual workspace with `crates/rollin` was rejected as churn with no third crate to justify it; it remains a mechanical `git mv` later. A separate repository was rejected because the GUI must track the library in lockstep (`Serialize` on `Output` and `CommandError`, #51, the pinned RNG), and one PR is better than a git-pin bump between two.
+
+This supersedes ADR-0003 in part: the workspace is no longer rejected, and the binary no longer owns all rendering. The library now owns front-end-neutral message text for non-roll `Output` and for `CommandError`, plus typed hints (for example "did you mean X", "delete the global preset", "create the character"). The binary keeps roll rendering, colour, command-style wording such as `rollin char new x`, and the exit code; the GUI maps the same hints to buttons and dialogs. The exact API is designed in #51.
+
+The RNG stays injected and ChaCha8-pinned. The app holds one RNG in managed state, seeded once from the `seed` control, so the same seed and the same sequence of formulas give identical results in the GUI and in a REPL started with `--seed`. The per-line `--seed` form is not exposed in the GUI, and the UI shows when a session is seeded.
+
+Consequences: contributors without Node can still build, test and release the CLI; CI gains a job for the app; the GUI and CLI share the TOML files of ADR-0004, so both read the same config directory.
