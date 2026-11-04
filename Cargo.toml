@@ -4,6 +4,10 @@ version = "2.0.1"
 edition = "2021"
 license = "MIT"
 
+[workspace]
+members = ["xtask"]
+default-members = [".", "xtask"]
+
 [lib]
 name = "rollin"
 path = "src/lib.rs"
@@ -23,6 +27,7 @@ toml = "1.1.8"
 toml_edit = "0.25.17"
 
 [dev-dependencies]
+xtask = { path = "xtask" }
 assert_cmd = "2.2.2"
 proptest = "1.12.0"
 rexpect = "0.7.1"
