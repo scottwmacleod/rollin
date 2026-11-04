@@ -1,0 +1,95 @@
+/* Formula box. Colours come from the design tokens only. */
+
+.formula-box.formula-mounted {
+  position: relative;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  min-height: 0;
+}
+
+.fx-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--size-input);
+  padding: 0 var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 20px;
+}
+.formula-box.compact .fx-field { height: 36px; }
+.fx-field:focus-within { border-color: var(--signal); }
+.fx-field.invalid, .fx-field.invalid:focus-within { border-color: var(--danger); }
+
+.fx-prompt { color: var(--signal-ink); user-select: none; }
+
+.fx-text { position: relative; flex: 1; min-width: 0; height: 20px; }
+.fx-highlight, .fx-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  letter-spacing: normal;
+  white-space: pre;
+}
+.fx-highlight { overflow: hidden; color: var(--text); pointer-events: none; }
+.fx-input {
+  width: 100%;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--text);
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.fx-input::placeholder { color: var(--muted); }
+.fx-input::selection { background: var(--signal-tint); }
+.fx-variable { color: var(--signal-ink); }
+.fx-label { color: var(--muted); }
+
+.fx-error {
+  margin: var(--space-1) var(--space-3) 0;
+  color: var(--danger);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.fx-error[hidden] { display: none; }
+
+.fx-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + var(--space-1));
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 18px;
+}
+.fx-list[hidden] { display: none; }
+.fx-option { padding: var(--space-1) var(--space-2); border-radius: var(--radius-1); color: var(--text-2); cursor: default; }
+.fx-option[aria-selected="true"] { background: var(--signal-tint); color: var(--text); }
+
+.fx-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
