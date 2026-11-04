@@ -22,8 +22,8 @@ mod session;
 
 pub use ast::{BinOp, Special};
 pub use command::{
-    execute, parse_command, Command, CommandError, Context, ImportReport, Output, PresetEntry,
-    PresetSource, Shadow, UndefinedVariable,
+    check, execute, parse_command, Command, CommandError, Context, ImportReport, Output,
+    PresetEntry, PresetSource, Shadow, UndefinedVariable,
 };
 pub use completion::{complete, Completion, CompletionData};
 pub use error::Error;

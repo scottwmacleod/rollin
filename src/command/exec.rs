@@ -1,4 +1,5 @@
 use super::context::require_character;
+use super::parse::roll_or_preset;
 use super::{
     edit_distance, import, Command, CommandError, Context, Output, PresetEntry, PresetSource,
     Shadow, UndefinedVariable,
@@ -198,6 +199,39 @@ pub fn execute(
             Ok(Output::Vars(character.vars.into_iter().collect()))
         }
     }
+}
+
+/// Checks a formula the way rolling it would, without rolling.
+///
+/// `formula` is read as one command-line argument: a lone word naming a
+/// preset checks that preset's formula, anything else is a formula. It is
+/// lexed, parsed and resolved against the acting character (`ctx.character`
+/// or the active one) and the presets reachable from it, then the arithmetic
+/// that does not depend on dice is evaluated, so `d20/0` and constant
+/// overflow are caught. The result is the [`CommandError`] rolling the same
+/// text would give, so a caller can draw the CLI's caret from
+/// [`CommandError::Formula`] (`source` plus `error.span()`), and an unknown
+/// `@variable` or preset carries the same details and suggestions.
+///
+/// It takes no RNG and only reads the saved data: no roll is made and no
+/// character, preset or history file is written. What depends on the dice
+/// themselves (a divisor that happens to roll 0, an explosion or reroll cap)
+/// can only fail when actually rolling. A blank formula is an error, as it is
+/// when rolling.
+pub fn check(formula: &str, ctx: &Context) -> Result<(), CommandError> {
+    let store = ctx.store()?;
+    let command = roll_or_preset(&[formula.to_string()], &mut || ctx.preset_names())?;
+    let scope = Scope::load(ctx)?;
+    let source = match command {
+        Command::RollPreset(name) => match scope.presets.get(&name) {
+            Some(formula) => formula.clone(),
+            None => store.load()?.remove(&name).unwrap_or_default(),
+        },
+        Command::Roll(formula) => formula,
+        _ => unreachable!("roll_or_preset gives a roll or a preset roll"),
+    };
+    crate::parser::check_with(&source, &|name| scope.vars.get(name).copied())
+        .map_err(|error| scope.error(&source, error))
 }
 
 /// Whether `formula` is acceptable to save. Variables are not known until
