@@ -1,0 +1,104 @@
+/* Rollin — generated from tokens.json. Edit tokens.json, then regenerate. */
+/* Dark is the default; light follows the OS unless [data-theme] forces one. */
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0B0C0B;
+  --surface: #111311;
+  --surface-hover: #171A17;
+  --sunken: #080908;
+  --line: #232723;
+  --line-strong: #333833;
+  --text: #EDEFEA;
+  --text-2: #B8BDB6;
+  --muted: #8E948D;
+  --signal: #C5F04A;
+  --on-signal: #0B0C0B;
+  --signal-ink: #C5F04A;
+  --signal-tint: rgba(197, 240, 74, 0.12);
+  --wip: #FFB547;
+  --danger: #FF8A80;
+  --danger-tint: rgba(255, 138, 128, 0.06);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #F6F7F3;
+    --surface: #FFFFFF;
+    --surface-hover: #EEF0EA;
+    --sunken: #EBEDE6;
+    --line: #DDE0D7;
+    --line-strong: #AEB3A8;
+    --text: #121412;
+    --text-2: #3A3F39;
+    --muted: #5B615A;
+    --signal: #C5F04A;
+    --on-signal: #0B0C0B;
+    --signal-ink: #3E5A00;
+    --signal-tint: rgba(197, 240, 74, 0.32);
+    --wip: #8A5300;
+    --danger: #B42318;
+    --danger-tint: rgba(180, 35, 24, 0.06);
+  }
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F6F7F3;
+  --surface: #FFFFFF;
+  --surface-hover: #EEF0EA;
+  --sunken: #EBEDE6;
+  --line: #DDE0D7;
+  --line-strong: #AEB3A8;
+  --text: #121412;
+  --text-2: #3A3F39;
+  --muted: #5B615A;
+  --signal: #C5F04A;
+  --on-signal: #0B0C0B;
+  --signal-ink: #3E5A00;
+  --signal-tint: rgba(197, 240, 74, 0.32);
+  --wip: #8A5300;
+  --danger: #B42318;
+  --danger-tint: rgba(180, 35, 24, 0.06);
+}
+
+:root {
+  --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+  --radius-0: 0px;
+  --radius-1: 4px;
+  --radius-2: 6px;
+  --size-control: 28px;
+  --size-roll-row: 32px;
+  --size-input: 40px;
+  --size-toolbar: 40px;
+  --size-status: 24px;
+  --size-sidebar: 240px;
+  --size-icon: 16px;
+  --size-window-min: 720px;
+  --duration-enter: 120ms;
+}
+
+.t-heading { font-family: var(--font-sans); font-size: 20px; line-height: 26px; font-weight: 600; letter-spacing: -0.02em; }
+.t-title { font-family: var(--font-sans); font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.t-ui-strong { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 500; }
+.t-ui { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 400; }
+.t-ui-sm { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 400; }
+.t-total { font-family: var(--font-mono); font-size: 15px; line-height: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.t-input { font-family: var(--font-mono); font-size: 14px; line-height: 20px; font-weight: 400; }
+.t-mono { font-family: var(--font-mono); font-size: 12px; line-height: 18px; font-weight: 400; }
+.t-mono-sm { font-family: var(--font-mono); font-size: 11px; line-height: 16px; font-weight: 400; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --duration-enter: 0ms; }
+}
