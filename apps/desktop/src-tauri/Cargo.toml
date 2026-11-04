@@ -1,0 +1,13 @@
+[package]
+name = "rollin-desktop"
+version = "0.0.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+rollin = { path = "../../.." }
+tauri = { version = "2", features = [] }

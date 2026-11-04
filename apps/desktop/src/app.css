@@ -1,0 +1,76 @@
+* { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 18px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+}
+
+#app {
+  display: grid;
+  height: 100vh;
+  min-width: var(--size-window-min);
+  min-height: var(--size-window-min-height);
+  grid-template-columns: var(--size-sidebar) minmax(0, 1fr);
+  grid-template-rows: var(--size-toolbar) minmax(0, 1fr) auto var(--size-status);
+  grid-template-areas:
+    "toolbar toolbar"
+    "sidebar roll-log"
+    "sidebar formula"
+    "status  status";
+}
+
+/* The overlay titlebar draws the macOS window buttons over the top-left
+   corner; the 84px inset keeps toolbar content clear of them. */
+.toolbar {
+  grid-area: toolbar;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) 0 84px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.sidebar {
+  grid-area: sidebar;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
+}
+
+.roll-log {
+  grid-area: roll-log;
+  padding: 0 var(--space-5);
+  overflow-y: auto;
+}
+
+.formula-box {
+  grid-area: formula;
+  min-height: var(--size-input);
+  margin: var(--space-3) var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+}
+
+.status-bar {
+  grid-area: status;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--muted);
+}
