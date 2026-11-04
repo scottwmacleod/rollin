@@ -191,7 +191,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
 /// Applies one operator with checked arithmetic. `span` covers the whole
 /// operation (for overflow); `rhs_span` is the right operand (for division
 /// by zero).
-fn apply(
+pub(crate) fn apply(
     op: BinOp,
     lhs: i64,
     rhs: i64,

@@ -9,6 +9,7 @@ use crate::ast::{
     RerollMode, Select, SelectKind, Special, Success,
 };
 use crate::error::Error;
+use crate::eval::apply;
 use crate::limits::{
     Cap, MAX_DEPTH, MAX_DICE_PER_EXPRESSION, MAX_DICE_PER_TERM, MAX_REPEAT, MAX_SIDES,
 };
@@ -57,6 +58,51 @@ pub fn parse_with(src: &str, vars: Lookup<'_>) -> Result<Formula, Error> {
             }
         }
     })
+}
+
+/// Like [`parse_with`], then evaluates what needs no dice: the arithmetic
+/// between numbers (and variables), so division by zero and overflow are
+/// reported as rolling would, without an RNG. Items are checked in the order
+/// rolling evaluates them.
+pub fn check_with(src: &str, vars: Lookup<'_>) -> Result<(), Error> {
+    for item in &parse_with(src, vars)?.items {
+        fold(&item.expr)?;
+    }
+    Ok(())
+}
+
+/// The value of `expr` if it does not depend on any die, reporting the
+/// errors rolling would certainly hit. Mirrors `eval::evaluate`'s order.
+fn fold(expr: &Expr) -> Result<Option<i64>, Error> {
+    match &expr.kind {
+        ExprKind::Number(n) => Ok(Some(*n)),
+        ExprKind::Dice(_) => Ok(None),
+        ExprKind::Group(inner) => fold(inner),
+        ExprKind::Neg(inner) => match fold(inner)? {
+            Some(v) => v.checked_neg().map(Some).ok_or(Error::Overflow {
+                span: expr.span.clone(),
+            }),
+            None => Ok(None),
+        },
+        ExprKind::Chain { first, rest } => {
+            let first_span = first.span.clone();
+            let mut total = fold(first)?;
+            for (op, operand) in rest {
+                let rhs = fold(operand)?;
+                let span = first_span.start..operand.span.end;
+                total = match (total, rhs) {
+                    (Some(l), Some(r)) => Some(apply(*op, l, r, span, operand.span.clone())?),
+                    (_, Some(0)) if *op == BinOp::Div => {
+                        return Err(Error::DivisionByZero {
+                            span: operand.span.clone(),
+                        })
+                    }
+                    _ => None,
+                };
+            }
+            Ok(total)
+        }
+    }
 }
 
 fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
