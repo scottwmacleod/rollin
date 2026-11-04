@@ -1,5 +1,5 @@
 {
   "formula": "4d6rr1",
   "seed": 8,
-  "expected": {"schema_version":1,"rolls":[{"formula":"4d6rr1","total":18,"expr":{"type":"dice","term":"4d6rr1","sides":6,"dice":[{"value":2,"status":"kept"},{"value":1,"status":"rerolled"},{"value":1,"status":"rerolled"},{"value":5,"status":"kept"},{"value":5,"status":"kept"},{"value":6,"status":"kept"}],"subtotal":18}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"4d6rr1","total":18,"expr":{"type":"dice","term":"4d6rr1","sides":6,"modifiers":["rr1"],"dice":[{"value":2,"status":"kept"},{"value":1,"status":"rerolled","reason":{"clause":"rr1"}},{"value":1,"status":"rerolled","reason":{"clause":"rr1","from":1}},{"value":5,"status":"kept","reason":{"clause":"rr1","from":2}},{"value":5,"status":"kept"},{"value":6,"status":"kept"}],"subtotal":18}}]}
 }
