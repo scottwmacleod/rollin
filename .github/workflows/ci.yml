@@ -49,3 +49,23 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Test
         run: cargo test --locked
+
+  msrv:
+    # Builds and tests with exactly the compiler declared as `rust-version` in
+    # Cargo.toml. rust-toolchain.toml (channel = "stable") would otherwise win
+    # over the installed toolchain, so RUSTUP_TOOLCHAIN forces it. Keep the
+    # version strings here in sync with Cargo.toml. Not a required check.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RUSTUP_TOOLCHAIN: "1.95.0"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.95.0"
+      - uses: Swatinem/rust-cache@v2
+      - name: Show compiler
+        run: rustc --version
+      - name: Test
+        run: cargo test --locked
