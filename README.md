@@ -787,3 +787,7 @@ compiled binary as a process with `--seed` and a temporary
 `XDG_CONFIG_HOME` (see `tests/common/mod.rs`); `proptest` covers library
 invariants, and a pty test covers the interactive session. The formula
 fixtures live in `tests/fixtures`.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
