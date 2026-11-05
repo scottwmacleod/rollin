@@ -1,6 +1,9 @@
 name: Release desktop app
 
-# Builds an unsigned universal macOS bundle and attaches it to a GitHub Release.
+# Builds a universal macOS bundle and attaches it to a GitHub Release. It is
+# ad-hoc signed only, until the Apple signing secrets below exist; with all of
+# them set it is Developer ID signed, notarized and stapled (see #112 and
+# docs/desktop-install.md).
 #
 # Three ways in, none needing local git:
 #   - schedule: daily. Releases a patch bump only if main has app changes since
@@ -173,6 +176,49 @@ jobs:
             echo "tauri.conf.json still has the placeholder updater public key" >&2
             exit 1
           fi
+      # Apple Developer ID signing and notarization (#112). Inert until the
+      # secrets exist: with none set the build stays ad-hoc signed as before;
+      # with only some set it fails, so a half-configured release is never
+      # shipped by accident. The values go to later steps via GITHUB_ENV so
+      # that Tauri never sees empty APPLE_* variables.
+      - name: Set up Apple signing and notarization
+        id: apple
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          names=(APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_API_ISSUER APPLE_API_KEY APPLE_API_PRIVATE_KEY)
+          set_count=0; missing=()
+          for n in "${names[@]}"; do
+            if [ -n "${!n:-}" ]; then set_count=$((set_count + 1)); else missing+=("$n"); fi
+          done
+          if [ "$set_count" -eq 0 ]; then
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "No Apple signing secrets set; building ad-hoc signed (unsigned for Gatekeeper)."
+            exit 0
+          fi
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Apple signing is partly configured; missing secrets: ${missing[*]}" >&2
+            exit 1
+          fi
+          key_path="$RUNNER_TEMP/AuthKey_$APPLE_API_KEY.p8"
+          printf '%s\n' "$APPLE_API_PRIVATE_KEY" > "$key_path"
+          chmod 600 "$key_path"
+          {
+            echo "APPLE_CERTIFICATE=$APPLE_CERTIFICATE"
+            echo "APPLE_CERTIFICATE_PASSWORD=$APPLE_CERTIFICATE_PASSWORD"
+            echo "APPLE_SIGNING_IDENTITY=$APPLE_SIGNING_IDENTITY"
+            echo "APPLE_API_ISSUER=$APPLE_API_ISSUER"
+            echo "APPLE_API_KEY=$APPLE_API_KEY"
+            echo "APPLE_API_KEY_PATH=$key_path"
+          } >> "$GITHUB_ENV"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+          echo "Apple signing and notarization enabled."
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
@@ -197,10 +243,7 @@ jobs:
           commitish: ${{ github.sha }}
           releaseName: Rollin desktop ${{ needs.plan.outputs.tag }}
           releaseBody: |
-            Unsigned macOS build (universal: Apple Silicon and Intel). On first
-            launch macOS will refuse to open it: right-click Rollin.app and
-            choose Open, or run `xattr -dr com.apple.quarantine /Applications/Rollin.app`.
-            See docs/desktop-install.md.
+            ${{ steps.apple.outputs.signed == 'true' && 'macOS build (universal: Apple Silicon and Intel), signed with a Developer ID and notarized by Apple. See docs/desktop-install.md.' || 'Unsigned macOS build (universal: Apple Silicon and Intel). On first launch macOS will refuse to open it: right-click Rollin.app and choose Open, or run `xattr -dr com.apple.quarantine /Applications/Rollin.app`. See docs/desktop-install.md.' }}
           releaseDraft: false
           prerelease: ${{ needs.plan.outputs.prerelease }}
           args: --target universal-apple-darwin -- --locked
@@ -213,4 +256,23 @@ jobs:
           echo "$assets"
           for pattern in '\.dmg$' '\.app\.tar\.gz$' '\.app\.tar\.gz\.sig$' '^latest\.json$'; do
             echo "$assets" | grep -Eq "$pattern" || { echo "Missing asset matching $pattern" >&2; exit 1; }
+          done
+      - name: Verify Apple signing and notarization
+        if: steps.apple.outputs.signed == 'true'
+        env:
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: |
+          set -euo pipefail
+          bundle=apps/desktop/src-tauri/target/universal-apple-darwin/release/bundle
+          app="$bundle/macos/Rollin.app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          details=$(codesign -dvv "$app" 2>&1)
+          echo "$details" | grep -q 'Authority=Developer ID Application'
+          echo "$details" | grep -Eq 'flags=0x[0-9a-f]+\(.*runtime'
+          spctl -a -vv -t exec "$app"
+          xcrun stapler validate "$app"
+          # The dmg is signed but Tauri does not staple it; report only.
+          for dmg in "$bundle"/dmg/*.dmg; do
+            codesign --verify --verbose=2 "$dmg"
+            xcrun stapler validate "$dmg" || echo "dmg is not stapled (the app inside is)"
           done

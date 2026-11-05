@@ -33,3 +33,27 @@ The app reads `https://github.com/scottwmacleod/rollin/releases/latest/download/
 4. Back up the key file and password (password manager). If the private key is lost, installed copies can never update again; users would have to reinstall by hand.
 
 The release workflow refuses to run while the placeholder public key or the secret is missing.
+
+## Apple signing and notarization (optional, #112)
+
+Until the secrets below exist, builds are ad-hoc signed and need the Gatekeeper steps at the top of this page. With all of them set, the release workflow signs with a Developer ID Application certificate, notarizes through the App Store Connect API, staples the ticket to the app, and verifies the result (`codesign`, `spctl -a -vv`, `xcrun stapler validate`); users then open the app with no warning. Setting only some of them fails the release on purpose.
+
+One-time setup (needs a person):
+
+1. Join the [Apple Developer Program](https://developer.apple.com/programs/enroll/) (US$99/year). An individual enrolment shows your legal name in Gatekeeper dialogs; an organisation shows the company name but needs a D-U-N-S number and takes longer. Approval can take from minutes to a few days.
+2. Create a **Developer ID Application** certificate (Certificates, IDs & Profiles > Certificates, or Xcode > Settings > Accounts > Manage Certificates). Export it from Keychain Access with its private key as a `.p12` and choose a password. Only the Account Holder can create Developer ID certificates.
+3. Create an App Store Connect API key (App Store Connect > Users and Access > Integrations > Team Keys; role Developer is enough). Note the Key ID and the Issuer ID, and download the `.p8` once, since Apple will not offer it again.
+4. Add these repo secrets (Settings > Secrets and variables > Actions):
+
+| Secret | Value |
+| --- | --- |
+| `APPLE_CERTIFICATE` | the `.p12`, base64 encoded: `base64 -i cert.p12 \| pbcopy` |
+| `APPLE_CERTIFICATE_PASSWORD` | the `.p12` password |
+| `APPLE_SIGNING_IDENTITY` | the certificate's full name, e.g. `Developer ID Application: Your Name (TEAMID)`; see `security find-identity -v -p codesigning` |
+| `APPLE_API_ISSUER` | the Issuer ID (a UUID) |
+| `APPLE_API_KEY` | the Key ID (10 characters) |
+| `APPLE_API_PRIVATE_KEY` | the full text of the `.p8` file |
+
+5. Back up the `.p12`, its password and the `.p8` in a password manager. Delete the `.p12` and `.p8` from Downloads.
+
+Updates keep working across the switch: the updater signature is separate, and the app's bundle identifier does not change. The first signed release replaces an ad-hoc one in place.
