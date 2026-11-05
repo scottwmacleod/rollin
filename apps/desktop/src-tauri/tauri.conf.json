@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Rollin",
-  "version": "0.0.0",
   "identifier": "dev.rollin.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -27,6 +26,20 @@
     }
   },
   "bundle": {
-    "active": false
+    "active": true,
+    "targets": ["app", "dmg"],
+    "category": "public.app-category.role-playing-games",
+    "shortDescription": "Dice roller for tabletop RPGs",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "signingIdentity": "-"
+    }
   }
 }
