@@ -83,7 +83,7 @@ jobs:
             See docs/desktop-install.md.
           releaseDraft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
-          args: --target universal-apple-darwin --locked
+          args: --target universal-apple-darwin -- --locked
       - name: Check the release has the updater assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
