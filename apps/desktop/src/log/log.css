@@ -9,19 +9,22 @@
   padding: var(--space-3) 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
 }
 
-.log-entry { border-radius: var(--radius-2); }
+/* Entries are full-bleed blocks split by a hairline, as in the design. */
+.log-entry { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.log-entry:last-child { border-bottom: 0; }
 .log-entry.entering { animation: log-enter var(--duration-enter) ease-out; }
 @keyframes log-enter { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .log-entry.entering { animation: none; } }
 
 .entry-head {
   display: flex;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-3);
   min-width: 0;
-  padding: 0 var(--space-2);
+  height: 24px;
+  padding: 0 var(--space-5);
   font-family: var(--font-mono);
   font-size: 11px;
   line-height: 16px;
@@ -35,9 +38,9 @@
   display: grid;
   grid-template-columns: 28px var(--formula-col) minmax(0, 1fr) 120px;
   align-items: center;
-  column-gap: var(--space-2);
+  column-gap: var(--space-3);
   height: var(--size-roll-row);
-  padding: 0 var(--space-2);
+  padding: 0 var(--space-5);
 }
 [data-compact] .roll-row { height: 30px; }
 @media (max-width: 799px) { .roll-row { --formula-col: 140px; } }
@@ -59,7 +62,7 @@
 .roll-formula-text {
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--text);
+  color: var(--text-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -98,6 +101,12 @@
   color: var(--text);
   white-space: nowrap; /* never truncated */
 }
+.roll-total-unit {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
 
 /* Die glyphs. Every state carries a mark besides colour: (n) dropped,
    strike-through rerolled, ↻ replacement, ✓ ✗ outcome, ! exploded, a chip
@@ -106,7 +115,7 @@
 .die-rerolled { color: var(--muted); text-decoration: line-through; }
 .die-replacement { color: var(--text); }
 .die-exploded { color: var(--text); }
-.die-success { color: var(--signal-ink); font-weight: 600; }
+.die-success { color: var(--signal-ink); }
 .die-failure { color: var(--danger); }
 .die-nat20 {
   background: var(--signal);
@@ -117,33 +126,29 @@
 }
 .die-nat1 {
   color: var(--danger);
+  font-weight: 600;
   box-shadow: inset 0 0 0 1px var(--danger);
   padding: 0 var(--space-1);
   border-radius: var(--radius-1);
 }
 
-.entry-error {
+.error-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-1) var(--space-5) 6px 60px; /* lines up with the formula column */
   background: var(--danger-tint);
-  padding-bottom: var(--space-2);
 }
-.error-message {
-  margin: 0;
-  padding: var(--space-1) var(--space-2) 0;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--danger);
-  user-select: text;
-}
+.error-message,
 .error-caret {
   margin: 0;
-  padding: 0 var(--space-2);
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 18px;
   color: var(--danger);
   user-select: text;
 }
+.error-source { color: var(--text-2); }
 
 /* Output of commands other than rolls: neutral text, then hints. */
 .notice-lines {
@@ -183,6 +188,7 @@
 }
 .log-entry { position: relative; }
 .log-entry.selected { background: var(--signal-tint); }
+.log-entry.selected .roll-formula-text { color: var(--text); }
 .log-entry.selected::before {
   content: "";
   position: absolute;
@@ -200,7 +206,7 @@
   padding: 0 var(--space-2);
   color: var(--text-2);
   background: transparent;
-  border: 1px solid var(--muted);
+  border: 1px solid transparent;
   border-radius: var(--radius-1);
   cursor: pointer;
 }

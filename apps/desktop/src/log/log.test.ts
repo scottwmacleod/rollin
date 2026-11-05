@@ -186,7 +186,7 @@ describe("entries", () => {
     });
     expect(node.classList.contains("entry-error")).toBe(true);
     expect(node.querySelector(".error-message")!.textContent).toBe("error: unexpected 'x'");
-    expect(node.querySelector(".error-caret")!.textContent).toBe("  2d6 + x\n        ^");
+    expect(node.querySelector(".error-caret")!.textContent).toBe("2d6 + x\n      ^");
   });
 
   it("maps byte spans to character columns", () => {

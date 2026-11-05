@@ -49,7 +49,7 @@ body {
 
 .roll-log {
   grid-area: roll-log;
-  padding: 0 var(--space-5);
+  padding: 0;
   overflow-y: auto;
 }
 
