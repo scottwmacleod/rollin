@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Main window: core defaults, dragging by the toolbar, opening links (the About view's repository), and the updater (check, install, restart).",
   "windows": ["main"],
-  "permissions": ["core:default", "core:window:allow-start-dragging", "opener:allow-open-url", "updater:default", "process:allow-restart"]
+  "permissions": ["core:default", "core:window:allow-start-dragging", "opener:allow-open-url", "updater:default"]
 }
