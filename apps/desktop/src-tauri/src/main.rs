@@ -5,7 +5,7 @@
 //! `rollin-desktop-core`; the logic and its tests live there.
 
 use rollin_desktop_core::{About, Completions, Execution, Failure, Session, State};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 use tauri::menu::{Menu, MenuItem};
 use tauri::{AppHandle, Emitter, Runtime};
@@ -58,6 +58,35 @@ fn about(app: AppHandle) -> About {
     rollin_desktop_core::about(&app.package_info().version.to_string())
 }
 
+/// The `.app` bundle that `exe` (`X.app/Contents/MacOS/bin`) runs from.
+fn bundle_of(exe: &Path) -> Option<PathBuf> {
+    let bundle = exe.ancestors().nth(3)?;
+    (bundle.extension()? == "app" && exe.parent()?.file_name()? == "MacOS")
+        .then(|| bundle.to_path_buf())
+}
+
+/// Restarts into the installed update. On macOS the stock restart execs the
+/// binary directly, which the Dock shows as a second Rollin icon; opening the
+/// bundle through LaunchServices once this process has exited reuses the
+/// Dock's own icon.
+#[tauri::command]
+fn relaunch_app(app: AppHandle) {
+    #[cfg(target_os = "macos")]
+    if let Some(bundle) = std::env::current_exe().ok().as_deref().and_then(bundle_of) {
+        let script =
+            r#"while kill -0 "$1" 2>/dev/null; do sleep 0.1; done; exec /usr/bin/open "$2""#;
+        let spawned = std::process::Command::new("/bin/sh")
+            .args(["-c", script, "sh", &std::process::id().to_string()])
+            .arg(&bundle)
+            .spawn();
+        if spawned.is_ok() {
+            app.exit(0);
+            return;
+        }
+    }
+    app.restart();
+}
+
 /// The stock menu with our About item in place of the native About panel.
 fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     let menu = Menu::default(app)?;
@@ -94,7 +123,6 @@ fn main() {
         // The updater checks and installs from the page (src/updater); its
         // endpoint and public key are in tauri.conf.json.
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init())
         .menu(build_menu)
         .on_menu_event(|app, event| {
             if event.id() == ABOUT_ID {
@@ -104,8 +132,37 @@ fn main() {
         })
         .manage(AppSession(Mutex::new(Session::new(config_dir()))))
         .invoke_handler(tauri::generate_handler![
-            execute, complete, check, state, set_seed, about
+            execute,
+            complete,
+            check,
+            state,
+            set_seed,
+            about,
+            relaunch_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running the rollin desktop app");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn finds_the_bundle_around_the_binary() {
+        let exe = Path::new("/Applications/Rollin.app/Contents/MacOS/rollin-desktop");
+        assert_eq!(
+            bundle_of(exe),
+            Some(PathBuf::from("/Applications/Rollin.app"))
+        );
+    }
+
+    #[test]
+    fn a_bare_binary_has_no_bundle() {
+        assert_eq!(
+            bundle_of(Path::new("/repo/target/debug/rollin-desktop")),
+            None
+        );
+        assert_eq!(bundle_of(Path::new("/x.app/y/z/bin")), None);
+    }
 }

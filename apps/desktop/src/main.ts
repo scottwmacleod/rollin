@@ -7,9 +7,8 @@ initTheme();
 
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { relaunch } from "@tauri-apps/plugin-process";
 import { check as checkForUpdate } from "@tauri-apps/plugin-updater";
-import { about, execute, state } from "./api";
+import { about, execute, relaunch, state } from "./api";
 import { mountAbout } from "./about";
 import type { Execution } from "./api";
 import { mountInput } from "./input";

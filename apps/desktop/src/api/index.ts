@@ -52,3 +52,8 @@ export function setSeed(seed: number | null): Promise<number | null> {
 export function about(): Promise<About> {
   return invoke<About>("about");
 }
+
+/** Restarts the app into an installed update; the page goes away with it. */
+export function relaunch(): Promise<void> {
+  return invoke<void>("relaunch_app");
+}
