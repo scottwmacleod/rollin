@@ -50,6 +50,20 @@ describe("entryFor", () => {
     });
   });
 
+  it("words error hints for the desktop", () => {
+    const failed: Execution = {
+      status: "error",
+      error: { kind: "unknown_preset", message: "no preset 'x'", hints: [{ kind: "list_presets" }] },
+      span: null,
+      source: null,
+    };
+    expect(entryFor("x", failed, t)?.result).toEqual({
+      ok: false,
+      message: "no preset 'x'",
+      hints: ["hint: run `presets` to list saved presets"],
+    });
+  });
+
   it("lays out listings from the typed data and words hints for the desktop", () => {
     const vars: Execution = { status: "ok", output: { kind: "vars", vars: [["str", 3], ["dex", 4]], lines: [], hints: [] } };
     expect(entryFor("vars", vars, t)?.result).toEqual({ ok: true, notice: { lines: ["str = 3", "dex = 4"], hints: [] } });

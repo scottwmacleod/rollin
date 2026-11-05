@@ -91,6 +91,7 @@ export function renderEntry(entry: LogEntry, entering = false): HTMLElement {
       pre.append(el("span", "error-source", line), `\n${carets}`);
       body.append(pre);
     }
+    for (const hint of result.hints ?? []) body.append(el("p", "error-hint", hint));
     root.append(body);
   }
   return root;

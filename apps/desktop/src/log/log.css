@@ -149,6 +149,14 @@
   user-select: text;
 }
 .error-source { color: var(--text-2); }
+.error-hint {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted);
+  user-select: text;
+}
 
 /* Output of commands other than rolls: neutral text, then hints. */
 .notice-lines {

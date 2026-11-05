@@ -214,6 +214,18 @@ describe("mountLog", () => {
   });
 });
 
+describe("error hints", () => {
+  it("renders hints under the error message", () => {
+    const node = renderEntry({
+      id: "e",
+      time,
+      input: "roll atk",
+      result: { ok: false, message: "unknown preset 'atk'", hints: ["hint: run `presets` to list saved presets"] },
+    });
+    expect(node.querySelector(".error-hint")?.textContent).toBe("hint: run `presets` to list saved presets");
+  });
+});
+
 describe("notice entries", () => {
   const notice: LogEntry = {
     id: "n",
