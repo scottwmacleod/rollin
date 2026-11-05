@@ -28,6 +28,7 @@
   "bundle": {
     "active": true,
     "targets": ["app", "dmg"],
+    "createUpdaterArtifacts": true,
     "category": "public.app-category.role-playing-games",
     "shortDescription": "Dice roller for tabletop RPGs",
     "icon": [
@@ -40,6 +41,12 @@
     "macOS": {
       "minimumSystemVersion": "11.0",
       "signingIdentity": "-"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "REPLACE_WITH_UPDATER_PUBLIC_KEY",
+      "endpoints": ["https://github.com/scottwmacleod/rollin/releases/latest/download/latest.json"]
     }
   }
 }

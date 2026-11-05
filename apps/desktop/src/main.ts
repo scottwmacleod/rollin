@@ -7,6 +7,8 @@ initTheme();
 
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { relaunch } from "@tauri-apps/plugin-process";
+import { check as checkForUpdate } from "@tauri-apps/plugin-updater";
 import { about, execute, state } from "./api";
 import { mountAbout } from "./about";
 import type { Execution } from "./api";
@@ -14,6 +16,9 @@ import { mountInput } from "./input";
 import { mountLog, type LogEntry } from "./log";
 import { entryFor } from "./session";
 import { mountSidebar } from "./sidebar";
+import { createUpdater } from "./updater";
+import { bindAboutToUpdater } from "./updater/about";
+import { mountUpdateBanner } from "./updater/banner";
 
 const logEl = document.querySelector<HTMLElement>(".roll-log");
 const inputEl = document.querySelector<HTMLElement>(".formula-box");
@@ -68,6 +73,11 @@ window.addEventListener("rollin:submit", (e) => {
 });
 
 // `Rollin ▸ About Rollin` (and its shortcut) is a native menu item; it sends
-// this event. `aboutView.setUpdateStatus` is where auto-update reports.
+// this event. Auto-update reports in the dialog and in a banner on launch.
 export const aboutView = mountAbout({ about, openUrl });
 void listen("about:open", () => void aboutView.open());
+
+const updater = createUpdater({ check: checkForUpdate, relaunch });
+bindAboutToUpdater(aboutView, updater);
+mountUpdateBanner(updater);
+void updater.check();
