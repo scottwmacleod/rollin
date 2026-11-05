@@ -1,6 +1,6 @@
 [package]
 name = "rollin-desktop"
-version = "0.1.1"
+version = "0.0.0" # placeholder: the release workflow injects the real version from the tag
 edition = "2021"
 license = "MIT"
 publish = false
