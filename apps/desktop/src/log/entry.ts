@@ -42,7 +42,12 @@ function rollRow(roll: Roll): HTMLElement {
   bd.title = cells.map((c) => c.text).join("");
   row.append(bd);
 
-  const total = el("span", "roll-total", totalText(roll));
+  const text = totalText(roll);
+  const total = el("span", "roll-total");
+  // `2 successes`: the unit is quieter than the number.
+  const unit = /^(-?\d+)( successes?)$/.exec(text);
+  if (unit) total.append(unit[1], el("span", "roll-total-unit", unit[2]));
+  else total.textContent = text;
   total.title = totalDetail(roll);
   row.append(total);
   return row;
@@ -73,13 +78,15 @@ export function renderEntry(entry: LogEntry, entering = false): HTMLElement {
     for (const roll of result.doc.rolls) root.append(rollRow(roll));
   } else {
     root.classList.add("entry-error");
-    root.append(el("p", "error-message", `error: ${result.message}`));
+    const body = el("div", "error-body");
+    body.append(el("p", "error-message", `error: ${result.message}`));
     if (result.source !== undefined && result.span) {
       const [line, carets] = caretLines(result.source, result.span);
       const pre = el("pre", "error-caret");
-      pre.textContent = `  ${line}\n  ${carets}`;
-      root.append(pre);
+      pre.append(el("span", "error-source", line), `\n${carets}`);
+      body.append(pre);
     }
+    root.append(body);
   }
   return root;
 }
