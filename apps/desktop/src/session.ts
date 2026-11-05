@@ -1,5 +1,5 @@
 import type { Execution } from "./api/types";
-import { noticeFor } from "./notice";
+import { hintText, noticeFor } from "./notice";
 import type { LogEntry, RollDocument } from "./log/types";
 
 let nextId = 1;
@@ -39,6 +39,7 @@ export function entryFor(line: string, execution: Execution, time: Date = new Da
         result: {
           ok: false,
           message: error.message,
+          ...(error.hints.length > 0 ? { hints: error.hints.map(hintText) } : {}),
           ...(source !== null && span !== null ? { source, span: [span.start, span.end] as [number, number] } : {}),
         },
       };

@@ -59,6 +59,8 @@ export interface ErrorResult {
   source?: string;
   /** UTF-8 byte range into `source`. */
   span?: [number, number];
+  /** Next-step hints, already worded for the desktop. */
+  hints?: string[];
 }
 
 /** What a command other than a roll printed: its lines, then any next-step hints. */
