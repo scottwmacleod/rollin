@@ -5,6 +5,8 @@ on:
     branches: [main]
   push:
     branches: [main]
+  # Merge queue runs the required checks on the queued commit.
+  merge_group:
 
 permissions:
   contents: read
