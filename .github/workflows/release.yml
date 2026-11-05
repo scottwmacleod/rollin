@@ -5,6 +5,12 @@ name: Release desktop app
 # apps/desktop/src-tauri/Cargo.toml (tauri.conf.json has no version and falls
 # back to it); the tag must match. The tag prefix keeps app releases apart from
 # CLI releases (see #61).
+#
+# The build also produces the updater bundle (Rollin.app.tar.gz), its .sig and
+# latest.json, signed with the updater key (secrets TAURI_SIGNING_PRIVATE_KEY
+# and TAURI_SIGNING_PRIVATE_KEY_PASSWORD). The app reads latest.json from
+# releases/latest/download, so the newest GitHub Release must be a desktop one;
+# see docs/desktop-install.md.
 
 on:
   push:
@@ -36,6 +42,18 @@ jobs:
             echo "Tag $TAG does not match rollin-desktop version $version" >&2
             exit 1
           fi
+      - name: Check updater signing is set up
+        env:
+          SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "Secret TAURI_SIGNING_PRIVATE_KEY is not set; see docs/desktop-install.md" >&2
+            exit 1
+          fi
+          if grep -q REPLACE_WITH apps/desktop/src-tauri/tauri.conf.json; then
+            echo "tauri.conf.json still has the placeholder updater public key" >&2
+            exit 1
+          fi
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
@@ -47,11 +65,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Install front-end dependencies
         run: npm --prefix apps/desktop ci
-      # tauri-action v0.6.2. Later updater artifacts (.app.tar.gz signature,
-      # latest.json) are produced by this same step; see #114.
+      # tauri-action v0.6.2. With bundle.createUpdaterArtifacts it also uploads
+      # the signed .app.tar.gz, its .sig and latest.json (#114).
       - uses: tauri-apps/tauri-action@1ddc7b49b13c3038297360482fcb3e058764d7c9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
           tagName: ${{ github.ref_name }}
@@ -64,3 +84,13 @@ jobs:
           releaseDraft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
           args: --target universal-apple-darwin --locked
+      - name: Check the release has the updater assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          assets=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+          echo "$assets"
+          for pattern in '\.dmg$' '\.app\.tar\.gz$' '\.app\.tar\.gz\.sig$' '^latest\.json$'; do
+            echo "$assets" | grep -Eq "$pattern" || { echo "Missing asset matching $pattern" >&2; exit 1; }
+          done

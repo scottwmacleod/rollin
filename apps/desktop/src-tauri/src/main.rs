@@ -91,6 +91,10 @@ fn config_dir() -> Option<PathBuf> {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        // The updater checks and installs from the page (src/updater); its
+        // endpoint and public key are in tauri.conf.json.
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .menu(build_menu)
         .on_menu_event(|app, event| {
             if event.id() == ABOUT_ID {

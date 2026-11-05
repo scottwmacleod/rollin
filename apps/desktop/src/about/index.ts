@@ -17,6 +17,8 @@ export interface AboutView {
    * `null` hides the line.
    */
   setUpdateStatus(text: string | null): void;
+  /** The button under the status line ("Check for updates"); `null` hides it. */
+  setUpdateAction(action: { label: string; run(): void } | null): void;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string) {
@@ -33,12 +35,17 @@ export function mountAbout(deps: AboutDeps): AboutView {
   let backdrop: HTMLElement | null = null;
   let status: HTMLElement | null = null;
   let statusText: string | null = null;
+  let action: HTMLButtonElement | null = null;
+  let actionSpec: { label: string; run(): void } | null = null;
   let returnTo: HTMLElement | null = null;
 
   const applyStatus = () => {
     if (!status) return;
     status.textContent = statusText ?? "";
     status.hidden = statusText === null;
+    if (!action) return;
+    action.textContent = actionSpec?.label ?? "";
+    action.hidden = actionSpec === null;
   };
 
   const close = () => {
@@ -46,6 +53,7 @@ export function mountAbout(deps: AboutDeps): AboutView {
     backdrop.remove();
     backdrop = null;
     status = null;
+    action = null;
     if (returnTo?.isConnected) returnTo.focus();
     returnTo = null;
   };
@@ -94,11 +102,16 @@ export function mountAbout(deps: AboutDeps): AboutView {
     status.setAttribute("role", "status");
     status.setAttribute("data-slot", "update-status");
 
+    action = el("button", "about-action");
+    action.setAttribute("type", "button");
+    action.setAttribute("data-slot", "update-action");
+    action.addEventListener("click", () => actionSpec?.run());
+
     const done = el("button", "about-close", "Close");
     done.setAttribute("type", "button");
     done.addEventListener("click", close);
 
-    dialog.append(title, rows, status, done);
+    dialog.append(title, rows, status, action, done);
     root.append(dialog);
     root.addEventListener("mousedown", (e) => {
       if (e.target === root) close();
@@ -135,6 +148,10 @@ export function mountAbout(deps: AboutDeps): AboutView {
     isOpen: () => backdrop !== null,
     setUpdateStatus(text) {
       statusText = text === null || text.trim() === "" ? null : text;
+      applyStatus();
+    },
+    setUpdateAction(next) {
+      actionSpec = next;
       applyStatus();
     },
   };

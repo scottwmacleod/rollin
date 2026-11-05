@@ -102,3 +102,23 @@ describe("about view", () => {
     expect(dialog()).toBeNull();
   });
 });
+
+describe("about update action", () => {
+  it("is hidden until set, runs its handler, and survives reopening", async () => {
+    const { view } = setup();
+    await view.open();
+    const button = () => dialog()!.querySelector<HTMLButtonElement>("[data-slot=update-action]")!;
+    expect(button().hidden).toBe(true);
+    const run = vi.fn();
+    view.setUpdateAction({ label: "Check for updates", run });
+    expect(button().hidden).toBe(false);
+    expect(button().textContent).toBe("Check for updates");
+    button().click();
+    expect(run).toHaveBeenCalledOnce();
+    view.close();
+    await view.open();
+    expect(button().textContent).toBe("Check for updates");
+    view.setUpdateAction(null);
+    expect(button().hidden).toBe(true);
+  });
+});
