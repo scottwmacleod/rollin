@@ -1,0 +1,66 @@
+name: Release desktop app
+
+# Pushing a tag like desktop-v0.1.0 builds an unsigned universal macOS bundle
+# and attaches it to a GitHub Release. The app version lives in
+# apps/desktop/src-tauri/Cargo.toml (tauri.conf.json has no version and falls
+# back to it); the tag must match. The tag prefix keeps app releases apart from
+# CLI releases (see #61).
+
+on:
+  push:
+    tags:
+      - "desktop-v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write # create the release and upload assets
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check tag matches app version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(cargo metadata --no-deps --format-version 1 --locked \
+            | jq -r '.packages[] | select(.name == "rollin-desktop") | .version')
+          if [ "desktop-v$version" != "$TAG" ]; then
+            echo "Tag $TAG does not match rollin-desktop version $version" >&2
+            exit 1
+          fi
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: Swatinem/rust-cache@v2
+      - name: Install front-end dependencies
+        run: npm --prefix apps/desktop ci
+      # tauri-action v0.6.2. Later updater artifacts (.app.tar.gz signature,
+      # latest.json) are produced by this same step; see #114.
+      - uses: tauri-apps/tauri-action@1ddc7b49b13c3038297360482fcb3e058764d7c9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: Rollin desktop ${{ github.ref_name }}
+          releaseBody: |
+            Unsigned macOS build (universal: Apple Silicon and Intel). On first
+            launch macOS will refuse to open it: right-click Rollin.app and
+            choose Open, or run `xattr -dr com.apple.quarantine /Applications/Rollin.app`.
+            See docs/desktop-install.md.
+          releaseDraft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          args: --target universal-apple-darwin --locked
