@@ -11,8 +11,13 @@ Later launches are normal.
 
 ## Cutting a release
 
-1. Bump `version` in `apps/desktop/src-tauri/Cargo.toml` (the single source of truth; `tauri.conf.json` has no version and uses it) and refresh `Cargo.lock`.
-2. Merge, then `git tag desktop-vX.Y.Z && git push origin desktop-vX.Y.Z`. The workflow fails if the tag and the Cargo version differ. A tag with a hyphen (`desktop-v0.2.0-rc.1`) is marked as a pre-release.
+No local git is needed. The "Release desktop app" workflow (`.github/workflows/release.yml`) works out the version, builds, and creates the tag and GitHub Release itself.
+
+- **Daily:** at 05:17 UTC it releases a patch bump if `main` has changed `apps/desktop`, `src`, or the root `Cargo.toml`/`Cargo.lock` since the last release. It skips quietly when nothing changed or when the required CI checks (`lint`, `test`, `test-linux`, `desktop`) have not all passed on `main`'s head; it tries again the next day.
+- **Manually:** Actions > Release desktop app > Run workflow (also available in GitHub Mobile). Choose `patch`, `minor` or `major`, or type an exact version, which wins over the bump. Run it on `main`. A version with a hyphen (`0.2.0-rc.1`) is marked as a pre-release.
+- **Fallback:** pushing a `desktop-vX.Y.Z` tag by hand builds that version without the schedule's checks.
+
+The git tag is the source of truth for the version. The workflow writes it into `tauri.conf.json` in the runner only; nothing is committed, and the `version` in `apps/desktop/src-tauri/Cargo.toml` is a `0.0.0` placeholder. Do not bump it.
 
 ## Updates
 

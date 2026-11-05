@@ -1,10 +1,19 @@
 name: Release desktop app
 
-# Pushing a tag like desktop-v0.1.0 builds an unsigned universal macOS bundle
-# and attaches it to a GitHub Release. The app version lives in
-# apps/desktop/src-tauri/Cargo.toml (tauri.conf.json has no version and falls
-# back to it); the tag must match. The tag prefix keeps app releases apart from
-# CLI releases (see #61).
+# Builds an unsigned universal macOS bundle and attaches it to a GitHub Release.
+#
+# Three ways in, none needing local git:
+#   - schedule: daily. Releases a patch bump only if main has app changes since
+#     the last release, and only if CI passed on that commit.
+#   - workflow_dispatch: run it from the Actions tab or GitHub Mobile. Pick a
+#     bump (patch/minor/major) or type an exact version.
+#   - push of a desktop-vX.Y.Z tag: manual fallback; the version comes from the tag.
+#
+# The tag is the source of truth for the version. The plan job works it out and
+# the build job writes it into tauri.conf.json in the runner's checkout only
+# (nothing is committed); the Cargo.toml version is a placeholder. tauri-action
+# creates the release, and GitHub creates the tag at the built commit.
+# The tag prefix keeps app releases apart from CLI releases (see #61).
 #
 # The build also produces the updater bundle (Rollin.app.tar.gz), its .sig and
 # latest.json, signed with the updater key (secrets TAURI_SIGNING_PRIVATE_KEY
@@ -13,6 +22,19 @@ name: Release desktop app
 # see docs/desktop-install.md.
 
 on:
+  schedule:
+    - cron: "17 5 * * *" # daily, 05:17 UTC
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump from the latest stable desktop release"
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      version:
+        description: "Exact version (e.g. 0.3.0 or 0.3.0-rc.1); overrides the bump"
+        type: string
+        required: false
   push:
     tags:
       - "desktop-v*"
@@ -21,27 +43,124 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:
+  plan:
+    # Decides whether to release and which version. Cheap, so the expensive
+    # macOS build only starts when there is something to ship.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: read # read CI results for the commit being released
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      version: ${{ steps.plan.outputs.version }}
+      tag: ${{ steps.plan.outputs.tag }}
+      prerelease: ${{ steps.plan.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # tags and history, to find the last release
+      - name: Plan the release
+        id: plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+          BUMP: ${{ inputs.bump }}
+          EXACT: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          semver='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
+          stop() { echo "release=false" >> "$GITHUB_OUTPUT"; echo "$1"; exit 0; }
+
+          last_tag=$(git tag --list 'desktop-v*' | grep -E '^desktop-v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+          last="${last_tag#desktop-v}"; last="${last:-0.0.0}"
+
+          if [ "$EVENT" = "push" ]; then
+            version="${REF_NAME#desktop-v}"
+          else
+            # Releases come from main only: a manual run on another branch is
+            # an error, the schedule always runs on the default branch.
+            if [ "$REF" != "refs/heads/main" ]; then
+              echo "Releases are only built from main (ref is $REF)" >&2
+              exit 1
+            fi
+            if [ -n "${EXACT:-}" ]; then
+              version="$EXACT"
+            else
+              IFS=. read -r major minor patch <<< "$last"
+              case "${BUMP:-patch}" in
+                major) version="$((major + 1)).0.0" ;;
+                minor) version="$major.$((minor + 1)).0" ;;
+                patch) version="$major.$minor.$((patch + 1))" ;;
+              esac
+            fi
+          fi
+
+          if ! [[ "$version" =~ $semver ]]; then
+            echo "'$version' is not a valid version" >&2
+            exit 1
+          fi
+          tag="desktop-v$version"
+
+          if [ "$EVENT" != "push" ]; then
+            if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+              echo "Tag $tag already exists" >&2
+              exit 1
+            fi
+            # A scheduled run is a no-op unless the app changed since the last release.
+            if [ "$EVENT" = "schedule" ]; then
+              if [ -n "$last_tag" ] && git diff --quiet "$last_tag" "$SHA" -- apps/desktop src Cargo.toml Cargo.lock; then
+                stop "No app changes since $last_tag; nothing to release."
+              fi
+            fi
+            # Only ship a commit whose required checks all passed.
+            runs=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq '.check_runs')
+            for check in lint test test-linux desktop; do
+              result=$(echo "$runs" | jq -r --arg n "$check" '[.[] | select(.name == $n)] | last | .conclusion // "missing"')
+              if [ "$result" != "success" ]; then
+                msg="Required check '$check' is '$result' on $SHA"
+                if [ "$EVENT" = "schedule" ]; then stop "$msg; will retry tomorrow."; fi
+                echo "$msg" >&2
+                exit 1
+              fi
+            done
+          fi
+
+          # A hyphen in the version (0.2.0-rc.1) marks a pre-release.
+          if [[ "$version" == *-* ]]; then prerelease=true; else prerelease=false; fi
+          {
+            echo "release=true"
+            echo "version=$version"
+            echo "tag=$tag"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
+          echo "Releasing $tag (previous stable: ${last_tag:-none})"
+
   macos:
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
     runs-on: macos-latest
     timeout-minutes: 45
     permissions:
       contents: write # create the release and upload assets
     steps:
       - uses: actions/checkout@v7
-      - name: Check tag matches app version
+      - name: Set the app version
         env:
-          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.plan.outputs.version }}
         run: |
-          version=$(cargo metadata --no-deps --format-version 1 --locked \
-            | jq -r '.packages[] | select(.name == "rollin-desktop") | .version')
-          if [ "desktop-v$version" != "$TAG" ]; then
-            echo "Tag $TAG does not match rollin-desktop version $version" >&2
-            exit 1
-          fi
+          conf=apps/desktop/src-tauri/tauri.conf.json
+          jq --arg v "$VERSION" '.version = $v' "$conf" > "$conf.new"
+          mv "$conf.new" "$conf"
+          grep '"version"' "$conf"
       - name: Check updater signing is set up
         env:
           SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -65,19 +184,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Install front-end dependencies
         run: npm --prefix apps/desktop ci
-      # A hyphen in the version (desktop-v0.2.0-rc.1) marks a pre-release. The
-      # tag prefix has its own hyphen, so strip it before looking.
-      - name: Decide whether this is a pre-release
-        id: kind
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          version="${TAG#desktop-v}"
-          if [[ "$version" == *-* ]]; then
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
       # tauri-action v0.6.2. With bundle.createUpdaterArtifacts it also uploads
       # the signed .app.tar.gz, its .sig and latest.json (#114).
       - uses: tauri-apps/tauri-action@1ddc7b49b13c3038297360482fcb3e058764d7c9
@@ -87,20 +193,21 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
-          tagName: ${{ github.ref_name }}
-          releaseName: Rollin desktop ${{ github.ref_name }}
+          tagName: ${{ needs.plan.outputs.tag }}
+          commitish: ${{ github.sha }}
+          releaseName: Rollin desktop ${{ needs.plan.outputs.tag }}
           releaseBody: |
             Unsigned macOS build (universal: Apple Silicon and Intel). On first
             launch macOS will refuse to open it: right-click Rollin.app and
             choose Open, or run `xattr -dr com.apple.quarantine /Applications/Rollin.app`.
             See docs/desktop-install.md.
           releaseDraft: false
-          prerelease: ${{ steps.kind.outputs.prerelease }}
+          prerelease: ${{ needs.plan.outputs.prerelease }}
           args: --target universal-apple-darwin -- --locked
       - name: Check the release has the updater assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ needs.plan.outputs.tag }}
         run: |
           assets=$(gh release view "$TAG" --json assets --jq '.assets[].name')
           echo "$assets"
