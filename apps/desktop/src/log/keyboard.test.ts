@@ -123,7 +123,7 @@ describe("keyboard mode", () => {
     (node.querySelectorAll(".entry-action")[2] as HTMLElement).click();
     await Promise.resolve();
     const r = entries[0].result;
-    if (!r.ok) throw new Error();
+    if (!r.ok || !("doc" in r)) throw new Error();
     expect(JSON.parse(writeText.mock.calls[0][0])).toEqual(r.doc);
   });
 

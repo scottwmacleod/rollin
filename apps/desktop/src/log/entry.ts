@@ -68,7 +68,12 @@ export function renderEntry(entry: LogEntry, entering = false): HTMLElement {
   root.append(header(entry));
 
   const result = entry.result;
-  if (result.ok) {
+  if (result.ok && "notice" in result) {
+    root.classList.add("entry-notice");
+    // One <pre> keeps listings aligned and selectable.
+    if (result.notice.lines.length > 0) root.append(el("pre", "notice-lines", result.notice.lines.join("\n")));
+    for (const hint of result.notice.hints) root.append(el("p", "notice-hint", hint));
+  } else if (result.ok) {
     root.classList.add("entry-rolls");
     for (const roll of result.doc.rolls) root.append(rollRow(roll));
   } else {

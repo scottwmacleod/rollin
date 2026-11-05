@@ -61,6 +61,12 @@ export interface ErrorResult {
   span?: [number, number];
 }
 
+/** What a command other than a roll printed: its lines, then any next-step hints. */
+export interface Notice {
+  lines: string[];
+  hints: string[];
+}
+
 /** One submit. */
 export interface LogEntry {
   id: string | number;
@@ -69,5 +75,5 @@ export interface LogEntry {
   input: string;
   /** What a preset expanded to, e.g. `adv-attack`, `d20adv+5`. */
   preset?: { name: string; expansion: string };
-  result: { ok: true; doc: RollDocument } | ({ ok: false } & ErrorResult);
+  result: { ok: true; doc: RollDocument } | { ok: true; notice: Notice } | ({ ok: false } & ErrorResult);
 }

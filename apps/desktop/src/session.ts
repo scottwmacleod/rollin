@@ -1,19 +1,25 @@
 import type { Execution } from "./api/types";
+import { noticeFor } from "./notice";
 import type { LogEntry, RollDocument } from "./log/types";
 
 let nextId = 1;
 
 /**
  * The log entry for one executed line, or null if it has nothing to show
- * there. Only rolls and errors have a log form; the other outputs (`save`,
- * `set`, `help`, ...) change the sidebar instead.
+ * there: only an empty line and `quit` have none. Rolls get the roll form,
+ * errors the error form, and everything else (`save`, `set`, `vars`, `help`,
+ * ...) a plain notice. Such commands also change the sidebar, which `record`
+ * refreshes.
  */
 export function entryFor(line: string, execution: Execution, time: Date = new Date()): LogEntry | null {
   const id = nextId++;
   switch (execution.status) {
     case "ok": {
       const out = execution.output;
-      if (out.kind !== "rolls") return null;
+      if (out.kind !== "rolls") {
+        const notice = noticeFor(out);
+        return notice && { id, time, input: line, result: { ok: true, notice } };
+      }
       const preset = out.preset ? { name: out.preset[0], expansion: out.preset[1] } : undefined;
       return {
         id,
@@ -39,6 +45,8 @@ export function entryFor(line: string, execution: Execution, time: Date = new Da
     }
     case "rejected":
       return { id, time, input: line, result: { ok: false, message: execution.message } };
+    case "text":
+      return { id, time, input: line, result: { ok: true, notice: { lines: execution.lines, hints: [] } } };
     default:
       return null;
   }
