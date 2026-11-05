@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Completions, Execution, Failure, SessionState } from "./types";
+import type { About, Completions, Execution, Failure, SessionState } from "./types";
 
 export type * from "./types";
 
@@ -46,4 +46,9 @@ export function state(): Promise<SessionState> {
  */
 export function setSeed(seed: number | null): Promise<number | null> {
   return invoke<number | null>("set_seed", { seed });
+}
+
+/** Name, versions (from the build), licence and repository for the About view. */
+export function about(): Promise<About> {
+  return invoke<About>("about");
 }

@@ -4,9 +4,15 @@
 //! The Tauri commands. Each one locks the session and calls
 //! `rollin-desktop-core`; the logic and its tests live there.
 
-use rollin_desktop_core::{Completions, Execution, Failure, Session, State};
+use rollin_desktop_core::{About, Completions, Execution, Failure, Session, State};
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};
+use tauri::menu::{Menu, MenuItem};
+use tauri::{AppHandle, Emitter, Runtime};
+
+/// The menu item that opens the About view, and the event it sends the page.
+const ABOUT_ID: &str = "about";
+const ABOUT_EVENT: &str = "about:open";
 
 /// The one session for this app run (ADR-0007: one RNG in managed state).
 struct AppSession(Mutex<Session>);
@@ -47,6 +53,34 @@ fn set_seed(session: tauri::State<'_, AppSession>, seed: Option<u64>) -> Option<
     session.current_seed()
 }
 
+#[tauri::command]
+fn about(app: AppHandle) -> About {
+    rollin_desktop_core::about(&app.package_info().version.to_string())
+}
+
+/// The stock menu with our About item in place of the native About panel.
+fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
+    let menu = Menu::default(app)?;
+    let item = MenuItem::with_id(app, ABOUT_ID, "About Rollin", true, Some("CmdOrCtrl+Alt+A"))?;
+    #[cfg(target_os = "macos")]
+    {
+        use tauri::menu::MenuItemKind;
+        // The app menu is first; its first entry is the native About item.
+        if let Some(MenuItemKind::Submenu(app_menu)) = menu.items()?.into_iter().next() {
+            if let Some(stock) = app_menu.items()?.into_iter().next() {
+                app_menu.remove(&stock)?;
+            }
+            app_menu.prepend(&item)?;
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        use tauri::menu::Submenu;
+        menu.append(&Submenu::with_items(app, "Rollin", true, &[&item])?)?;
+    }
+    Ok(menu)
+}
+
 /// `$XDG_CONFIG_HOME` if absolute, else `$HOME/.config`: the CLI's rule.
 fn config_dir() -> Option<PathBuf> {
     let xdg = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
@@ -56,9 +90,17 @@ fn config_dir() -> Option<PathBuf> {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .menu(build_menu)
+        .on_menu_event(|app, event| {
+            if event.id() == ABOUT_ID {
+                // The view is in the page; a failed emit leaves nothing to show.
+                let _ = app.emit(ABOUT_EVENT, ());
+            }
+        })
         .manage(AppSession(Mutex::new(Session::new(config_dir()))))
         .invoke_handler(tauri::generate_handler![
-            execute, complete, check, state, set_seed
+            execute, complete, check, state, set_seed, about
         ])
         .run(tauri::generate_context!())
         .expect("error while running the rollin desktop app");

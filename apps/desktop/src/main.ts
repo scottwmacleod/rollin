@@ -5,7 +5,10 @@ import { initTheme } from "./theme";
 
 initTheme();
 
-import { execute, state } from "./api";
+import { listen } from "@tauri-apps/api/event";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { about, execute, state } from "./api";
+import { mountAbout } from "./about";
 import type { Execution } from "./api";
 import { mountInput } from "./input";
 import { mountLog, type LogEntry } from "./log";
@@ -63,3 +66,8 @@ window.addEventListener("rollin:submit", (e) => {
   const line = (e as CustomEvent<unknown>).detail;
   if (typeof line === "string" && line.trim() !== "") void run(line);
 });
+
+// `Rollin ▸ About Rollin` (and its shortcut) is a native menu item; it sends
+// this event. `aboutView.setUpdateStatus` is where auto-update reports.
+export const aboutView = mountAbout({ about, openUrl });
+void listen("about:open", () => void aboutView.open());

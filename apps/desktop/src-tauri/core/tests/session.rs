@@ -258,3 +258,13 @@ fn complete_and_check_use_the_saved_names() {
     assert_eq!(failure["error"]["kind"], "formula");
     assert!(failure["span"]["end"].is_u64());
 }
+
+#[test]
+fn about_reports_build_versions_and_licence() {
+    let info = serde_json::to_value(rollin_desktop_core::about("1.2.3")).unwrap();
+    assert_eq!(info["name"], "Rollin");
+    assert_eq!(info["app_version"], "1.2.3");
+    assert_eq!(info["library_version"], rollin::version());
+    assert_eq!(info["license"], "MIT");
+    assert!(info["repository"].as_str().unwrap().starts_with("https://"));
+}

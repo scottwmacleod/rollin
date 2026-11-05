@@ -12,3 +12,4 @@ tauri-build = { version = "2", features = [] }
 rollin = { path = "../../.." }
 rollin-desktop-core = { path = "core" }
 tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
