@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Execution } from "../api";
 import { mountInput, type InputApi } from "./index";
-import { commonPrefix, History, isFormulaLine, pieces } from "./words";
+import { commonPrefix, History, isFormulaLine, pieces, usageFor } from "./words";
 
 const failure = (message: string) => ({ status: "error", error: { kind: "x", message, hints: [] }, span: null, source: null });
 const ok: Execution = { status: "empty" };
@@ -54,6 +54,15 @@ describe("words", () => {
     expect(isFormulaLine("  ")).toBe(false);
     expect(isFormulaLine("-h")).toBe(false);
   });
+  it("usage appears once a command word is typed", () => {
+    expect(usageFor("sav")).toBeNull();
+    expect(usageFor("save")).toContain("<name> <formula>");
+    expect(usageFor("  set prof")).toContain("<integer>");
+    expect(usageFor("char ")).toContain("new <name>");
+    expect(usageFor("d20+5")).toBeNull();
+    expect(usageFor("toString")).toBeNull();
+  });
+
   it("common prefix", () => {
     expect(commonPrefix(["attack", "attune"])).toBe("att");
     expect(commonPrefix([])).toBe("");
@@ -106,6 +115,17 @@ describe("formula box", () => {
     first(failure("old"));
     await flush();
     expect(error().hidden).toBe(true);
+  });
+
+  it("shows usage under the box for a typed command, and not for formulas", () => {
+    const { host, type } = setup();
+    const hint = () => host.querySelector<HTMLElement>(".fx-hint")!;
+    expect(hint().hidden).toBe(true);
+    type("save");
+    expect(hint().hidden).toBe(false);
+    expect(hint().textContent).toContain("save <name> <formula> [--global]");
+    type("d20");
+    expect(hint().hidden).toBe(true);
   });
 
   it("does not live-check commands", async () => {

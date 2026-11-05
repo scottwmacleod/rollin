@@ -1,7 +1,7 @@
 import "./input.css";
 import * as api from "../api";
 import type { Completions, Execution } from "../api";
-import { commonPrefix, History, isFormulaLine, pieces } from "./words";
+import { commonPrefix, History, isFormulaLine, pieces, usageFor } from "./words";
 
 export { isFormulaLine, pieces, commonPrefix, History } from "./words";
 
@@ -91,6 +91,10 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
   error.setAttribute("role", "status");
   error.hidden = true;
 
+  const hint = document.createElement("div");
+  hint.className = "fx-hint";
+  hint.hidden = true;
+
   const list = document.createElement("ul");
   list.className = "fx-list";
   list.id = `${id}-list`;
@@ -98,7 +102,7 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
   list.setAttribute("aria-label", "Completions");
   list.hidden = true;
 
-  container.replaceChildren(label, list, field, error);
+  container.replaceChildren(label, list, field, error, hint);
 
   // --- rendering -----------------------------------------------------------
 
@@ -115,9 +119,17 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
     highlight.scrollLeft = input.scrollLeft;
   }
 
+  /** Usage for a typed command word, unless an error is already showing. */
+  function showHint(): void {
+    const usage = error.hidden ? usageFor(input.value) : null;
+    hint.hidden = usage === null;
+    hint.textContent = usage ?? "";
+  }
+
   function showError(message: string | null): void {
     error.hidden = message === null;
     error.textContent = message ?? "";
+    showHint();
     field.classList.toggle("invalid", message !== null);
     input.setAttribute("aria-invalid", String(message !== null));
   }
@@ -242,6 +254,7 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
   function edited(): void {
     completing++;
     paint();
+    showHint();
     live();
   }
 

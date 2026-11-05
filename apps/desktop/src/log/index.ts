@@ -1,7 +1,6 @@
 import "./log.css";
-import { breakdown } from "./breakdown";
 import { renderEntry } from "./entry";
-import { classify, entryText, isPrintable } from "./keys";
+import { classify, isPrintable } from "./keys";
 import { renderTree } from "./treeview";
 import type { LogEntry } from "./types";
 
@@ -78,18 +77,12 @@ export function mountLog(container: HTMLElement, options: LogOptions = {}): Roll
 
   const canExpand = (it: Item) => it.entry.result.ok && "doc" in it.entry.result && it.entry.result.doc.rolls.some((r) => r.expr.type !== "number");
 
-  function textOf(it: Item): string {
-    return entryText(it.entry, (i) => {
-      const r = it.entry.result;
-      return r.ok && "doc" in r ? breakdown(r.doc.rolls[i]).map((c) => c.text).join("") : "";
-    });
-  }
-
   async function copy(it: Item, what: "text" | "json") {
     const r = it.entry.result;
     if (what === "json" && !(r.ok && "doc" in r)) return;
+    // "copy" is the formula only, so it can be pasted straight back into the box.
     // The stored document is the `--json` document, so this matches the CLI.
-    const body = what === "json" && r.ok && "doc" in r ? JSON.stringify(r.doc, null, 2) : textOf(it);
+    const body = what === "json" && r.ok && "doc" in r ? JSON.stringify(r.doc, null, 2) : it.entry.input;
     try {
       await write(body);
       say(what === "json" ? "Copied JSON" : "Copied");

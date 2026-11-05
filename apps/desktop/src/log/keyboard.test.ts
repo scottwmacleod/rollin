@@ -103,14 +103,14 @@ describe("keyboard mode", () => {
     expect(node.getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("R rerolls the selected entry's input; C copies it as text", () => {
+  it("R rerolls the selected entry's input; C copies only the formula", () => {
     const { host, log, reroll, writeText, entries } = setup();
     log.focusLog();
     press(host, "k");
     press(host, "r");
     expect(reroll).toHaveBeenCalledWith(entries[1]);
     press(host, "c");
-    expect(writeText.mock.calls[0][0]).toMatch(/^› 4d6dl1\n4d6dl1 {2}\[.*\] {2}= \d+$/);
+    expect(writeText.mock.calls[0][0]).toBe(entries[1].input);
   });
 
   it("selected entries offer reroll, copy and copy json buttons; copy json is the --json document", async () => {
@@ -137,7 +137,7 @@ describe("keyboard mode", () => {
     expect(host.querySelector(".die-tree")).toBeNull();
     expect(host.querySelectorAll(".entry-action")).toHaveLength(2);
     press(host, "c");
-    expect(writeText).toHaveBeenCalledWith("› 2d6 +\nerror: unexpected end");
+    expect(writeText).toHaveBeenCalledWith("2d6 +");
   });
 });
 
