@@ -37,7 +37,7 @@ Each issue may carry one line in its body: `**Touches:** ` followed by comma-sep
 7. **Wait.** The main thread waits for CI, not the subagent. In T3 call `link_pull_request` on the new PR, then `watch_pull_request`, and end the turn; call `unwatch_pull_request` once the PR is merged or abandoned. Outside T3 poll `gh pr view <n> --json state,statusCheckRollup`. Do not use `sleep` loops or `gh pr checks --watch` where the harness forbids waiting.
 8. **Resolve.**
    - `MERGED`: `git fetch origin` (every branch is cut from `origin/main`, so local `main` is never needed), then go back to the queue.
-   - Branch behind `main`: with the merge queue on, nothing to do; the queue rebuilds it. Without the queue (strict protection), `gh pr update-branch`, wait again, auto-merge stays enabled.
+   - Branch behind `main`: (strict protection; merge queue is unavailable on user-owned repos) `gh pr update-branch`, wait again, auto-merge stays enabled.
    - Infrastructure failure (runner error, network): `gh run rerun --failed`, at most 2 times.
    - Real failure: read the logs, spawn a fix subagent (`sonnet`), push, verify (step 3) again. Maximum 3 attempts. The last attempt uses `opus`.
 
