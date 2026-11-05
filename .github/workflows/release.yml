@@ -65,6 +65,19 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Install front-end dependencies
         run: npm --prefix apps/desktop ci
+      # A hyphen in the version (desktop-v0.2.0-rc.1) marks a pre-release. The
+      # tag prefix has its own hyphen, so strip it before looking.
+      - name: Decide whether this is a pre-release
+        id: kind
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#desktop-v}"
+          if [[ "$version" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
       # tauri-action v0.6.2. With bundle.createUpdaterArtifacts it also uploads
       # the signed .app.tar.gz, its .sig and latest.json (#114).
       - uses: tauri-apps/tauri-action@1ddc7b49b13c3038297360482fcb3e058764d7c9
@@ -82,7 +95,7 @@ jobs:
             choose Open, or run `xattr -dr com.apple.quarantine /Applications/Rollin.app`.
             See docs/desktop-install.md.
           releaseDraft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          prerelease: ${{ steps.kind.outputs.prerelease }}
           args: --target universal-apple-darwin -- --locked
       - name: Check the release has the updater assets
         env:
