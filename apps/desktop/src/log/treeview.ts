@@ -36,11 +36,13 @@ export function renderTree(roll: Roll): HTMLElement {
   foot.className = "die-tree-foot";
   const order = document.createElement("span");
   order.className = "tree-order";
-  order.textContent = tree.order ? `order: ${tree.order}` : "no modifiers";
+  order.textContent = tree.order || "no modifiers";
+  const label = document.createElement("span");
+  label.textContent = "total";
   const total = document.createElement("span");
   total.className = "tree-total";
-  total.textContent = `total ${tree.total}`;
-  foot.append(order, total);
+  total.textContent = tree.total;
+  foot.append(order, label, total);
   root.append(foot);
   return root;
 }
