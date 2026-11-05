@@ -127,3 +127,12 @@ export interface Completions {
   start: number;
   candidates: string[];
 }
+
+/** What the About view shows; built in Rust from the build's own versions. */
+export interface About {
+  name: string;
+  app_version: string;
+  library_version: string;
+  license: string;
+  repository: string;
+}

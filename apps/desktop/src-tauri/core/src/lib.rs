@@ -17,6 +17,37 @@ use serde::Serialize;
 use std::ops::Range;
 use std::path::PathBuf;
 
+/// The licence the app and the library ship under.
+pub const LICENSE: &str = "MIT";
+
+/// Where the source lives.
+pub const REPOSITORY: &str = "https://github.com/scottwmacleod/rollin";
+
+/// What the About view shows. The versions come from the build, never from
+/// strings typed into the front end.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct About {
+    pub name: &'static str,
+    /// The desktop app's version (the bundle version in `tauri.conf.json`).
+    pub app_version: String,
+    /// The `rollin` library the app links against.
+    pub library_version: &'static str,
+    pub license: &'static str,
+    pub repository: &'static str,
+}
+
+/// Builds the About data. The app version is the shell's to know, so it is
+/// passed in; the rest is fixed or comes from the linked library.
+pub fn about(app_version: &str) -> About {
+    About {
+        name: "Rollin",
+        app_version: app_version.to_string(),
+        library_version: rollin::version(),
+        license: LICENSE,
+        repository: REPOSITORY,
+    }
+}
+
 /// The result of one typed line.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Execution {
