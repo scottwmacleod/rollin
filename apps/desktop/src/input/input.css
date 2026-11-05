@@ -64,6 +64,15 @@
 }
 .fx-error[hidden] { display: none; }
 
+.fx-hint {
+  margin: var(--space-1) var(--space-3) 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+}
+.fx-hint[hidden] { display: none; }
+
 .fx-list {
   position: absolute;
   left: 0;

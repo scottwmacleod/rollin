@@ -229,7 +229,7 @@ describe("notice entries", () => {
     expect(node.querySelector(".notice-hint")?.textContent).toBe("Add one with: set <name> <integer>");
   });
 
-  it("is selectable, copies as text, and has no die tree or JSON copy", async () => {
+  it("is selectable, copies only the input, and has no die tree or JSON copy", async () => {
     const copied: string[] = [];
     const container = document.createElement("div");
     const log = mountLog(container, { writeText: (t) => void copied.push(t) });
@@ -238,7 +238,7 @@ describe("notice entries", () => {
     const copy = [...container.querySelectorAll<HTMLButtonElement>(".entry-action")].find((b) => b.textContent === "copy");
     copy?.click();
     await Promise.resolve();
-    expect(copied).toEqual(["› vars\nNo variables set.\nAdd one with: set <name> <integer>"]);
+    expect(copied).toEqual(["vars"]);
     expect([...container.querySelectorAll(".entry-action")].some((b) => b.textContent === "copy json")).toBe(false);
   });
 });

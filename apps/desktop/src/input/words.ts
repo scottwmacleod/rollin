@@ -16,6 +16,27 @@ export function isFormulaLine(line: string): boolean {
   return !NON_FORMULA.has(first);
 }
 
+/** Usage for commands that take arguments. Mirrors the usage strings the
+ * library's parser reports (src/command/parse.rs) so the shape is visible as
+ * soon as the word is typed, before it can be rejected. */
+const USAGE: Record<string, string> = {
+  save: "save <name> <formula> [--global]   e.g. save attack d20+5",
+  set: "set <name> <integer>   e.g. set prof 3, then use @prof in a formula",
+  unset: "unset <name>",
+  delete: "delete <name> [--global]",
+  import: "import <path> [--force]",
+  roll: "roll <formula or preset name>",
+  char: "char [<name> | new <name> | delete <name>]",
+};
+
+/** The usage line for the command word at the start of `line`, once that word
+ * is fully typed (a space after it, or the whole line is exactly the word). */
+export function usageFor(line: string): string | null {
+  const m = /^\s*(\S+)(\s|$)/.exec(line);
+  if (!m) return null;
+  return Object.hasOwn(USAGE, m[1]) ? USAGE[m[1]] : null;
+}
+
 export type Piece = { text: string; kind: "plain" | "variable" | "label" };
 
 /** Splits `line` for colouring: `@variables` and `# labels` (which run to the
