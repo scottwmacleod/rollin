@@ -3309,7 +3309,7 @@ dependencies = [
 
 [[package]]
 name = "rollin-desktop"
-version = "0.1.1"
+version = "0.0.0"
 dependencies = [
  "rollin",
  "rollin-desktop-core",
