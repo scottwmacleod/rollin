@@ -38,6 +38,8 @@ export function entryText(entry: LogEntry, breakdownOf: (i: number) => string): 
   const lines = [`› ${entry.input}`];
   if (!entry.result.ok) {
     lines.push(`error: ${entry.result.message}`);
+  } else if ("notice" in entry.result) {
+    lines.push(...entry.result.notice.lines, ...entry.result.notice.hints);
   } else {
     entry.result.doc.rolls.forEach((roll, i) => {
       const bd = breakdownOf(i);

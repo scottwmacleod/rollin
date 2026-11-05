@@ -213,3 +213,32 @@ describe("mountLog", () => {
     expect(host.querySelectorAll(".log-entry")).toHaveLength(0);
   });
 });
+
+describe("notice entries", () => {
+  const notice: LogEntry = {
+    id: "n",
+    time,
+    input: "vars",
+    result: { ok: true, notice: { lines: ["No variables set."], hints: ["Add one with: set <name> <integer>"] } },
+  };
+
+  it("renders the lines, then the hints", () => {
+    const node = renderEntry(notice);
+    expect(node.classList.contains("entry-notice")).toBe(true);
+    expect(node.querySelector(".notice-lines")?.textContent).toBe("No variables set.");
+    expect(node.querySelector(".notice-hint")?.textContent).toBe("Add one with: set <name> <integer>");
+  });
+
+  it("is selectable, copies as text, and has no die tree or JSON copy", async () => {
+    const copied: string[] = [];
+    const container = document.createElement("div");
+    const log = mountLog(container, { writeText: (t) => void copied.push(t) });
+    log.append(notice);
+    expect(container.querySelector(".entry-action")?.textContent).not.toBe("copy json");
+    const copy = [...container.querySelectorAll<HTMLButtonElement>(".entry-action")].find((b) => b.textContent === "copy");
+    copy?.click();
+    await Promise.resolve();
+    expect(copied).toEqual(["› vars\nNo variables set.\nAdd one with: set <name> <integer>"]);
+    expect([...container.querySelectorAll(".entry-action")].some((b) => b.textContent === "copy json")).toBe(false);
+  });
+});

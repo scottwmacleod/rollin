@@ -150,6 +150,28 @@
 }
 .error-source { color: var(--text-2); }
 
+/* Output of commands other than rolls: neutral text, then hints. */
+.notice-lines {
+  margin: 0;
+  padding: var(--space-1) var(--space-2) 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-2);
+  white-space: pre-wrap;
+  user-select: text;
+}
+.notice-hint {
+  margin: 0;
+  padding: 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted);
+  user-select: text;
+}
+.entry-notice { padding-bottom: var(--space-1); }
+
 .sr-only {
   position: absolute;
   width: 1px;

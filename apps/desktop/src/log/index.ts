@@ -76,20 +76,20 @@ export function mountLog(container: HTMLElement, options: LogOptions = {}): Roll
     status.textContent = text;
   };
 
-  const canExpand = (it: Item) => it.entry.result.ok && it.entry.result.doc.rolls.some((r) => r.expr.type !== "number");
+  const canExpand = (it: Item) => it.entry.result.ok && "doc" in it.entry.result && it.entry.result.doc.rolls.some((r) => r.expr.type !== "number");
 
   function textOf(it: Item): string {
     return entryText(it.entry, (i) => {
       const r = it.entry.result;
-      return r.ok ? breakdown(r.doc.rolls[i]).map((c) => c.text).join("") : "";
+      return r.ok && "doc" in r ? breakdown(r.doc.rolls[i]).map((c) => c.text).join("") : "";
     });
   }
 
   async function copy(it: Item, what: "text" | "json") {
     const r = it.entry.result;
-    if (what === "json" && !r.ok) return;
+    if (what === "json" && !(r.ok && "doc" in r)) return;
     // The stored document is the `--json` document, so this matches the CLI.
-    const body = what === "json" && r.ok ? JSON.stringify(r.doc, null, 2) : textOf(it);
+    const body = what === "json" && r.ok && "doc" in r ? JSON.stringify(r.doc, null, 2) : textOf(it);
     try {
       await write(body);
       say(what === "json" ? "Copied JSON" : "Copied");
@@ -101,7 +101,7 @@ export function mountLog(container: HTMLElement, options: LogOptions = {}): Roll
   function toggle(it: Item) {
     if (!canExpand(it)) return;
     const r = it.entry.result;
-    if (!r.ok) return;
+    if (!r.ok || !("doc" in r)) return;
     const open = it.tree === null;
     if (open) {
       it.tree = document.createElement("div");
@@ -187,7 +187,7 @@ export function mountLog(container: HTMLElement, options: LogOptions = {}): Roll
       actions.className = "entry-actions";
       if (options.reroll) actions.append(button("reroll", () => { options.reroll?.(entry); say("Rerolled"); }));
       actions.append(button("copy", () => void copy(it, "text")));
-      if (entry.result.ok) actions.append(button("copy json", () => void copy(it, "json")));
+      if (entry.result.ok && "doc" in entry.result) actions.append(button("copy json", () => void copy(it, "json")));
       node.querySelector(".entry-head")?.append(actions);
       node.addEventListener("click", () => {
         select(items.indexOf(it), false);
