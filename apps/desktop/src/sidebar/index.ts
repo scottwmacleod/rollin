@@ -173,7 +173,10 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
       const global = row.scope === "global";
       const items: [string, () => void][] = [];
       if (!row.shadowed) {
-        items.push(["Edit", () => startPresetEdit(li, row)]);
+        items.push([
+          "Edit",
+          () => window.dispatchEvent(new CustomEvent("rollin:edit-preset", { detail: { name: entry.name, global } })),
+        ]);
         if (!global) {
           items.push([
             "Make global",
@@ -191,16 +194,6 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
     });
     li.append(b);
     return li;
-  }
-
-  function startPresetEdit(li: HTMLElement, row: PresetRow) {
-    const input = inlineInput(
-      row.entry.formula,
-      `Formula for ${row.entry.name}`,
-      (v) => void edit(commands.savePreset(row.entry.name, v, row.scope === "global")),
-      () => render(),
-    );
-    li.replaceChildren(el("span", "sb-preset-name", row.entry.name), input);
   }
 
   function openMenu(anchor: HTMLElement, items: [string, () => void][], e: MouseEvent) {
