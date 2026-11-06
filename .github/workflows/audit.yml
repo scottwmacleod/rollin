@@ -1,0 +1,38 @@
+name: Audit
+
+# Supply-chain checks (advisories, licences, bans, sources) via cargo-deny, configured in deny.toml.
+# Deliberately not part of the `ci` aggregate and not a required check: a new
+# advisory can turn this red on an unrelated PR or on the weekly run.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "**/Cargo.toml"
+      - "deny.toml"
+      - ".github/workflows/audit.yml"
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, Monday 05:43 UTC, to catch advisories published since the last change.
+    - cron: "43 5 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  cargo-deny:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      # --workspace: the desktop app is not a default member, so without it the Tauri tree goes unchecked.
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          arguments: --workspace
