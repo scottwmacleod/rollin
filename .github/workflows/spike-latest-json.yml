@@ -1,0 +1,79 @@
+name: Spike latest.json (#145)
+# THROWAWAY. Tests tauri-action merging latest.json across two jobs. Not for main.
+on:
+  push:
+    branches: [claude/project-thread-59ia69]
+permissions:
+  contents: write
+jobs:
+  # Layout A: both jobs create/upload with no coordination.
+  a-macos:
+    runs-on: macos-latest
+    env: { TAG: desktop-v0.0.0-win.1, VERSION: 0.0.0-win.1 }
+    steps: &steps-macos
+      - uses: actions/checkout@v7
+      - run: |
+          conf=apps/desktop/src-tauri/tauri.conf.json
+          jq --arg v "$VERSION" '.version = $v' "$conf" > "$conf.new" && mv "$conf.new" "$conf"
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+        with: { targets: "aarch64-apple-darwin,x86_64-apple-darwin" }
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: npm, cache-dependency-path: apps/desktop/package-lock.json }
+      - run: npm --prefix apps/desktop ci
+      - uses: tauri-apps/tauri-action@1ddc7b49b13c3038297360482fcb3e058764d7c9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ env.TAG }}
+          releaseCommitish: ${{ github.sha }}
+          releaseName: Spike ${{ env.TAG }}
+          releaseBody: throwaway spike for #145
+          releaseDraft: false
+          prerelease: true
+          args: --target universal-apple-darwin -- --locked
+  a-windows:
+    runs-on: windows-latest
+    env: { TAG: desktop-v0.0.0-win.1, VERSION: 0.0.0-win.1 }
+    steps: &steps-win
+      - uses: actions/checkout@v7
+      - shell: bash
+        run: |
+          conf=apps/desktop/src-tauri/tauri.conf.json
+          jq --arg v "$VERSION" '.version = $v' "$conf" > "$conf.new" && mv "$conf.new" "$conf"
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: npm, cache-dependency-path: apps/desktop/package-lock.json }
+      - run: npm --prefix apps/desktop ci
+      - uses: tauri-apps/tauri-action@1ddc7b49b13c3038297360482fcb3e058764d7c9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ env.TAG }}
+          releaseCommitish: ${{ github.sha }}
+          releaseName: Spike ${{ env.TAG }}
+          releaseBody: throwaway spike for #145
+          releaseDraft: false
+          prerelease: true
+          args: --bundles nsis -- --locked
+  # Layout B: one job creates the release, then both upload to it.
+  b-create:
+    runs-on: ubuntu-latest
+    steps:
+      - env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: gh release create desktop-v0.0.0-win.2 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Spike desktop-v0.0.0-win.2" --notes "throwaway spike for #145"
+  b-macos:
+    needs: b-create
+    runs-on: macos-latest
+    env: { TAG: desktop-v0.0.0-win.2, VERSION: 0.0.0-win.2 }
+    steps: *steps-macos
+  b-windows:
+    needs: b-create
+    runs-on: windows-latest
+    env: { TAG: desktop-v0.0.0-win.2, VERSION: 0.0.0-win.2 }
+    steps: *steps-win
