@@ -83,6 +83,7 @@ export type Output = (
   | { kind: "characters"; names: string[]; active: string }
   | { kind: "active_character"; name: string }
   | { kind: "char_deleted"; name: string; was_active: boolean }
+  | { kind: "char_renamed"; from: string; to: string }
   | { kind: "char_created"; name: string }
   | { kind: "char_switched"; name: string }
   | { kind: "vars"; vars: [string, number][] }

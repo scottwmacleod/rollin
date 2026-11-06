@@ -60,6 +60,9 @@ impl NameError {
             NameRule::CommandWord if self.name.eq_ignore_ascii_case("new") => {
                 "'new' is reserved for `rollin char new`".into()
             }
+            NameRule::CommandWord if self.name.eq_ignore_ascii_case("rename") => {
+                "'rename' is reserved for `rollin char rename`".into()
+            }
             NameRule::CommandWord => {
                 format!("it is a command word ({})", COMMAND_WORDS.join(", "))
             }
@@ -111,7 +114,7 @@ impl Name {
     /// A name for a new character: a preset name that is also not `new`,
     /// which `char new` would read as its own subcommand.
     pub fn character(raw: &str) -> Result<Name, NameError> {
-        if raw.eq_ignore_ascii_case("new") {
+        if raw.eq_ignore_ascii_case("new") || raw.eq_ignore_ascii_case("rename") {
             return Err(NameError {
                 name: raw.to_string(),
                 rule: NameRule::CommandWord,

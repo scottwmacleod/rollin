@@ -20,6 +20,7 @@ fn output_kind(o: &Output) -> &'static str {
         Output::Characters { .. } => "characters",
         Output::ActiveCharacter { .. } => "active_character",
         Output::CharDeleted { .. } => "char_deleted",
+        Output::CharRenamed { .. } => "char_renamed",
         Output::CharCreated { .. } => "char_created",
         Output::CharSwitched { .. } => "char_switched",
         Output::Vars { .. } => "vars",
@@ -43,6 +44,7 @@ fn error_kind(e: &CommandError) -> &'static str {
         CommandError::NoSuchVariable { .. } => "no_such_variable",
         CommandError::ActiveCharacterMissing { .. } => "active_character_missing",
         CommandError::CannotDeleteDefault => "cannot_delete_default",
+        CommandError::CannotRenameDefault => "cannot_rename_default",
         CommandError::CharacterExists { .. } => "character_exists",
         CommandError::InvalidCharName(_) => "invalid_char_name",
         CommandError::InvalidName(_) => "invalid_name",
@@ -100,6 +102,10 @@ fn outputs() -> Vec<Output> {
         Output::CharDeleted {
             name: s("grog"),
             was_active: true,
+        },
+        Output::CharRenamed {
+            from: s("grog"),
+            to: s("gorg"),
         },
         Output::CharCreated { name: s("grog") },
         Output::CharSwitched { name: s("grog") },
@@ -163,6 +169,7 @@ fn errors() -> Vec<CommandError> {
         },
         CommandError::ActiveCharacterMissing { name: s("grog") },
         CommandError::CannotDeleteDefault,
+        CommandError::CannotRenameDefault,
         CommandError::CharacterExists { name: s("grog") },
         CommandError::InvalidCharName(name_error.clone()),
         CommandError::InvalidName(name_error),
@@ -216,11 +223,11 @@ fn output_covers_every_kind() {
     let mut kinds: Vec<&str> = outputs().iter().map(output_kind).collect();
     kinds.sort();
     kinds.dedup();
-    assert_eq!(kinds.len(), 13);
+    assert_eq!(kinds.len(), 14);
     let mut kinds: Vec<&str> = errors().iter().map(error_kind).collect();
     kinds.sort();
     kinds.dedup();
-    assert_eq!(kinds.len(), 19);
+    assert_eq!(kinds.len(), 20);
 }
 
 #[test]

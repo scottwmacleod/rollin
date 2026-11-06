@@ -50,6 +50,8 @@ pub enum Command {
     CharSwitch(Name),
     /// Delete a character.
     CharDelete(Name),
+    /// Rename a character, keeping its data; the active one stays active.
+    CharRename { from: Name, to: String },
     /// Create an empty character and make it active.
     CharNew(String),
     /// List the active character's variables.

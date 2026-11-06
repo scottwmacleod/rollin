@@ -43,6 +43,11 @@ pub enum Output {
         name: String,
         was_active: bool,
     },
+    /// A character was renamed. If it was the active one, `to` is now active.
+    CharRenamed {
+        from: String,
+        to: String,
+    },
     /// A character was created and made active.
     CharCreated {
         name: String,
@@ -131,6 +136,9 @@ impl Output {
                 vec![format!(
                     "deleted character '{name}'; active character is now 'default'"
                 )]
+            }
+            Output::CharRenamed { from, to } => {
+                vec![format!("renamed character '{from}' to '{to}'")]
             }
             Output::CharCreated { name } => {
                 vec![format!("created character '{name}' and made it active")]
