@@ -12,6 +12,10 @@ struct Ctx<'a, R> {
     rng: &'a mut R,
     /// Dice rolled so far, explosions included.
     rolled: i64,
+    /// Whether every dice group rolls twice as many dice (critical damage).
+    double: bool,
+    /// How many dice groups were doubled.
+    doubled: usize,
 }
 
 impl<R: Rng> Ctx<'_, R> {
@@ -29,8 +33,15 @@ impl<R: Rng> Ctx<'_, R> {
     }
 }
 
-pub fn evaluate(item: &Item, rng: &mut impl Rng) -> Result<Roll, Error> {
-    let mut ctx = Ctx { rng, rolled: 0 };
+/// Evaluates one item. With `double`, every dice group rolls twice as many
+/// dice (flat numbers are untouched), as a critical hit's damage does.
+pub fn evaluate(item: &Item, double: bool, rng: &mut impl Rng) -> Result<Roll, Error> {
+    let mut ctx = Ctx {
+        rng,
+        rolled: 0,
+        double,
+        doubled: 0,
+    };
     let mut expr = eval_expr(&item.expr, &mut ctx)?;
     mark_natural(&mut expr);
     Ok(Roll {
@@ -44,6 +55,8 @@ pub fn evaluate(item: &Item, rng: &mut impl Rng) -> Result<Roll, Error> {
         expr,
         label: item.label.clone(),
         iteration: None,
+        crit: None,
+        doubled: ctx.doubled > 0,
     })
 }
 
@@ -53,7 +66,13 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
         ExprKind::Dice(d) => {
             let mut dice = Vec::new();
             let reroll_reason = d.clauses.reroll.clone();
-            for _ in 0..d.count {
+            let count = if ctx.double {
+                ctx.doubled += 1;
+                d.count.saturating_mul(2)
+            } else {
+                d.count
+            };
+            for _ in 0..count {
                 let mut raw = ctx.die(d, &expr.span)?;
                 // The index of the last die this one's reroll replaced.
                 let mut replaced = None;

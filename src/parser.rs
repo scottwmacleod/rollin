@@ -6,7 +6,7 @@
 
 use crate::ast::{
     BinOp, Clauses, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Formula, Item,
-    Reroll, RerollMode, Select, SelectKind, Special, Success,
+    Reroll, RerollMode, Role, Select, SelectKind, Special, Success,
 };
 use crate::error::Error;
 use crate::eval::apply;
@@ -154,6 +154,18 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
         parser.item_dice = 0;
         let expr = parser.parse_item()?;
         let stop = parser.prev_end();
+        let role = match parser.peek() {
+            Some(Token::Word(w)) if w == "atk" || w == "dmg" => {
+                let role = if w == "atk" {
+                    Role::Attack
+                } else {
+                    Role::Damage
+                };
+                parser.pos += 1;
+                Some(role)
+            }
+            _ => None,
+        };
         let label = match parser.peek() {
             Some(Token::Label(text)) => {
                 let text = text.clone();
@@ -166,6 +178,7 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
             source: src[start..stop].trim().to_string(),
             expr,
             label,
+            role,
         });
         if !parser.at_end() && !matches!(parser.peek(), Some(Token::Comma)) {
             return Err(parser.unexpected("',' or the end of the formula"));

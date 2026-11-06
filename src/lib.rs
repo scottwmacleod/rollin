@@ -20,7 +20,10 @@ mod parser;
 mod paths;
 mod presets;
 mod session;
+mod settings;
+mod system;
 
+use ast::Role;
 pub use ast::{BinOp, Special};
 pub use command::{
     check, execute, parse_command, Command, CommandError, Context, ErrorReport, ImportReport,
@@ -34,6 +37,8 @@ pub use name::{validate_name, Name, NameError, NameRule};
 pub use paths::{app_dir, config_dir};
 pub use presets::{Store, StoreError};
 pub use session::{format_history, help_text, session_command, SessionCommand};
+pub use settings::SettingsStore;
+pub use system::{Crit, System};
 
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -261,6 +266,14 @@ pub struct Roll {
     /// For a repeated formula (`Nx`), which repeat (from 1) this roll is in.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub iteration: Option<u32>,
+    /// Under a game system: whether this attack was a critical hit or miss.
+    /// Absent on every other roll.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub crit: Option<Crit>,
+    /// Under a game system: whether this damage roll's dice were doubled
+    /// because its attack was a critical hit.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub doubled: bool,
 }
 
 impl Roll {
@@ -289,7 +302,7 @@ impl Roll {
 /// Parses and evaluates a formula (one or more comma-separated rolls) using
 /// the injected RNG, returning one [`Roll`] per item.
 pub fn roll(formula: &str, rng: &mut impl Rng) -> Result<Vec<Roll>, Error> {
-    roll_with(formula, &|_| None, rng)
+    roll_in(formula, &|_| None, None, rng)
 }
 
 /// Like [`roll`], resolving `@name` variables through `vars` (given the
@@ -300,11 +313,30 @@ pub fn roll_with(
     vars: &dyn Fn(&str) -> Option<i64>,
     rng: &mut impl Rng,
 ) -> Result<Vec<Roll>, Error> {
+    roll_in(formula, vars, None, rng)
+}
+
+/// Like [`roll_with`], under a game `system` (`None` rolls every item
+/// independently). Each `Nx` repeat pairs its attacks and damage afresh.
+pub fn roll_in(
+    formula: &str,
+    vars: &dyn Fn(&str) -> Option<i64>,
+    system: Option<System>,
+    rng: &mut impl Rng,
+) -> Result<Vec<Roll>, Error> {
     let parsed = parser::parse_with(formula, vars)?;
     let mut rolls = Vec::new();
     for iteration in 1..=parsed.repeat.unwrap_or(1) {
+        // The latest attack's crit, which later damage rolls belong to.
+        let mut attack: Option<Crit> = None;
         for item in &parsed.items {
-            let mut roll = eval::evaluate(item, rng)?;
+            let role = system.and_then(|_| item.role());
+            let double = role == Some(Role::Damage) && attack == Some(Crit::Hit);
+            let mut roll = eval::evaluate(item, double, rng)?;
+            if role == Some(Role::Attack) {
+                roll.crit = roll.natural().map(Crit::from);
+                attack = roll.crit;
+            }
             roll.iteration = parsed.repeat.map(|_| iteration);
             rolls.push(roll);
         }
