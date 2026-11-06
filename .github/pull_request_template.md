@@ -1,19 +1,21 @@
+<!-- Shape from the /pr skill (mattpocock/skills). Keep prose brief and use GLOSSARY.md terms. -->
+
 ## Summary
 
-<!-- What changed and why, in a few sentences. -->
+<!-- The smallest view that makes the change clear: a diagram, diff sketch, call tree or pseudocode. -->
 
-## Release note
-
-<!-- The PR title is the release-note line. Write it for a user of the app, and add a label: `enhancement`, `bug`, or `internal` to leave it out. -->
-
-## Linked issue
-
-<!-- Keep the closing keyword so the issue closes on merge. -->
 Closes #
 
-## Verification
+## Evidence
 
-<!-- How you checked it, e.g. `just check`, `cargo test`, manual run. Paste key output. -->
+- **Before:** <!-- output or failing test run -->
+  **After:** <!-- output or passing test run, e.g. `just check` -->
+
+## Merge Danger
+
+**Door:** <!-- one-way or two-way -->
+
+**Blast Radius:** <!-- one word -->
 
 ## CI / release config impact
 

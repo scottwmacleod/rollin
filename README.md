@@ -814,7 +814,7 @@ without touching your real data.
 The crate is a library core (tokenizer, parser, evaluator with an injected
 RNG, which never prints) plus a binary that owns arguments, rendering and
 I/O. Design decisions are in [docs/adr](docs/adr), the glossary in
-[CONTEXT.md](CONTEXT.md), and the `--json` schema in
+[GLOSSARY.md](GLOSSARY.md), and the `--json` schema in
 [docs/json-schema.md](docs/json-schema.md).
 
 ```sh
