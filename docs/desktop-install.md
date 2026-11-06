@@ -15,7 +15,12 @@ No local git is needed. The "Release desktop app" workflow (`.github/workflows/r
 
 - **Daily:** at 05:17 UTC it releases a patch bump if `main` has changed `apps/desktop`, `src`, or the root `Cargo.toml`/`Cargo.lock` since the last release. It skips quietly when nothing changed or when the required CI checks (`lint`, `test`, `test-linux`, `desktop`) have not all passed on `main`'s head; it tries again the next day.
 - **Manually:** Actions > Release desktop app > Run workflow (also available in GitHub Mobile). Choose `patch`, `minor` or `major`, or type an exact version, which wins over the bump. Run it on `main`. A version with a hyphen (`0.2.0-rc.1`) is marked as a pre-release.
+- **Highlights:** the manual run has an optional `highlights` field. Its text goes above the list of changes, in both the release page and the app's update notes.
 - **Fallback:** pushing a `desktop-vX.Y.Z` tag by hand builds that version without the schedule's checks.
+
+### Release notes
+
+The notes are GitHub's generated list of PRs merged since the previous desktop release, grouped by label (`.github/release.yml`): `enhancement` under "New", `bug` under "Fixes", everything else under "Other changes". PRs labelled `dependencies`, `github_actions` or `internal` are left out. So write the PR title as a line a user would read, and label the PR. The same text goes into `latest.json` as the update notes; the release page also gets the install help appended after the build. Editing a release afterwards changes the page only, not `latest.json`, so use `highlights` or fix titles/labels before the run.
 
 The git tag is the source of truth for the version. The workflow writes it into `tauri.conf.json` in the runner only; nothing is committed, and the `version` in `apps/desktop/src-tauri/Cargo.toml` is a `0.0.0` placeholder. Do not bump it.
 

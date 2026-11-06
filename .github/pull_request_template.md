@@ -2,6 +2,10 @@
 
 <!-- What changed and why, in a few sentences. -->
 
+## Release note
+
+<!-- The PR title is the release-note line. Write it for a user of the app, and add a label: `enhancement`, `bug`, or `internal` to leave it out. -->
+
 ## Linked issue
 
 <!-- Keep the closing keyword so the issue closes on merge. -->
