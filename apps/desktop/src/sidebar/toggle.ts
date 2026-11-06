@@ -1,3 +1,5 @@
+import { hasMod, modHint } from "../platform";
+
 /**
  * A toolbar button for the sidebar, so narrow windows have a visible way in
  * (⌘B alone is invisible). Escape or a click outside closes the slide-over.
@@ -13,7 +15,7 @@ export function mountSidebarToggle(
   button.type = "button";
   button.className = "sb-toggle";
   button.textContent = "☰";
-  button.title = "Toggle sidebar (⌘B)";
+  button.title = `Toggle sidebar (${modHint("B")})`;
   button.setAttribute("aria-label", "Toggle sidebar");
   button.setAttribute("aria-controls", "sidebar");
   sidebar.id = "sidebar";
@@ -36,7 +38,7 @@ export function mountSidebarToggle(
   // Runs after the sidebar's own ⌘B handler, so the state is already flipped.
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeSlideOver();
-    else if (e.metaKey && e.key.toLowerCase() === "b") sync();
+    else if (hasMod(e) && e.key.toLowerCase() === "b") sync();
   });
   document.addEventListener("pointerdown", (e) => {
     const target = e.target as Node;
