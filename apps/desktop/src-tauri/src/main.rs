@@ -59,6 +59,7 @@ fn about(app: AppHandle) -> About {
 }
 
 /// The `.app` bundle that `exe` (`X.app/Contents/MacOS/bin`) runs from.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn bundle_of(exe: &Path) -> Option<PathBuf> {
     let bundle = exe.ancestors().nth(3)?;
     (bundle.extension()? == "app" && exe.parent()?.file_name()? == "MacOS")
