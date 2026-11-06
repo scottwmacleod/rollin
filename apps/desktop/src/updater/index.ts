@@ -25,8 +25,12 @@ export interface Updater {
   state(): UpdateState;
   /** Calls `listener` now and on every change; returns an unsubscribe. */
   subscribe(listener: (state: UpdateState) => void): () => void;
-  /** Checks for an update. Does nothing while a check or install runs. */
-  check(): Promise<void>;
+  /**
+   * Checks for an update. Does nothing while a check or install runs.
+   * A `background` check is silent: it shows no "checking" state, keeps an
+   * offered update on screen, and ignores failures.
+   */
+  check(options?: { background?: boolean }): Promise<void>;
   /** Installs the update found by `check`, then restarts. */
   install(): Promise<void>;
 }
@@ -79,13 +83,21 @@ export function createUpdater(deps: UpdaterDeps): Updater {
       listener(state);
       return () => listeners.delete(listener);
     },
-    async check() {
+    async check(options) {
       if (state.kind === "checking" || state.kind === "installing") return;
-      set({ kind: "checking" });
+      const quiet = options?.background === true;
+      if (!quiet) set({ kind: "checking" });
+      const before = state;
       try {
-        pending = await deps.check();
-        set(pending ? { kind: "available", version: pending.version } : { kind: "current" });
+        const found = await deps.check();
+        // An install may have started while this check was in flight.
+        if ((state as UpdateState).kind === "installing") return;
+        if (quiet && found === null && before.kind === "available") return;
+        pending = found;
+        if (quiet && found && before.kind === "available" && before.version === found.version) return;
+        set(found ? { kind: "available", version: found.version } : { kind: "current" });
       } catch (error) {
+        if (quiet) return;
         pending = null;
         set({ kind: "failed", message: messageOf(error) });
       }

@@ -20,6 +20,7 @@ import { mountSidebarToggle } from "./sidebar/toggle";
 import { createUpdater } from "./updater";
 import { bindAboutToUpdater } from "./updater/about";
 import { mountUpdateBanner } from "./updater/banner";
+import { startUpdateSchedule } from "./updater/schedule";
 
 const logEl = document.querySelector<HTMLElement>(".roll-log");
 const inputEl = document.querySelector<HTMLElement>(".formula-box");
@@ -103,3 +104,4 @@ const updater = createUpdater({ check: checkForUpdate, relaunch });
 bindAboutToUpdater(aboutView, updater);
 mountUpdateBanner(updater);
 void updater.check();
+startUpdateSchedule(updater);
