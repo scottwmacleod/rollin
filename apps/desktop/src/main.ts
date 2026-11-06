@@ -4,6 +4,7 @@ import "./app.css";
 import { initTheme } from "./theme";
 
 initTheme();
+document.documentElement.dataset.platform = /Mac/.test(navigator.userAgent) ? "macos" : "other";
 
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
