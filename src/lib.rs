@@ -88,11 +88,25 @@ pub struct Die {
     /// Absent on dice that matched nothing, and on every die of a sum.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub outcome: Option<Outcome>,
+    /// Set on the kept die of a d20 check when it rolled a natural 20 or 1
+    /// (see [`Roll::natural`]). Absent on every other die.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub natural: Option<Natural>,
     /// The clause that made this die what it is: the reroll that replaced or
     /// was replaced, the explosion that added it, or the keep/drop that
     /// dropped it. Absent on a die no clause touched.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reason: Option<Reason>,
+}
+
+/// The natural result of a d20 check's kept die.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Natural {
+    /// The kept d20 rolled a 20.
+    Twenty,
+    /// The kept d20 rolled a 1.
+    One,
 }
 
 /// Why a die is in the pool or out of it.
@@ -247,6 +261,29 @@ pub struct Roll {
     /// For a repeated formula (`Nx`), which repeat (from 1) this roll is in.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub iteration: Option<u32>,
+}
+
+impl Roll {
+    /// The natural 20 or 1 of this roll's d20 check, if it has one.
+    ///
+    /// A roll is a d20 check when it contains exactly one d20 term that is
+    /// not a success count; the check's result is that term's single kept
+    /// die (so `d20adv` and `2d20kh1` read the kept die, while `3d20` is not
+    /// a check). Rerolled dice are history and dropped dice never count.
+    pub fn natural(&self) -> Option<Natural> {
+        fn find(node: &Node) -> Option<Natural> {
+            match node {
+                Node::Dice { dice, .. } => dice.iter().find_map(|d| d.natural),
+                Node::Neg { operand, .. } => find(operand),
+                Node::Group { inner, .. } => find(inner),
+                Node::Chain { first, rest, .. } => {
+                    find(first).or_else(|| rest.iter().find_map(|l| find(&l.node)))
+                }
+                Node::Number { .. } => None,
+            }
+        }
+        find(&self.expr)
+    }
 }
 
 /// Parses and evaluates a formula (one or more comma-separated rolls) using

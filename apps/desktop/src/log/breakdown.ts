@@ -1,4 +1,3 @@
-import { natural, type Natural } from "./natural";
 import type { Die, Node, Roll } from "./types";
 
 /** How a die is drawn. Each state has a glyph, so colour is never the only
@@ -25,7 +24,7 @@ export interface DieCell {
 
 export type Cell = DieCell | { type: "text"; text: string };
 
-function dieCell(die: Die, dice: Die[], nat: Natural | null): DieCell {
+function dieCell(die: Die, dice: Die[]): DieCell {
   const face = String(die.value);
   const bang = die.status === "exploded" || (die.parts?.length ?? 0) > 1 ? "!" : "";
   if (die.status === "rerolled") {
@@ -41,10 +40,10 @@ function dieCell(die: Die, dice: Die[], nat: Natural | null): DieCell {
     return { type: "die", state: "failure", text: `${face}${bang}✗`, spoken: `${face} failure` };
   }
   const replaces = die.reason?.from !== undefined && dice[die.reason.from]?.status === "rerolled";
-  if (nat === "twenty") {
+  if (die.natural === "twenty") {
     return { type: "die", state: "nat20", text: `${replaces ? "↻" : ""}${face}`, spoken: "natural 20" };
   }
-  if (nat === "one") {
+  if (die.natural === "one") {
     return { type: "die", state: "nat1", text: `${replaces ? "↻" : ""}${face}`, spoken: "natural 1" };
   }
   if (replaces) {
@@ -61,7 +60,7 @@ function dieCell(die: Die, dice: Die[], nat: Natural | null): DieCell {
   return { type: "die", state: "kept", text: face, spoken: `${face} kept` };
 }
 
-function walk(node: Node, nat: Natural | null, out: Cell[]): void {
+function walk(node: Node, out: Cell[]): void {
   const text = (t: string) => out.push({ type: "text", text: t });
   switch (node.type) {
     case "number":
@@ -71,25 +70,25 @@ function walk(node: Node, nat: Natural | null, out: Cell[]): void {
       text("[");
       node.dice.forEach((d, i) => {
         if (i > 0) text(", ");
-        out.push(dieCell(d, node.dice, nat));
+        out.push(dieCell(d, node.dice));
       });
       text("]");
       break;
     }
     case "neg":
       text("-");
-      walk(node.operand, nat, out);
+      walk(node.operand, out);
       break;
     case "group":
       text("(");
-      walk(node.inner, nat, out);
+      walk(node.inner, out);
       text(")");
       break;
     case "chain":
-      walk(node.first, nat, out);
+      walk(node.first, out);
       for (const link of node.rest) {
         text(` ${link.op} `);
-        walk(link.node, nat, out);
+        walk(link.node, out);
       }
       break;
   }
@@ -114,7 +113,7 @@ function hasDice(node: Node): boolean {
 export function breakdown(roll: Roll): Cell[] {
   if (!hasDice(roll.expr)) return [];
   const out: Cell[] = [];
-  walk(roll.expr, natural(roll.expr), out);
+  walk(roll.expr, out);
   return out;
 }
 

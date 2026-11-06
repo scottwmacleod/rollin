@@ -3,6 +3,8 @@
 
 export type DieStatus = "kept" | "dropped" | "exploded" | "rerolled" | (string & {});
 
+export type Natural = "twenty" | "one";
+
 export interface DieReason {
   clause: string;
   /** Index into the same node's `dice` of the die that caused this one. */
@@ -15,6 +17,8 @@ export interface Die {
   status: DieStatus;
   parts?: number[];
   outcome?: "success" | "failure";
+  /** Set by the library on the kept die of a d20 check that rolled a 20 or a 1. */
+  natural?: Natural;
   reason?: DieReason;
 }
 

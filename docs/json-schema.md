@@ -84,7 +84,7 @@ the dice whose status counts (`kept` and `exploded`).
 | `modifiers` | array of string | The term's modifier clauses as written, in the order they apply: reroll, explode, keep/drop (or `adv`/`dis`), then success. **Absent when the term has none** (additive; see "Why a die is what it is") |
 
 A die is `{"value": <integer>, "status": <string>}`, plus an optional `parts`
-array, an optional `outcome` and an optional `reason`. Statuses:
+array, an optional `outcome`, an optional `natural` and an optional `reason`. Statuses:
 
 | Status | Counts toward `subtotal` | Meaning |
 | --- | --- | --- |
@@ -95,6 +95,13 @@ array, an optional `outcome` and an optional `reason`. Statuses:
 
 Later features add statuses; consumers should treat a status they do not know
 as not counting.
+
+`natural` is `"twenty"` or `"one"` on the kept die of a d20 check that rolled a
+20 or a 1, and absent on every other die (additive; `schema_version` stays 1).
+A roll is a d20 check when it has exactly one d20 term that is not a success
+count and keeps a single die, so `d20`, `d20+5`, `d20adv`, `d20dis`, `2d20kh1`
+and `d20adv+1d4` qualify while `3d20` and two d20 terms do not. A dropped or
+rerolled die never carries it.
 
 `parts` is present only on a compounded die (`!!`) that actually exploded: the
 rolls added together into `value`, in order, so `value` is their sum. A

@@ -162,23 +162,30 @@ fn default_output_shows_both_dice_with_the_loser_dropped() {
 }
 
 #[test]
-fn natural_highlights_never_apply_to_advantage() {
+fn natural_highlights_apply_to_the_kept_die_only() {
     let cli = Cli::new();
-    let mut saw_natural = false;
-    for seed in 0..200 {
-        let run = cli.run(&["--seed", &seed.to_string(), "--color", "always", "d20adv"]);
-        let high = dice_values(&cli, "d20adv", seed)
-            .iter()
-            .any(|d| d.0 == 20 && d.1 == "kept");
-        let low = dice_values(&cli, "d20adv", seed)
-            .iter()
-            .any(|d| d.0 == 1 && d.1 == "kept");
-        saw_natural |= high || low;
-        assert!(
-            !run.stdout.contains("1;32") && !run.stdout.contains("1;31"),
-            "seed {seed}: {}",
-            run.stdout
-        );
+    let (mut saw_twenty, mut saw_one, mut saw_dropped_natural) = (false, false, false);
+    for formula in ["d20adv", "d20dis"] {
+        for seed in 0..300 {
+            let run = cli.run(&["--seed", &seed.to_string(), "--color", "always", formula]);
+            let dice = dice_values(&cli, formula, seed);
+            let kept = dice.iter().find(|d| d.1 == "kept").unwrap().0;
+            let dropped = dice.iter().find(|d| d.1 == "dropped").unwrap().0;
+            let twenty = run.stdout.contains(&format!("\x1b[1;32m{kept}\x1b[0m"));
+            let one = run.stdout.contains(&format!("\x1b[1;31m{kept}\x1b[0m"));
+            assert_eq!(twenty, kept == 20, "{formula} seed {seed}: {}", run.stdout);
+            assert_eq!(one, kept == 1, "{formula} seed {seed}: {}", run.stdout);
+            // A dropped die is dimmed in parentheses, never highlighted.
+            assert!(
+                run.stdout.contains(&format!("\x1b[2m({dropped})\x1b[0m")),
+                "{formula} seed {seed}: {}",
+                run.stdout
+            );
+            saw_twenty |= kept == 20;
+            saw_one |= kept == 1;
+            saw_dropped_natural |= (dropped == 20 && kept != 20) || (dropped == 1 && kept != 1);
+        }
     }
-    assert!(saw_natural, "no natural 20 or 1 in the sample");
+    assert!(saw_twenty && saw_one, "no kept natural in the sample");
+    assert!(saw_dropped_natural, "no dropped natural in the sample");
 }
