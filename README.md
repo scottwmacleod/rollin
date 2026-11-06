@@ -474,6 +474,18 @@ nothing. Each `Nx` repeat pairs its attacks and damage afresh. In `--json`, an
 attack carries `"crit": "hit"` or `"miss"` and boosted damage carries
 `"doubled": true`; both are absent otherwise.
 
+A `crit` word after a roll (before any `# label`, and in either order with
+`atk` / `dmg`) doubles that roll's dice by hand, with or without a system:
+`1d8+3 crit` rolls `2d8+3`. It marks the roll `(dice doubled)` and sets
+`"doubled": true`, but never `"crit"`, which is only for a natural roll. A roll
+with no dice is unchanged, and it overrides the attack pairing: the `crit` roll
+doubles whatever the attack was.
+
+```
+$ rollin '1d8+3 crit # smite'
+1d8+3  [5, 2] + 3  →  10  (dice doubled)  # smite
+```
+
 ### Errors
 
 An invalid formula prints the problem on stderr, repeats the formula with

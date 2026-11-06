@@ -154,18 +154,23 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
         parser.item_dice = 0;
         let expr = parser.parse_item()?;
         let stop = parser.prev_end();
-        let role = match parser.peek() {
-            Some(Token::Word(w)) if w == "atk" || w == "dmg" => {
-                let role = if w == "atk" {
-                    Role::Attack
-                } else {
-                    Role::Damage
-                };
-                parser.pos += 1;
-                Some(role)
+        // `atk` / `dmg` and `crit` may each appear once, in either order.
+        let mut role = None;
+        let mut crit = false;
+        loop {
+            match parser.peek() {
+                Some(Token::Word(w)) if role.is_none() && (w == "atk" || w == "dmg") => {
+                    role = Some(if w == "atk" {
+                        Role::Attack
+                    } else {
+                        Role::Damage
+                    });
+                }
+                Some(Token::Word(w)) if !crit && w == "crit" => crit = true,
+                _ => break,
             }
-            _ => None,
-        };
+            parser.pos += 1;
+        }
         let label = match parser.peek() {
             Some(Token::Label(text)) => {
                 let text = text.clone();
@@ -179,6 +184,7 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
             expr,
             label,
             role,
+            crit,
         });
         if !parser.at_end() && !matches!(parser.peek(), Some(Token::Comma)) {
             return Err(parser.unexpected("',' or the end of the formula"));
