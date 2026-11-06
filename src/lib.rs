@@ -270,8 +270,8 @@ pub struct Roll {
     /// Absent on every other roll.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub crit: Option<Crit>,
-    /// Under a game system: whether this damage roll's dice were doubled
-    /// because its attack was a critical hit.
+    /// Whether this roll's dice were doubled: by a `crit` suffix, or under a
+    /// game system because its attack was a critical hit.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub doubled: bool,
 }
@@ -331,7 +331,7 @@ pub fn roll_in(
         let mut attack: Option<Crit> = None;
         for item in &parsed.items {
             let role = system.and_then(|_| item.role());
-            let double = role == Some(Role::Damage) && attack == Some(Crit::Hit);
+            let double = item.crit || (role == Some(Role::Damage) && attack == Some(Crit::Hit));
             let mut roll = eval::evaluate(item, double, rng)?;
             if role == Some(Role::Attack) {
                 roll.crit = roll.natural().map(Crit::from);

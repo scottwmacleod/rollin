@@ -22,6 +22,9 @@ pub struct Item {
     /// The `atk` / `dmg` suffix marker, if the item has one. Only a game
     /// system reads it; without one it changes nothing.
     pub role: Option<Role>,
+    /// The `crit` suffix: this roll's dice are doubled by hand, with or
+    /// without a game system.
+    pub crit: bool,
 }
 
 /// What a roll is in a game system's attack-and-damage pairing.
