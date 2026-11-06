@@ -1,6 +1,7 @@
 name: Release desktop app
 
-# Builds an unsigned universal macOS bundle and attaches it to a GitHub Release.
+# Builds an unsigned universal macOS bundle and an unsigned Windows x64 (NSIS)
+# installer and attaches both to one GitHub Release.
 #
 # Three ways in, none needing local git:
 #   - schedule: daily. Releases a patch bump only if main has app changes since
@@ -15,8 +16,15 @@ name: Release desktop app
 # creates the release, and GitHub creates the tag at the built commit.
 # The tag prefix keeps app releases apart from CLI releases (see #61).
 #
-# The build also produces the updater bundle (Rollin.app.tar.gz), its .sig and
-# latest.json, signed with the updater key (secrets TAURI_SIGNING_PRIVATE_KEY
+# Jobs: plan, then macos, then windows, then publish. They run in sequence on
+# purpose: tauri-action merges each platform into the release's latest.json by
+# read-modify-write, so two jobs finishing together could drop an entry (#145).
+# macos creates the release; windows adds to it; publish checks latest.json has
+# both platforms and writes the install help on the release page last (an
+# earlier job would have it overwritten by the next tauri-action run).
+#
+# Each build also produces the updater bundle (Rollin.app.tar.gz, or the
+# -setup.exe), its .sig and latest.json, signed with the updater key (secrets TAURI_SIGNING_PRIVATE_KEY
 # and TAURI_SIGNING_PRIVATE_KEY_PASSWORD). The app reads latest.json from
 # releases/latest/download, so the newest GitHub Release must be a desktop one;
 # see docs/desktop-install.md.
@@ -177,6 +185,8 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write # create the release and upload assets
+    outputs:
+      notes: ${{ steps.notes.outputs.body }}
     steps:
       - uses: actions/checkout@v7
       - name: Set the app version
@@ -263,19 +273,105 @@ jobs:
           for pattern in '\.dmg$' '\.app\.tar\.gz$' '\.app\.tar\.gz\.sig$' '^latest\.json$'; do
             echo "$assets" | grep -Eq "$pattern" || { echo "Missing asset matching $pattern" >&2; exit 1; }
           done
+
+  windows:
+    # After macos, not alongside it: see the header. Unsigned x64 NSIS installer
+    # (bundle.targets only lists the macOS bundles, hence --bundles nsis).
+    needs: [plan, macos]
+    if: needs.plan.outputs.release == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write # upload assets to the release macos created
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set the app version
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          conf=apps/desktop/src-tauri/tauri.conf.json
+          jq --arg v "$VERSION" '.version = $v' "$conf" > "$conf.new"
+          mv "$conf.new" "$conf"
+          grep '"version"' "$conf"
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch, 2026-11-06
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Install front-end dependencies
+        run: npm --prefix apps/desktop ci
+      # Same tauri-action pin and release settings as macos, so the release,
+      # its notes and latest.json's version agree. tauri-action reads the
+      # existing latest.json and adds windows-x86_64 to it.
+      - uses: tauri-apps/tauri-action@1ddc7b49b13c3038297360482fcb3e058764d7c9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ needs.plan.outputs.tag }}
+          releaseCommitish: ${{ github.sha }}
+          releaseName: Rollin desktop ${{ needs.plan.outputs.tag }}
+          releaseBody: ${{ needs.macos.outputs.notes }}
+          releaseDraft: false
+          prerelease: ${{ needs.plan.outputs.prerelease }}
+          args: --bundles nsis -- --locked
+
+  publish:
+    # Last step of the release: check everything is attached, then write the
+    # install help on the release page.
+    needs: [plan, macos, windows]
+    if: needs.plan.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # edit the release page
+    steps:
+      - name: Check the release has both platforms
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ needs.plan.outputs.tag }}
+        run: |
+          set -euo pipefail
+          assets=$(gh release view "$TAG" --repo "$REPO" --json assets --jq '.assets[].name')
+          echo "$assets"
+          for pattern in '\.dmg$' '\.app\.tar\.gz$' '\.app\.tar\.gz\.sig$' '-setup\.exe$' '-setup\.exe\.sig$' '^latest\.json$'; do
+            echo "$assets" | grep -Eq "$pattern" || { echo "Missing asset matching $pattern" >&2; exit 1; }
+          done
+          # The app updates from latest.json; both platforms must be in it.
+          gh release download "$TAG" --repo "$REPO" --pattern latest.json --dir "$RUNNER_TEMP"
+          jq . "$RUNNER_TEMP/latest.json"
+          for platform in darwin-aarch64 darwin-x86_64 windows-x86_64; do
+            jq -e --arg p "$platform" '.platforms[$p] | (.url // "") != "" and (.signature // "") != ""' "$RUNNER_TEMP/latest.json" > /dev/null \
+              || { echo "latest.json has no usable $platform entry" >&2; exit 1; }
+          done
       - name: Add install help to the release page
-        # After the build, so latest.json (the app's update notes) keeps only
+        # After every build, so latest.json (the app's update notes) keeps only
         # the changes.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
           TAG: ${{ needs.plan.outputs.tag }}
-          NOTES: ${{ steps.notes.outputs.body }}
+          NOTES: ${{ needs.macos.outputs.notes }}
         run: |
           {
             printf '%s\n\n---\n\n' "$NOTES"
-            echo 'Unsigned macOS build (universal: Apple Silicon and Intel). On first'
-            echo 'launch macOS will refuse to open it: right-click Rollin.app and'
+            echo 'Unsigned builds.'
+            echo
+            echo '**macOS** (universal: Apple Silicon and Intel): download the `.dmg`. On first'
+            echo 'launch macOS will refuse to open the app: right-click Rollin.app and'
             echo 'choose Open, or run `xattr -dr com.apple.quarantine /Applications/Rollin.app`.'
+            echo
+            echo '**Windows** (64-bit): download the `-setup.exe` and run it. If SmartScreen'
+            echo 'says "Windows protected your PC", click More info, then Run anyway.'
+            echo
             echo 'See docs/desktop-install.md.'
           } > "$RUNNER_TEMP/page.md"
-          gh release edit "$TAG" --notes-file "$RUNNER_TEMP/page.md"
+          gh release edit "$TAG" --repo "$REPO" --notes-file "$RUNNER_TEMP/page.md"
