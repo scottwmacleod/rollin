@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { About, Completions, Execution, Failure, SessionState } from "./types";
+import type { About, Completions, Execution, Failure, Roll, SessionState } from "./types";
 
 export type * from "./types";
 
@@ -33,6 +33,15 @@ export async function complete(line: string, pos: number): Promise<Completions> 
 /** Resolves if `formula` (or a preset name) would roll; rejects with a `Failure`. */
 export function check(formula: string): Promise<void> {
   return invoke<null>("check", { formula }).then(() => undefined);
+}
+
+/**
+ * A sample roll of `formula` (or a preset name) for a preview, one `Roll` per
+ * item. It uses its own RNG, so it never moves the session seed, and it is not
+ * logged. Rejects with a `Failure`.
+ */
+export function sample(formula: string): Promise<Roll[]> {
+  return invoke<Roll[]>("sample", { formula });
 }
 
 /** The sidebar's data. Rejects with a `Failure` (for example, no config directory). */

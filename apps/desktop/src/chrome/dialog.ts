@@ -1,5 +1,8 @@
 import { commands } from "../sidebar/model";
-import type { PresetEntry, SessionState } from "../api/types";
+import type { PresetEntry, Roll, SessionState } from "../api/types";
+import { breakdown, totalText } from "../log/breakdown";
+import { cellNode } from "../log/entry";
+import type { Roll as LogRoll } from "../log/types";
 
 /** A modal dialog frame: scrim, title, body, footer. Esc closes it, Tab stays
  * inside it, and focus goes back to where it was. */
@@ -74,6 +77,11 @@ function field(label: string, input: HTMLInputElement, note: HTMLElement): HTMLE
   note.id = `${id}-note`;
   input.setAttribute("aria-describedby", note.id);
   wrap.append(lab, input, note);
+  return wrap;
+}
+
+function withSample(wrap: HTMLElement, sample: HTMLElement): HTMLElement {
+  wrap.append(sample);
   return wrap;
 }
 
@@ -179,12 +187,25 @@ export function presetClash(
   return (global ? state.global_presets : state.presets).find((p) => p.name === lower) ?? null;
 }
 
+/** One sample row: the log's breakdown cells and total for a roll. */
+function sampleRow(wire: Roll): HTMLElement {
+  // The wire `Roll` is the `--json` roll; the log types it a little more narrowly.
+  const roll = wire as unknown as LogRoll;
+  const row = el("div", "dlg-sample-row");
+  const bd = el("span", "dlg-sample-bd");
+  for (const cell of breakdown(roll)) bd.append(cellNode(cell));
+  row.append(bd, el("span", "dlg-sample-total", totalText(roll)));
+  return row;
+}
+
 export interface PresetDialogDeps {
   state: SessionState;
   /** Set when editing; null for a new preset. */
   original: { name: string; formula: string; global: boolean } | null;
   /** Resolves if the formula would roll; rejects with the library's failure. */
   check(formula: string): Promise<void>;
+  /** A throwaway roll of the formula: not logged, off the session seed. */
+  sample(formula: string): Promise<Roll[]>;
   describe(failure: unknown): string;
   /** Runs the lines in order; resolves to the first error text, or null. */
   apply(lines: string[]): Promise<string | null>;
@@ -198,6 +219,13 @@ export function openPresetDialog(deps: PresetDialogDeps): Dialog {
   const formulaIn = el("input");
   formulaIn.classList.add("is-mono");
   const formulaNote = note();
+  const sampleBox = el("div", "dlg-sample");
+  sampleBox.hidden = true;
+  const sampleRows = el("div", "dlg-sample-rows");
+  sampleRows.setAttribute("aria-live", "polite");
+  const reroll = button("Re-roll");
+  reroll.classList.add("dlg-sample-btn");
+  sampleBox.append(el("span", "dlg-sample-label", "Sample"), sampleRows, reroll);
   nameIn.value = original?.name ?? "";
   formulaIn.value = original?.formula ?? "";
 
@@ -231,7 +259,7 @@ export function openPresetDialog(deps: PresetDialogDeps): Dialog {
   const body = el("div", "dlg-body");
   body.append(
     field("Name", nameIn, nameNote),
-    field("Formula", formulaIn, formulaNote),
+    withSample(field("Formula", formulaIn, formulaNote), sampleBox),
     scope,
   );
   const footer = el("div", "dlg-footer");
@@ -244,6 +272,30 @@ export function openPresetDialog(deps: PresetDialogDeps): Dialog {
   if (original) del.style.marginRight = "auto";
 
   let formulaOk = original !== null;
+  /** Rolls the current formula for the preview. A formula that checks but
+   * fails when rolled (a divisor that rolls 0, a cap) shows the library's
+   * message in place of the sample. */
+  const rollSample = () => {
+    const mine = ++seq;
+    const f = formulaIn.value.trim();
+    if (f === "" || !formulaOk) {
+      sampleBox.hidden = true;
+      return;
+    }
+    deps.sample(f).then(
+      (rolls) => {
+        if (mine !== seq) return;
+        sampleRows.replaceChildren(...rolls.map(sampleRow));
+        sampleBox.hidden = false;
+        setNote(formulaNote, formulaIn, "", false);
+      },
+      (failure) => {
+        if (mine !== seq) return;
+        sampleBox.hidden = true;
+        setNote(formulaNote, formulaIn, deps.describe(failure), true);
+      },
+    );
+  };
   let seq = 0;
   const validate = () => {
     const name = nameIn.value.trim();
@@ -261,6 +313,7 @@ export function openPresetDialog(deps: PresetDialogDeps): Dialog {
     const f = formulaIn.value.trim();
     if (f === "") {
       formulaOk = false;
+      sampleBox.hidden = true;
       setNote(formulaNote, formulaIn, "", false);
       validate();
       return;
@@ -271,10 +324,12 @@ export function openPresetDialog(deps: PresetDialogDeps): Dialog {
         formulaOk = true;
         setNote(formulaNote, formulaIn, "", false);
         validate();
+        rollSample();
       },
       (failure) => {
         if (mine !== seq) return;
         formulaOk = false;
+        sampleBox.hidden = true;
         setNote(formulaNote, formulaIn, deps.describe(failure), true);
         validate();
       },
@@ -305,6 +360,7 @@ export function openPresetDialog(deps: PresetDialogDeps): Dialog {
       }
     });
   }
+  reroll.addEventListener("click", rollSample);
   save.addEventListener("click", () => void submit());
   cancel.addEventListener("click", dialog.close);
   del.addEventListener("click", () => {

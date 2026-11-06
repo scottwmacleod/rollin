@@ -42,6 +42,14 @@ fn check(session: tauri::State<'_, AppSession>, formula: String) -> Result<(), F
 }
 
 #[tauri::command]
+fn sample(
+    session: tauri::State<'_, AppSession>,
+    formula: String,
+) -> Result<Vec<rollin::Roll>, Failure> {
+    session.lock().sample(&formula)
+}
+
+#[tauri::command]
 fn state(session: tauri::State<'_, AppSession>) -> Result<State, Failure> {
     session.lock().state()
 }
@@ -133,6 +141,7 @@ fn main() {
             execute,
             complete,
             check,
+            sample,
             state,
             set_seed,
             about,

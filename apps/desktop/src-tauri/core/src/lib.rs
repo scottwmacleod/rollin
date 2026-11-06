@@ -171,6 +171,8 @@ pub struct Completions {
 pub struct Session {
     config_dir: Option<PathBuf>,
     rng: ChaCha8Rng,
+    /// Rolls previews, so a sample never moves the session RNG.
+    sample_rng: ChaCha8Rng,
     seed: Option<u64>,
     history: Vec<String>,
 }
@@ -182,6 +184,7 @@ impl Session {
         Session {
             config_dir,
             rng: entropy_rng(),
+            sample_rng: entropy_rng(),
             seed: None,
             history: Vec::new(),
         }
@@ -249,6 +252,14 @@ impl Session {
     /// Whether `formula` (or a preset name) would roll, without rolling.
     pub fn check(&self, formula: &str) -> Result<(), Failure> {
         Ok(rollin::check(formula, &self.context())?)
+    }
+
+    /// A sample roll of `formula` for a preview. It draws from its own entropy
+    /// RNG, so the session RNG (seeded or not) does not move, and it makes no
+    /// history entry.
+    pub fn sample(&mut self, formula: &str) -> Result<Vec<rollin::Roll>, Failure> {
+        let ctx = self.context();
+        Ok(rollin::sample(formula, &ctx, &mut self.sample_rng)?)
     }
 
     /// The sidebar's data, read fresh from the files the CLI also uses.
