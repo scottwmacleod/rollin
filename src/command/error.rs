@@ -48,7 +48,9 @@ pub enum CommandError {
     ActiveCharacterMissing { name: String },
     /// `char delete default`.
     CannotDeleteDefault,
-    /// `char new` named a character that already exists.
+    /// `char rename default ...`.
+    CannotRenameDefault,
+    /// A character name that already exists (`char new`, `char rename`).
     CharacterExists { name: String },
     /// A character name that breaks a naming rule.
     InvalidCharName(NameError),
@@ -179,6 +181,9 @@ impl std::fmt::Display for CommandError {
             ),
             CommandError::CannotDeleteDefault => {
                 write!(f, "the 'default' character cannot be deleted")
+            }
+            CommandError::CannotRenameDefault => {
+                write!(f, "the 'default' character cannot be renamed")
             }
             CommandError::CharacterExists { name } => {
                 write!(f, "character '{name}' already exists")

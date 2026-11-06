@@ -1,0 +1,19 @@
+# Categories for the generated release notes (see docs/desktop-install.md).
+changelog:
+  exclude:
+    labels:
+      - dependencies
+      - github_actions
+      - internal
+    authors:
+      - dependabot
+  categories:
+    - title: New
+      labels:
+        - enhancement
+    - title: Fixes
+      labels:
+        - bug
+    - title: Other changes
+      labels:
+        - "*"

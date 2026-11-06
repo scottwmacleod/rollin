@@ -77,6 +77,13 @@ impl CharacterStore {
         }
     }
 
+    /// Moves a character's file to a new name, keeping its contents. The
+    /// caller has checked that `from` exists and `to` does not.
+    pub fn rename(&self, from: &Name, to: &Name) -> Result<(), StoreError> {
+        std::fs::rename(self.path(from), self.path(to))
+            .map_err(|e| StoreError::at(&self.path(from), e.to_string()))
+    }
+
     /// Whether a character exists (`default` always does).
     pub fn exists(&self, name: &Name) -> bool {
         name.as_str() == DEFAULT || self.path(name).is_file()

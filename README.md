@@ -315,8 +315,10 @@ hint: create it with: rollin char new gorg
   case-insensitive, stored lowercase, and match `[a-z][a-z0-9_]*`.
 - `characters` lists every character; `char` shows the active one;
   `char <name>` switches to an existing character; `char new <name>` creates
-  an empty one and switches to it; `char delete <name>` removes one (deleting
-  the active character switches back to `default`).
+  an empty one and switches to it; `char rename <old> <new>` renames one,
+  keeping its variables and presets (renaming the active character keeps it
+  active; `default` cannot be renamed); `char delete <name>` removes one
+  (deleting the active character switches back to `default`).
 - `--char <name>` runs one command as another character and never changes
   the active one. It applies to rolls, presets and variables. The character
   must exist (or be `default`).
