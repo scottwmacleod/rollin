@@ -121,16 +121,36 @@ jobs:
                 stop "No app changes since $last_tag; nothing to release."
               fi
             fi
-            # Only ship a commit whose required checks all passed.
-            runs=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq '.check_runs')
-            for check in lint test test-linux desktop; do
-              result=$(echo "$runs" | jq -r --arg n "$check" '[.[] | select(.name == $n)] | last | .conclusion // "missing"')
-              if [ "$result" != "success" ]; then
-                msg="Required check '$check' is '$result' on $SHA"
+            # Only ship a commit whose required checks all passed. A release
+            # started right after a merge can beat CI on main, so wait for
+            # checks that are still queued or running (up to 15 minutes).
+            deadline=$((SECONDS + 900))
+            while :; do
+              runs=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq '.check_runs')
+              pending=""; failed=""
+              for check in lint test test-linux desktop; do
+                state=$(echo "$runs" | jq -r --arg n "$check" '[.[] | select(.name == $n)] | last | if . == null then "missing" elif .status != "completed" then "pending" else .conclusion end')
+                case "$state" in
+                  success) ;;
+                  pending|missing) pending="$pending $check" ;;
+                  *) failed="$failed $check ($state)" ;;
+                esac
+              done
+              if [ -n "$failed" ]; then
+                msg="Required checks failed on $SHA:$failed"
                 if [ "$EVENT" = "schedule" ]; then stop "$msg; will retry tomorrow."; fi
                 echo "$msg" >&2
                 exit 1
               fi
+              [ -z "$pending" ] && break
+              if [ "$SECONDS" -ge "$deadline" ]; then
+                msg="Required checks not finished on $SHA:$pending"
+                if [ "$EVENT" = "schedule" ]; then stop "$msg; will retry tomorrow."; fi
+                echo "$msg" >&2
+                exit 1
+              fi
+              echo "Waiting for checks:$pending"
+              sleep 20
             done
           fi
 
