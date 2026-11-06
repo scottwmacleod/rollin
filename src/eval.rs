@@ -3,7 +3,7 @@
 use crate::ast::{BinOp, Dice, ExplodeMode, Expr, ExprKind, Item, RerollMode};
 use crate::error::Error;
 use crate::limits::{Cap, MAX_DICE_PER_EXPRESSION, MAX_EXPLOSIONS_PER_DIE, MAX_REROLLS_PER_DIE};
-use crate::{Die, Kind, Link, Node, Outcome, Reason, Roll, Status, Tally};
+use crate::{Die, Kind, Link, Natural, Node, Outcome, Reason, Roll, Status, Tally};
 use rand::Rng;
 use std::ops::Range;
 
@@ -31,7 +31,8 @@ impl<R: Rng> Ctx<'_, R> {
 
 pub fn evaluate(item: &Item, rng: &mut impl Rng) -> Result<Roll, Error> {
     let mut ctx = Ctx { rng, rolled: 0 };
-    let expr = eval_expr(&item.expr, &mut ctx)?;
+    let mut expr = eval_expr(&item.expr, &mut ctx)?;
+    mark_natural(&mut expr);
     Ok(Roll {
         formula: item.source.clone(),
         kind: if expr.is_count() {
@@ -72,6 +73,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                             status: Status::Rerolled,
                             parts: Vec::new(),
                             outcome: None,
+                            natural: None,
                             reason: reroll_reason.clone().map(|c| Reason::new(&c, replaced)),
                         });
                         replaced = Some(dice.len() - 1);
@@ -86,6 +88,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                     status: Status::Kept,
                     parts: Vec::new(),
                     outcome: None,
+                    natural: None,
                     reason: replaced
                         .and_then(|i| Some(Reason::new(reroll_reason.as_deref()?, Some(i)))),
                 };
@@ -128,6 +131,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                             status: Status::Exploded,
                             parts: Vec::new(),
                             outcome: None,
+                            natural: None,
                             // Each extra die exploded from the die just before it.
                             reason: d
                                 .clauses
@@ -257,4 +261,48 @@ fn apply_drops(dice: &mut [Die], (lowest, highest): (i64, i64), clause: &str) {
         dice[i].status = Status::Dropped;
         dice[i].reason = Some(Reason::new(clause, None));
     }
+}
+
+/// Marks the kept die of a d20 check that rolled a natural 20 or 1.
+///
+/// A roll is a d20 check when it holds exactly one d20 term, and that term is
+/// not a success count. Its result is the one die left standing: rerolled
+/// dice are history and dropped dice are out, so `d20adv` and `2d20kh1` read
+/// the kept die while `3d20` (three standing dice) is not a check.
+fn mark_natural(root: &mut Node) {
+    fn d20_terms<'a>(node: &'a mut Node, out: &mut Vec<&'a mut Node>) {
+        match node {
+            Node::Dice { sides: 20, .. } => out.push(node),
+            Node::Dice { .. } | Node::Number { .. } => {}
+            Node::Neg { operand, .. } => d20_terms(operand, out),
+            Node::Group { inner, .. } => d20_terms(inner, out),
+            Node::Chain { first, rest, .. } => {
+                d20_terms(first, out);
+                for link in rest {
+                    d20_terms(&mut link.node, out);
+                }
+            }
+        }
+    }
+    let mut terms = Vec::new();
+    d20_terms(root, &mut terms);
+    let [Node::Dice { dice, tally, .. }] = terms.as_mut_slice() else {
+        return;
+    };
+    if tally.is_some() {
+        return;
+    }
+    let mut standing = dice.iter_mut().filter(|d| d.status.counts());
+    let (Some(die), None) = (standing.next(), standing.next()) else {
+        return;
+    };
+    // A compounded explosion is a sum of rolls, not a face.
+    if die.parts.len() > 1 {
+        return;
+    }
+    die.natural = match die.value {
+        20 => Some(Natural::Twenty),
+        1 => Some(Natural::One),
+        _ => None,
+    };
 }

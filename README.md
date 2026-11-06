@@ -169,8 +169,8 @@ in a comma list: `6d10>=8, d20`.
 `kl` or `kh` in either order (`d20advdl1`, `3d20kh1adv`) is an error. The
 output shows both dice with the loser dropped, as in `2d20kh1`; the formula
 is echoed as typed, and `d20adv` counts as two dice toward the dice limits.
-A natural 20 or 1 is highlighted only on a lone single-die roll, so `d20adv`
-is never highlighted.
+A natural 20 or 1 is highlighted on the kept die of a d20 check (see Color
+below), so in `d20adv` the winning die is highlighted and the dropped one never.
 `d%` is a d100 whose faces and RNG use are identical to `d100`; the formula
 and term are echoed as typed (`d%`), and `--json` marks the group with
 `"special": "percentile"` and `"sides": 100`.
@@ -482,8 +482,11 @@ By default each roll prints on one line, as above. Flags change the renderer;
 all of them draw from the same result tree.
 
 **Color.** On a terminal, dropped dice are dimmed, totals are bold, and when
-the whole roll is a single d20 (`d20`, `d20+5`, `1d20-2`) a natural 20 is
-bold green and a natural 1 bold red. Color is off when stdout is not a
+the roll is a d20 check, the kept d20 shows a natural 20 in bold green and a
+natural 1 in bold red. A d20 check is a roll with exactly one d20 term that
+keeps one die: `d20`, `d20+5`, `d20adv`, `d20dis`, `2d20kh1`, `2d20kl1`, or a
+d20 mixed with other dice (`d20adv+1d4`). `3d20`, two d20 terms and success
+counts are never highlighted; rerolled dice are ignored. Color is off when stdout is not a
 terminal (for example piped) or when `NO_COLOR` is set to a non-empty value.
 `--color <auto|always|never>` overrides it; the default is `auto`. Precedence:
 `--color never` beats `--color always`, which beats `NO_COLOR`, which beats

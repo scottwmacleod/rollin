@@ -2,7 +2,7 @@
 //! optional ANSI styling.
 
 use clap::ValueEnum;
-use rollin::{BinOp, Die, Node, Outcome, Roll, Status, Tally};
+use rollin::{Die, Natural, Node, Outcome, Roll, Status, Tally};
 
 /// The `--color` flag.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
@@ -60,55 +60,9 @@ impl Painter {
     }
 }
 
-/// A natural result on a lone d20.
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Natural {
-    Twenty,
-    One,
-}
-
-/// Whether the whole roll is a single d20 (one die, 20 sides), optionally
-/// with flat `+`/`-` numbers, and which natural it rolled. Nothing cleverer.
-fn natural(expr: &Node) -> Option<Natural> {
-    let dice = match expr {
-        Node::Dice { .. } => expr,
-        Node::Chain { first, rest, .. } => {
-            let mut dice_nodes = std::iter::once(&**first)
-                .chain(rest.iter().map(|l| &l.node))
-                .filter(|n| !matches!(n, Node::Number { .. }));
-            let only = dice_nodes.next()?;
-            if dice_nodes.next().is_some() {
-                return None;
-            }
-            let additive = rest.iter().all(|l| matches!(l.op, BinOp::Add | BinOp::Sub));
-            if !additive {
-                return None;
-            }
-            only
-        }
-        _ => return None,
-    };
-    let Node::Dice { sides, dice, .. } = dice else {
-        return None;
-    };
-    // Dice a reroll replaced are history; only the one that stands counts.
-    let dice: Vec<&Die> = dice
-        .iter()
-        .filter(|d| d.status != Status::Rerolled)
-        .collect();
-    if dice.len() != 1 || *sides != 20 || dice[0].parts.len() > 1 {
-        return None;
-    }
-    match dice[0].value {
-        20 => Some(Natural::Twenty),
-        1 => Some(Natural::One),
-        _ => None,
-    }
-}
-
 /// Styles a die's text by its status and any natural highlight.
-fn paint_die(p: Painter, die: &Die, nat: Option<Natural>, text: &str) -> String {
-    match (die.status, nat) {
+fn paint_die(p: Painter, die: &Die, text: &str) -> String {
+    match (die.status, die.natural) {
         (Status::Rerolled, _) => p.struck(text),
         (Status::Dropped, _) => p.dim(text),
         (_, _) if die.outcome == Some(Outcome::Success) => p.green(text),
@@ -175,7 +129,7 @@ fn has_dice(node: &Node) -> bool {
 /// Shows each dice group's dice (dropped in parentheses, rerolled-away dice
 /// between tildes), joined by the
 /// formula's operators.
-fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
+fn expr_line(p: Painter, node: &Node) -> String {
     match node {
         Node::Number { value } => value.to_string(),
         Node::Dice { dice, .. } => {
@@ -196,20 +150,20 @@ fn expr_line(p: Painter, node: &Node, nat: Option<Natural>) -> String {
                         Status::Rerolled => format!("~{face}~"),
                         _ => format!("{face}{bang}{mark}"),
                     };
-                    paint_die(p, d, nat, &text)
+                    paint_die(p, d, &text)
                 })
                 .collect();
             format!("[{}]", cells.join(", "))
         }
-        Node::Neg { operand, .. } => format!("-{}", expr_line(p, operand, nat)),
-        Node::Group { inner, .. } => format!("({})", expr_line(p, inner, nat)),
+        Node::Neg { operand, .. } => format!("-{}", expr_line(p, operand)),
+        Node::Group { inner, .. } => format!("({})", expr_line(p, inner)),
         Node::Chain { first, rest, .. } => {
-            let mut out = expr_line(p, first, nat);
+            let mut out = expr_line(p, first);
             for link in rest {
                 out.push_str(&format!(
                     " {} {}",
                     link.op.symbol(),
-                    expr_line(p, &link.node, nat)
+                    expr_line(p, &link.node)
                 ));
             }
             out
@@ -231,10 +185,9 @@ pub fn render_line(p: Painter, roll: &Roll) -> String {
     if !has_dice(&roll.expr) {
         return format!("{}  →  {total}{label}", roll.formula);
     }
-    let nat = natural(&roll.expr);
     format!(
         "{}  {}  →  {total}{label}",
         roll.formula,
-        expr_line(p, &roll.expr, nat)
+        expr_line(p, &roll.expr)
     )
 }

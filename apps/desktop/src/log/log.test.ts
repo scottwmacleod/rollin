@@ -3,7 +3,6 @@ import { breakdown, totalText } from "./breakdown";
 import { caretLines } from "./caret";
 import { renderEntry } from "./entry";
 import { mountLog } from "./index";
-import { natural } from "./natural";
 import type { Die, LogEntry, Roll, RollDocument } from "./types";
 
 interface Fixture {
@@ -93,46 +92,36 @@ describe("die glyphs", () => {
     for (const t of dieTexts(node, "exploded")) expect(t).toMatch(/!$/);
   });
 
-  it("gives a natural 20 a chip and a natural 1 an outline, only on a lone d20", () => {
-    const nat20 = doc("d20", [{ value: 20, status: "kept" }], 20);
-    const nat1 = doc("d20+5", [{ value: 1, status: "kept" }], 1, 5);
+  it("gives the die the library flags a natural 20 chip or a natural 1 outline", () => {
+    const nat20 = doc("d20", [{ value: 20, status: "kept", natural: "twenty" }], 20);
+    const nat1 = doc("d20+5", [{ value: 1, status: "kept", natural: "one" }], 1, 5);
     expect(dieTexts(renderEntry(nat20), "nat20")).toEqual(["20"]);
     expect(dieTexts(renderEntry(nat1), "nat1")).toEqual(["1"]);
     expect(renderEntry(nat20).textContent).toContain("natural 20");
-
-    const two = doc("2d20kh1", [
-      { value: 20, status: "kept" },
-      { value: 3, status: "dropped" },
-    ], 20);
-    expect(renderEntry(two).querySelector(".die-nat20")).toBeNull();
   });
 
-  it("applies the lone d20 rule of render.rs", () => {
-    const d = (value: number) => ({ value, status: "kept" as const });
-    const dice = (sides: number, ...vals: number[]) => ({
-      type: "dice" as const,
-      term: "x",
-      sides,
-      dice: vals.map(d),
-      subtotal: 0,
-    });
-    expect(natural(dice(20, 20))).toBe("twenty");
-    expect(natural(dice(20, 1))).toBe("one");
-    expect(natural(dice(20, 7))).toBeNull();
-    expect(natural(dice(12, 12))).toBeNull();
-    expect(natural(dice(20, 20, 20))).toBeNull();
-    const times = {
-      type: "chain" as const,
-      first: dice(20, 20),
-      rest: [{ op: "*" as const, node: { type: "number" as const, value: 2 } }],
-      total: 40,
-    };
-    expect(natural(times)).toBeNull();
-    const twoGroups = {
-      ...times,
-      rest: [{ op: "+" as const, node: dice(20, 20) }],
-    };
-    expect(natural(twoGroups)).toBeNull();
+  it("highlights the kept die of an advantage roll, never the dropped one", () => {
+    const adv = doc(
+      "d20adv",
+      [
+        { value: 3, status: "dropped" },
+        { value: 20, status: "kept", natural: "twenty" },
+      ],
+      20,
+    );
+    expect(dieTexts(renderEntry(adv), "nat20")).toEqual(["20"]);
+    expect(dieTexts(renderEntry(adv), "dropped")).toEqual(["(3)"]);
+  });
+
+  it("does not work out naturals itself: no flag from the library, no highlight", () => {
+    const unflagged = doc("3d20", [
+      { value: 20, status: "kept" },
+      { value: 1, status: "kept" },
+      { value: 7, status: "kept" },
+    ], 28);
+    const node = renderEntry(unflagged);
+    expect(node.querySelector(".die-nat20")).toBeNull();
+    expect(node.querySelector(".die-nat1")).toBeNull();
   });
 
   it("never relies on colour alone: every non-plain die carries a mark or spoken text", () => {

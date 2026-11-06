@@ -194,11 +194,24 @@ fn natural_highlight_works_with_a_flat_modifier() {
 }
 
 #[test]
-fn natural_highlight_is_limited_to_a_lone_d20_term() {
-    for formula in ["d20+d4", "2d20kh1", "d20*2", "d12", "(d20)+1", "d100"] {
+fn natural_highlight_is_limited_to_a_d20_check() {
+    for formula in ["d20+d20", "3d20", "d12", "d100", "d12+d4"] {
         let run = color_run(&[formula, "--seed", SEED_NAT20, "--color", "always"]);
         assert!(
             !run.stdout.contains(NAT20) && !run.stdout.contains(NAT1),
+            "{formula}: {:?}",
+            run.stdout
+        );
+    }
+}
+
+#[test]
+fn natural_highlight_covers_a_d20_mixed_with_other_terms() {
+    // Seed SEED_NAT20 rolls a 20 on the first die, which is the lone d20.
+    for formula in ["d20+d4", "d20+5-d6"] {
+        let run = color_run(&[formula, "--seed", SEED_NAT20, "--color", "always"]);
+        assert!(
+            run.stdout.contains(&format!("{NAT20}20{RESET}")),
             "{formula}: {:?}",
             run.stdout
         );
