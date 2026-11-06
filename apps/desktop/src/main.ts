@@ -8,8 +8,9 @@ initTheme();
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { check as checkForUpdate } from "@tauri-apps/plugin-updater";
-import { about, execute, relaunch, state } from "./api";
+import { about, check, execute, relaunch, setSeed, state } from "./api";
 import { mountAbout } from "./about";
+import { mountChrome } from "./chrome";
 import type { Execution } from "./api";
 import { mountInput } from "./input";
 import { mountLog, type LogEntry } from "./log";
@@ -23,9 +24,12 @@ import { mountUpdateBanner } from "./updater/banner";
 const logEl = document.querySelector<HTMLElement>(".roll-log");
 const inputEl = document.querySelector<HTMLElement>(".formula-box");
 const sidebarEl = document.querySelector<HTMLElement>(".sidebar");
+const toolbarEl = document.querySelector<HTMLElement>(".toolbar");
+const statusEl = document.querySelector<HTMLElement>(".status-bar");
 
 let sidebar: ReturnType<typeof mountSidebar> | null = null;
 let input: ReturnType<typeof mountInput> | null = null;
+let chrome: ReturnType<typeof mountChrome> | null = null;
 
 // One way into the log: every line, typed or not, ends up here.
 function record(line: string, execution: Execution): void {
@@ -33,6 +37,7 @@ function record(line: string, execution: Execution): void {
   if (entry) log?.append(entry);
   // `save`, `set`, `char` and friends change what the sidebar shows.
   void sidebar?.refresh();
+  void chrome?.record(execution);
 }
 
 /** Runs a line that did not come from the box (preset click, ⌘1–9, reroll). */
@@ -68,6 +73,20 @@ if (sidebarEl) {
   const appEl = document.getElementById("app");
   const toolbarEl = document.querySelector<HTMLElement>(".toolbar");
   if (appEl && toolbarEl) mountSidebarToggle(appEl, toolbarEl, sidebarEl, sidebar.toggle);
+}
+
+if (toolbarEl && statusEl) {
+  chrome = mountChrome(toolbarEl, statusEl, {
+    execute,
+    state,
+    setSeed,
+    check,
+    about,
+    run: (line) => void run(line),
+    toggleSidebar: () => sidebar?.toggle(),
+    clearLog: () => log?.clear(),
+    changed: () => void sidebar?.refresh(),
+  });
 }
 
 window.addEventListener("rollin:submit", (e) => {
