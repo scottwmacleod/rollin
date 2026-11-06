@@ -257,6 +257,33 @@ pub fn execute(
 /// can only fail when actually rolling. A blank formula is an error, as it is
 /// when rolling.
 pub fn check(formula: &str, ctx: &Context) -> Result<(), CommandError> {
+    let (scope, source) = resolve(formula, ctx)?;
+    crate::parser::check_with(&source, &|name| scope.vars.get(name).copied())
+        .map_err(|error| scope.error(&source, error))
+}
+
+/// Rolls a formula the way [`check`] reads it, for a preview.
+///
+/// `formula` is resolved exactly as in [`check`] (a lone preset name rolls
+/// that preset), and rolled with the caller's `rng` under the character's
+/// game system. Nothing is written: it makes no history entry and touches no
+/// character or preset file, and it uses only the RNG it is given, so a
+/// caller that passes a throwaway one leaves its own session RNG, seeded or
+/// not, where it was. Errors are the ones rolling the same text would give.
+pub fn sample(
+    formula: &str,
+    ctx: &Context,
+    rng: &mut impl Rng,
+) -> Result<Vec<crate::Roll>, CommandError> {
+    let (scope, source) = resolve(formula, ctx)?;
+    let system = scope.system(ctx)?;
+    crate::roll_in(&source, &|name| scope.vars.get(name).copied(), system, rng)
+        .map_err(|error| scope.error(&source, error))
+}
+
+/// The scope a formula is read in and its source text, with a lone preset
+/// name replaced by that preset's formula.
+fn resolve(formula: &str, ctx: &Context) -> Result<(Scope, String), CommandError> {
     let store = ctx.store()?;
     let command = roll_or_preset(&[formula.to_string()], &mut || ctx.preset_names())?;
     let scope = Scope::load(ctx)?;
@@ -268,8 +295,7 @@ pub fn check(formula: &str, ctx: &Context) -> Result<(), CommandError> {
         Command::Roll(formula) => formula,
         _ => unreachable!("roll_or_preset gives a roll or a preset roll"),
     };
-    crate::parser::check_with(&source, &|name| scope.vars.get(name).copied())
-        .map_err(|error| scope.error(&source, error))
+    Ok((scope, source))
 }
 
 /// Whether `formula` is acceptable to save. Variables are not known until

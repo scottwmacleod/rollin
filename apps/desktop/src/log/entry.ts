@@ -18,7 +18,7 @@ function formatTime(time: Date): string {
   return `${p(time.getHours())}:${p(time.getMinutes())}:${p(time.getSeconds())}`;
 }
 
-function cellNode(cell: Cell): Node {
+export function cellNode(cell: Cell): Node {
   if (cell.type === "text") return document.createTextNode(cell.text);
   const span = el("span", `die die-${cell.state}`, cell.text);
   // Spoken form, so a state is never conveyed by styling alone.

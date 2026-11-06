@@ -268,3 +268,25 @@ fn about_reports_build_versions_and_licence() {
     assert_eq!(info["license"], "MIT");
     assert!(info["repository"].as_str().unwrap().starts_with("https://"));
 }
+
+#[test]
+fn a_sample_leaves_the_seeded_stream_and_history_alone() {
+    let dir = TempDir::new().unwrap();
+    let mut plain = session(&dir);
+    plain.seed(Some(9));
+    let expected: Vec<i64> = ["4d6dl1", "d20+5"]
+        .iter()
+        .flat_map(|l| app_totals(&plain.execute(l)))
+        .collect();
+
+    let mut app = session(&dir);
+    app.seed(Some(9));
+    let first = app_totals(&app.execute("4d6dl1"));
+    let sampled = app.sample("3x d20").unwrap();
+    assert_eq!(sampled.len(), 3);
+    assert!(app.sample("d20+").is_err());
+    let second = app_totals(&app.execute("d20+5"));
+
+    assert_eq!([first, second].concat(), expected);
+    assert_eq!(app.state().unwrap().history, ["4d6dl1", "d20+5"]);
+}
