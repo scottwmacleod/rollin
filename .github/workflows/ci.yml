@@ -79,6 +79,36 @@ jobs:
       - name: Build app
         run: cargo build -p rollin-desktop --locked
 
+  desktop-windows:
+    # Same as `desktop` but on Windows (#144). Stays on `-p rollin-desktop`
+    # because the root crate's rexpect dev-dependency is unix-only. Not a
+    # required check until it has proven stable.
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: Swatinem/rust-cache@v2
+      - name: Install front-end dependencies
+        run: npm --prefix apps/desktop ci
+      - name: Build front end
+        run: npm --prefix apps/desktop run build
+      - name: Test front end
+        run: npm --prefix apps/desktop test
+      - name: Clippy
+        run: cargo clippy -p rollin-desktop --all-targets --locked -- -D warnings
+      - name: Test
+        run: cargo test -p rollin-desktop --locked
+      - name: Build app
+        run: cargo build -p rollin-desktop --locked
+
   msrv:
     # Builds and tests with exactly the compiler declared as `rust-version` in
     # Cargo.toml. rust-toolchain.toml (channel = "stable") would otherwise win

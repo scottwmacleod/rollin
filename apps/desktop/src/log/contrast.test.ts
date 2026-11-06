@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const css = readFileSync(resolve(__dirname, "../generated/tokens.css"), "utf8");
+// Normalise CRLF: Windows checkouts convert line endings and the selectors below contain "\n".
+const css = readFileSync(resolve(__dirname, "../generated/tokens.css"), "utf8").replace(/\r\n/g, "\n");
 
 // Text pairs the log uses must meet 4.5:1 in both themes (design system notes).
 
