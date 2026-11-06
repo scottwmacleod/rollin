@@ -8,6 +8,7 @@ permissions:
 jobs:
   # Layout A: both jobs create/upload with no coordination.
   a-macos:
+    if: false
     runs-on: macos-latest
     env: { TAG: desktop-v0.0.0-win.1, VERSION: 0.0.0-win.1 }
     steps: &steps-macos
@@ -30,11 +31,12 @@ jobs:
           tagName: ${{ env.TAG }}
           releaseCommitish: ${{ github.sha }}
           releaseName: Spike ${{ env.TAG }}
-          releaseBody: throwaway spike for #145
+          releaseBody: throwaway spike
           releaseDraft: false
           prerelease: true
           args: --target universal-apple-darwin -- --locked
   a-windows:
+    if: false
     runs-on: windows-latest
     env: { TAG: desktop-v0.0.0-win.1, VERSION: 0.0.0-win.1 }
     steps: &steps-win
@@ -57,7 +59,7 @@ jobs:
           tagName: ${{ env.TAG }}
           releaseCommitish: ${{ github.sha }}
           releaseName: Spike ${{ env.TAG }}
-          releaseBody: throwaway spike for #145
+          releaseBody: throwaway spike
           releaseDraft: false
           prerelease: true
           args: --bundles nsis -- --locked
@@ -66,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
-        run: gh release create desktop-v0.0.0-win.2 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Spike desktop-v0.0.0-win.2" --notes "throwaway spike for #145"
+        run: gh release create desktop-v0.0.0-win.2 --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Spike desktop-v0.0.0-win.2" --notes "throwaway spike"
   b-macos:
     needs: b-create
     runs-on: macos-latest
