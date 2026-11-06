@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Execution, PresetEntry, SessionState } from "../api/types";
+import { asPlatform } from "../platform.test";
 import { commands, presetRows } from "./model";
 import { mountSidebar } from "./index";
 
@@ -83,6 +84,7 @@ describe("sidebar", () => {
   });
 
   it("⌘1-9 follows displayed order", async () => {
+    asPlatform("MacIntel");
     await mount();
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "2", metaKey: true }));
     expect(run).toHaveBeenCalledWith("save");
@@ -105,8 +107,21 @@ describe("sidebar", () => {
   });
 
   it("⌘B toggles the sidebar", async () => {
+    asPlatform("MacIntel");
     await mount();
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "b", metaKey: true }));
+    expect(document.getElementById("app")!.classList.contains("sidebar-collapsed")).toBe(true);
+  });
+
+  it("Ctrl 1-9 and Ctrl B work on Windows, ⌘ does not", async () => {
+    asPlatform("Win32");
+    await mount();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "2", metaKey: true }));
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "b", metaKey: true }));
+    expect(run).not.toHaveBeenCalled();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "2", ctrlKey: true }));
+    expect(run).toHaveBeenCalledWith("save");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "b", ctrlKey: true }));
     expect(document.getElementById("app")!.classList.contains("sidebar-collapsed")).toBe(true);
   });
 });

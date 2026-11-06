@@ -131,11 +131,9 @@ pub fn run_line(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
     }
 }
 
-/// `$XDG_CONFIG_HOME` if absolute, else `$HOME/.config`.
+/// `%APPDATA%` on Windows, else `$XDG_CONFIG_HOME` if absolute, else `$HOME/.config`.
 pub fn config_dir() -> Option<PathBuf> {
-    let xdg = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
-    let home = std::env::var_os("HOME").map(PathBuf::from);
-    rollin::config_dir(xdg.as_deref(), home.as_deref())
+    rollin::config_dir_from_env()
 }
 
 fn fail(e: &CommandError) -> ExitCode {
