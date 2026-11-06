@@ -941,3 +941,73 @@ fn files_in_the_characters_directory_with_odd_names_are_not_characters() {
     write_file(&cli, "characters/notes.txt", "");
     assert_eq!(cli.run(&["characters"]).stdout, "* default\n  grog\n");
 }
+
+#[test]
+fn char_rename_moves_the_file_with_its_data_and_keeps_the_active_one_active() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    cli.run(&["set", "str", "3"]).assert_success();
+    cli.run(&["save", "atk", "d20+@str"]).assert_success();
+    let run = cli.run(&["char", "rename", "GROG", "Gorg"]);
+    run.assert_success();
+    assert_eq!(run.stdout, "renamed character 'grog' to 'gorg'\n");
+    let dir = cli.config_dir().join("rollin/characters");
+    assert!(!dir.join("grog.toml").exists());
+    assert!(dir.join("gorg.toml").exists());
+    assert_eq!(cli.run(&["char"]).stdout, "active character: gorg\n");
+    assert_eq!(cli.run(&["vars"]).stdout, "str = 3\n");
+    assert!(cli.run(&["presets"]).stdout.contains("atk"));
+}
+
+#[test]
+fn char_rename_of_an_inactive_character_leaves_the_active_one_alone() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    cli.run(&["char", "new", "mira"]).assert_success();
+    cli.run(&["char", "rename", "grog", "gorg"])
+        .assert_success();
+    assert_eq!(cli.run(&["char"]).stdout, "active character: mira\n");
+    assert_eq!(
+        cli.run(&["characters"]).stdout,
+        "  default\n  gorg\n* mira\n"
+    );
+}
+
+#[test]
+fn char_rename_errors() {
+    let cli = Cli::new();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    cli.run(&["char", "new", "mira"]).assert_success();
+    let default = cli.run(&["char", "rename", "default", "x"]);
+    assert_eq!(default.code, 1, "{default:?}");
+    assert_eq!(
+        default.stderr,
+        "error: the 'default' character cannot be renamed\n"
+    );
+    let clash = cli.run(&["char", "rename", "grog", "mira"]);
+    assert_eq!(clash.code, 1);
+    assert_eq!(clash.stderr, "error: character 'mira' already exists\n");
+    let to_default = cli.run(&["char", "rename", "grog", "default"]);
+    assert_eq!(to_default.code, 1);
+    let missing = cli.run(&["char", "rename", "nobody", "x"]);
+    assert_eq!(missing.code, 1);
+    assert_eq!(
+        missing.stderr,
+        "error: no character named 'nobody'\nhint: create it with: rollin char new nobody\n"
+    );
+    let invalid = cli.run(&["char", "rename", "grog", "9lives"]);
+    assert_eq!(invalid.code, 1);
+    assert!(invalid.stderr.contains("invalid character name '9lives'"));
+    let reserved = cli.run(&["char", "rename", "grog", "rename"]);
+    assert_eq!(reserved.code, 1);
+    let usage = cli.run(&["char", "rename", "grog"]);
+    assert_eq!(usage.code, 1);
+    assert!(
+        usage.stderr.contains("char rename <old> <new>"),
+        "{usage:?}"
+    );
+    assert!(cli
+        .config_dir()
+        .join("rollin/characters/grog.toml")
+        .exists());
+}

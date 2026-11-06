@@ -55,11 +55,12 @@ fn roll_and_delete_complete_preset_names() {
 
 #[test]
 fn char_completes_subcommands_and_character_names() {
-    expect("char ", 5, &["default", "delete", "grog", "new"]);
+    expect("char ", 5, &["default", "delete", "grog", "new", "rename"]);
     expect("char g", 5, &["grog"]);
     expect("char n", 5, &["new"]);
     expect("char delete ", 12, &["default", "grog"]);
     expect("char delete g", 12, &["grog"]);
+    expect("char rename ", 12, &["default", "grog"]);
     expect("char new g", 9, &[]);
     expect("--char ", 7, &["default", "grog"]);
     expect("--char g", 7, &["grog"]);

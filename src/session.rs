@@ -43,7 +43,7 @@ apply to that line only.
   unset <name>                       remove a variable
   vars                               list the active character's variables
   characters                         list characters
-  char [<name> | new <name> | delete <name>]   show, switch, create, delete
+  char [<name> | new|rename|delete ...]  show, switch, create, rename, delete
   history                            numbered lines typed so far
   help                               this text
   quit, exit, Ctrl-D                 leave

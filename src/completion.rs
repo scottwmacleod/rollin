@@ -91,13 +91,13 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
         [command] if command == "roll" || command == "delete" => presets(),
         [command] if command == "char" => {
             let mut names = chars();
-            names.extend(["new", "delete"]);
+            names.extend(["new", "rename", "delete"]);
             names
         }
         [command] if command == "set" || command == "unset" => {
             data.variables.iter().map(String::as_str).collect()
         }
-        [command, sub] if command == "char" && sub == "delete" => chars(),
+        [command, sub] if command == "char" && (sub == "delete" || sub == "rename") => chars(),
         _ => Vec::new(),
     };
     Completion {

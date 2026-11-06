@@ -35,6 +35,15 @@ pub fn parse_command(
             [delete, name] if delete.eq_ignore_ascii_case("delete") => Ok(Command::CharDelete(
                 Name::shaped(name).map_err(CommandError::InvalidCharName)?,
             )),
+            [rename, from, to] if rename.eq_ignore_ascii_case("rename") => {
+                Ok(Command::CharRename {
+                    from: Name::shaped(from).map_err(CommandError::InvalidCharName)?,
+                    to: normalise(to),
+                })
+            }
+            [rename, ..] if rename.eq_ignore_ascii_case("rename") => Err(CommandError::Usage {
+                usage: "char rename <old> <new>".into(),
+            }),
             [new, name] if new.eq_ignore_ascii_case("new") => Ok(Command::CharNew(normalise(name))),
             [new] if new.eq_ignore_ascii_case("new") => Err(CommandError::Usage {
                 usage: "char new <name>".into(),
@@ -43,7 +52,7 @@ pub fn parse_command(
                 Name::shaped(name).map_err(CommandError::InvalidCharName)?,
             )),
             _ => Err(CommandError::Usage {
-                usage: "char [<name> | new <name>]".into(),
+                usage: "char [<name> | new <name> | rename <old> <new> | delete <name>]".into(),
             }),
         },
         Some("unset") => match rest {

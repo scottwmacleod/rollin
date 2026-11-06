@@ -170,6 +170,28 @@ pub fn execute(
                 was_active,
             })
         }
+        Command::CharRename { from, to } => {
+            let characters = ctx.characters()?;
+            if from.as_str() == DEFAULT {
+                return Err(CommandError::CannotRenameDefault);
+            }
+            require_character(&characters, from)?;
+            let to = Name::character(to).map_err(CommandError::InvalidCharName)?;
+            if characters.exists(&to) {
+                return Err(CommandError::CharacterExists {
+                    name: to.into_string(),
+                });
+            }
+            let was_active = characters.active()? == *from;
+            characters.rename(from, &to)?;
+            if was_active {
+                characters.set_active(&to)?;
+            }
+            Ok(Output::CharRenamed {
+                from: from.to_string(),
+                to: to.into_string(),
+            })
+        }
         Command::CharNew(name) => {
             let characters = ctx.characters()?;
             let name = Name::character(name).map_err(CommandError::InvalidCharName)?;
