@@ -15,6 +15,7 @@ import { mountInput } from "./input";
 import { mountLog, type LogEntry } from "./log";
 import { entryFor } from "./session";
 import { mountSidebar } from "./sidebar";
+import { mountSidebarToggle } from "./sidebar/toggle";
 import { createUpdater } from "./updater";
 import { bindAboutToUpdater } from "./updater/about";
 import { mountUpdateBanner } from "./updater/banner";
@@ -64,6 +65,9 @@ if (sidebarEl) {
     state,
     run: (line) => window.dispatchEvent(new CustomEvent("rollin:submit", { detail: line })),
   });
+  const appEl = document.getElementById("app");
+  const toolbarEl = document.querySelector<HTMLElement>(".toolbar");
+  if (appEl && toolbarEl) mountSidebarToggle(appEl, toolbarEl, sidebarEl, sidebar.toggle);
 }
 
 window.addEventListener("rollin:submit", (e) => {
