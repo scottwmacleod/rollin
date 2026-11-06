@@ -239,7 +239,7 @@ jobs:
         run: npm --prefix apps/desktop ci
       # tauri-action v0.6.2. With bundle.createUpdaterArtifacts it also uploads
       # the signed .app.tar.gz, its .sig and latest.json (#114).
-      - uses: tauri-apps/tauri-action@1ddc7b49b13c3038297360482fcb3e058764d7c9
+      - uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
