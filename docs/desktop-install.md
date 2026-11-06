@@ -1,6 +1,10 @@
 # Installing the desktop app (unsigned builds)
 
-Releases tagged `desktop-vX.Y.Z` attach a universal `.dmg` (Apple Silicon and Intel, macOS 11+) to [GitHub Releases](https://github.com/scottwmacleod/rollin/releases). The builds are ad-hoc signed but not signed with an Apple Developer ID or notarized, so Gatekeeper blocks the first launch.
+Releases tagged `desktop-vX.Y.Z` attach installers to [GitHub Releases](https://github.com/scottwmacleod/rollin/releases): a universal `.dmg` for macOS and a `-setup.exe` for Windows. Neither is signed with a paid certificate (Apple Developer ID or a Windows code-signing certificate), so each OS warns on the first launch. Pick your platform below.
+
+## macOS
+
+The `.dmg` covers Apple Silicon and Intel, macOS 11+. The build is ad-hoc signed but not notarized, so Gatekeeper blocks the first launch.
 
 1. Open the `.dmg` and drag Rollin to Applications.
 2. Try to open it once, then either:
@@ -8,6 +12,29 @@ Releases tagged `desktop-vX.Y.Z` attach a universal `.dmg` (Apple Silicon and In
    - run `xattr -dr com.apple.quarantine /Applications/Rollin.app` in a terminal.
 
 Later launches are normal.
+
+## Windows
+
+The installer is `Rollin_<version>_x64-setup.exe` (64-bit Windows). It is unsigned, so SmartScreen warns about it.
+
+1. Download the `-setup.exe` from the release page and run it.
+2. If Windows shows "Windows protected your PC", click **More info**, then **Run anyway**.
+3. Follow the installer. It installs for your user only, so there is no administrator prompt. Rollin goes in `%LOCALAPPDATA%\Rollin` and appears in the Start menu.
+
+Later launches are normal, and the app updates itself (see [Updates](#updates)). To remove it, use Settings > Apps > Installed apps.
+
+### Smart App Control (Windows 11)
+
+If Smart App Control is on, Windows may refuse to run the installer at all, with no "Run anyway" option. Smart App Control blocks unsigned apps it does not recognise. Your options:
+
+- Turn it off in Windows Security > App & browser control > Smart App Control settings. It can only be turned back on by resetting Windows, so think before doing this.
+- Wait for a signed Windows build (tracked in [#149](https://github.com/scottwmacleod/rollin/issues/149)).
+
+Smart App Control is only active on some Windows 11 installs, mostly clean ones. If you do not see the block, you can ignore this.
+
+### Where your data lives
+
+Characters, presets and settings are TOML files in `%APPDATA%\rollin` (that is `C:\Users\<you>\AppData\Roaming\rollin`). Uninstalling Rollin leaves this folder alone, so a reinstall keeps your data. Delete the folder yourself for a clean slate. On macOS and Linux the same files live in `$XDG_CONFIG_HOME/rollin` or `~/.config/rollin`.
 
 ## Cutting a release
 
