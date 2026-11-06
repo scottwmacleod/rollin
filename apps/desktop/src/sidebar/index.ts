@@ -1,5 +1,6 @@
 import "./sidebar.css";
 import type { Execution, SessionState } from "../api/types";
+import { hasMod, modAria } from "../platform";
 import { commands, presetRows, type PresetRow } from "./model";
 
 export { presetRows } from "./model";
@@ -160,7 +161,7 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
       el("span", "sb-preset-name", entry.name),
       el("span", "sb-preset-formula", entry.formula),
     );
-    if (row.shortcut) b.setAttribute("aria-keyshortcuts", `Meta+${row.shortcut}`);
+    if (row.shortcut) b.setAttribute("aria-keyshortcuts", modAria(String(row.shortcut)));
     b.setAttribute(
       "aria-label",
       row.shadowed ? `${entry.name}, shadowed` : `Roll ${entry.name}, ${entry.formula}`,
@@ -265,7 +266,7 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
   };
 
   document.addEventListener("keydown", (e) => {
-    if (!e.metaKey || e.altKey || e.ctrlKey) return;
+    if (!hasMod(e)) return;
     if (e.key.toLowerCase() === "b") {
       e.preventDefault();
       toggle();

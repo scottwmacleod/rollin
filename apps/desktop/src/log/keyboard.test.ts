@@ -91,6 +91,13 @@ describe("keyboard mode", () => {
     expect(press(host, "c", { metaKey: true }).defaultPrevented).toBe(false);
   });
 
+  it("leaves Ctrl-modified keys to the browser too", () => {
+    const { host, log } = setup();
+    log.focusLog();
+    expect(press(host, "c", { ctrlKey: true }).defaultPrevented).toBe(false);
+    expect(press(host, "k", { ctrlKey: true }).defaultPrevented).toBe(false);
+  });
+
   it("Enter toggles the die tree", () => {
     const { host, log } = setup();
     log.focusLog();
