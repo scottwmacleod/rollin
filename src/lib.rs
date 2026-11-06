@@ -34,7 +34,7 @@ pub use error::Error;
 pub use hint::Hint;
 pub use limits::Cap;
 pub use name::{validate_name, Name, NameError, NameRule};
-pub use paths::{app_dir, config_dir};
+pub use paths::{app_dir, config_dir, config_dir_from_env, windows_config_dir};
 pub use presets::{Store, StoreError};
 pub use session::{format_history, help_text, session_command, SessionCommand};
 pub use settings::SettingsStore;
