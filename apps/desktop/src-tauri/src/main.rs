@@ -110,11 +110,9 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     Ok(menu)
 }
 
-/// `$XDG_CONFIG_HOME` if absolute, else `$HOME/.config`: the CLI's rule.
+/// `%APPDATA%` on Windows, else `$XDG_CONFIG_HOME` if absolute, else `$HOME/.config`.
 fn config_dir() -> Option<PathBuf> {
-    let xdg = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
-    let home = std::env::var_os("HOME").map(PathBuf::from);
-    rollin::config_dir(xdg.as_deref(), home.as_deref())
+    rollin::config_dir_from_env()
 }
 
 fn main() {
