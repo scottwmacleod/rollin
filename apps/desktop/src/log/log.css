@@ -44,6 +44,20 @@
 }
 [data-compact] .roll-row { height: 30px; }
 @media (max-width: 799px) { .roll-row { --formula-col: 140px; } }
+/* Below 560px the breakdown drops under the formula so the total keeps its room. */
+@media (max-width: 559px) {
+  .roll-row {
+    --formula-col: minmax(0, 1fr);
+    grid-template-columns: 28px var(--formula-col) auto;
+    height: auto;
+    min-height: var(--size-roll-row);
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+  [data-compact] .roll-row { height: auto; min-height: 30px; }
+  .roll-row > .roll-total { grid-column: 3; grid-row: 1; }
+  .roll-row > .roll-breakdown { grid-column: 2 / -1; grid-row: 2; }
+}
 
 .roll-iteration {
   font-family: var(--font-mono);
