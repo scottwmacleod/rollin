@@ -39,7 +39,7 @@ A `#` note attached to one roll that is shown in the output, e.g. `# attack`.
 _Avoid_: Comment, tag
 
 **Game system**:
-A rule set a character plays under (`dnd5e` so far) that gives rolls meaning: an **attack** (a single d20 check) can be a **critical hit** (natural 20 on the kept die) or **critical miss** (natural 1), and a critical hit doubles the dice of its **damage** (later rolls without a d20, or marked `atk` / `dmg`).
+A rule set a character plays under (`dnd5e` so far) that gives rolls meaning: an **attack** (a single d20 check) can be a **critical hit** (natural 20 on the kept die, or any kept d20 at or above the character's `crit_range`) or **critical miss** (natural 1), and a critical hit doubles the dice of its **damage** (later rolls without a d20, or marked `atk` / `dmg`).
 _Avoid_: Ruleset, mode
 
 **Repeat**:

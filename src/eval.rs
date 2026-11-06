@@ -43,7 +43,7 @@ pub fn evaluate(item: &Item, double: bool, rng: &mut impl Rng) -> Result<Roll, E
         doubled: 0,
     };
     let mut expr = eval_expr(&item.expr, &mut ctx)?;
-    mark_natural(&mut expr);
+    let check = mark_natural(&mut expr);
     Ok(Roll {
         formula: item.source.clone(),
         kind: if expr.is_count() {
@@ -57,6 +57,7 @@ pub fn evaluate(item: &Item, double: bool, rng: &mut impl Rng) -> Result<Roll, E
         iteration: None,
         crit: None,
         doubled: ctx.doubled > 0,
+        check,
     })
 }
 
@@ -288,7 +289,10 @@ fn apply_drops(dice: &mut [Die], (lowest, highest): (i64, i64), clause: &str) {
 /// not a success count. Its result is the one die left standing: rerolled
 /// dice are history and dropped dice are out, so `d20adv` and `2d20kh1` read
 /// the kept die while `3d20` (three standing dice) is not a check.
-fn mark_natural(root: &mut Node) {
+///
+/// Returns the kept die's face, natural or not, for a game system's crit
+/// range.
+fn mark_natural(root: &mut Node) -> Option<i64> {
     fn d20_terms<'a>(node: &'a mut Node, out: &mut Vec<&'a mut Node>) {
         match node {
             Node::Dice { sides: 20, .. } => out.push(node),
@@ -306,22 +310,23 @@ fn mark_natural(root: &mut Node) {
     let mut terms = Vec::new();
     d20_terms(root, &mut terms);
     let [Node::Dice { dice, tally, .. }] = terms.as_mut_slice() else {
-        return;
+        return None;
     };
     if tally.is_some() {
-        return;
+        return None;
     }
     let mut standing = dice.iter_mut().filter(|d| d.status.counts());
     let (Some(die), None) = (standing.next(), standing.next()) else {
-        return;
+        return None;
     };
     // A compounded explosion is a sum of rolls, not a face.
     if die.parts.len() > 1 {
-        return;
+        return None;
     }
     die.natural = match die.value {
         20 => Some(Natural::Twenty),
         1 => Some(Natural::One),
         _ => None,
     };
+    Some(die.value)
 }
