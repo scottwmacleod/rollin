@@ -226,7 +226,7 @@ jobs:
             cat "$RUNNER_TEMP/notes.md"
             echo "RELEASE_NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch, 2026-11-06
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
       - uses: actions/setup-node@v6
@@ -234,7 +234,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: apps/desktop/package-lock.json
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install front-end dependencies
         run: npm --prefix apps/desktop ci
       # tauri-action v0.6.2. With bundle.createUpdaterArtifacts it also uploads

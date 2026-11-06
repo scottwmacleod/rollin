@@ -49,7 +49,7 @@ When a limit is hit (3 review rounds, 3 CI fix attempts, or an unresolvable conf
 
 Checked by the main thread against the PR diff. If any fires: open the PR but do **not** enable auto-merge, replace `ready-for-agent` with `ready-for-human`, comment why, and continue with other issues. Dependents stay blocked until a human merges.
 
-- Renames or removes the `lint`, `test`, `test-linux`, `desktop` or `desktop-windows` jobs in `.github/workflows/ci.yml` (their names are the required status checks in branch protection).
+- Renames or removes the `lint`, `test`, `test-linux`, `desktop`, `desktop-windows` or `ci` jobs in `.github/workflows/ci.yml`, or changes what `ci` needs (`ci` is the aggregate required check; the others feed it).
 - Adds or edits anything that publishes or releases: a release workflow, `cargo publish`, tokens, `secrets.*`, `cargo-dist` or `release-plz` config.
 - Uses `pull_request_target` or `workflow_run`, or widens workflow `permissions:` beyond `contents: read`.
 - Edits this file or `.claude/settings.json` (the loop's own rules).

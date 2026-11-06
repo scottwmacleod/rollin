@@ -29,3 +29,11 @@ updates:
         update-types:
           - "minor"
           - "patch"
+
+  - package-ecosystem: "npm"
+    directory: "/apps/desktop"
+    schedule:
+      interval: "weekly"
+    groups:
+      desktop-npm-minor-patch:
+        update-types: ["minor", "patch"]
