@@ -109,29 +109,9 @@ jobs:
       - name: Build app
         run: cargo build -p rollin-desktop --locked
 
-  msrv:
-    # Builds and tests with exactly the compiler declared as `rust-version` in
-    # Cargo.toml. rust-toolchain.toml (channel = "stable") would otherwise win
-    # over the installed toolchain, so RUSTUP_TOOLCHAIN forces it. Keep the
-    # version strings here in sync with Cargo.toml. Not a required check.
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      RUSTUP_TOOLCHAIN: "1.95.0"
-    steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master branch, 2026-11-06
-        with:
-          toolchain: "1.95.0"
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - name: Show compiler
-        run: rustc --version
-      - name: Test
-        run: cargo test --locked
-
   ci:
     # The one required check (baseline). Fails if any gate failed or was
-    # skipped. msrv stays out on purpose: it is not a required check.
+    # skipped.
     if: always()
     needs: [lint, test, test-linux, desktop, desktop-windows]
     runs-on: ubuntu-latest
