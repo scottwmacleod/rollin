@@ -127,6 +127,14 @@ impl Context {
         }
     }
 
+    /// The global settings, or an error if there is no config directory.
+    pub(super) fn settings(&self) -> Result<crate::SettingsStore, CommandError> {
+        self.config_dir
+            .as_deref()
+            .map(crate::SettingsStore::in_config_dir)
+            .ok_or(CommandError::NoConfigDir)
+    }
+
     /// The presets store, or an error if there is no config directory.
     pub fn store(&self) -> Result<Store, CommandError> {
         self.config_dir

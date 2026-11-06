@@ -5,6 +5,8 @@ use crate::name::Name;
 use crate::presets::{
     edit_document, read_presets, read_section, read_table, string_values, sync_section, StoreError,
 };
+use crate::system::read_system;
+use crate::System;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -18,6 +20,9 @@ pub struct Character {
     pub vars: BTreeMap<String, i64>,
     /// Preset name to formula.
     pub presets: BTreeMap<String, String>,
+    /// The game system this character plays under; `None` falls back to the
+    /// global default, then to no system.
+    pub system: Option<System>,
 }
 
 /// The characters directory inside a config directory.
@@ -133,6 +138,7 @@ impl CharacterStore {
                 v.as_integer()
             })?,
             presets: read_presets(&table, &path)?,
+            system: read_system(&table, &path)?,
         })
     }
 
@@ -145,8 +151,27 @@ impl CharacterStore {
             .map(|(var, value)| (var.clone(), toml_edit::Value::from(*value)))
             .collect();
         edit_document(&self.path(name), |doc| {
+            sync_system(doc, character.system);
             sync_section(doc, "vars", vars)?;
             sync_section(doc, "presets", string_values(&character.presets))
         })
     }
+}
+
+/// Makes the top-level `system` key hold `system` (absent for `None`), keeping
+/// an unchanged key, with its comments, as it is.
+fn sync_system(doc: &mut toml_edit::DocumentMut, system: Option<System>) {
+    let Some(system) = system else {
+        doc.remove("system");
+        return;
+    };
+    let old = doc.get("system").and_then(toml_edit::Item::as_value);
+    if old.and_then(toml_edit::Value::as_str) == Some(system.as_str()) {
+        return;
+    }
+    let mut new = toml_edit::Value::from(system.as_str());
+    if let Some(old) = old {
+        *new.decor_mut() = old.decor().clone();
+    }
+    doc["system"] = toml_edit::Item::Value(new);
 }

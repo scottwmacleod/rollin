@@ -429,6 +429,7 @@ fully, as before. `import` writes global presets and applies the same check.
 ```
 presets.toml            global presets        [presets]
 state.toml              active = "grog"
+settings.toml           system = "dnd5e"      default game system
 characters/grog.toml    [vars] str = 5        [presets] atk = "d20+@str"
 ```
 
@@ -439,6 +440,39 @@ file. If `state.toml` names a character whose file is gone, commands fail
 with a message suggesting `rollin char default`. A file that is not valid
 TOML or has the wrong types (a non-integer variable, say) is an error naming
 the file; it is never overwritten by a failed command.
+
+### Game systems
+
+A character can play under a game system, which gives some rolls meaning
+beyond their total. The only system so far is `dnd5e`. Name it with a
+top-level key in the character's file, or in `settings.toml` as the default for
+every character that does not name its own (the character wins; with neither,
+rollin behaves as before):
+
+```toml
+# characters/grog.toml, or settings.toml
+system = "dnd5e"
+```
+
+Under `dnd5e`, a roll with a single d20 is an attack, and a natural 20 on its
+kept die (so `d20adv` counts) is a critical hit; a natural 1 is a critical
+miss, which only flags the roll. Every later roll in the formula with no d20
+is damage from the nearest attack before it. When that attack is a critical
+hit the damage rolls twice as many dice (`1d8+3` rolls `2d8+3`; flat numbers
+are added once):
+
+```
+$ rollin 'd20+5, 1d8+3, 2d6 # sneak'
+d20+5  [20] + 5  →  25  CRITICAL HIT
+1d8+3  [8, 3] + 3  →  14  (dice doubled)
+2d6  [1, 6, 4, 4]  →  15  (dice doubled)  # sneak
+```
+
+A `atk` or `dmg` word after a roll, before any `# label`, sets its role instead
+of inferring it: `d20+5 atk, 1d8 dmg`. Without a system the words change
+nothing. Each `Nx` repeat pairs its attacks and damage afresh. In `--json`, an
+attack carries `"crit": "hit"` or `"miss"` and boosted damage carries
+`"doubled": true`; both are absent otherwise.
 
 ### Errors
 
@@ -703,6 +737,7 @@ touch your real config or the checkout, even with `XDG_CONFIG_HOME` unset;
 | `tests/presets.rs` | Preset commands, name rules, the TOML store, `import`, against a temp config dir |
 | `tests/golden.rs` | Golden fixtures (the `--json` contract): formula + seed to expected output |
 | `tests/v1_spec.rs` | The Python v1 test cases as a parity spec |
+| `tests/dnd5e.rs`, `tests/dnd5e_config.rs` | The `dnd5e` system: crit hits and misses, doubled damage, `atk` / `dmg`, config precedence, CLI wording |
 | `tests/session.rs` | The session over piped stdin: byte-for-byte parity with one-shot for a table of lines, parse errors, `help`, `quit`, `history` |
 | `tests/session_lib.rs` | Prompt text and `Context::completion_data`, at the library API |
 | `tests/completion.rs` | Tab completion as pure functions (`complete`), including `proptest` invariants |
@@ -765,7 +800,8 @@ Everything rollin stores lives under `$XDG_CONFIG_HOME/rollin` (default
 | --- | --- |
 | `presets.toml` | Global presets |
 | `state.toml` | The active character |
-| `characters/<name>.toml` | One character's variables and presets |
+| `settings.toml` | The default game system |
+| `characters/<name>.toml` | One character's variables, presets and game system |
 | `history` | Interactive-session history |
 
 The TOML files are hand-editable and written atomically; see

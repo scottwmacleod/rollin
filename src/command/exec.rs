@@ -6,7 +6,7 @@ use super::{
 };
 use crate::characters::{Character, DEFAULT};
 use crate::name::{normalise, Name};
-use crate::Error;
+use crate::{Error, System};
 use rand::Rng;
 use std::collections::BTreeMap;
 
@@ -20,7 +20,7 @@ pub fn execute(
     match command {
         Command::Roll(formula) => {
             let scope = Scope::load(ctx)?;
-            roll_formula(formula, None, &scope, rng)
+            roll_formula(formula, None, &scope, ctx, rng)
         }
         Command::RollPreset(name) => {
             let scope = Scope::load(ctx)?;
@@ -28,7 +28,13 @@ pub fn execute(
                 Some(formula) => formula.clone(),
                 None => store.load()?.remove(name).unwrap_or_default(),
             };
-            roll_formula(&formula, Some((name.clone(), formula.clone())), &scope, rng)
+            roll_formula(
+                &formula,
+                Some((name.clone(), formula.clone())),
+                &scope,
+                ctx,
+                rng,
+            )
         }
         Command::Save {
             name,
@@ -297,6 +303,8 @@ struct Scope {
     presets: BTreeMap<String, String>,
     /// Whether the character was chosen with `--char`.
     explicit: bool,
+    /// The character's own game system, if it names one.
+    system: Option<System>,
 }
 
 impl Scope {
@@ -308,7 +316,17 @@ impl Scope {
             vars: character.vars,
             presets: character.presets,
             explicit: ctx.character.is_some(),
+            system: character.system,
         })
+    }
+
+    /// The game system rolls run under: the character's, else the global
+    /// default, else none.
+    fn system(&self, ctx: &Context) -> Result<Option<System>, CommandError> {
+        match self.system {
+            Some(system) => Ok(Some(system)),
+            None => Ok(ctx.settings()?.system()?),
+        }
     }
 
     /// Turns a library error for `source` into a command error, adding the
@@ -344,9 +362,11 @@ fn roll_formula(
     formula: &str,
     preset: Option<(String, String)>,
     scope: &Scope,
+    ctx: &Context,
     rng: &mut impl Rng,
 ) -> Result<Output, CommandError> {
-    crate::roll_with(formula, &|name| scope.vars.get(name).copied(), rng)
+    let system = scope.system(ctx)?;
+    crate::roll_in(formula, &|name| scope.vars.get(name).copied(), system, rng)
         .map(|rolls| Output::Rolls { preset, rolls })
         .map_err(|error| scope.error(formula, error))
 }

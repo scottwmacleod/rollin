@@ -2,7 +2,7 @@
 //! optional ANSI styling.
 
 use clap::ValueEnum;
-use rollin::{Die, Natural, Node, Outcome, Roll, Status, Tally};
+use rollin::{Crit, Die, Natural, Node, Outcome, Roll, Status, Tally};
 
 /// The `--color` flag.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
@@ -178,9 +178,20 @@ fn label_suffix(p: Painter, roll: &Roll) -> String {
         .map_or(String::new(), |l| format!("  {}", p.dim(&format!("# {l}"))))
 }
 
+/// The game-system note after the total: the attack's crit, or damage whose
+/// dice were doubled by one. Empty for every other roll.
+fn crit_note(p: Painter, roll: &Roll) -> String {
+    match roll.crit {
+        Some(Crit::Hit) => format!("  {}", p.wrap("1;32", "CRITICAL HIT")),
+        Some(Crit::Miss) => format!("  {}", p.wrap("1;31", "CRITICAL MISS")),
+        None if roll.doubled => format!("  {}", p.dim("(dice doubled)")),
+        None => String::new(),
+    }
+}
+
 /// The default output: one line per roll.
 pub fn render_line(p: Painter, roll: &Roll) -> String {
-    let total = p.bold(&total_text(roll));
+    let total = format!("{}{}", p.bold(&total_text(roll)), crit_note(p, roll));
     let label = label_suffix(p, roll);
     if !has_dice(&roll.expr) {
         return format!("{}  →  {total}{label}", roll.formula);

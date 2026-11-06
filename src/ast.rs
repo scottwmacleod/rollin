@@ -19,6 +19,30 @@ pub struct Item {
     pub expr: Expr,
     /// The `# text` note on this item, trimmed.
     pub label: Option<String>,
+    /// The `atk` / `dmg` suffix marker, if the item has one. Only a game
+    /// system reads it; without one it changes nothing.
+    pub role: Option<Role>,
+}
+
+/// What a roll is in a game system's attack-and-damage pairing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Role {
+    /// A d20 check that can hit or miss.
+    Attack,
+    /// Damage dealt by the nearest preceding attack.
+    Damage,
+}
+
+impl Item {
+    /// The role a game system gives this item: the marker if it has one,
+    /// else attack for a single d20 check and damage for dice with no d20.
+    pub fn role(&self) -> Option<Role> {
+        self.role.or_else(|| match self.expr.d20_terms() {
+            (1, false) => Some(Role::Attack),
+            (0, _) if self.expr.has_dice() => Some(Role::Damage),
+            _ => None,
+        })
+    }
 }
 
 /// An expression with the byte range of the source it came from.
@@ -53,6 +77,21 @@ impl Expr {
             ExprKind::Chain { first, rest } => {
                 first.has_dice() || rest.iter().any(|(_, e)| e.has_dice())
             }
+        }
+    }
+
+    /// How many d20 groups this expression holds, and whether any of them is
+    /// a success count (which is never a check).
+    pub fn d20_terms(&self) -> (usize, bool) {
+        match &self.kind {
+            ExprKind::Number(_) => (0, false),
+            ExprKind::Dice(d) if d.sides == 20 => (1, d.success.is_some()),
+            ExprKind::Dice(_) => (0, false),
+            ExprKind::Neg(inner) | ExprKind::Group(inner) => inner.d20_terms(),
+            ExprKind::Chain { first, rest } => rest
+                .iter()
+                .map(|(_, e)| e.d20_terms())
+                .fold(first.d20_terms(), |(n, count), (m, c)| (n + m, count || c)),
         }
     }
 
