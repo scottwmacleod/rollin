@@ -196,7 +196,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -214,7 +214,7 @@ jobs:
         with:
           projectPath: apps/desktop
           tagName: ${{ needs.plan.outputs.tag }}
-          commitish: ${{ github.sha }}
+          releaseCommitish: ${{ github.sha }}
           releaseName: Rollin desktop ${{ needs.plan.outputs.tag }}
           releaseBody: |
             Unsigned macOS build (universal: Apple Silicon and Intel). On first
