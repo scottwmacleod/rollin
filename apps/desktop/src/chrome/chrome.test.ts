@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Execution, SessionState } from "../api/types";
+import { asPlatform } from "../platform.test";
 import { mountChrome, type Chrome, type ChromeDeps } from "./index";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -164,6 +165,9 @@ describe("chrome", () => {
   });
 
   describe("palette", () => {
+    beforeEach(() => {
+      asPlatform("MacIntel");
+    });
     const press = (key: string, init: KeyboardEventInit = {}) =>
       document.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, ...init }));
 
@@ -174,6 +178,18 @@ describe("chrome", () => {
       expect(document.querySelector(".pal")).not.toBeNull();
       document.querySelector(".pal")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
       expect(document.querySelector(".pal")).toBeNull();
+    });
+
+    it("uses Ctrl and a Ctrl K hint on Windows", async () => {
+      asPlatform("Win32");
+      await mount();
+      expect(toolbar.querySelector(".tb-search kbd")!.textContent).toBe("Ctrl K");
+      press("k", { metaKey: true });
+      await flush();
+      expect(document.querySelector(".pal")).toBeNull();
+      press("k", { ctrlKey: true });
+      await flush();
+      expect(document.querySelector(".pal")).not.toBeNull();
     });
 
     it("rolls a preset on Enter", async () => {

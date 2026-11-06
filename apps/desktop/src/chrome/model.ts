@@ -1,3 +1,4 @@
+import { modHint } from "../platform";
 import type { Execution, Output, PresetEntry, SessionState } from "../api/types";
 
 /** Rows shown before a menu or the palette list scrolls (28px each). */
@@ -80,7 +81,14 @@ export const COMMANDS: PaletteRow[] = [
   { kind: "command", label: "New character…", action: { type: "ui", id: "new-character" } },
   { kind: "command", label: "New preset…", action: { type: "ui", id: "new-preset" } },
   { kind: "command", label: "Clear log", action: { type: "ui", id: "clear-log" } },
-  { kind: "command", label: "Toggle sidebar", detail: "⌘B", action: { type: "ui", id: "toggle-sidebar" } },
+  {
+    kind: "command",
+    label: "Toggle sidebar",
+    get detail() {
+      return modHint("B");
+    },
+    action: { type: "ui", id: "toggle-sidebar" },
+  },
   { kind: "command", label: "Set seed…", action: { type: "ui", id: "set-seed" } },
   { kind: "command", label: "Random seed", action: { type: "ui", id: "random-seed" } },
   { kind: "command", label: "List presets", detail: "presets", action: { type: "run", line: "presets" } },

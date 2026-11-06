@@ -1,3 +1,4 @@
+import { hasMod } from "../platform";
 import { el } from "./dialog";
 import { LIST_ROWS, paletteView, type PaletteAction, type PaletteRow, type PaletteView } from "./model";
 import type { SessionState } from "../api/types";
@@ -139,7 +140,7 @@ export function mountPalette(deps: PaletteDeps): Palette {
         e.preventDefault();
         prefix = "";
         paint();
-      } else if (e.key === "e" && e.metaKey) {
+      } else if (e.key === "e" && hasMod(e)) {
         const row = view.rows[active];
         if (row?.preset) {
           e.preventDefault();
