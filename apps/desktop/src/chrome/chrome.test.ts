@@ -48,6 +48,7 @@ describe("chrome", () => {
       state: async () => structuredClone(st),
       setSeed: setSeed as never,
       check: async () => undefined,
+      sample: async () => [],
       about: async () => ({ name: "Rollin", app_version: "0.1.2", library_version: "1", license: "MIT", repository: "" }),
       run: vi.fn(),
       toggleSidebar: vi.fn(),
@@ -261,6 +262,49 @@ describe("chrome", () => {
       [...document.querySelectorAll<HTMLButtonElement>(".dlg-btn")].find((b) => b.textContent === "Save")!.click();
       await flush();
       expect(execute.mock.calls.map((c) => c[0])).toEqual(["save strike d20+5", "delete attack"]);
+    });
+
+    it("previews a sample roll, re-rolls it, and hides it when the formula is invalid", async () => {
+      const roll = (total: number) => ({
+        formula: "d20+5",
+        total,
+        expr: {
+          type: "chain" as const,
+          first: { type: "dice" as const, term: "d20", sides: 20, dice: [{ value: total - 5, status: "kept" as const }], subtotal: total - 5 },
+          rest: [{ op: "+", node: { type: "number" as const, value: 5 } }],
+          total,
+        },
+      });
+      const sample = vi.fn<(f: string) => Promise<ReturnType<typeof roll>[]>>();
+      sample.mockResolvedValueOnce([roll(12)]).mockResolvedValueOnce([roll(21)]);
+      deps.sample = sample as unknown as ChromeDeps["sample"];
+      deps.check = async (f) => (f.endsWith("+") ? Promise.reject({ error: { message: "missing a number after +" } }) : undefined);
+      await mount();
+      window.dispatchEvent(new CustomEvent("rollin:edit-preset", { detail: { name: "attack", global: false } }));
+      await flush();
+      const box = document.querySelector<HTMLElement>(".dlg-sample")!;
+      expect(box.hidden).toBe(false);
+      expect(box.querySelector(".dlg-sample-total")?.textContent).toBe("12");
+      expect(execute).not.toHaveBeenCalled();
+      box.querySelector<HTMLButtonElement>(".dlg-sample-btn")!.click();
+      await flush();
+      expect(box.querySelector(".dlg-sample-total")?.textContent).toBe("21");
+
+      const formula = document.querySelectorAll<HTMLInputElement>(".dlg-input")[1]!;
+      formula.value = "d20+";
+      formula.dispatchEvent(new Event("input"));
+      await flush();
+      expect(box.hidden).toBe(true);
+      expect(sample).toHaveBeenCalledTimes(2);
+    });
+
+    it("shows the library's message when a valid formula fails as it rolls", async () => {
+      deps.sample = async () => Promise.reject({ error: { message: "divide by zero" } });
+      await mount();
+      window.dispatchEvent(new CustomEvent("rollin:edit-preset", { detail: { name: "attack", global: false } }));
+      await flush();
+      expect(document.querySelector<HTMLElement>(".dlg-sample")!.hidden).toBe(true);
+      expect(document.querySelectorAll(".dlg-note")[1]?.textContent).toBe("divide by zero");
     });
 
     it("shows the library's message for a formula that would not roll", async () => {

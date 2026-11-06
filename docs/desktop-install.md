@@ -13,7 +13,7 @@ Later launches are normal.
 
 No local git is needed. The "Release desktop app" workflow (`.github/workflows/release.yml`) works out the version, builds, and creates the tag and GitHub Release itself.
 
-- **Daily:** at 05:17 UTC it releases a patch bump if `main` has changed `apps/desktop`, `src`, or the root `Cargo.toml`/`Cargo.lock` since the last release. It skips quietly when nothing changed or when the required CI checks (`lint`, `test`, `test-linux`, `desktop`) have not all passed on `main`'s head; it tries again the next day.
+- **Daily:** at 05:17 UTC it releases a patch bump if `main` has changed `apps/desktop`, `src`, or the root `Cargo.toml`/`Cargo.lock` since the last release. It skips quietly when nothing changed or when the required CI checks (`lint`, `test`, `test-linux`, `desktop`, `desktop-windows`) have not all passed on `main`'s head; it tries again the next day.
 - **Manually:** Actions > Release desktop app > Run workflow (also available in GitHub Mobile). Choose `patch`, `minor` or `major`, or type an exact version, which wins over the bump. Run it on `main`. A version with a hyphen (`0.2.0-rc.1`) is marked as a pre-release.
 - **Highlights:** the manual run has an optional `highlights` field. Its text goes above the list of changes, in both the release page and the app's update notes.
 - **Fallback:** pushing a `desktop-vX.Y.Z` tag by hand builds that version without the schedule's checks.

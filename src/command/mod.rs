@@ -11,7 +11,7 @@ mod parse;
 
 pub use context::Context;
 pub use error::{CommandError, ErrorReport};
-pub use exec::{check, execute};
+pub use exec::{check, execute, sample};
 pub use output::{ImportReport, Output, OutputReport, PresetEntry, PresetSource, Shadow};
 pub use parse::parse_command;
 

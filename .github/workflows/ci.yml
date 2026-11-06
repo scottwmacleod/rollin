@@ -79,6 +79,36 @@ jobs:
       - name: Build app
         run: cargo build -p rollin-desktop --locked
 
+  desktop-windows:
+    # Same as `desktop` but on Windows (#144). Stays on `-p rollin-desktop`
+    # because the root crate's rexpect dev-dependency is unix-only. Required
+    # since #164, so `ci` needs it.
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch, 2026-11-06
+        with:
+          components: clippy
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Install front-end dependencies
+        run: npm --prefix apps/desktop ci
+      - name: Build front end
+        run: npm --prefix apps/desktop run build
+      - name: Test front end
+        run: npm --prefix apps/desktop test
+      - name: Clippy
+        run: cargo clippy -p rollin-desktop --all-targets --locked -- -D warnings
+      - name: Test
+        run: cargo test -p rollin-desktop --locked
+      - name: Build app
+        run: cargo build -p rollin-desktop --locked
+
   msrv:
     # Builds and tests with exactly the compiler declared as `rust-version` in
     # Cargo.toml. rust-toolchain.toml (channel = "stable") would otherwise win
@@ -103,7 +133,7 @@ jobs:
     # The one required check (baseline). Fails if any gate failed or was
     # skipped. msrv stays out on purpose: it is not a required check.
     if: always()
-    needs: [lint, test, test-linux, desktop]
+    needs: [lint, test, test-linux, desktop, desktop-windows]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

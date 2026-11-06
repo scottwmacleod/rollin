@@ -42,6 +42,14 @@ fn check(session: tauri::State<'_, AppSession>, formula: String) -> Result<(), F
 }
 
 #[tauri::command]
+fn sample(
+    session: tauri::State<'_, AppSession>,
+    formula: String,
+) -> Result<Vec<rollin::Roll>, Failure> {
+    session.lock().sample(&formula)
+}
+
+#[tauri::command]
 fn state(session: tauri::State<'_, AppSession>) -> Result<State, Failure> {
     session.lock().state()
 }
@@ -59,6 +67,7 @@ fn about(app: AppHandle) -> About {
 }
 
 /// The `.app` bundle that `exe` (`X.app/Contents/MacOS/bin`) runs from.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn bundle_of(exe: &Path) -> Option<PathBuf> {
     let bundle = exe.ancestors().nth(3)?;
     (bundle.extension()? == "app" && exe.parent()?.file_name()? == "MacOS")
@@ -133,6 +142,7 @@ fn main() {
             execute,
             complete,
             check,
+            sample,
             state,
             set_seed,
             about,

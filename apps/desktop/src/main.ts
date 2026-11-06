@@ -9,7 +9,7 @@ document.documentElement.dataset.platform = /Mac/.test(navigator.userAgent) ? "m
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { check as checkForUpdate } from "@tauri-apps/plugin-updater";
-import { about, check, execute, relaunch, setSeed, state } from "./api";
+import { about, check, execute, relaunch, sample, setSeed, state } from "./api";
 import { mountAbout } from "./about";
 import { mountChrome } from "./chrome";
 import type { Execution } from "./api";
@@ -83,6 +83,7 @@ if (toolbarEl && statusEl) {
     state,
     setSeed,
     check,
+    sample,
     about,
     run: (line) => void run(line),
     toggleSidebar: () => sidebar?.toggle(),

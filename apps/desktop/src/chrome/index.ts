@@ -1,5 +1,5 @@
 import "./chrome.css";
-import type { About, Execution, SessionState } from "../api/types";
+import type { About, Execution, Roll, SessionState } from "../api/types";
 import { hasMod, modAria, modHint } from "../platform";
 import { presetRows } from "../sidebar/model";
 import { el, openNewCharacter, openPresetDialog } from "./dialog";
@@ -12,6 +12,7 @@ export interface ChromeDeps {
   state(): Promise<SessionState>;
   setSeed(seed: number | null): Promise<number | null>;
   check(formula: string): Promise<void>;
+  sample(formula: string): Promise<Roll[]>;
   about(): Promise<About>;
   /** Rolls or runs a line into the log exactly as if it had been typed. */
   run(line: string): void;
@@ -144,6 +145,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
       state: current,
       original,
       check: deps.check,
+      sample: deps.sample,
       describe: messageOf,
       apply: async (lines) => {
         for (const line of lines) {
