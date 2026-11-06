@@ -35,6 +35,10 @@ on:
         description: "Exact version (e.g. 0.3.0 or 0.3.0-rc.1); overrides the bump"
         type: string
         required: false
+      highlights:
+        description: "Optional intro for the release notes (shown above the list of changes and in the app's update notes)"
+        type: string
+        required: false
   push:
     tags:
       - "desktop-v*"
@@ -59,6 +63,7 @@ jobs:
       release: ${{ steps.plan.outputs.release }}
       version: ${{ steps.plan.outputs.version }}
       tag: ${{ steps.plan.outputs.tag }}
+      previous: ${{ steps.plan.outputs.previous }}
       prerelease: ${{ steps.plan.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v7
@@ -160,6 +165,7 @@ jobs:
             echo "release=true"
             echo "version=$version"
             echo "tag=$tag"
+            echo "previous=$last_tag"
             echo "prerelease=$prerelease"
           } >> "$GITHUB_OUTPUT"
           echo "Releasing $tag (previous stable: ${last_tag:-none})"
@@ -193,6 +199,33 @@ jobs:
             echo "tauri.conf.json still has the placeholder updater public key" >&2
             exit 1
           fi
+      - name: Write the release notes
+        # GitHub lists the merged PRs since the previous release, grouped by
+        # label as set in .github/release.yml. The same text becomes the
+        # release body and the updater's notes in latest.json.
+        id: notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ needs.plan.outputs.tag }}
+          PREVIOUS: ${{ needs.plan.outputs.previous }}
+          SHA: ${{ github.sha }}
+          HIGHLIGHTS: ${{ inputs.highlights }}
+        run: |
+          set -euo pipefail
+          args=(-f "tag_name=$TAG" -f "target_commitish=$SHA")
+          if [ -n "$PREVIOUS" ]; then args+=(-f "previous_tag_name=$PREVIOUS"); fi
+          generated=$(gh api -X POST "repos/$REPO/releases/generate-notes" "${args[@]}" --jq .body)
+          {
+            if [ -n "${HIGHLIGHTS:-}" ]; then printf '%s\n\n' "$HIGHLIGHTS"; fi
+            printf '%s\n' "$generated"
+          } > "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
+          {
+            echo "body<<RELEASE_NOTES_EOF"
+            cat "$RUNNER_TEMP/notes.md"
+            echo "RELEASE_NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
@@ -216,11 +249,7 @@ jobs:
           tagName: ${{ needs.plan.outputs.tag }}
           releaseCommitish: ${{ github.sha }}
           releaseName: Rollin desktop ${{ needs.plan.outputs.tag }}
-          releaseBody: |
-            Unsigned macOS build (universal: Apple Silicon and Intel). On first
-            launch macOS will refuse to open it: right-click Rollin.app and
-            choose Open, or run `xattr -dr com.apple.quarantine /Applications/Rollin.app`.
-            See docs/desktop-install.md.
+          releaseBody: ${{ steps.notes.outputs.body }}
           releaseDraft: false
           prerelease: ${{ needs.plan.outputs.prerelease }}
           args: --target universal-apple-darwin -- --locked
@@ -234,3 +263,19 @@ jobs:
           for pattern in '\.dmg$' '\.app\.tar\.gz$' '\.app\.tar\.gz\.sig$' '^latest\.json$'; do
             echo "$assets" | grep -Eq "$pattern" || { echo "Missing asset matching $pattern" >&2; exit 1; }
           done
+      - name: Add install help to the release page
+        # After the build, so latest.json (the app's update notes) keeps only
+        # the changes.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.plan.outputs.tag }}
+          NOTES: ${{ steps.notes.outputs.body }}
+        run: |
+          {
+            printf '%s\n\n---\n\n' "$NOTES"
+            echo 'Unsigned macOS build (universal: Apple Silicon and Intel). On first'
+            echo 'launch macOS will refuse to open it: right-click Rollin.app and'
+            echo 'choose Open, or run `xattr -dr com.apple.quarantine /Applications/Rollin.app`.'
+            echo 'See docs/desktop-install.md.'
+          } > "$RUNNER_TEMP/page.md"
+          gh release edit "$TAG" --notes-file "$RUNNER_TEMP/page.md"
