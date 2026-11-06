@@ -133,7 +133,7 @@ jobs:
             while :; do
               runs=$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq '.check_runs')
               pending=""; failed=""
-              for check in lint test test-linux desktop; do
+              for check in lint test test-linux desktop desktop-windows; do
                 state=$(echo "$runs" | jq -r --arg n "$check" '[.[] | select(.name == $n)] | last | if . == null then "missing" elif .status != "completed" then "pending" else .conclusion end')
                 case "$state" in
                   success) ;;
