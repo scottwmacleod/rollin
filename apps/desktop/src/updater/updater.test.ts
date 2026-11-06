@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { mountAbout } from "../about";
 import { bindAboutToUpdater } from "./about";
 import { mountUpdateBanner } from "./banner";
+import { startUpdateSchedule } from "./schedule";
 import { createUpdater, statusText, type PendingUpdate, type UpdateState } from "./index";
 
 function pending(version = "0.2.0", install: () => Promise<void> = () => Promise.resolve()): PendingUpdate {
@@ -174,5 +175,50 @@ describe("about dialog binding", () => {
     await updater.install();
     expect(slot("update-status").textContent).toContain("bad signature");
     expect(slot("update-action").textContent).toBe("Try again");
+  });
+});
+
+describe("background checks", () => {
+  it("stay silent: no checking state, failures ignored", async () => {
+    const { updater } = setup(() => Promise.reject(new Error("offline")));
+    const seen: UpdateState["kind"][] = [];
+    updater.subscribe((s) => seen.push(s.kind));
+    await updater.check({ background: true });
+    expect(seen).toEqual(["idle"]);
+  });
+
+  it("surface a new release and keep an offered one", async () => {
+    let result: PendingUpdate | null = pending("0.2.0");
+    const { updater } = setup(() => Promise.resolve(result));
+    await updater.check({ background: true });
+    expect(updater.state()).toEqual({ kind: "available", version: "0.2.0" });
+    result = null;
+    await updater.check({ background: true });
+    expect(updater.state()).toEqual({ kind: "available", version: "0.2.0" });
+  });
+});
+
+describe("update schedule", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("rechecks every interval and on focus after a long gap, until stopped", () => {
+    vi.useFakeTimers();
+    let t = 0;
+    const checks = vi.fn(() => Promise.resolve());
+    const updater = { check: checks } as unknown as Parameters<typeof startUpdateSchedule>[0];
+    const target = new EventTarget() as unknown as Window;
+    const stop = startUpdateSchedule(updater, { intervalMs: 1000, focusAfterMs: 500, now: () => t, target });
+    target.dispatchEvent(new Event("focus"));
+    expect(checks).not.toHaveBeenCalled();
+    t = 600;
+    target.dispatchEvent(new Event("focus"));
+    expect(checks).toHaveBeenCalledTimes(1);
+    expect(checks).toHaveBeenLastCalledWith({ background: true });
+    vi.advanceTimersByTime(1000);
+    expect(checks).toHaveBeenCalledTimes(2);
+    stop();
+    vi.advanceTimersByTime(5000);
+    target.dispatchEvent(new Event("focus"));
+    expect(checks).toHaveBeenCalledTimes(2);
   });
 });

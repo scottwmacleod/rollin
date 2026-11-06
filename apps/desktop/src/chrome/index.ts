@@ -1,5 +1,6 @@
 import "./chrome.css";
 import type { About, Execution, SessionState } from "../api/types";
+import { hasMod, modAria, modHint } from "../platform";
 import { presetRows } from "../sidebar/model";
 import { el, openNewCharacter, openPresetDialog } from "./dialog";
 import { eventFor, failureText, messageOf, rollsIn, type AppEvent, type PaletteAction, type PaletteRow } from "./model";
@@ -57,15 +58,15 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
   toolbar.setAttribute("role", "toolbar");
   toolbar.setAttribute("aria-label", "Rollin");
   const sidebarBtn = iconButton("Toggle sidebar", "◧");
-  sidebarBtn.setAttribute("aria-keyshortcuts", "Meta+B");
+  sidebarBtn.setAttribute("aria-keyshortcuts", modAria("B"));
   const word = el("span", "tb-word", "rollin");
   const charBtn = el("button", "tb-btn tb-char-btn");
   charBtn.type = "button";
   const search = el("button", "tb-btn tb-search");
   search.type = "button";
   search.setAttribute("aria-label", "Search presets, characters and commands");
-  search.setAttribute("aria-keyshortcuts", "Meta+K");
-  search.append(el("span", "", "Search"), el("kbd", "", "⌘K"));
+  search.setAttribute("aria-keyshortcuts", modAria("K"));
+  search.append(el("span", "", "Search"), el("kbd", "", modHint("K")));
   const seedBtn = el("button", "tb-btn tb-seed");
   seedBtn.type = "button";
   const clearBtn = iconButton("Clear log", "⌫");
@@ -243,7 +244,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
   seedBtn.addEventListener("click", editSeed);
   clearBtn.addEventListener("click", deps.clearLog);
   const onKey = (e: KeyboardEvent) => {
-    if (e.metaKey && !e.altKey && !e.ctrlKey && e.key.toLowerCase() === "k") {
+    if (hasMod(e) && e.key.toLowerCase() === "k") {
       e.preventDefault();
       if (palette.isOpen()) palette.close();
       else palette.open();
