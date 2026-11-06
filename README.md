@@ -474,6 +474,18 @@ nothing. Each `Nx` repeat pairs its attacks and damage afresh. In `--json`, an
 attack carries `"crit": "hit"` or `"miss"` and boosted damage carries
 `"doubled": true`; both are absent otherwise.
 
+A character can widen its critical hits with `crit_range` in its file, the
+lowest kept d20 that counts (`19` means 19-20, as for a Champion fighter). It
+takes an integer from 2 to 20, defaults to 20, and applies under a system only;
+a natural 1 stays the only critical miss. The die is highlighted only on a
+natural 20 or 1, so a 19 shows `CRITICAL HIT` without the highlight:
+
+```toml
+# characters/grog.toml
+system = "dnd5e"
+crit_range = 19
+```
+
 A `crit` word after a roll (before any `# label`, and in either order with
 `atk` / `dmg`) doubles that roll's dice by hand, with or without a system:
 `1d8+3 crit` rolls `2d8+3`. It marks the roll `(dice doubled)` and sets

@@ -6,7 +6,7 @@ use super::{
 };
 use crate::characters::{Character, DEFAULT};
 use crate::name::{normalise, Name};
-use crate::{Error, System};
+use crate::{CritRange, Error, System};
 use rand::Rng;
 use std::collections::BTreeMap;
 
@@ -277,8 +277,14 @@ pub fn sample(
 ) -> Result<Vec<crate::Roll>, CommandError> {
     let (scope, source) = resolve(formula, ctx)?;
     let system = scope.system(ctx)?;
-    crate::roll_in(&source, &|name| scope.vars.get(name).copied(), system, rng)
-        .map_err(|error| scope.error(&source, error))
+    crate::roll_in(
+        &source,
+        &|name| scope.vars.get(name).copied(),
+        system,
+        scope.crit_range.unwrap_or_default(),
+        rng,
+    )
+    .map_err(|error| scope.error(&source, error))
 }
 
 /// The scope a formula is read in and its source text, with a lone preset
@@ -331,6 +337,8 @@ struct Scope {
     explicit: bool,
     /// The character's own game system, if it names one.
     system: Option<System>,
+    /// The character's crit range, if it sets one.
+    crit_range: Option<CritRange>,
 }
 
 impl Scope {
@@ -343,6 +351,7 @@ impl Scope {
             presets: character.presets,
             explicit: ctx.character.is_some(),
             system: character.system,
+            crit_range: character.crit_range,
         })
     }
 
@@ -392,7 +401,13 @@ fn roll_formula(
     rng: &mut impl Rng,
 ) -> Result<Output, CommandError> {
     let system = scope.system(ctx)?;
-    crate::roll_in(formula, &|name| scope.vars.get(name).copied(), system, rng)
-        .map(|rolls| Output::Rolls { preset, rolls })
-        .map_err(|error| scope.error(formula, error))
+    crate::roll_in(
+        formula,
+        &|name| scope.vars.get(name).copied(),
+        system,
+        scope.crit_range.unwrap_or_default(),
+        rng,
+    )
+    .map(|rolls| Output::Rolls { preset, rolls })
+    .map_err(|error| scope.error(formula, error))
 }

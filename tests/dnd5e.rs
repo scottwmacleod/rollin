@@ -2,10 +2,17 @@
 //! damage dice. The RNG is injected (ADR-0003): each test scans seeds for the
 //! rolls it needs.
 
-use rollin::{roll_in, seeded_rng, Crit, Node, Roll, System};
+use rollin::{roll_in, seeded_rng, Crit, CritRange, Node, Roll, System};
 
 fn run(formula: &str, system: Option<System>, seed: u64) -> Vec<Roll> {
-    roll_in(formula, &|_| None, system, &mut seeded_rng(seed)).unwrap()
+    roll_in(
+        formula,
+        &|_| None,
+        system,
+        CritRange::default(),
+        &mut seeded_rng(seed),
+    )
+    .unwrap()
 }
 
 fn dnd(formula: &str, seed: u64) -> Vec<Roll> {

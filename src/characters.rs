@@ -5,8 +5,8 @@ use crate::name::Name;
 use crate::presets::{
     edit_document, read_presets, read_section, read_table, string_values, sync_section, StoreError,
 };
-use crate::system::read_system;
-use crate::System;
+use crate::system::{read_crit_range, read_system};
+use crate::{CritRange, System};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
@@ -23,6 +23,9 @@ pub struct Character {
     /// The game system this character plays under; `None` falls back to the
     /// global default, then to no system.
     pub system: Option<System>,
+    /// The lowest kept d20 that is a critical hit under a system (`19` for
+    /// 19-20); `None` means 20.
+    pub crit_range: Option<CritRange>,
 }
 
 /// The characters directory inside a config directory.
@@ -139,6 +142,7 @@ impl CharacterStore {
             })?,
             presets: read_presets(&table, &path)?,
             system: read_system(&table, &path)?,
+            crit_range: read_crit_range(&table, &path)?,
         })
     }
 
@@ -152,6 +156,7 @@ impl CharacterStore {
             .collect();
         edit_document(&self.path(name), |doc| {
             sync_system(doc, character.system);
+            sync_crit_range(doc, character.crit_range);
             sync_section(doc, "vars", vars)?;
             sync_section(doc, "presets", string_values(&character.presets))
         })
@@ -174,4 +179,23 @@ fn sync_system(doc: &mut toml_edit::DocumentMut, system: Option<System>) {
         *new.decor_mut() = old.decor().clone();
     }
     doc["system"] = toml_edit::Item::Value(new);
+}
+
+/// Makes the top-level `crit_range` key hold `range` (absent for `None`),
+/// keeping an unchanged key, with its comments, as it is.
+fn sync_crit_range(doc: &mut toml_edit::DocumentMut, range: Option<CritRange>) {
+    let Some(range) = range else {
+        doc.remove("crit_range");
+        return;
+    };
+    let old = doc.get("crit_range").and_then(toml_edit::Item::as_value);
+    let value = i64::from(range.get());
+    if old.and_then(toml_edit::Value::as_integer) == Some(value) {
+        return;
+    }
+    let mut new = toml_edit::Value::from(value);
+    if let Some(old) = old {
+        *new.decor_mut() = old.decor().clone();
+    }
+    doc["crit_range"] = toml_edit::Item::Value(new);
 }
