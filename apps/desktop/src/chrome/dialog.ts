@@ -1,3 +1,4 @@
+import { systemName } from "./system";
 import { commands } from "../sidebar/model";
 import type { PresetEntry, Roll, SessionState } from "../api/types";
 import { breakdown, totalText } from "../log/breakdown";
@@ -131,11 +132,11 @@ export function openNewCharacter(deps: NewCharacterDeps): Dialog {
   const body = el("div", "dlg-body");
   body.append(field("Name", input, msg));
   const system = el("select");
-  const inherit = el("option", "", deps.defaultSystem ? `Use default (${deps.defaultSystem})` : "Use default (no system)");
+  const inherit = el("option", "", deps.defaultSystem ? `Use default (${systemName(deps.defaultSystem)})` : "Use default (no system)");
   inherit.value = "";
   system.append(inherit);
   for (const name of deps.systems) {
-    const o = el("option", "", name);
+    const o = el("option", "", systemName(name));
     o.value = name;
     system.append(o);
   }
