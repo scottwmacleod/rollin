@@ -1,11 +1,10 @@
 use super::context::require_character;
 use super::parse::roll_or_preset;
-use super::{
-    edit_distance, import, Command, CommandError, Context, Output, PresetEntry, PresetSource,
-    Shadow, UndefinedVariable,
-};
+use super::scope::PresetScope;
+use super::{edit_distance, import, Command, CommandError, Context, Output, UndefinedVariable};
 use crate::characters::{Character, DEFAULT};
 use crate::name::{normalise, Name};
+use crate::presets::Store;
 use crate::{CritRange, Error, System};
 use rand::Rng;
 use std::collections::BTreeMap;
@@ -24,10 +23,7 @@ pub fn execute(
         }
         Command::RollPreset(name) => {
             let scope = Scope::load(ctx)?;
-            let formula = match scope.presets.get(name) {
-                Some(formula) => formula.clone(),
-                None => store.load()?.remove(name).unwrap_or_default(),
-            };
+            let formula = scope.preset_formula(&store, name)?;
             roll_formula(
                 &formula,
                 Some((name.clone(), formula.clone())),
@@ -56,10 +52,9 @@ pub fn execute(
                     replaced,
                 });
             }
-            let (characters, active) = ctx.current()?;
-            let mut character = characters.load(&active)?;
-            let replaced = character.presets.insert(name.clone(), formula.clone());
-            characters.save(&active, &character)?;
+            let (replaced, active) = ctx.update_character(|character, _| {
+                Ok(character.presets.insert(name.clone(), formula.clone()))
+            })?;
             Ok(Output::Saved {
                 name,
                 formula: formula.clone(),
@@ -80,16 +75,16 @@ pub fn execute(
                     character: None,
                 });
             }
-            let (characters, active) = ctx.current()?;
-            let mut character = characters.load(&active)?;
-            if character.presets.remove(&name).is_none() {
-                return Err(CommandError::NoSuchCharacterPreset {
-                    global_exists: globals.contains_key(&name),
-                    name,
-                    character: active.into_string(),
-                });
-            }
-            characters.save(&active, &character)?;
+            let ((), active) = ctx.update_character(|character, active| {
+                if character.presets.remove(&name).is_none() {
+                    return Err(CommandError::NoSuchCharacterPreset {
+                        global_exists: globals.contains_key(&name),
+                        name: name.clone(),
+                        character: active.to_string(),
+                    });
+                }
+                Ok(())
+            })?;
             Ok(Output::Deleted {
                 name,
                 character: Some(active.into_string()),
@@ -98,37 +93,16 @@ pub fn execute(
         Command::Import { path, force } => import::run(path, *force, &store),
         Command::Presets => {
             let (characters, active) = ctx.current()?;
-            let own_presets = characters.load(&active)?.presets;
-            let global_presets = store.load()?;
-            let own = own_presets.iter().map(|(name, formula)| PresetEntry {
-                name: name.clone(),
-                formula: formula.clone(),
-                source: PresetSource::Character(active.to_string()),
-                shadow: if global_presets.contains_key(name) {
-                    Shadow::Shadows
-                } else {
-                    Shadow::None
-                },
-            });
-            let global = global_presets.iter().map(|(name, formula)| PresetEntry {
-                name: name.clone(),
-                formula: formula.clone(),
-                source: PresetSource::Global,
-                shadow: if own_presets.contains_key(name) {
-                    Shadow::ShadowedBy(active.to_string())
-                } else {
-                    Shadow::None
-                },
-            });
+            let scope = PresetScope::new(characters.load(&active)?.presets, store.load()?);
             Ok(Output::Presets {
-                presets: own.chain(global).collect(),
+                presets: scope.entries(active.as_str()),
             })
         }
         Command::Set { name, value } => {
-            let (characters, active) = ctx.current()?;
-            let mut character = characters.load(&active)?;
-            character.vars.insert(name.clone(), *value);
-            characters.save(&active, &character)?;
+            let ((), active) = ctx.update_character(|character, _| {
+                character.vars.insert(name.clone(), *value);
+                Ok(())
+            })?;
             Ok(Output::VarSet {
                 name: name.clone(),
                 value: *value,
@@ -215,15 +189,15 @@ pub fn execute(
             })
         }
         Command::Unset { name } => {
-            let (characters, active) = ctx.current()?;
-            let mut character = characters.load(&active)?;
-            if character.vars.remove(name).is_none() {
-                return Err(CommandError::NoSuchVariable {
-                    name: name.clone(),
-                    character: active.into_string(),
-                });
-            }
-            characters.save(&active, &character)?;
+            let ((), active) = ctx.update_character(|character, active| {
+                if character.vars.remove(name).is_none() {
+                    return Err(CommandError::NoSuchVariable {
+                        name: name.clone(),
+                        character: active.to_string(),
+                    });
+                }
+                Ok(())
+            })?;
             Ok(Output::VarUnset {
                 name: name.clone(),
                 character: active.into_string(),
@@ -294,10 +268,7 @@ fn resolve(formula: &str, ctx: &Context) -> Result<(Scope, String), CommandError
     let command = roll_or_preset(&[formula.to_string()], &mut || ctx.preset_names())?;
     let scope = Scope::load(ctx)?;
     let source = match command {
-        Command::RollPreset(name) => match scope.presets.get(&name) {
-            Some(formula) => formula.clone(),
-            None => store.load()?.remove(&name).unwrap_or_default(),
-        },
+        Command::RollPreset(name) => scope.preset_formula(&store, &name)?,
         Command::Roll(formula) => formula,
         _ => unreachable!("roll_or_preset gives a roll or a preset roll"),
     };
@@ -353,6 +324,14 @@ impl Scope {
             system: character.system,
             crit_range: character.crit_range,
         })
+    }
+
+    /// The formula of preset `name`: the character's own, else the global one.
+    fn preset_formula(&self, store: &Store, name: &str) -> Result<String, CommandError> {
+        let found = PresetScope::find(&self.presets, name, || {
+            store.load().map_err(CommandError::from)
+        })?;
+        Ok(found.unwrap_or_default())
     }
 
     /// The game system rolls run under: the character's, else the global
