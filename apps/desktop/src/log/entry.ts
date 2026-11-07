@@ -33,6 +33,11 @@ function rollRow(roll: Roll): HTMLElement {
   const formula = el("span", "roll-formula");
   formula.append(el("span", "roll-formula-text", roll.formula));
   if (roll.label) formula.append(el("span", "roll-label", `# ${roll.label}`));
+  if (roll.doubled) {
+    const mark = el("span", "roll-badge is-doubled", "doubled");
+    mark.title = "This roll's dice were doubled";
+    formula.append(mark);
+  }
   row.append(formula);
 
   const cells = breakdown(roll);
@@ -49,6 +54,13 @@ function rollRow(roll: Roll): HTMLElement {
   if (unit) total.append(unit[1], el("span", "roll-total-unit", unit[2]));
   else total.textContent = text;
   total.title = totalDetail(roll);
+  if (roll.crit) {
+    const hit = roll.crit === "hit";
+    const badge = el("span", `roll-badge ${hit ? "is-crit" : "is-fumble"}`, hit ? "CRIT" : "NAT 1");
+    badge.title = hit ? "Critical hit" : "Critical miss";
+    badge.append(el("span", "sr-only", hit ? " critical hit" : " critical miss"));
+    total.prepend(badge);
+  }
   row.append(total);
   return row;
 }

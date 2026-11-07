@@ -127,6 +127,32 @@ impl Context {
         }
     }
 
+    /// The acting character's own game system, if it names one.
+    pub fn character_system(&self) -> Result<Option<crate::System>, CommandError> {
+        let (characters, name) = self.current()?;
+        Ok(characters.load(&name)?.system)
+    }
+
+    /// The global default game system, if one is set.
+    pub fn default_system(&self) -> Result<Option<crate::System>, CommandError> {
+        Ok(self.settings()?.system()?)
+    }
+
+    /// Sets (or with `None` clears) the acting character's own game system,
+    /// leaving the rest of its file as it is.
+    pub fn set_character_system(&self, system: Option<crate::System>) -> Result<(), CommandError> {
+        let (characters, name) = self.current()?;
+        let mut character = characters.load(&name)?;
+        character.system = system;
+        characters.save(&name, &character)?;
+        Ok(())
+    }
+
+    /// Sets (or with `None` clears) the global default game system.
+    pub fn set_default_system(&self, system: Option<crate::System>) -> Result<(), CommandError> {
+        Ok(self.settings()?.set_system(system)?)
+    }
+
     /// The global settings, or an error if there is no config directory.
     pub(super) fn settings(&self) -> Result<crate::SettingsStore, CommandError> {
         self.config_dir

@@ -243,3 +243,31 @@ describe("notice entries", () => {
     expect([...container.querySelectorAll(".entry-action")].some((b) => b.textContent === "copy json")).toBe(false);
   });
 });
+
+describe("crit badges", () => {
+  const roll = (extra: Partial<Roll>): Roll => ({
+    formula: "d20+5",
+    total: 25,
+    expr: { type: "number", value: 25 },
+    ...extra,
+  });
+  const html = (r: Roll) =>
+    renderEntry({ id: 1, time, input: "d20+5", result: { ok: true, doc: { schema_version: 1, rolls: [r] } } });
+
+  it("marks a critical hit beside the total", () => {
+    const node = html(roll({ crit: "hit" }));
+    expect(node.querySelector(".roll-total .roll-badge.is-crit")!.textContent).toContain("CRIT");
+    expect(node.querySelector(".roll-total .sr-only")!.textContent).toBe(" critical hit");
+  });
+
+  it("flags a natural 1 without doubling", () => {
+    const node = html(roll({ crit: "miss" }));
+    expect(node.querySelector(".roll-badge.is-fumble")!.textContent).toContain("NAT 1");
+    expect(node.querySelector(".is-doubled")).toBeNull();
+  });
+
+  it("marks doubled dice on the formula, and shows nothing for an ordinary roll", () => {
+    expect(html(roll({ doubled: true })).querySelector(".roll-formula .is-doubled")!.textContent).toBe("doubled");
+    expect(html(roll({})).querySelector(".roll-badge")).toBeNull();
+  });
+});

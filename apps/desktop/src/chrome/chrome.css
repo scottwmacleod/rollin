@@ -152,3 +152,16 @@
   .sw-menu, .pal, .dlg { animation: chrome-in var(--duration-enter) ease-out; }
 }
 @keyframes chrome-in { from { opacity: 0; transform: translateY(-4px); } }
+
+/* Game-system chip and popover */
+.st-system { all: unset; box-sizing: border-box; white-space: nowrap; cursor: pointer; color: var(--text-2); padding: 0 var(--space-1); border-radius: var(--radius-1); }
+.st-system:hover, .st-system.is-open { background: var(--surface-hover); color: var(--text); }
+.st-system:focus-visible, .sys-select:focus-visible { outline: 2px solid var(--signal-ink); outline-offset: -2px; }
+.sys-pop { position: fixed; z-index: 30; width: 280px; padding: var(--space-3); display: grid; gap: var(--space-2); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-2); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28); }
+.sys-title { font-weight: 600; }
+.sys-row { display: grid; grid-template-columns: 88px 1fr; align-items: center; gap: var(--space-2); }
+.sys-label { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sys-select { all: unset; box-sizing: border-box; height: var(--size-control); padding: 0 var(--space-2); background: var(--sunken); border: 1px solid var(--line-strong); border-radius: var(--radius-1); font: 12px/16px var(--font-mono); color: var(--text); }
+.sys-hint { margin: 0; color: var(--muted); font-size: 12px; line-height: 16px; }
+.sys-error { color: var(--danger); font-size: 12px; line-height: 16px; }
+.sys-error:empty { display: none; }

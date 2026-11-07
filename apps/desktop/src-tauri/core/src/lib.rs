@@ -153,6 +153,12 @@ pub struct State {
     pub presets: Vec<PresetEntry>,
     /// Global presets.
     pub global_presets: Vec<PresetEntry>,
+    /// The active character's own game system, if it names one.
+    pub system: Option<String>,
+    /// The global default game system, if one is set.
+    pub default_system: Option<String>,
+    /// Every game system that can be chosen.
+    pub systems: Vec<String>,
     /// The session seed; `None` while the RNG comes from entropy.
     pub seed: Option<u64>,
     /// Lines typed this session, oldest first, consecutive repeats dropped.
@@ -165,6 +171,16 @@ pub struct Completions {
     /// Byte offset in the line where the replacement starts.
     pub start: usize,
     pub candidates: Vec<String>,
+}
+
+/// Which setting a game-system change is for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum SystemScope {
+    /// A character's own `system`.
+    Character,
+    /// The global default in `settings.toml`.
+    Default,
 }
 
 /// One app run's state.
@@ -262,6 +278,35 @@ impl Session {
         Ok(rollin::sample(formula, &ctx, &mut self.sample_rng)?)
     }
 
+    /// Sets (`Some`) or clears (`None`) a game system: a character's own
+    /// (`character`, else the active one), or the global default every
+    /// character without one falls back to. Writes the same TOML the CLI
+    /// reads. An unknown name is an error.
+    pub fn set_system(
+        &self,
+        scope: SystemScope,
+        character: Option<&str>,
+        system: Option<&str>,
+    ) -> Result<(), String> {
+        let system = match system {
+            None => None,
+            Some(text) => Some(rollin::System::parse(text).ok_or_else(|| {
+                let known: Vec<&str> = rollin::System::ALL.iter().map(|s| s.as_str()).collect();
+                format!(
+                    "unknown system `{text}`; choose one of {}",
+                    known.join(", ")
+                )
+            })?),
+        };
+        let mut ctx = self.context();
+        ctx.character = character.map(str::to_string);
+        match scope {
+            SystemScope::Character => ctx.set_character_system(system),
+            SystemScope::Default => ctx.set_default_system(system),
+        }
+        .map_err(|e| e.to_string())
+    }
+
     /// The sidebar's data, read fresh from the files the CLI also uses.
     pub fn state(&mut self) -> Result<State, Failure> {
         let ctx = self.context();
@@ -289,6 +334,12 @@ impl Session {
             vars,
             presets,
             global_presets,
+            system: ctx.character_system()?.map(|s| s.as_str().to_string()),
+            default_system: ctx.default_system()?.map(|s| s.as_str().to_string()),
+            systems: rollin::System::ALL
+                .iter()
+                .map(|s| s.as_str().to_string())
+                .collect(),
             seed: self.seed,
             history: self.history.clone(),
         })

@@ -276,3 +276,17 @@
 }
 .tree-order { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tree-total { color: var(--text); font-size: 13px; font-weight: 600; white-space: nowrap; }
+
+/* Crit badges. Words, not colour alone: CRIT, NAT 1 and doubled. */
+.roll-badge {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: var(--space-2);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-1);
+  font: 600 10px/16px var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.roll-badge.is-crit { background: var(--signal); color: var(--on-signal); }
+.roll-badge.is-fumble { color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+.roll-badge.is-doubled { margin: 0; color: var(--signal-ink); box-shadow: inset 0 0 0 1px var(--signal-ink); font-weight: 500; letter-spacing: 0; text-transform: lowercase; flex: none; }

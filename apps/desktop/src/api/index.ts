@@ -50,6 +50,15 @@ export function state(): Promise<SessionState> {
 }
 
 /**
+ * Sets (`system` a name) or clears (`null`) a game system: a character's own
+ * (`character`, else the active one) or the global default. Rejects with the
+ * library's message.
+ */
+export function setSystem(scope: "character" | "default", character: string | null, system: string | null): Promise<void> {
+  return invoke<null>("set_system", { scope, character, system }).then(() => undefined);
+}
+
+/**
  * Seeds the session RNG: `n` gives the stream `rollin --seed n` gives in a
  * REPL; `null` goes back to entropy. Returns the new state's seed.
  */

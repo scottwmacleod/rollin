@@ -6,11 +6,14 @@ import { el, openNewCharacter, openPresetDialog } from "./dialog";
 import { eventFor, failureText, messageOf, rollsIn, type AppEvent, type PaletteAction, type PaletteRow } from "./model";
 import { mountPalette } from "./palette";
 import { mountSwitcher } from "./switcher";
+import { mountSystemChip, systemLabel } from "./system";
 
 export interface ChromeDeps {
   execute(line: string): Promise<Execution>;
   state(): Promise<SessionState>;
   setSeed(seed: number | null): Promise<number | null>;
+  /** Sets or clears a game system; rejects with the library's message. */
+  setSystem(scope: "character" | "default", character: string | null, system: string | null): Promise<void>;
   check(formula: string): Promise<void>;
   sample(formula: string): Promise<Roll[]>;
   about(): Promise<About>;
@@ -74,6 +77,22 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
   const spacer = el("span", "tb-spacer");
   toolbar.replaceChildren(sidebarBtn, word, charBtn, search, spacer, seedBtn, clearBtn);
 
+  const systemChip = el("button", "st-cell st-system");
+  systemChip.type = "button";
+  const system = mountSystemChip(systemChip, {
+    set: async (scope, value) => {
+      try {
+        await deps.setSystem(scope, null, value);
+      } catch (failure) {
+        return messageOf(failure);
+      }
+      event = { glyph: "~", text: value === null ? `${scope === "default" ? "default " : ""}system cleared` : `${scope === "default" ? "default " : ""}system set to ${value}` };
+      await refresh();
+      deps.changed();
+      return null;
+    },
+  });
+
   function paintSeed() {
     const seed = current?.seed ?? null;
     seedBtn.textContent = `seed ${seed ?? "random"}`;
@@ -90,6 +109,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
         cell(`${s.vars.length} ${s.vars.length === 1 ? "var" : "vars"} · ${presetRows(s).length} ${presetRows(s).length === 1 ? "preset" : "presets"}`),
       );
     }
+    if (s) parts.push(systemChip);
     parts.push(cell(`${rolls} ${rolls === 1 ? "roll" : "rolls"} this session`));
     const ev = el("span", "st-cell st-event");
     if (event) ev.append(el("span", "st-glyph", event.glyph), document.createTextNode(` ${event.text}`.trimEnd()));
@@ -104,7 +124,10 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
     } catch {
       current = null;
     }
-    if (current) switcher.update(current.characters, current.active_character);
+    if (current) {
+      switcher.update(current.characters, current.active_character);
+      system.update(current);
+    }
     paintSeed();
     paintStatus();
   }
@@ -135,7 +158,19 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
   function newCharacter() {
     openNewCharacter({
       characters: current?.characters ?? [],
-      create: (name) => exec(`char new ${name}`),
+      systems: current?.systems ?? [],
+      defaultSystem: current?.default_system ?? null,
+      create: async (name, chosen) => {
+        const error = await exec(`char new ${name}`);
+        if (error !== null || chosen === null) return error;
+        try {
+          await deps.setSystem("character", name, chosen);
+        } catch (failure) {
+          return messageOf(failure);
+        }
+        await refresh();
+        return null;
+      },
     });
   }
 

@@ -3,7 +3,8 @@
 //! Format: an optional `system = "dnd5e"`, the default game system for any
 //! character that does not name its own.
 
-use crate::presets::{read_table, StoreError};
+use crate::characters::sync_system;
+use crate::presets::{edit_document, read_table, StoreError};
 use crate::system::read_system;
 use crate::System;
 use std::path::{Path, PathBuf};
@@ -24,5 +25,14 @@ impl SettingsStore {
     /// none.
     pub fn system(&self) -> Result<Option<System>, StoreError> {
         read_system(&read_table(&self.path)?, &self.path)
+    }
+
+    /// Makes the file's default game system `system` (absent for `None`),
+    /// keeping any other text in it.
+    pub fn set_system(&self, system: Option<System>) -> Result<(), StoreError> {
+        edit_document(&self.path, |doc| {
+            sync_system(doc, system);
+            Ok(())
+        })
     }
 }
