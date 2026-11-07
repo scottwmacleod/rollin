@@ -35,7 +35,7 @@ impl TryRng for Script {
 
 /// On a d2 that explodes on 1, `lows` ones in a row are one original die plus
 /// `lows - 1` ones that each exploded again, ending on a 2.
-fn run(formula: &str, lows: usize) -> Result<rollin::Roll, Error> {
+fn run(formula: &str, lows: usize) -> Result<rollin::RollResult, Error> {
     roll(formula, &mut Script { lows }).map(|mut rolls| rolls.remove(0))
 }
 

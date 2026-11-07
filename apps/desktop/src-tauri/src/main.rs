@@ -45,7 +45,7 @@ fn check(session: tauri::State<'_, AppSession>, formula: String) -> Result<(), F
 fn sample(
     session: tauri::State<'_, AppSession>,
     formula: String,
-) -> Result<Vec<rollin::Roll>, Failure> {
+) -> Result<Vec<rollin::RollResult>, Failure> {
     session.lock().sample(&formula)
 }
 

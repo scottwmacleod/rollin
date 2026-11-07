@@ -1,9 +1,9 @@
 //! Evaluator: walks the AST, drawing dice from the injected RNG.
 
-use crate::ast::{BinOp, Dice, ExplodeMode, Expr, ExprKind, Item, RerollMode};
+use crate::ast::{Arith, ArithKind, BinOp, DiceTerm, ExplodeMode, RerollMode, Roll};
 use crate::error::Error;
-use crate::limits::{Cap, MAX_DICE_PER_EXPRESSION, MAX_EXPLOSIONS_PER_DIE, MAX_REROLLS_PER_DIE};
-use crate::{Die, Kind, Link, Natural, Node, Outcome, Reason, Roll, Status, Tally};
+use crate::limits::{Cap, MAX_DICE_PER_ROLL, MAX_EXPLOSIONS_PER_DIE, MAX_REROLLS_PER_DIE};
+use crate::{Die, Kind, Link, Natural, Node, Outcome, Reason, RollResult, Status, Tally};
 use rand::{Rng, RngExt};
 use std::ops::Range;
 
@@ -19,12 +19,12 @@ struct Ctx<'a, R> {
 }
 
 impl<R: Rng> Ctx<'_, R> {
-    /// Rolls one die, counting it toward the per-expression cap.
-    fn die(&mut self, dice: &Dice, span: &Range<usize>) -> Result<i64, Error> {
+    /// Rolls one die, counting it toward the per-roll cap.
+    fn die(&mut self, dice: &DiceTerm, span: &Range<usize>) -> Result<i64, Error> {
         self.rolled += 1;
-        if self.rolled > MAX_DICE_PER_EXPRESSION {
+        if self.rolled > MAX_DICE_PER_ROLL {
             return Err(Error::limit_exceeded(
-                Cap::DicePerExpression,
+                Cap::DicePerRoll,
                 dice.text.clone(),
                 span.clone(),
             ));
@@ -33,19 +33,19 @@ impl<R: Rng> Ctx<'_, R> {
     }
 }
 
-/// Evaluates one item. With `double`, every dice group rolls twice as many
+/// Evaluates one roll. With `double`, every dice group rolls twice as many
 /// dice (flat numbers are untouched), as a critical hit's damage does.
-pub fn evaluate(item: &Item, double: bool, rng: &mut impl Rng) -> Result<Roll, Error> {
+pub fn evaluate(roll: &Roll, double: bool, rng: &mut impl Rng) -> Result<RollResult, Error> {
     let mut ctx = Ctx {
         rng,
         rolled: 0,
         double,
         doubled: 0,
     };
-    let mut expr = eval_expr(&item.expr, &mut ctx)?;
+    let mut expr = eval_expr(&roll.expr, &mut ctx)?;
     let check = mark_natural(&mut expr);
-    Ok(Roll {
-        formula: item.source.clone(),
+    Ok(RollResult {
+        formula: roll.source.clone(),
         kind: if expr.is_count() {
             Kind::Count
         } else {
@@ -53,7 +53,7 @@ pub fn evaluate(item: &Item, double: bool, rng: &mut impl Rng) -> Result<Roll, E
         },
         total: expr.total(),
         expr,
-        label: item.label.clone(),
+        label: roll.label.clone(),
         iteration: None,
         crit: None,
         doubled: ctx.doubled > 0,
@@ -61,10 +61,10 @@ pub fn evaluate(item: &Item, double: bool, rng: &mut impl Rng) -> Result<Roll, E
     })
 }
 
-fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
+fn eval_expr(expr: &Arith, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
     match &expr.kind {
-        ExprKind::Number(n) => Ok(Node::Number { value: *n }),
-        ExprKind::Dice(d) => {
+        ArithKind::Number(n) => Ok(Node::Number { value: *n }),
+        ArithKind::Dice(d) => {
             let mut dice = Vec::new();
             let reroll_reason = d.clauses.reroll.clone();
             let count = if ctx.double {
@@ -205,7 +205,7 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 tally,
             })
         }
-        ExprKind::Neg(inner) => {
+        ArithKind::Neg(inner) => {
             let operand = eval_expr(inner, ctx)?;
             let total = operand.total().checked_neg().ok_or(Error::Overflow {
                 span: expr.span.clone(),
@@ -215,14 +215,14 @@ fn eval_expr(expr: &Expr, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 total,
             })
         }
-        ExprKind::Group(inner) => {
+        ArithKind::Group(inner) => {
             let inner = eval_expr(inner, ctx)?;
             Ok(Node::Group {
                 total: inner.total(),
                 inner: Box::new(inner),
             })
         }
-        ExprKind::Chain { first, rest } => {
+        ArithKind::Chain { first, rest } => {
             let first_span = first.span.clone();
             let first = eval_expr(first, ctx)?;
             let mut total = first.total();

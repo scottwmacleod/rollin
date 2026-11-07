@@ -11,11 +11,11 @@ Text a player types that describes one or more rolls, e.g. `4d6dl1, d20+@str # a
 _Avoid_: Expression, command, notation
 
 **Roll**:
-One evaluation of a single comma-separated item of a formula, producing a result.
+One comma-separated part of a formula, and its evaluation, which produces a result. In code, `ast::Roll` is the parsed roll and `RollResult` is what evaluating it returns.
 _Avoid_: Throw, check
 
 **Term**:
-One dice group or number within a roll, e.g. `4d6dl1` or `+3`.
+One dice group or number within a roll, e.g. `4d6dl1` or `+3`. In code, a dice group is `DiceTerm`; the arithmetic that combines terms is `Arith`.
 _Avoid_: Component, operand
 
 **Die**:

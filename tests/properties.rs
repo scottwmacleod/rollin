@@ -576,12 +576,12 @@ proptest! {
 mod special_dice {
     use super::*;
 
-    fn only_roll(formula: &str, seed: u64) -> rollin::Roll {
+    fn only_roll(formula: &str, seed: u64) -> rollin::RollResult {
         roll(formula, &mut seeded_rng(seed)).unwrap().remove(0)
     }
 
     /// The tree and total of a roll, ignoring the text that was typed.
-    fn shape(r: &rollin::Roll) -> (Vec<Die>, i64) {
+    fn shape(r: &rollin::RollResult) -> (Vec<Die>, i64) {
         // The reason names the clause as written (`adv` vs `kh1`), so it is
         // not part of the shape.
         let mut dice = dice_of(&r.expr);
@@ -823,7 +823,7 @@ mod variables {
         }
     }
 
-    fn shape(rolls: &[rollin::Roll]) -> Vec<(i64, Vec<(i64, Status)>)> {
+    fn shape(rolls: &[rollin::RollResult]) -> Vec<(i64, Vec<(i64, Status)>)> {
         rolls
             .iter()
             .map(|r| {

@@ -35,7 +35,7 @@ impl TryRng for Script {
 
 /// On a d2 that rerolls on 1, `lows` ones in a row are `lows` rerolls
 /// (every one of them rerolled away), then a 2 stands.
-fn run(formula: &str, lows: usize) -> Result<rollin::Roll, Error> {
+fn run(formula: &str, lows: usize) -> Result<rollin::RollResult, Error> {
     roll(formula, &mut Script { lows }).map(|mut rolls| rolls.remove(0))
 }
 

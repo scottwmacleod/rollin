@@ -7,7 +7,7 @@ const ALL: [(Cap, &str, i64); 6] = [
     (Cap::DicePerTerm, "dice per term", 1000),
     (Cap::ExplosionsPerDie, "explosions per die", 100),
     (Cap::RerollsPerDie, "rerolls per die", 100),
-    (Cap::DicePerExpression, "dice per expression", 10000),
+    (Cap::DicePerRoll, "dice per roll", 10000),
     (Cap::NestingDepth, "nesting depth", 32),
     (Cap::Repeat, "repeat", 100),
 ];
@@ -37,6 +37,6 @@ fn parse_time_caps_report_their_cap_and_limit() {
     );
     assert_eq!(
         limit_error("1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1d6"),
-        (Cap::DicePerExpression, 10000)
+        (Cap::DicePerRoll, 10000)
     );
 }

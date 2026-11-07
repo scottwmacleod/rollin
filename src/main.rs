@@ -6,7 +6,7 @@ use rand_chacha::ChaCha8Rng;
 use render::{color_enabled, render_line, ColorChoice, Painter};
 use rollin::{
     entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Hint, Output,
-    PresetEntry, PresetSource, Roll, Shadow,
+    PresetEntry, PresetSource, RollResult, Shadow,
 };
 use serde::Serialize;
 use std::io::IsTerminal;
@@ -85,7 +85,7 @@ const SCHEMA_VERSION: u32 = 1;
 #[derive(Serialize)]
 struct JsonOutput {
     schema_version: u32,
-    rolls: Vec<Roll>,
+    rolls: Vec<RollResult>,
 }
 
 fn main() -> ExitCode {
@@ -239,7 +239,7 @@ fn show(args: &Args, output: Output) {
     }
 }
 
-fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<Roll>) {
+fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<RollResult>) {
     if args.json {
         let out = JsonOutput {
             schema_version: SCHEMA_VERSION,
@@ -272,7 +272,7 @@ fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<Roll>) {
 }
 
 /// Digits in the highest iteration number, so prefixes line up.
-fn iteration_width(rolls: &[Roll]) -> usize {
+fn iteration_width(rolls: &[RollResult]) -> usize {
     let last = rolls.iter().filter_map(|r| r.iteration).max().unwrap_or(0);
     last.to_string().len()
 }

@@ -1,9 +1,9 @@
 //! The manual `crit` suffix: doubles a roll's dice by hand, with or without a
 //! game system. The RNG is injected (ADR-0003).
 
-use rollin::{roll, roll_in, seeded_rng, CritRange, Node, Roll, System};
+use rollin::{roll, roll_in, seeded_rng, CritRange, Node, RollResult, System};
 
-fn plain(formula: &str, seed: u64) -> Vec<Roll> {
+fn plain(formula: &str, seed: u64) -> Vec<RollResult> {
     roll(formula, &mut seeded_rng(seed)).unwrap()
 }
 

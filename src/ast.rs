@@ -3,23 +3,23 @@
 use serde::Serialize;
 use std::ops::Range;
 
-/// A parsed formula: an optional repeat count and the items it applies to.
+/// A parsed formula: an optional repeat count and the rolls it applies to.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Formula {
     /// The `N` of a leading `Nx`; `None` when the formula is not repeated.
     pub repeat: Option<u32>,
-    pub items: Vec<Item>,
+    pub rolls: Vec<Roll>,
 }
 
-/// One comma-separated item of a formula: a single roll.
+/// One comma-separated roll of a formula, before it is evaluated.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Item {
-    /// The item's source text, trimmed.
+pub struct Roll {
+    /// The roll's source text, trimmed.
     pub source: String,
-    pub expr: Expr,
-    /// The `# text` note on this item, trimmed.
+    pub expr: Arith,
+    /// The `# text` note on this roll, trimmed.
     pub label: Option<String>,
-    /// The `atk` / `dmg` suffix marker, if the item has one. Only a game
+    /// The `atk` / `dmg` suffix marker, if the roll has one. Only a game
     /// system reads it; without one it changes nothing.
     pub role: Option<Role>,
     /// The `crit` suffix: this roll's dice are doubled by hand, with or
@@ -36,8 +36,8 @@ pub enum Role {
     Damage,
 }
 
-impl Item {
-    /// The role a game system gives this item: the marker if it has one,
+impl Roll {
+    /// The role a game system gives this roll: the marker if it has one,
     /// else attack for a single d20 check and damage for dice with no d20.
     pub fn role(&self) -> Option<Role> {
         self.role.or_else(|| match self.expr.d20_terms() {
@@ -48,62 +48,62 @@ impl Item {
     }
 }
 
-/// An expression with the byte range of the source it came from.
+/// Arithmetic over terms, with the byte range of the source it came from.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Expr {
-    pub kind: ExprKind,
+pub struct Arith {
+    pub kind: ArithKind,
     pub span: Range<usize>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ExprKind {
+pub enum ArithKind {
     Number(i64),
-    Dice(Dice),
-    Neg(Box<Expr>),
-    /// A parenthesised expression.
-    Group(Box<Expr>),
+    Dice(DiceTerm),
+    Neg(Box<Arith>),
+    /// A parenthesised group.
+    Group(Box<Arith>),
     /// Operands joined by operators of one precedence level, evaluated left
     /// to right. Chains are flat so long formulas do not nest deeply.
     Chain {
-        first: Box<Expr>,
-        rest: Vec<(BinOp, Expr)>,
+        first: Box<Arith>,
+        rest: Vec<(BinOp, Arith)>,
     },
 }
 
-impl Expr {
-    /// Whether any dice are rolled anywhere in this expression.
+impl Arith {
+    /// Whether any dice are rolled anywhere in this arithmetic.
     pub fn has_dice(&self) -> bool {
         match &self.kind {
-            ExprKind::Number(_) => false,
-            ExprKind::Dice(_) => true,
-            ExprKind::Neg(inner) | ExprKind::Group(inner) => inner.has_dice(),
-            ExprKind::Chain { first, rest } => {
+            ArithKind::Number(_) => false,
+            ArithKind::Dice(_) => true,
+            ArithKind::Neg(inner) | ArithKind::Group(inner) => inner.has_dice(),
+            ArithKind::Chain { first, rest } => {
                 first.has_dice() || rest.iter().any(|(_, e)| e.has_dice())
             }
         }
     }
 
-    /// How many d20 groups this expression holds, and whether any of them is
+    /// How many d20 groups this arithmetic holds, and whether any of them is
     /// a success count (which is never a check).
     pub fn d20_terms(&self) -> (usize, bool) {
         match &self.kind {
-            ExprKind::Number(_) => (0, false),
-            ExprKind::Dice(d) if d.sides == 20 => (1, d.success.is_some()),
-            ExprKind::Dice(_) => (0, false),
-            ExprKind::Neg(inner) | ExprKind::Group(inner) => inner.d20_terms(),
-            ExprKind::Chain { first, rest } => rest
+            ArithKind::Number(_) => (0, false),
+            ArithKind::Dice(d) if d.sides == 20 => (1, d.success.is_some()),
+            ArithKind::Dice(_) => (0, false),
+            ArithKind::Neg(inner) | ArithKind::Group(inner) => inner.d20_terms(),
+            ArithKind::Chain { first, rest } => rest
                 .iter()
                 .map(|(_, e)| e.d20_terms())
                 .fold(first.d20_terms(), |(n, count), (m, c)| (n + m, count || c)),
         }
     }
 
-    /// Whether this expression is a success count (a dice group with a
+    /// Whether this is a success count (a dice group with a
     /// success clause, possibly parenthesised).
     pub fn is_count(&self) -> bool {
         match &self.kind {
-            ExprKind::Dice(d) => d.success.is_some(),
-            ExprKind::Group(inner) => inner.is_count(),
+            ArithKind::Dice(d) => d.success.is_some(),
+            ArithKind::Group(inner) => inner.is_count(),
             _ => false,
         }
     }
@@ -142,7 +142,7 @@ impl BinOp {
 
 /// A dice group such as `4d6dl1`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Dice {
+pub struct DiceTerm {
     /// The term as written, e.g. `4d6dl1`.
     pub text: String,
     pub count: i64,
@@ -304,7 +304,7 @@ pub enum SelectKind {
     KeepHighest,
 }
 
-impl Dice {
+impl DiceTerm {
     /// How many of the lowest and highest dice this group drops from a pool
     /// of `pool` dice (more than `count` when dice explode).
     pub fn drops(&self, pool: usize) -> (i64, i64) {

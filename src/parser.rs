@@ -1,24 +1,22 @@
-//! Parser: tokens to [`Item`]s.
+//! Parser: tokens to [`Roll`]s.
 //!
-//! An item is an arithmetic expression over dice groups and numbers, parsed by
+//! A roll is arithmetic over terms (dice groups and numbers), parsed by
 //! precedence climbing. The v1 shape (a dice group plus a flat modifier) is
-//! just the simplest such expression.
+//! just the simplest such formula.
 
 use crate::ast::{
-    BinOp, Clauses, Cmp, Dice, Explode, ExplodeMode, Expr, ExprKind, Failure, Formula, Item,
-    Reroll, RerollMode, Role, Select, SelectKind, Special, Success,
+    Arith, ArithKind, BinOp, Clauses, Cmp, DiceTerm, Explode, ExplodeMode, Failure, Formula,
+    Reroll, RerollMode, Role, Roll, Select, SelectKind, Special, Success,
 };
 use crate::error::Error;
 use crate::eval::apply;
-use crate::limits::{
-    Cap, MAX_DEPTH, MAX_DICE_PER_EXPRESSION, MAX_DICE_PER_TERM, MAX_REPEAT, MAX_SIDES,
-};
+use crate::limits::{Cap, MAX_DEPTH, MAX_DICE_PER_ROLL, MAX_DICE_PER_TERM, MAX_REPEAT, MAX_SIDES};
 /// `d%` is a d100.
 const PERCENTILE_SIDES: i64 = 100;
 
 use crate::lexer::{tokenize, Spanned, Token};
 
-/// Parses a whole formula (comma-separated items) into items.
+/// Parses a whole formula (comma-separated rolls) into rolls.
 pub fn parse(src: &str) -> Result<Formula, Error> {
     parse_with(src, &|_| None)
 }
@@ -65,26 +63,26 @@ pub fn parse_with(src: &str, vars: Lookup<'_>) -> Result<Formula, Error> {
 /// reported as rolling would, without an RNG. Items are checked in the order
 /// rolling evaluates them.
 pub fn check_with(src: &str, vars: Lookup<'_>) -> Result<(), Error> {
-    for item in &parse_with(src, vars)?.items {
-        fold(&item.expr)?;
+    for roll in &parse_with(src, vars)?.rolls {
+        fold(&roll.expr)?;
     }
     Ok(())
 }
 
 /// The value of `expr` if it does not depend on any die, reporting the
 /// errors rolling would certainly hit. Mirrors `eval::evaluate`'s order.
-fn fold(expr: &Expr) -> Result<Option<i64>, Error> {
+fn fold(expr: &Arith) -> Result<Option<i64>, Error> {
     match &expr.kind {
-        ExprKind::Number(n) => Ok(Some(*n)),
-        ExprKind::Dice(_) => Ok(None),
-        ExprKind::Group(inner) => fold(inner),
-        ExprKind::Neg(inner) => match fold(inner)? {
+        ArithKind::Number(n) => Ok(Some(*n)),
+        ArithKind::Dice(_) => Ok(None),
+        ArithKind::Group(inner) => fold(inner),
+        ArithKind::Neg(inner) => match fold(inner)? {
             Some(v) => v.checked_neg().map(Some).ok_or(Error::Overflow {
                 span: expr.span.clone(),
             }),
             None => Ok(None),
         },
-        ExprKind::Chain { first, rest } => {
+        ArithKind::Chain { first, rest } => {
             let first_span = first.span.clone();
             let mut total = fold(first)?;
             for (op, operand) in rest {
@@ -135,9 +133,9 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
             parser.pos = 2;
         }
     }
-    let mut items = Vec::new();
+    let mut rolls = Vec::new();
     loop {
-        // v1 ignores empty items, so `d20,,d6` and a trailing comma are fine.
+        // v1 ignores empty rolls, so `d20,,d6` and a trailing comma are fine.
         while matches!(parser.peek(), Some(Token::Comma)) {
             parser.pos += 1;
         }
@@ -179,7 +177,7 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
             }
             _ => None,
         };
-        items.push(Item {
+        rolls.push(Roll {
             source: src[start..stop].trim().to_string(),
             expr,
             label,
@@ -190,7 +188,7 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
             return Err(parser.unexpected("',' or the end of the formula"));
         }
     }
-    if items.is_empty() {
+    if rolls.is_empty() {
         if repeat.is_some() {
             let span = tokens[0].span.start..tokens[1].span.end;
             return Err(Error::syntax(
@@ -200,11 +198,11 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
         }
         return Err(Error::syntax("no formulas provided", 0..src.len()));
     }
-    if repeat.is_some() && !items.iter().any(|item| item.expr.has_dice()) {
+    if repeat.is_some() && !rolls.iter().any(|roll| roll.expr.has_dice()) {
         let span = tokens[0].span.start..tokens[1].span.end;
         let body = src[span.end..].trim().to_string();
-        let multiplication = match items.as_slice() {
-            [Item { label: None, .. }] => {
+        let multiplication = match rolls.as_slice() {
+            [Roll { label: None, .. }] => {
                 Some(format!("{}*{body}", src[tokens[0].span.clone()].trim()))
             }
             _ => None,
@@ -215,7 +213,7 @@ fn parse_tokens(src: &str, tokens: Vec<Spanned>) -> Result<Formula, Error> {
             span,
         });
     }
-    Ok(Formula { repeat, items })
+    Ok(Formula { repeat, rolls })
 }
 
 struct Parser<'a> {
@@ -225,7 +223,7 @@ struct Parser<'a> {
     end: usize,
     /// Parentheses and unary minus signs currently open.
     depth: i64,
-    /// Dice rolled so far by the item being parsed.
+    /// Dice rolled so far by the roll being parsed.
     item_dice: i64,
 }
 
@@ -284,13 +282,13 @@ impl Parser<'_> {
         }
     }
 
-    fn parse_item(&mut self) -> Result<Expr, Error> {
+    fn parse_item(&mut self) -> Result<Arith, Error> {
         self.parse_expr(1)
     }
 
     /// Precedence climbing: parses operators binding at least as tightly as
     /// `min_prec`. Operators of one level extend a single flat chain.
-    fn parse_expr(&mut self, min_prec: u8) -> Result<Expr, Error> {
+    fn parse_expr(&mut self, min_prec: u8) -> Result<Arith, Error> {
         let mut lhs = self.parse_unary()?;
         while let Some(op) = self.peek_binop() {
             if op.precedence() < min_prec {
@@ -316,7 +314,7 @@ impl Parser<'_> {
     }
 
     /// Unary `-` negates and unary `+` is a no-op (v1 accepted `+5`).
-    fn parse_unary(&mut self) -> Result<Expr, Error> {
+    fn parse_unary(&mut self) -> Result<Arith, Error> {
         match self.peek() {
             Some(Token::Minus) => {
                 let start = self.tokens[self.pos].span.start;
@@ -326,8 +324,8 @@ impl Parser<'_> {
                 reject_count(&operand)?;
                 self.depth -= 1;
                 let span = start..operand.span.end;
-                Ok(Expr {
-                    kind: ExprKind::Neg(Box::new(operand)),
+                Ok(Arith {
+                    kind: ArithKind::Neg(Box::new(operand)),
                     span,
                 })
             }
@@ -359,7 +357,7 @@ impl Parser<'_> {
         Ok(())
     }
 
-    fn parse_group(&mut self) -> Result<Expr, Error> {
+    fn parse_group(&mut self) -> Result<Arith, Error> {
         let open = self.tokens[self.pos].span.clone();
         self.enter(open.start)?;
         self.pos += 1;
@@ -368,22 +366,22 @@ impl Parser<'_> {
         match self.peek() {
             Some(Token::RParen) => {
                 self.pos += 1;
-                Ok(Expr {
-                    kind: ExprKind::Group(Box::new(inner)),
+                Ok(Arith {
+                    kind: ArithKind::Group(Box::new(inner)),
                     span: open.start..self.prev_end(),
                 })
             }
             None => Err(Error::syntax("unclosed '('", open)),
             Some(Token::Label(_)) => Err(Error::syntax(
-                "unclosed '(': a label runs to the next comma, so it swallowed the ')'; put labels at the end of an item",
+                "unclosed '(': a label runs to the next comma, so it swallowed the ')'; put labels at the end of a roll",
                 open,
             )),
             Some(_) => Err(self.unexpected("')'")),
         }
     }
 
-    /// A parenthesised expression, a number or a dice group.
-    fn parse_operand(&mut self) -> Result<Expr, Error> {
+    /// A parenthesised group, a number or a dice group.
+    fn parse_operand(&mut self) -> Result<Arith, Error> {
         let start = self.pos;
         if matches!(self.peek(), Some(Token::LParen)) {
             return self.parse_group();
@@ -405,8 +403,8 @@ impl Parser<'_> {
                     }
                 }
                 if !matches!(self.peek(), Some(Token::Word(w)) if w == "d") {
-                    return Ok(Expr {
-                        kind: ExprKind::Number(n),
+                    return Ok(Arith {
+                        kind: ArithKind::Number(n),
                         span: self.tokens[start].span.clone(),
                     });
                 }
@@ -471,15 +469,15 @@ impl Parser<'_> {
         let success_text = self.clause_text(success_start, success.is_some());
         let span = self.tokens[start].span.start..self.prev_end();
         self.item_dice += count;
-        if self.item_dice > MAX_DICE_PER_EXPRESSION {
+        if self.item_dice > MAX_DICE_PER_ROLL {
             return Err(Error::limit_exceeded(
-                Cap::DicePerExpression,
+                Cap::DicePerRoll,
                 &self.src[span.clone()],
                 span,
             ));
         }
-        Ok(Expr {
-            kind: ExprKind::Dice(Dice {
+        Ok(Arith {
+            kind: ArithKind::Dice(DiceTerm {
                 text: self.src[span.clone()].to_string(),
                 count,
                 sides,
@@ -746,7 +744,7 @@ fn kind_letters(kind: SelectKind) -> &'static str {
 }
 
 /// A success count is its own kind of result and cannot be an operand.
-fn reject_count(operand: &Expr) -> Result<(), Error> {
+fn reject_count(operand: &Arith) -> Result<(), Error> {
     if operand.is_count() {
         return Err(Error::CountInArithmetic {
             span: operand.span.clone(),
@@ -757,9 +755,9 @@ fn reject_count(operand: &Expr) -> Result<(), Error> {
 
 /// Appends `op rhs` to `lhs`, extending its chain when it is one of the same
 /// precedence level.
-fn link(mut lhs: Expr, op: BinOp, rhs: Expr) -> Expr {
+fn link(mut lhs: Arith, op: BinOp, rhs: Arith) -> Arith {
     let end = rhs.span.end;
-    if let ExprKind::Chain { rest, .. } = &mut lhs.kind {
+    if let ArithKind::Chain { rest, .. } = &mut lhs.kind {
         if rest[0].0.precedence() == op.precedence() {
             rest.push((op, rhs));
             lhs.span.end = end;
@@ -767,8 +765,8 @@ fn link(mut lhs: Expr, op: BinOp, rhs: Expr) -> Expr {
         }
     }
     let span = lhs.span.start..end;
-    Expr {
-        kind: ExprKind::Chain {
+    Arith {
+        kind: ArithKind::Chain {
             first: Box::new(lhs),
             rest: vec![(op, rhs)],
         },
