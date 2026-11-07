@@ -7,9 +7,17 @@ export function effectiveSystem(s: Pick<SessionState, "system" | "default_system
   return s.system ?? s.default_system ?? null;
 }
 
+const SYSTEM_NAMES: Record<string, string> = { dnd5e: "D&D 5e" };
+
+/** The name a person knows a game system by; unknown ids show as they are. */
+export function systemName(id: string): string {
+  return SYSTEM_NAMES[id] ?? id;
+}
+
 /** The status-bar text for the system in force. */
 export function systemLabel(s: Pick<SessionState, "system" | "default_system">): string {
-  return effectiveSystem(s) ?? "no system";
+  const id = effectiveSystem(s);
+  return id === null ? "no system" : systemName(id);
 }
 
 export interface SystemDeps {
@@ -63,8 +71,8 @@ export function mountSystemChip(chip: HTMLButtonElement, deps: SystemDeps): Syst
   function draw() {
     if (!pop || !state) return;
     const s = state;
-    const named: [string, string][] = s.systems.map((name) => [name, name]);
-    const inherit = s.default_system ? `Use default (${s.default_system})` : "Use default (no system)";
+    const named: [string, string][] = s.systems.map((name) => [name, systemName(name)]);
+    const inherit = s.default_system ? `Use default (${systemName(s.default_system)})` : "Use default (no system)";
     const err = el("div", "sys-error", error);
     err.setAttribute("role", "alert");
     pop.replaceChildren(

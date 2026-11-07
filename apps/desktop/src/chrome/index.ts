@@ -6,7 +6,7 @@ import { el, openNewCharacter, openPresetDialog } from "./dialog";
 import { eventFor, failureText, messageOf, rollsIn, type AppEvent, type PaletteAction, type PaletteRow } from "./model";
 import { mountPalette } from "./palette";
 import { mountSwitcher } from "./switcher";
-import { mountSystemChip, systemLabel } from "./system";
+import { mountSystemChip, systemLabel, systemName } from "./system";
 
 export interface ChromeDeps {
   execute(line: string): Promise<Execution>;
@@ -68,7 +68,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
       } catch (failure) {
         return messageOf(failure);
       }
-      event = { glyph: "~", text: value === null ? `${scope === "default" ? "default " : ""}system cleared` : `${scope === "default" ? "default " : ""}system set to ${value}` };
+      event = { glyph: "~", text: value === null ? `${scope === "default" ? "default " : ""}system cleared` : `${scope === "default" ? "default " : ""}system set to ${systemName(value)}` };
       await refresh();
       deps.changed();
       return null;

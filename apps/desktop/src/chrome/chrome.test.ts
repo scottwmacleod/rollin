@@ -108,8 +108,8 @@ describe("chrome", () => {
     fallback.dispatchEvent(new Event("change"));
     await flush();
     expect(st.default_system).toBe("dnd5e");
-    expect(status.querySelector(".st-system")!.textContent).toBe("dnd5e");
-    expect(document.querySelectorAll<HTMLSelectElement>(".sys-select")[0].options[0].textContent).toBe("Use default (dnd5e)");
+    expect(status.querySelector(".st-system")!.textContent).toBe("D&D 5e");
+    expect(document.querySelectorAll<HTMLSelectElement>(".sys-select")[0].options[0].textContent).toBe("Use default (D&D 5e)");
     own.value = "dnd5e";
     own.dispatchEvent(new Event("change"));
     await flush();
@@ -118,7 +118,7 @@ describe("chrome", () => {
     document.querySelectorAll<HTMLSelectElement>(".sys-select")[1].dispatchEvent(new Event("change"));
     await flush();
     expect(st.default_system).toBeNull();
-    expect(status.querySelector(".st-system")!.textContent).toBe("dnd5e");
+    expect(status.querySelector(".st-system")!.textContent).toBe("D&D 5e");
   });
 
   it("has no seed, clear-log or sidebar controls in the toolbar", async () => {
