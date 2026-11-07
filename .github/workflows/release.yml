@@ -11,21 +11,24 @@ name: Release desktop app
 #   - push of a desktop-vX.Y.Z tag: manual fallback; the version comes from the tag.
 #
 # The tag is the source of truth for the version. The plan job works it out and
-# the build job writes it into tauri.conf.json in the runner's checkout only
-# (nothing is committed); the Cargo.toml version is a placeholder. tauri-action
-# creates the release, and GitHub creates the tag at the built commit.
+# the build jobs write it into tauri.conf.json in the runner's checkout only
+# (nothing is committed); the Cargo.toml version is a placeholder. GitHub
+# creates the tag at the built commit when publish publishes the release.
 # The tag prefix keeps app releases apart from CLI releases (see #61).
 #
-# Jobs: plan, then macos, then windows, then publish. They run in sequence on
-# purpose: tauri-action merges each platform into the release's latest.json by
-# read-modify-write, so two jobs finishing together could drop an entry (#145).
-# macos creates the release; windows adds to it; publish checks latest.json has
-# both platforms and writes the install help on the release page last (an
-# earlier job would have it overwritten by the next tauri-action run).
+# Jobs: plan; release (creates a draft release and its notes); macos and
+# windows in parallel (each only uploads its installer, updater bundle and
+# .sig to the draft); publish (writes latest.json from both platforms, adds the
+# install help, and publishes the release). tauri-action's own latest.json
+# upload is off (includeUpdaterJson: false): it is a read-modify-write on one
+# release asset, which parallel jobs could race on (#145). Because the release
+# stays a draft until publish succeeds, a failed build never leaves users a
+# half release; re-run the failed jobs and publish picks up where it stopped.
+# A draft has no tag yet, so a brand new run after a failure would plan the
+# same version again; prefer re-running the failed jobs.
 #
-# Each build also produces the updater bundle (Rollin.app.tar.gz, or the
-# -setup.exe), its .sig and latest.json, signed with the updater key (secrets TAURI_SIGNING_PRIVATE_KEY
-# and TAURI_SIGNING_PRIVATE_KEY_PASSWORD). The app reads latest.json from
+# Builds are signed for the updater with secrets TAURI_SIGNING_PRIVATE_KEY and
+# TAURI_SIGNING_PRIVATE_KEY_PASSWORD. The app reads latest.json from
 # releases/latest/download, so the newest GitHub Release must be a desktop one;
 # see docs/desktop-install.md.
 
@@ -178,37 +181,18 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "Releasing $tag (previous stable: ${last_tag:-none})"
 
-  macos:
+  release:
+    # Creates the draft release the builds upload into, and writes the notes.
     needs: plan
     if: needs.plan.outputs.release == 'true'
-    runs-on: macos-latest
-    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
-      contents: write # create the release and upload assets
+      contents: write # create the draft release
     outputs:
+      id: ${{ steps.draft.outputs.id }}
       notes: ${{ steps.notes.outputs.body }}
     steps:
-      - uses: actions/checkout@v7
-      - name: Set the app version
-        env:
-          VERSION: ${{ needs.plan.outputs.version }}
-        run: |
-          conf=apps/desktop/src-tauri/tauri.conf.json
-          jq --arg v "$VERSION" '.version = $v' "$conf" > "$conf.new"
-          mv "$conf.new" "$conf"
-          grep '"version"' "$conf"
-      - name: Check updater signing is set up
-        env:
-          SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-        run: |
-          if [ -z "$SIGNING_KEY" ]; then
-            echo "Secret TAURI_SIGNING_PRIVATE_KEY is not set; see docs/desktop-install.md" >&2
-            exit 1
-          fi
-          if grep -q REPLACE_WITH apps/desktop/src-tauri/tauri.conf.json; then
-            echo "tauri.conf.json still has the placeholder updater public key" >&2
-            exit 1
-          fi
       - name: Write the release notes
         # GitHub lists the merged PRs since the previous release, grouped by
         # label as set in .github/release.yml. The same text becomes the
@@ -236,6 +220,53 @@ jobs:
             cat "$RUNNER_TEMP/notes.md"
             echo "RELEASE_NOTES_EOF"
           } >> "$GITHUB_OUTPUT"
+      - name: Create the draft release
+        id: draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ needs.plan.outputs.tag }}
+          SHA: ${{ github.sha }}
+          PRERELEASE: ${{ needs.plan.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          jq -n --arg tag "$TAG" --arg sha "$SHA" --arg name "Rollin desktop $TAG" \
+            --rawfile body "$RUNNER_TEMP/notes.md" --argjson pre "$PRERELEASE" \
+            '{tag_name: $tag, target_commitish: $sha, name: $name, body: $body, draft: true, prerelease: $pre}' \
+            > "$RUNNER_TEMP/release.json"
+          id=$(gh api -X POST "repos/$REPO/releases" --input "$RUNNER_TEMP/release.json" --jq .id)
+          echo "Draft release $id for $TAG"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+  macos:
+    needs: [plan, release]
+    if: needs.plan.outputs.release == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write # upload assets to the draft release
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set the app version
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          conf=apps/desktop/src-tauri/tauri.conf.json
+          jq --arg v "$VERSION" '.version = $v' "$conf" > "$conf.new"
+          mv "$conf.new" "$conf"
+          grep '"version"' "$conf"
+      - name: Check updater signing is set up
+        env:
+          SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SIGNING_KEY" ]; then
+            echo "Secret TAURI_SIGNING_PRIVATE_KEY is not set; see docs/desktop-install.md" >&2
+            exit 1
+          fi
+          if grep -q REPLACE_WITH apps/desktop/src-tauri/tauri.conf.json; then
+            echo "tauri.conf.json still has the placeholder updater public key" >&2
+            exit 1
+          fi
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch, 2026-11-06
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
@@ -247,8 +278,9 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install front-end dependencies
         run: npm --prefix apps/desktop ci
-      # tauri-action v0.6.2. With bundle.createUpdaterArtifacts it also uploads
-      # the signed .app.tar.gz, its .sig and latest.json (#114).
+      # tauri-action v0.6.2, uploading to the draft by id. With
+      # bundle.createUpdaterArtifacts it also uploads the signed .app.tar.gz
+      # and its .sig; latest.json is written by publish instead.
       - uses: tauri-apps/tauri-action@1ddc7b49b13c3038297360482fcb3e058764d7c9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -256,33 +288,19 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
-          tagName: ${{ needs.plan.outputs.tag }}
-          releaseCommitish: ${{ github.sha }}
-          releaseName: Rollin desktop ${{ needs.plan.outputs.tag }}
-          releaseBody: ${{ steps.notes.outputs.body }}
-          releaseDraft: false
-          prerelease: ${{ needs.plan.outputs.prerelease }}
+          releaseId: ${{ needs.release.outputs.id }}
+          includeUpdaterJson: false
           args: --target universal-apple-darwin -- --locked
-      - name: Check the release has the updater assets
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.plan.outputs.tag }}
-        run: |
-          assets=$(gh release view "$TAG" --json assets --jq '.assets[].name')
-          echo "$assets"
-          for pattern in '\.dmg$' '\.app\.tar\.gz$' '\.app\.tar\.gz\.sig$' '^latest\.json$'; do
-            echo "$assets" | grep -Eq "$pattern" || { echo "Missing asset matching $pattern" >&2; exit 1; }
-          done
 
   windows:
-    # After macos, not alongside it: see the header. Unsigned x64 NSIS installer
-    # (bundle.targets only lists the macOS bundles, hence --bundles nsis).
-    needs: [plan, macos]
+    # Unsigned x64 NSIS installer (bundle.targets only lists the macOS bundles,
+    # hence --bundles nsis). Runs alongside macos.
+    needs: [plan, release]
     if: needs.plan.outputs.release == 'true'
     runs-on: windows-latest
     timeout-minutes: 45
     permissions:
-      contents: write # upload assets to the release macos created
+      contents: write # upload assets to the draft release
     defaults:
       run:
         shell: bash
@@ -305,9 +323,6 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Install front-end dependencies
         run: npm --prefix apps/desktop ci
-      # Same tauri-action pin and release settings as macos, so the release,
-      # its notes and latest.json's version agree. tauri-action reads the
-      # existing latest.json and adds windows-x86_64 to it.
       - uses: tauri-apps/tauri-action@1ddc7b49b13c3038297360482fcb3e058764d7c9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -315,52 +330,86 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           projectPath: apps/desktop
-          tagName: ${{ needs.plan.outputs.tag }}
-          releaseCommitish: ${{ github.sha }}
-          releaseName: Rollin desktop ${{ needs.plan.outputs.tag }}
-          releaseBody: ${{ needs.macos.outputs.notes }}
-          releaseDraft: false
-          prerelease: ${{ needs.plan.outputs.prerelease }}
+          releaseId: ${{ needs.release.outputs.id }}
+          includeUpdaterJson: false
           args: --bundles nsis -- --locked
 
   publish:
-    # Last step of the release: check everything is attached, then write the
-    # install help on the release page.
-    needs: [plan, macos, windows]
+    # Runs only when both builds succeeded. Writes latest.json for both
+    # platforms, adds the install help, and publishes the draft (which creates
+    # the tag), so users never see a release without its updater file.
+    needs: [plan, release, macos, windows]
     if: needs.plan.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: write # edit the release page
+      contents: write # upload latest.json, publish the release
     steps:
       - name: Check the release has both platforms
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          TAG: ${{ needs.plan.outputs.tag }}
+          ID: ${{ needs.release.outputs.id }}
         run: |
           set -euo pipefail
-          assets=$(gh release view "$TAG" --repo "$REPO" --json assets --jq '.assets[].name')
-          echo "$assets"
-          for pattern in '\.dmg$' '\.app\.tar\.gz$' '\.app\.tar\.gz\.sig$' '-setup\.exe$' '-setup\.exe\.sig$' '^latest\.json$'; do
-            echo "$assets" | grep -Eq "$pattern" || { echo "Missing asset matching $pattern" >&2; exit 1; }
+          gh api "repos/$REPO/releases/$ID" --jq '[.assets[] | {id, name}]' > "$RUNNER_TEMP/assets.json"
+          jq -r '.[].name' "$RUNNER_TEMP/assets.json"
+          for pattern in '\.dmg$' '\.app\.tar\.gz$' '\.app\.tar\.gz\.sig$' '-setup\.exe$' '-setup\.exe\.sig$'; do
+            jq -e --arg p "$pattern" 'any(.[]; .name | test($p))' "$RUNNER_TEMP/assets.json" > /dev/null \
+              || { echo "Missing asset matching $pattern" >&2; exit 1; }
           done
-          # The app updates from latest.json; both platforms must be in it.
-          gh release download "$TAG" --repo "$REPO" --pattern latest.json --dir "$RUNNER_TEMP"
+      - name: Write latest.json and upload it
+        # The app reads this file from releases/latest/download. Same keys
+        # tauri-action wrote before (checked against v0.1.4): the plain
+        # target-arch key plus the -app / -nsis bundle-specific one.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          ID: ${{ needs.release.outputs.id }}
+          TAG: ${{ needs.plan.outputs.tag }}
+          VERSION: ${{ needs.plan.outputs.version }}
+          NOTES: ${{ needs.release.outputs.notes }}
+        run: |
+          set -euo pipefail
+          base="https://github.com/$REPO/releases/download/$TAG"
+          asset_id() { jq -r --arg p "$1" '[.[] | select(.name | test($p))][0].id' "$RUNNER_TEMP/assets.json"; }
+          asset_name() { jq -r --arg p "$1" '[.[] | select(.name | test($p))][0].name' "$RUNNER_TEMP/assets.json"; }
+          sig() { gh api -H 'Accept: application/octet-stream' "repos/$REPO/releases/assets/$(asset_id "$1")" | tr -d '\r\n'; }
+          mac_sig=$(sig '\.app\.tar\.gz\.sig$')
+          win_sig=$(sig '-setup\.exe\.sig$')
+          mac_url="$base/$(asset_name '\.app\.tar\.gz$')"
+          win_url="$base/$(asset_name '-setup\.exe$')"
+          jq -n --arg version "$VERSION" --arg notes "$NOTES" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg mac_sig "$mac_sig" --arg mac_url "$mac_url" --arg win_sig "$win_sig" --arg win_url "$win_url" '
+            {signature: $mac_sig, url: $mac_url} as $mac
+            | {signature: $win_sig, url: $win_url} as $win
+            | {version: $version, notes: $notes, pub_date: $date, platforms: {
+                "darwin-aarch64": $mac, "darwin-x86_64": $mac,
+                "darwin-aarch64-app": $mac, "darwin-x86_64-app": $mac,
+                "windows-x86_64": $win, "windows-x86_64-nsis": $win}}' > "$RUNNER_TEMP/latest.json"
           jq . "$RUNNER_TEMP/latest.json"
           for platform in darwin-aarch64 darwin-x86_64 windows-x86_64; do
             jq -e --arg p "$platform" '.platforms[$p] | (.url // "") != "" and (.signature // "") != ""' "$RUNNER_TEMP/latest.json" > /dev/null \
               || { echo "latest.json has no usable $platform entry" >&2; exit 1; }
           done
-      - name: Add install help to the release page
-        # After every build, so latest.json (the app's update notes) keeps only
-        # the changes.
+          # Replace any latest.json from an earlier attempt, then upload.
+          for old in $(jq -r '.[] | select(.name == "latest.json") | .id' "$RUNNER_TEMP/assets.json"); do
+            gh api -X DELETE "repos/$REPO/releases/assets/$old"
+          done
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: application/json" \
+            --data-binary "@$RUNNER_TEMP/latest.json" \
+            "https://uploads.github.com/repos/$REPO/releases/$ID/assets?name=latest.json" > /dev/null
+      - name: Add install help and publish the release
+        # Last, so latest.json (the app's update notes) keeps only the changes.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          TAG: ${{ needs.plan.outputs.tag }}
-          NOTES: ${{ needs.macos.outputs.notes }}
+          ID: ${{ needs.release.outputs.id }}
+          PRERELEASE: ${{ needs.plan.outputs.prerelease }}
+          NOTES: ${{ needs.release.outputs.notes }}
         run: |
+          set -euo pipefail
           {
             printf '%s\n\n---\n\n' "$NOTES"
             echo 'Unsigned builds.'
@@ -374,4 +423,7 @@ jobs:
             echo
             echo 'See docs/desktop-install.md.'
           } > "$RUNNER_TEMP/page.md"
-          gh release edit "$TAG" --repo "$REPO" --notes-file "$RUNNER_TEMP/page.md"
+          if [ "$PRERELEASE" = "true" ]; then latest=false; else latest=true; fi
+          jq -n --rawfile body "$RUNNER_TEMP/page.md" --arg latest "$latest" \
+            '{body: $body, draft: false, make_latest: $latest}' > "$RUNNER_TEMP/publish.json"
+          gh api -X PATCH "repos/$REPO/releases/$ID" --input "$RUNNER_TEMP/publish.json" --jq .html_url
