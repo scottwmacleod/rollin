@@ -1,7 +1,4 @@
 {
-  "enabledPlugins": {
-    "mattpocock-skills@claude-plugins-official": true
-  },
   "permissions": {
     "allow": [
       "Bash(cargo fmt *)",
