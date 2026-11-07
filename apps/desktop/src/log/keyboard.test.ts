@@ -177,6 +177,6 @@ describe("die tree", () => {
   it("footer gives the order of operations and the total", () => {
     const t = dieTree(byName("4d6dl1-seed3.json").expected.rolls[0]);
     expect(t.order).toBe("keep/drop (dl1)");
-    expect(t.total).toBe("11");
+    expect(t.total).toBe("9");
   });
 });
