@@ -3,26 +3,6 @@
 //! never re-checks it. The rules differ by kind, so each kind has a
 //! constructor.
 
-/// Words the command parser treats as commands, plus the session-only words
-/// (`help`, `quit`, `exit`, `history`), which are reserved so a preset can
-/// never be shadowed by one.
-pub const COMMAND_WORDS: [&str; 14] = [
-    "save",
-    "presets",
-    "delete",
-    "import",
-    "roll",
-    "set",
-    "unset",
-    "vars",
-    "char",
-    "characters",
-    "help",
-    "quit",
-    "exit",
-    "history",
-];
-
 /// Words the formula lexer and parser treat as keywords.
 const DICE_KEYWORDS: [&str; 11] = [
     "d", "dl", "dh", "kl", "kh", "r", "rr", "p", "f", "adv", "dis",
@@ -64,7 +44,10 @@ impl NameError {
                 "'rename' is reserved for `rollin char rename`".into()
             }
             NameRule::CommandWord => {
-                format!("it is a command word ({})", COMMAND_WORDS.join(", "))
+                format!(
+                    "it is a command word ({})",
+                    crate::vocab::words().collect::<Vec<_>>().join(", ")
+                )
             }
             NameRule::DiceKeyword => "it is a reserved dice keyword".into(),
             NameRule::LooksLikeDice => "it looks like dice syntax".into(),
@@ -98,7 +81,7 @@ impl Name {
         };
         if !is_name_shaped(&name) {
             Err(fail(NameRule::Shape))
-        } else if COMMAND_WORDS.contains(&name.as_str()) {
+        } else if crate::vocab::words().any(|w| w == name) {
             Err(fail(NameRule::CommandWord))
         } else if DICE_KEYWORDS.contains(&name.as_str()) {
             Err(fail(NameRule::DiceKeyword))

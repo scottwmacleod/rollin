@@ -21,12 +21,12 @@ pub fn parse_command(
                     global,
                 }),
                 _ => Err(CommandError::Usage {
-                    usage: "save <name> <formula> [--global]".into(),
+                    usage: usage("save"),
                 }),
             }
         }
         Some("roll") if rest.is_empty() => Err(CommandError::Usage {
-            usage: "roll <formula or preset name>".into(),
+            usage: usage("roll"),
         }),
         Some("roll") => roll_or_preset(rest, preset_names),
         Some("characters") => Ok(Command::Characters),
@@ -52,7 +52,7 @@ pub fn parse_command(
                 Name::shaped(name).map_err(CommandError::InvalidCharName)?,
             )),
             _ => Err(CommandError::Usage {
-                usage: "char [<name> | new <name> | rename <old> <new> | delete <name>]".into(),
+                usage: usage("char"),
             }),
         },
         Some("unset") => match rest {
@@ -60,7 +60,7 @@ pub fn parse_command(
                 name: normalise(name),
             }),
             _ => Err(CommandError::Usage {
-                usage: "unset <name>".into(),
+                usage: usage("unset"),
             }),
         },
         Some("vars") => Ok(Command::Vars),
@@ -74,7 +74,7 @@ pub fn parse_command(
                 })?,
             }),
             _ => Err(CommandError::Usage {
-                usage: "set <name> <integer>".into(),
+                usage: usage("set"),
             }),
         },
         Some("presets") => Ok(Command::Presets),
@@ -87,12 +87,17 @@ pub fn parse_command(
                     global,
                 }),
                 _ => Err(CommandError::Usage {
-                    usage: "delete <name> [--global]".into(),
+                    usage: usage("delete"),
                 }),
             }
         }
         _ => roll_or_preset(words, preset_names),
     }
+}
+
+/// The usage line of a command, from the vocabulary table.
+fn usage(word: &'static str) -> String {
+    crate::vocab::usage(word).into()
 }
 
 /// Splits `flag` (any case, anywhere) out of `words`; true if it was there.
@@ -113,7 +118,7 @@ fn take_flag(words: &[String], flag: &str) -> (Vec<String>, bool) {
 /// `import <path> [--force]`, with the flag allowed anywhere after `import`.
 fn parse_import(rest: &[String]) -> Result<Command, CommandError> {
     let usage = || CommandError::Usage {
-        usage: "import <path> [--force]".into(),
+        usage: usage("import"),
     };
     let force = rest.iter().any(|w| w.eq_ignore_ascii_case("--force"));
     let mut paths = rest.iter().filter(|w| !w.eq_ignore_ascii_case("--force"));
@@ -134,7 +139,7 @@ pub(super) fn roll_or_preset(
 ) -> Result<Command, CommandError> {
     if let [word] = words {
         let name = normalise(word);
-        if crate::session::SESSION_WORDS.contains(&name.as_str()) {
+        if crate::vocab::session_words().any(|w| w == name) {
             return Err(CommandError::SessionOnly { word: word.clone() });
         }
         // A name-shaped word that fails to parse as a formula (a syntax

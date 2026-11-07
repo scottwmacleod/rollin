@@ -22,6 +22,7 @@ mod presets;
 mod session;
 mod settings;
 mod system;
+mod vocab;
 
 use ast::Role;
 pub use ast::{BinOp, Special};

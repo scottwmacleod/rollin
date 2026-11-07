@@ -25,21 +25,6 @@ pub struct Completion {
     pub candidates: Vec<String>,
 }
 
-/// The words the command parser knows (the session-only ones come in
-/// [`CompletionData::session_words`]).
-const COMMANDS: [&str; 10] = [
-    "save",
-    "presets",
-    "delete",
-    "import",
-    "roll",
-    "set",
-    "unset",
-    "vars",
-    "char",
-    "characters",
-];
-
 /// Completes the word ending at byte offset `pos` of `line`. A `pos` past the
 /// end, or inside a character, is moved back to the nearest boundary.
 pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
@@ -83,7 +68,7 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
         _ if pending == Some("--char") => chars(),
         _ if pending.is_some() => Vec::new(),
         [] => {
-            let mut names: Vec<&str> = COMMANDS.to_vec();
+            let mut names: Vec<&str> = crate::vocab::parser_words().collect();
             names.extend(data.session_words.iter().map(String::as_str));
             names.extend(presets());
             names
