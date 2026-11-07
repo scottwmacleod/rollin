@@ -1,5 +1,5 @@
 {
   "formula": "d20adv+8",
   "seed": 1,
-  "expected": {"schema_version":1,"rolls":[{"formula":"d20adv+8","total":17,"expr":{"type":"chain","first":{"type":"dice","term":"d20adv","sides":20,"modifiers":["adv"],"dice":[{"value":9,"status":"kept"},{"value":2,"status":"dropped","reason":{"clause":"adv"}}],"subtotal":9},"rest":[{"op":"+","node":{"type":"number","value":8}}],"total":17}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"d20adv+8","total":19,"expr":{"type":"chain","first":{"type":"dice","term":"d20adv","sides":20,"modifiers":["adv"],"dice":[{"value":11,"status":"kept"},{"value":9,"status":"dropped","reason":{"clause":"adv"}}],"subtotal":11},"rest":[{"op":"+","node":{"type":"number","value":8}}],"total":19}}]}
 }

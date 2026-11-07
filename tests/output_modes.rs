@@ -79,7 +79,7 @@ const NAT20: &str = "\x1b[1;32m";
 const NAT1: &str = "\x1b[1;31m";
 /// Seeds under which the first d20 rolls a natural 1 / 20.
 const SEED_NAT1: &str = "27";
-const SEED_NAT20: &str = "39";
+const SEED_NAT20: &str = "4";
 
 fn color_run(args: &[&str]) -> common::Run {
     let run = Cli::new().run(args);

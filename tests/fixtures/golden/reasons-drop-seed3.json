@@ -1,5 +1,5 @@
 {
   "formula": "4d6dl1",
   "seed": 3,
-  "expected": {"schema_version":1,"rolls":[{"formula":"4d6dl1","total":11,"expr":{"type":"dice","term":"4d6dl1","sides":6,"modifiers":["dl1"],"dice":[{"value":1,"status":"dropped","reason":{"clause":"dl1"}},{"value":4,"status":"kept"},{"value":1,"status":"kept"},{"value":6,"status":"kept"}],"subtotal":11}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"4d6dl1","total":9,"expr":{"type":"dice","term":"4d6dl1","sides":6,"modifiers":["dl1"],"dice":[{"value":1,"status":"dropped","reason":{"clause":"dl1"}},{"value":4,"status":"kept"},{"value":4,"status":"kept"},{"value":1,"status":"kept"}],"subtotal":9}}]}
 }

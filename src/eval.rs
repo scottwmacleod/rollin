@@ -4,7 +4,7 @@ use crate::ast::{BinOp, Dice, ExplodeMode, Expr, ExprKind, Item, RerollMode};
 use crate::error::Error;
 use crate::limits::{Cap, MAX_DICE_PER_EXPRESSION, MAX_EXPLOSIONS_PER_DIE, MAX_REROLLS_PER_DIE};
 use crate::{Die, Kind, Link, Natural, Node, Outcome, Reason, Roll, Status, Tally};
-use rand::Rng;
+use rand::{Rng, RngExt};
 use std::ops::Range;
 
 /// State threaded through one roll's evaluation.
@@ -29,7 +29,7 @@ impl<R: Rng> Ctx<'_, R> {
                 span.clone(),
             ));
         }
-        Ok(i64::from(self.rng.gen_range(1..=dice.sides as u32)))
+        Ok(i64::from(self.rng.random_range(1..=dice.sides as u32)))
     }
 }
 

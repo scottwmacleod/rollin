@@ -1,5 +1,5 @@
 {
   "formula": "d20+8 # attack",
   "seed": 1,
-  "expected": {"schema_version":1,"rolls":[{"formula":"d20+8","total":17,"expr":{"type":"chain","first":{"type":"dice","term":"d20","sides":20,"dice":[{"value":9,"status":"kept"}],"subtotal":9},"rest":[{"op":"+","node":{"type":"number","value":8}}],"total":17},"label":"attack"}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"d20+8","total":19,"expr":{"type":"chain","first":{"type":"dice","term":"d20","sides":20,"dice":[{"value":11,"status":"kept"}],"subtotal":11},"rest":[{"op":"+","node":{"type":"number","value":8}}],"total":19},"label":"attack"}]}
 }

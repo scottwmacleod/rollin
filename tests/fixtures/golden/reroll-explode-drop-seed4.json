@@ -1,5 +1,5 @@
 {
   "formula": "4d6r1!dl1",
   "seed": 4,
-  "expected": {"schema_version":1,"rolls":[{"formula":"4d6r1!dl1","total":24,"expr":{"type":"dice","term":"4d6r1!dl1","sides":6,"modifiers":["r1","!","dl1"],"dice":[{"value":5,"status":"kept"},{"value":1,"status":"rerolled","reason":{"clause":"r1"}},{"value":6,"status":"kept","reason":{"clause":"r1","from":1}},{"value":6,"status":"exploded","reason":{"clause":"!","from":2}},{"value":5,"status":"exploded","reason":{"clause":"!","from":3}},{"value":2,"status":"dropped","reason":{"clause":"dl1"}},{"value":2,"status":"kept"}],"subtotal":24}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"4d6r1!dl1","total":32,"expr":{"type":"dice","term":"4d6r1!dl1","sides":6,"modifiers":["r1","!","dl1"],"dice":[{"value":6,"status":"kept"},{"value":5,"status":"exploded","reason":{"clause":"!","from":0}},{"value":4,"status":"kept"},{"value":1,"status":"rerolled","reason":{"clause":"r1"}},{"value":3,"status":"dropped","reason":{"clause":"dl1"}},{"value":6,"status":"kept"},{"value":6,"status":"exploded","reason":{"clause":"!","from":5}},{"value":5,"status":"exploded","reason":{"clause":"!","from":6}}],"subtotal":32}}]}
 }
