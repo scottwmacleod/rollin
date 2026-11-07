@@ -61,6 +61,17 @@ describe("chrome", () => {
     document.body.innerHTML = "";
   });
 
+  it("draws the logo cursor after the word and marks it busy on request", async () => {
+    const chrome = await mount();
+    const word = toolbar.querySelector(".tb-word")!;
+    expect(word.textContent).toBe("rollin");
+    expect(word.querySelector(".tb-cursor")?.getAttribute("aria-hidden")).toBe("true");
+    chrome.setBusy(true);
+    expect(word.classList.contains("is-busy")).toBe(true);
+    chrome.setBusy(false);
+    expect(word.classList.contains("is-busy")).toBe(false);
+  });
+
   it("gives every toolbar control an accessible name", async () => {
     await mount();
     for (const b of toolbar.querySelectorAll("button")) {

@@ -28,6 +28,8 @@ export interface Chrome {
   record(execution: Execution): Promise<void>;
   refresh(): Promise<void>;
   openPalette(initial?: string): void;
+  /** Blinks the logo cursor faster while something is loading, such as an update check. */
+  setBusy(busy: boolean): void;
   /** Removes the window and document listeners (for tests). */
   dispose(): void;
 }
@@ -44,6 +46,9 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
   toolbar.setAttribute("role", "toolbar");
   toolbar.setAttribute("aria-label", "Rollin");
   const word = el("span", "tb-word", "rollin");
+  const cursor = el("span", "tb-cursor");
+  cursor.setAttribute("aria-hidden", "true");
+  word.append(cursor);
   const charBtn = el("button", "tb-btn tb-char-btn");
   charBtn.type = "button";
   const search = el("button", "tb-btn tb-search");
@@ -231,6 +236,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
     },
     refresh,
     openPalette: (initial) => palette.open(initial),
+    setBusy: (busy) => word.classList.toggle("is-busy", busy),
     dispose() {
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("rollin:edit-preset", onEdit);
