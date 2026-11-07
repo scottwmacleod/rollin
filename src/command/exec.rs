@@ -274,7 +274,7 @@ pub fn sample(
     formula: &str,
     ctx: &Context,
     rng: &mut impl Rng,
-) -> Result<Vec<crate::Roll>, CommandError> {
+) -> Result<Vec<crate::RollResult>, CommandError> {
     let (scope, source) = resolve(formula, ctx)?;
     let system = scope.system(ctx)?;
     crate::roll_in(

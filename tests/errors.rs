@@ -115,7 +115,7 @@ fn too_many_dice_in_an_expression_names_the_cap_and_the_term() {
     let first_line = stderr.lines().next().unwrap();
     assert_eq!(
         first_line,
-        "error: dice per expression cap (10000) exceeded by '1d4'"
+        "error: dice per roll cap (10000) exceeded by '1d4'"
     );
     // The caret sits under the term that went over.
     let caret_col = stderr.lines().nth(2).unwrap().find('^').unwrap();

@@ -95,7 +95,7 @@ pub struct Die {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub outcome: Option<Outcome>,
     /// Set on the kept die of a d20 check when it rolled a natural 20 or 1
-    /// (see [`Roll::natural`]). Absent on every other die.
+    /// (see [`RollResult::natural`]). Absent on every other die.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub natural: Option<Natural>,
     /// The clause that made this die what it is: the reroll that replaced or
@@ -174,7 +174,7 @@ pub struct Tally {
 }
 
 /// One node of a roll's result tree. Every node carries what it contributed,
-/// so any expression can be shown term by term.
+/// so any roll can be shown term by term.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Node {
@@ -204,7 +204,7 @@ pub enum Node {
         operand: Box<Node>,
         total: i64,
     },
-    /// A parenthesised expression.
+    /// A parenthesised group.
     Group {
         inner: Box<Node>,
         total: i64,
@@ -254,14 +254,14 @@ impl Node {
 
 /// The result of evaluating one roll.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct Roll {
+pub struct RollResult {
     pub formula: String,
     /// Omitted from JSON for an ordinary sum.
     #[serde(skip_serializing_if = "Kind::is_sum")]
     pub kind: Kind,
     pub total: i64,
     pub expr: Node,
-    /// The `# text` note on this roll's item, if it had one.
+    /// The `# text` note on this roll, if it had one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
     /// For a repeated formula (`Nx`), which repeat (from 1) this roll is in.
@@ -275,13 +275,13 @@ pub struct Roll {
     /// game system because its attack was a critical hit.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub doubled: bool,
-    /// The face of this roll's d20 check die (see [`Roll::natural`]), for a
+    /// The face of this roll's d20 check die (see [`RollResult::natural`]), for a
     /// game system's crit range. Not serialised.
     #[serde(skip)]
     pub(crate) check: Option<i64>,
 }
 
-impl Roll {
+impl RollResult {
     /// The natural 20 or 1 of this roll's d20 check, if it has one.
     ///
     /// A roll is a d20 check when it contains exactly one d20 term that is
@@ -305,8 +305,8 @@ impl Roll {
 }
 
 /// Parses and evaluates a formula (one or more comma-separated rolls) using
-/// the injected RNG, returning one [`Roll`] per item.
-pub fn roll(formula: &str, rng: &mut impl Rng) -> Result<Vec<Roll>, Error> {
+/// the injected RNG, returning one [`RollResult`] per roll.
+pub fn roll(formula: &str, rng: &mut impl Rng) -> Result<Vec<RollResult>, Error> {
     roll_in(formula, &|_| None, None, CritRange::default(), rng)
 }
 
@@ -317,11 +317,11 @@ pub fn roll_with(
     formula: &str,
     vars: &dyn Fn(&str) -> Option<i64>,
     rng: &mut impl Rng,
-) -> Result<Vec<Roll>, Error> {
+) -> Result<Vec<RollResult>, Error> {
     roll_in(formula, vars, None, CritRange::default(), rng)
 }
 
-/// Like [`roll_with`], under a game `system` (`None` rolls every item
+/// Like [`roll_with`], under a game `system` (`None` rolls every comma-separated roll
 /// independently). Each `Nx` repeat pairs its attacks and damage afresh.
 /// `crit_range` is the lowest kept d20 that is a critical hit under a system.
 pub fn roll_in(
@@ -330,16 +330,16 @@ pub fn roll_in(
     system: Option<System>,
     crit_range: CritRange,
     rng: &mut impl Rng,
-) -> Result<Vec<Roll>, Error> {
+) -> Result<Vec<RollResult>, Error> {
     let parsed = parser::parse_with(formula, vars)?;
     let mut rolls = Vec::new();
     for iteration in 1..=parsed.repeat.unwrap_or(1) {
         // The latest attack's crit, which later damage rolls belong to.
         let mut attack: Option<Crit> = None;
-        for item in &parsed.items {
-            let role = system.and_then(|_| item.role());
-            let double = item.crit || (role == Some(Role::Damage) && attack == Some(Crit::Hit));
-            let mut roll = eval::evaluate(item, double, rng)?;
+        for spec in &parsed.rolls {
+            let role = system.and_then(|_| spec.role());
+            let double = spec.crit || (role == Some(Role::Damage) && attack == Some(Crit::Hit));
+            let mut roll = eval::evaluate(spec, double, rng)?;
             if role == Some(Role::Attack) {
                 roll.crit = Crit::of(&roll, crit_range);
                 attack = roll.crit;

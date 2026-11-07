@@ -273,7 +273,7 @@ impl Session {
     /// A sample roll of `formula` for a preview. It draws from its own entropy
     /// RNG, so the session RNG (seeded or not) does not move, and it makes no
     /// history entry.
-    pub fn sample(&mut self, formula: &str) -> Result<Vec<rollin::Roll>, Failure> {
+    pub fn sample(&mut self, formula: &str) -> Result<Vec<rollin::RollResult>, Failure> {
         let ctx = self.context();
         Ok(rollin::sample(formula, &ctx, &mut self.sample_rng)?)
     }

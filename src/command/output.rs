@@ -1,4 +1,4 @@
-use crate::{Hint, Roll};
+use crate::{Hint, RollResult};
 use serde::Serialize;
 
 /// What a command produced, for the caller to render.
@@ -8,7 +8,7 @@ pub enum Output {
     Rolls {
         /// The preset (name, formula) these rolls came from, if any.
         preset: Option<(String, String)>,
-        rolls: Vec<Roll>,
+        rolls: Vec<RollResult>,
     },
     Saved {
         name: String,

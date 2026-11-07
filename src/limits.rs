@@ -14,7 +14,7 @@ pub(crate) const MAX_EXPLOSIONS_PER_DIE: i64 = 100;
 pub(crate) const MAX_REROLLS_PER_DIE: i64 = 100;
 
 /// Most dice in one roll, extra explosion dice included.
-pub(crate) const MAX_DICE_PER_EXPRESSION: i64 = 10000;
+pub(crate) const MAX_DICE_PER_ROLL: i64 = 10000;
 
 /// Deepest nesting of parentheses.
 pub(crate) const MAX_DEPTH: i64 = 32;
@@ -36,7 +36,7 @@ pub enum Cap {
     DicePerTerm,
     ExplosionsPerDie,
     RerollsPerDie,
-    DicePerExpression,
+    DicePerRoll,
     NestingDepth,
     Repeat,
 }
@@ -48,7 +48,7 @@ impl Cap {
             Cap::DicePerTerm => MAX_DICE_PER_TERM,
             Cap::ExplosionsPerDie => MAX_EXPLOSIONS_PER_DIE,
             Cap::RerollsPerDie => MAX_REROLLS_PER_DIE,
-            Cap::DicePerExpression => MAX_DICE_PER_EXPRESSION,
+            Cap::DicePerRoll => MAX_DICE_PER_ROLL,
             Cap::NestingDepth => MAX_DEPTH,
             Cap::Repeat => MAX_REPEAT,
         }
@@ -61,7 +61,7 @@ impl fmt::Display for Cap {
             Cap::DicePerTerm => "dice per term",
             Cap::ExplosionsPerDie => "explosions per die",
             Cap::RerollsPerDie => "rerolls per die",
-            Cap::DicePerExpression => "dice per expression",
+            Cap::DicePerRoll => "dice per roll",
             Cap::NestingDepth => "nesting depth",
             Cap::Repeat => "repeat",
         })

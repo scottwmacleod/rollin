@@ -276,7 +276,7 @@ fn exploded_dice_count_toward_the_dice_per_expression_cap() {
     // Each 1000d4!>=2 rolls about 4000 dice, though only 3000 are written.
     let err = failure("1000d4!>=2 + 1000d4!>=2 + 1000d4!>=2");
     assert!(
-        err.starts_with("error: dice per expression cap (10000) exceeded by '1000d4!>=2'\n"),
+        err.starts_with("error: dice per roll cap (10000) exceeded by '1000d4!>=2'\n"),
         "{err}"
     );
 }
@@ -285,7 +285,7 @@ fn exploded_dice_count_toward_the_dice_per_expression_cap() {
 fn compounded_extra_rolls_count_toward_the_dice_per_expression_cap() {
     let err = failure("1000d4!!>=2 + 1000d4!!>=2 + 1000d4!!>=2");
     assert!(
-        err.starts_with("error: dice per expression cap (10000) exceeded by '1000d4!!>=2'\n"),
+        err.starts_with("error: dice per roll cap (10000) exceeded by '1000d4!!>=2'\n"),
         "{err}"
     );
 }

@@ -1,9 +1,9 @@
 //! Natural 20 / natural 1 detection on a d20 check, in the library. The RNG
 //! is injected (ADR-0003): each test scans seeds for the rolls it needs.
 
-use rollin::{roll, seeded_rng, Natural, Node, Roll, Status};
+use rollin::{roll, seeded_rng, Natural, Node, RollResult, Status};
 
-fn one(formula: &str, seed: u64) -> Roll {
+fn one(formula: &str, seed: u64) -> RollResult {
     roll(formula, &mut seeded_rng(seed)).unwrap().remove(0)
 }
 
@@ -21,14 +21,14 @@ fn all_dice(node: &Node, out: &mut Vec<(i64, Status, Option<Natural>)>) {
     }
 }
 
-fn dice_of(roll: &Roll) -> Vec<(i64, Status, Option<Natural>)> {
+fn dice_of(roll: &RollResult) -> Vec<(i64, Status, Option<Natural>)> {
     let mut out = Vec::new();
     all_dice(&roll.expr, &mut out);
     out
 }
 
 /// The first seed whose roll of `formula` satisfies `want`.
-fn find(formula: &str, want: impl Fn(&Roll) -> bool) -> Roll {
+fn find(formula: &str, want: impl Fn(&RollResult) -> bool) -> RollResult {
     (0..5000)
         .map(|seed| one(formula, seed))
         .find(want)
@@ -60,7 +60,7 @@ fn single_d20_reports_naturals() {
 }
 
 /// The value of the kept die of the (only) d20 term.
-fn kept_d20(roll: &Roll) -> Option<i64> {
+fn kept_d20(roll: &RollResult) -> Option<i64> {
     fn d20<'a>(node: &'a Node, out: &mut Vec<&'a Node>) {
         match node {
             Node::Dice { sides: 20, .. } => out.push(node),

@@ -2,7 +2,7 @@
 //! optional ANSI styling.
 
 use clap::ValueEnum;
-use rollin::{Crit, Die, Natural, Node, Outcome, Roll, Status, Tally};
+use rollin::{Crit, Die, Natural, Node, Outcome, RollResult, Status, Tally};
 
 /// The `--color` flag.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
@@ -107,7 +107,7 @@ fn count_label(tally: &Tally) -> String {
 
 /// The roll's total as shown: a plain number for a sum, a labelled tally for
 /// a success count.
-fn total_text(roll: &Roll) -> String {
+fn total_text(roll: &RollResult) -> String {
     match roll.expr.tally() {
         Some(tally) => count_label(tally),
         None => roll.total.to_string(),
@@ -172,7 +172,7 @@ fn expr_line(p: Painter, node: &Node) -> String {
 }
 
 /// The roll's label as it trails a line: two spaces then `# text`, dimmed.
-fn label_suffix(p: Painter, roll: &Roll) -> String {
+fn label_suffix(p: Painter, roll: &RollResult) -> String {
     roll.label
         .as_ref()
         .map_or(String::new(), |l| format!("  {}", p.dim(&format!("# {l}"))))
@@ -180,7 +180,7 @@ fn label_suffix(p: Painter, roll: &Roll) -> String {
 
 /// The game-system note after the total: the attack's crit, or damage whose
 /// dice were doubled by one. Empty for every other roll.
-fn crit_note(p: Painter, roll: &Roll) -> String {
+fn crit_note(p: Painter, roll: &RollResult) -> String {
     match roll.crit {
         Some(Crit::Hit) => format!("  {}", p.wrap("1;32", "CRITICAL HIT")),
         Some(Crit::Miss) => format!("  {}", p.wrap("1;31", "CRITICAL MISS")),
@@ -190,7 +190,7 @@ fn crit_note(p: Painter, roll: &Roll) -> String {
 }
 
 /// The default output: one line per roll.
-pub fn render_line(p: Painter, roll: &Roll) -> String {
+pub fn render_line(p: Painter, roll: &RollResult) -> String {
     let total = format!("{}{}", p.bold(&total_text(roll)), crit_note(p, roll));
     let label = label_suffix(p, roll);
     if !has_dice(&roll.expr) {

@@ -179,7 +179,7 @@ fn rerolled_dice_count_toward_the_dice_per_expression_cap() {
     let six = ["1000d6r<=6"; 6].join("+");
     let stderr = failure(&six);
     assert!(
-        stderr.starts_with("error: dice per expression cap (10000) exceeded by '1000d6r<=6'"),
+        stderr.starts_with("error: dice per roll cap (10000) exceeded by '1000d6r<=6'"),
         "{stderr}"
     );
 }

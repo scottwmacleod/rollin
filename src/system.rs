@@ -47,7 +47,7 @@ impl Crit {
     /// The crit of a d20 attack: a natural 1 is a miss, a kept d20 at or above
     /// `range` is a hit, and anything else (or a roll with no d20 check) is
     /// neither.
-    pub(crate) fn of(roll: &crate::Roll, range: CritRange) -> Option<Crit> {
+    pub(crate) fn of(roll: &crate::RollResult, range: CritRange) -> Option<Crit> {
         if roll.natural() == Some(Natural::One) {
             return Some(Crit::Miss);
         }

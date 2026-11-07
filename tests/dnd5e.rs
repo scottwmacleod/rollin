@@ -2,9 +2,9 @@
 //! damage dice. The RNG is injected (ADR-0003): each test scans seeds for the
 //! rolls it needs.
 
-use rollin::{roll_in, seeded_rng, Crit, CritRange, Node, Roll, System};
+use rollin::{roll_in, seeded_rng, Crit, CritRange, Node, RollResult, System};
 
-fn run(formula: &str, system: Option<System>, seed: u64) -> Vec<Roll> {
+fn run(formula: &str, system: Option<System>, seed: u64) -> Vec<RollResult> {
     roll_in(
         formula,
         &|_| None,
@@ -15,12 +15,12 @@ fn run(formula: &str, system: Option<System>, seed: u64) -> Vec<Roll> {
     .unwrap()
 }
 
-fn dnd(formula: &str, seed: u64) -> Vec<Roll> {
+fn dnd(formula: &str, seed: u64) -> Vec<RollResult> {
     run(formula, Some(System::Dnd5e), seed)
 }
 
 /// The first rolls of `formula` under dnd5e that satisfy `want`.
-fn find(formula: &str, want: impl Fn(&[Roll]) -> bool) -> Vec<Roll> {
+fn find(formula: &str, want: impl Fn(&[RollResult]) -> bool) -> Vec<RollResult> {
     (0..20000)
         .map(|seed| dnd(formula, seed))
         .find(|rolls| want(rolls))
@@ -28,7 +28,7 @@ fn find(formula: &str, want: impl Fn(&[Roll]) -> bool) -> Vec<Roll> {
 }
 
 /// The face values of the dice a roll's first dice group counts.
-fn counted(roll: &Roll) -> Vec<i64> {
+fn counted(roll: &RollResult) -> Vec<i64> {
     fn first(node: &Node) -> Option<&Node> {
         match node {
             Node::Dice { .. } => Some(node),
@@ -49,7 +49,7 @@ fn counted(roll: &Roll) -> Vec<i64> {
         .collect()
 }
 
-fn dice_count(roll: &Roll, term: &str) -> usize {
+fn dice_count(roll: &RollResult, term: &str) -> usize {
     fn walk(node: &Node, term: &str, out: &mut usize) {
         match node {
             Node::Dice { term: t, dice, .. } if t == term => *out += dice.len(),
