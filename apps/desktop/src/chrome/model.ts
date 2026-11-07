@@ -21,14 +21,17 @@ const GLYPH: Partial<Record<Output["kind"], string>> = {
   deleted: "−",
 };
 
+const NO_EVENT = new Set<Output["kind"]>(["rolls", "char_switched", "active_character"]);
+
 /** The status bar's event for a command result. The wording is the library's
  * (`Output.lines`), the same text the CLI prints; this only adds the glyph.
- * Rolls and listings have no event. */
+ * Rolls, listings and character switches have no event: the status bar's
+ * first cell already names the active character. */
 export function eventFor(execution: Execution): AppEvent | null {
   if (execution.status !== "ok") return null;
   const out = execution.output;
   const text = out.lines[0];
-  if (text === undefined || out.kind === "rolls") return null;
+  if (text === undefined || NO_EVENT.has(out.kind)) return null;
   const glyph = out.kind === "saved" ? (out.replaced === null ? "+" : "~") : (GLYPH[out.kind] ?? "");
   return { glyph, text };
 }

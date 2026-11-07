@@ -37,7 +37,9 @@ describe("eventFor", () => {
     expect(eventFor(ok({ kind: "char_renamed" }, ["renamed 'a' to 'b'"]))?.glyph).toBe("~");
   });
 
-  it("has no event for rolls, listings and failures", () => {
+  it("has no event for rolls, listings, character switches and failures", () => {
+    expect(eventFor(ok({ kind: "char_switched", name: "silas" }, ["active character: silas"]))).toBeNull();
+    expect(eventFor(ok({ kind: "active_character", name: "silas" }, ["active character: silas"]))).toBeNull();
     expect(eventFor(ok({ kind: "rolls", rolls: [] }, []))).toBeNull();
     expect(eventFor(ok({ kind: "vars", vars: [] }, []))).toBeNull();
     expect(eventFor({ status: "rejected", message: "no" })).toBeNull();
