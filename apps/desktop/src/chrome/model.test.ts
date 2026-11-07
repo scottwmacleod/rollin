@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Execution, PresetEntry, SessionState } from "../api/types";
 import { presetClash, presetSaveLines } from "./dialog";
-import { parseSeed } from "./index";
 import { eventFor, matchScore, paletteView, parseQuery, rollsIn } from "./model";
 
 const ok = (output: object, lines: string[]): Execution =>
@@ -49,16 +48,6 @@ describe("rollsIn", () => {
   it("counts the rolls a result holds", () => {
     expect(rollsIn(ok({ kind: "rolls", rolls: [{}, {}, {}] }, []))).toBe(3);
     expect(rollsIn(ok({ kind: "vars" }, []))).toBe(0);
-  });
-});
-
-describe("parseSeed", () => {
-  it("takes whole numbers, random or nothing", () => {
-    expect(parseSeed("42")).toBe(42);
-    expect(parseSeed(" random ")).toBeNull();
-    expect(parseSeed("")).toBeNull();
-    expect(parseSeed("4.5")).toBeUndefined();
-    expect(parseSeed("-1")).toBeUndefined();
   });
 });
 

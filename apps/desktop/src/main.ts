@@ -1,15 +1,17 @@
 import "./generated/tokens.css";
 import "./fonts.css";
 import "./app.css";
+import { trackFullscreen } from "./fullscreen";
 import { initTheme } from "./theme";
 
 initTheme();
 document.documentElement.dataset.platform = /Mac/.test(navigator.userAgent) ? "macos" : "other";
+void trackFullscreen(document.documentElement);
 
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { check as checkForUpdate } from "@tauri-apps/plugin-updater";
-import { about, check, execute, relaunch, sample, setSeed, setSystem, state } from "./api";
+import { about, check, execute, relaunch, sample, setSystem, state } from "./api";
 import { mountAbout } from "./about";
 import { mountChrome } from "./chrome";
 import type { Execution } from "./api";
@@ -17,7 +19,7 @@ import { mountInput } from "./input";
 import { mountLog, type LogEntry } from "./log";
 import { entryFor } from "./session";
 import { mountSidebar } from "./sidebar";
-import { mountSidebarToggle } from "./sidebar/toggle";
+import { mountSlideOverDismiss } from "./sidebar/dismiss";
 import { createUpdater } from "./updater";
 import { bindAboutToUpdater } from "./updater/about";
 import { mountUpdateBanner } from "./updater/banner";
@@ -73,22 +75,19 @@ if (sidebarEl) {
     run: (line) => window.dispatchEvent(new CustomEvent("rollin:submit", { detail: line })),
   });
   const appEl = document.getElementById("app");
-  const toolbarEl = document.querySelector<HTMLElement>(".toolbar");
-  if (appEl && toolbarEl) mountSidebarToggle(appEl, toolbarEl, sidebarEl, sidebar.toggle);
+  if (appEl) mountSlideOverDismiss(appEl, sidebarEl);
 }
 
 if (toolbarEl && statusEl) {
   chrome = mountChrome(toolbarEl, statusEl, {
     execute,
     state,
-    setSeed,
     setSystem,
     check,
     sample,
     about,
     run: (line) => void run(line),
     toggleSidebar: () => sidebar?.toggle(),
-    clearLog: () => log?.clear(),
     changed: () => void sidebar?.refresh(),
   });
 }

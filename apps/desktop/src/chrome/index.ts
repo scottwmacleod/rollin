@@ -11,7 +11,6 @@ import { mountSystemChip, systemLabel } from "./system";
 export interface ChromeDeps {
   execute(line: string): Promise<Execution>;
   state(): Promise<SessionState>;
-  setSeed(seed: number | null): Promise<number | null>;
   /** Sets or clears a game system; rejects with the library's message. */
   setSystem(scope: "character" | "default", character: string | null, system: string | null): Promise<void>;
   check(formula: string): Promise<void>;
@@ -20,7 +19,6 @@ export interface ChromeDeps {
   /** Rolls or runs a line into the log exactly as if it had been typed. */
   run(line: string): void;
   toggleSidebar(): void;
-  clearLog(): void;
   /** A command run from the chrome changed saved data. */
   changed(): void;
 }
@@ -34,22 +32,6 @@ export interface Chrome {
   dispose(): void;
 }
 
-/** "random" and an empty box mean entropy; anything else must be a whole
- * number the library's `--seed` accepts. */
-export function parseSeed(text: string): number | null | undefined {
-  const t = text.trim().toLowerCase();
-  if (t === "" || t === "random") return null;
-  return /^\d+$/.test(t) && Number.isSafeInteger(Number(t)) ? Number(t) : undefined;
-}
-
-function iconButton(label: string, glyph: string): HTMLButtonElement {
-  const b = el("button", "tb-btn tb-icon", glyph);
-  b.type = "button";
-  b.setAttribute("aria-label", label);
-  b.title = label;
-  return b;
-}
-
 /** Fills the toolbar and the status bar and owns the palette, the character
  * switcher and their dialogs. Every change goes through `execute`, so the
  * library validates and words it, as in the CLI. */
@@ -61,8 +43,6 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
 
   toolbar.setAttribute("role", "toolbar");
   toolbar.setAttribute("aria-label", "Rollin");
-  const sidebarBtn = iconButton("Toggle sidebar", "◧");
-  sidebarBtn.setAttribute("aria-keyshortcuts", modAria("B"));
   const word = el("span", "tb-word", "rollin");
   const charBtn = el("button", "tb-btn tb-char-btn");
   charBtn.type = "button";
@@ -71,11 +51,8 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
   search.setAttribute("aria-label", "Search presets, characters and commands");
   search.setAttribute("aria-keyshortcuts", modAria("K"));
   search.append(el("span", "", "Search"), el("kbd", "", modHint("K")));
-  const seedBtn = el("button", "tb-btn tb-seed");
-  seedBtn.type = "button";
-  const clearBtn = iconButton("Clear log", "⌫");
   const spacer = el("span", "tb-spacer");
-  toolbar.replaceChildren(sidebarBtn, word, charBtn, search, spacer, seedBtn, clearBtn);
+  toolbar.replaceChildren(word, charBtn, search, spacer);
 
   const systemChip = el("button", "st-cell st-system");
   systemChip.type = "button";
@@ -92,12 +69,6 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
       return null;
     },
   });
-
-  function paintSeed() {
-    const seed = current?.seed ?? null;
-    seedBtn.textContent = `seed ${seed ?? "random"}`;
-    seedBtn.setAttribute("aria-label", `Seed: ${seed ?? "random"}. Change seed`);
-  }
 
   function paintStatus() {
     const s = current;
@@ -128,7 +99,6 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
       switcher.update(current.characters, current.active_character);
       system.update(current);
     }
-    paintSeed();
     paintStatus();
   }
 
@@ -198,48 +168,6 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
     if (entry) presetDialog({ name: entry.name, formula: entry.formula, global });
   }
 
-  function setSeed(seed: number | null) {
-    return deps.setSeed(seed).then(async (applied) => {
-      event = { glyph: "~", text: applied === null ? "seed set to random" : `seed set to ${applied}` };
-      await refresh();
-    });
-  }
-
-  function editSeed() {
-    const input = el("input", "tb-seed-input");
-    input.setAttribute("aria-label", "Seed: a whole number, or random");
-    input.placeholder = "number or random";
-    input.value = current?.seed === null || current?.seed === undefined ? "" : String(current.seed);
-    input.spellcheck = false;
-    let done = false;
-    const finish = () => {
-      done = true;
-      input.replaceWith(seedBtn);
-    };
-    input.addEventListener("keydown", (e) => {
-      e.stopPropagation();
-      if (e.key === "Enter") {
-        const seed = parseSeed(input.value);
-        if (seed === undefined) {
-          input.setAttribute("aria-invalid", "true");
-          return;
-        }
-        finish();
-        void setSeed(seed).then(() => seedBtn.focus());
-      } else if (e.key === "Escape") {
-        finish();
-        seedBtn.focus();
-      }
-    });
-    input.addEventListener("input", () => input.removeAttribute("aria-invalid"));
-    input.addEventListener("blur", () => {
-      if (!done) finish();
-    });
-    seedBtn.replaceWith(input);
-    input.focus();
-    input.select();
-  }
-
   function perform(action: PaletteAction) {
     switch (action.type) {
       case "roll":
@@ -255,14 +183,8 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
             return newCharacter();
           case "new-preset":
             return presetDialog(null);
-          case "clear-log":
-            return deps.clearLog();
           case "toggle-sidebar":
             return deps.toggleSidebar();
-          case "set-seed":
-            return editSeed();
-          case "random-seed":
-            return void setSeed(null);
         }
     }
   }
@@ -276,10 +198,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
     },
   });
 
-  sidebarBtn.addEventListener("click", deps.toggleSidebar);
   search.addEventListener("click", () => palette.open());
-  seedBtn.addEventListener("click", editSeed);
-  clearBtn.addEventListener("click", deps.clearLog);
   const onKey = (e: KeyboardEvent) => {
     if (hasMod(e) && e.key.toLowerCase() === "k") {
       e.preventDefault();
@@ -301,7 +220,6 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
     },
     () => undefined,
   );
-  paintSeed();
   paintStatus();
   void refresh();
 
