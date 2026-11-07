@@ -8,7 +8,7 @@ description = "Session state and command logic behind the desktop app's Tauri co
 
 [dependencies]
 rollin = { path = "../../../.." }
-rand_chacha = "0.3"
+rand_chacha = "0.10"
 serde = { version = "1.0.229", features = ["derive"] }
 
 [dev-dependencies]

@@ -74,16 +74,16 @@ describe("die glyphs", () => {
 
   it("strikes a rerolled die and marks its replacement with ↻", () => {
     const node = render(fixture("reasons-reroll-seed3.json"));
-    expect(dieTexts(node, "rerolled")).toEqual(["1", "1", "1"]);
-    expect(dieTexts(node, "replacement")).toEqual(["↻4", "↻6", "↻5"]);
+    expect(dieTexts(node, "rerolled")).toEqual(["1", "1"]);
+    expect(dieTexts(node, "replacement")).toEqual(["↻4", "↻6"]);
   });
 
   it("marks successes ✓ and failures ✗", () => {
     const node = render(fixture("count-failure-seed2.json"));
-    expect(dieTexts(node, "success")).toEqual(["9✓"]);
+    expect(dieTexts(node, "success")).toEqual(["9✓", "8✓"]);
     expect(dieTexts(node, "failure")).toEqual(["1✗"]);
-    expect(node.querySelector(".roll-total")!.textContent).toBe("0 successes");
-    expect(node.querySelector<HTMLElement>(".roll-total")!.title).toBe("0 successes (1 - 1 failure)");
+    expect(node.querySelector(".roll-total")!.textContent).toBe("1 success");
+    expect(node.querySelector<HTMLElement>(".roll-total")!.title).toBe("1 success (2 - 1 failure)");
   });
 
   it("marks exploded dice with !", () => {

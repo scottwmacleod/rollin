@@ -186,8 +186,8 @@ fn rerolled_dice_count_toward_the_dice_per_expression_cap() {
 
 #[test]
 fn more_than_100_rerolls_of_one_die_is_an_error_naming_cap_and_term() {
-    // Seed 3 rerolls a d100 that rerolls on 99 or less more than 100 times.
-    let run = Cli::new().run(&["--seed", "3", "--", "d100rr<=99"]);
+    // Seed 5 rerolls a d100 that rerolls on 99 or less more than 100 times.
+    let run = Cli::new().run(&["--seed", "5", "--", "d100rr<=99"]);
     assert!(!run.success(), "{run:?}");
     assert_eq!(run.stdout, "");
     assert_eq!(
@@ -281,10 +281,10 @@ fn out(args: &[&str]) -> String {
 
 #[test]
 fn default_output_marks_rerolled_away_dice_with_tildes() {
-    // Seed 3 rerolls three 1s into 4, 6 and 5; the 4 is then dropped.
+    // Seed 3 rerolls two 1s into 4 and 6; the 2 is then dropped.
     assert_eq!(
         out(&["--seed", "3", "4d6r1dl1"]),
-        "4d6r1dl1  [~1~, (4), ~1~, 6, ~1~, 5, 4]  →  15\n"
+        "4d6r1dl1  [~1~, 4, 4, ~1~, 6, (2)]  →  14\n"
     );
 }
 
@@ -293,7 +293,7 @@ fn color_dims_and_strikes_rerolled_dice() {
     let stdout = out(&["--seed", "3", "--color", "always", "4d6r1dl1"]);
     // Rerolled dice are dim and crossed out; dropped ones stay merely dim.
     assert!(stdout.contains("\x1b[2;9m~1~\x1b[0m"), "{stdout:?}");
-    assert!(stdout.contains("\x1b[2m(4)\x1b[0m"), "{stdout:?}");
+    assert!(stdout.contains("\x1b[2m(2)\x1b[0m"), "{stdout:?}");
 }
 
 #[test]

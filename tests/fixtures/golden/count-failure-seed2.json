@@ -1,5 +1,5 @@
 {
   "formula": "6d10>=8f1",
   "seed": 2,
-  "expected": {"schema_version":1,"rolls":[{"formula":"6d10>=8f1","kind":"count","total":0,"expr":{"type":"dice","term":"6d10>=8f1","sides":10,"modifiers":[">=8f1"],"dice":[{"value":6,"status":"kept"},{"value":6,"status":"kept"},{"value":1,"status":"kept","outcome":"failure"},{"value":3,"status":"kept"},{"value":9,"status":"kept","outcome":"success"},{"value":3,"status":"kept"}],"subtotal":0,"kind":"count","successes":1,"failures":1}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"6d10>=8f1","kind":"count","total":1,"expr":{"type":"dice","term":"6d10>=8f1","sides":10,"modifiers":[">=8f1"],"dice":[{"value":2,"status":"kept"},{"value":9,"status":"kept","outcome":"success"},{"value":6,"status":"kept"},{"value":6,"status":"kept"},{"value":1,"status":"kept","outcome":"failure"},{"value":8,"status":"kept","outcome":"success"}],"subtotal":1,"kind":"count","successes":2,"failures":1}}]}
 }

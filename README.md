@@ -41,7 +41,7 @@ Each dice group shows its dice, joined by the formula's operators:
 $ rollin "(d20+5)*2" --seed 3
 (d20+5)*2  ([3] + 5) * 2  →  16
 $ rollin 2d6+1d4+3 --seed 3
-2d6+1d4+3  [1, 4] + [1] + 3  →  9
+2d6+1d4+3  [1, 4] + [3] + 3  →  11
 ```
 
 ### Formula syntax
@@ -205,7 +205,7 @@ $ rollin atk --seed 3                   # bare name, or: rollin roll atk
 d20+8  [3] + 8  →  11
 $ rollin roll sneak --seed 3 -q         # --json and -q print no header line
 8
-5
+8
 $ rollin delete atk
 deleted 'atk' from 'default'
 $ rollin save --global house d6         # global; also: delete --global house
@@ -286,7 +286,7 @@ through this one are a single continuous session, replayed in order.
 $ rollin set str 3                      # on the active character (default)
 set str = 3 on 'default'
 $ rollin 'd20+@str' --seed 1            # @str is replaced by 3
-d20+@str  [9] + 3  →  12
+d20+@str  [11] + 3  →  14
 $ rollin char new grog                  # create and switch to a character
 created character 'grog' and made it active
 $ rollin set str 5
@@ -341,12 +341,12 @@ set dc = 8 on 'default'
 $ rollin '@level d6' --seed 2           # 3d6 when level is 3
 @level d6  [2, 6, 4]  →  12
 $ rollin 'd@sides' --seed 2             # d8 when sides is 8
-d@sides  [8]  →  8
+d@sides  [2]  →  2
 $ rollin '@n x 4d6kh@keep' --seed 1     # two stat rolls
-1: 4d6kh@keep  [4, 3, (1), (2)]  →  7
-2: 4d6kh@keep  [4, 3, (2), (2)]  →  7
+1: 4d6kh@keep  [4, (3), 6, (1)]  →  10
+2: 4d6kh@keep  [(2), 4, 3, (2)]  →  7
 $ rollin '6d10>=@dc' --seed 1           # a success pool
-6d10>=@dc  [6, 5, 3, 3, 9✓, 10✓]  →  2 successes
+6d10>=@dc  [6, 5, 10✓, 1, 3, 6]  →  1 success
 $ rollin set sides 1
 set sides = 1 on 'default'
 $ rollin 'd@sides'
@@ -560,21 +560,21 @@ color is on. A formula without `Nx` or labels prints exactly as before.
 
 ```
 $ rollin --seed 1 6x 4d6dl1
-1: 4d6dl1  [4, 3, (1), 2]  →  9
-2: 4d6dl1  [4, 3, (2), 2]  →  9
-3: 4d6dl1  [6, 5, 5, (1)]  →  16
-4: 4d6dl1  [6, 2, 5, (1)]  →  13
-5: 4d6dl1  [6, 4, 6, (1)]  →  16
-6: 4d6dl1  [(2), 3, 3, 3]  →  9
+1: 4d6dl1  [4, 3, 6, (1)]  →  13
+2: 4d6dl1  [(2), 4, 3, 2]  →  9
+3: 4d6dl1  [5, (2), 6, 5]  →  16
+4: 4d6dl1  [3, 3, 5, (1)]  →  11
+5: 4d6dl1  [(1), 6, 2, 5]  →  13
+6: 4d6dl1  [(1), 3, 6, 4]  →  13
 $ rollin --seed 1 '3x d20+8 # attack, d10+5 # damage'
-1: d20+8  [9] + 8  →  17  # attack
-1: d10+5  [3] + 5  →  8  # damage
-2: d20+8  [5] + 8  →  13  # attack
-2: d10+5  [9] + 5  →  14  # damage
-3: d20+8  [19] + 8  →  27  # attack
-3: d10+5  [8] + 5  →  13  # damage
+1: d20+8  [11] + 8  →  19  # attack
+1: d10+5  [5] + 5  →  10  # damage
+2: d20+8  [20] + 8  →  28  # attack
+2: d10+5  [1] + 5  →  6  # damage
+3: d20+8  [5] + 8  →  13  # attack
+3: d10+5  [6] + 5  →  11  # damage
 $ rollin --seed 1 'd20+8 # attack'
-d20+8  [9] + 8  →  17  # attack
+d20+8  [11] + 8  →  19  # attack
 ```
 
 `-q` prints one total per line, in order. `--json` adds `"iteration"` to each
@@ -583,9 +583,9 @@ schema doc); the rolls array stays flat, in the order rolled.
 
 ```
 $ rollin --seed 1 -q 3x d20+8
+19
 17
-10
-13
+28
 ```
 
 Exploded dice are marked with a trailing `!` in the default output and the
@@ -607,7 +607,7 @@ output, with the die that replaced them right after, and as `rerolled` in
 
 ```
 $ rollin --seed 3 4d6r1
-4d6r1  [~1~, 4, ~1~, 6, ~1~, 5, 4]  →  19
+4d6r1  [~1~, 4, 4, ~1~, 6, 2]  →  16
 $ rollin --seed 8 4d6rr1
 4d6rr1  [2, ~1~, ~1~, 5, 5, 6]  →  18
 ```
@@ -620,9 +620,9 @@ successes are green and failures red. `--json` carries each die's outcome and th
 
 ```
 $ rollin --seed 6 6d10>=8
-6d10>=8  [4, 5, 6, 4, 4, 1]  →  0 successes
+6d10>=8  [4, 5, 6, 5, 2, 4]  →  0 successes
 $ rollin --seed 2 6d10>=8f1
-6d10>=8f1  [6, 6, 1✗, 3, 9✓, 3]  →  0 successes (1 - 1 failure)
+6d10>=8f1  [2, 9✓, 6, 6, 1✗, 8✓]  →  1 success (2 - 1 failure)
 ```
 
 **Quiet (`-q`, `--quiet`).** Only the total of each roll, one per line, so
@@ -631,8 +631,8 @@ non-zero exit and nothing on stdout.
 
 ```
 $ rollin -q "d20+8, d10+5" --seed 1
-17
-8
+19
+10
 ```
 
 **JSON (`--json`).** The result tree as one line of JSON with a
@@ -649,7 +649,7 @@ without retyping the program name:
 $ rollin
 rollin 2.0.1 — type 'help' for commands, 'quit' to exit
 rollin> d20+5 --seed 4
-d20+5  [15] + 5  →  20
+d20+5  [20] + 5  →  25
 rollin> set str 3
 set str = 3 on 'default'
 rollin> char new grog
@@ -660,9 +660,9 @@ rollin[grog]> save atk d20+@str # attack
 saved 'atk' on 'grog': d20+@str # attack
 rollin[grog]> atk --seed 4
 (preset 'atk': d20+@str # attack)
-d20+@str  [15] + 5  →  20  # attack
+d20+@str  [20] + 5  →  25  # attack
 rollin[grog]> --char default d20+@str --seed 4
-d20+@str  [15] + 3  →  18
+d20+@str  [20] + 3  →  23
 rollin[grog]> d20+
 error: expected a number, a dice group or '(', found end of input
   d20+
@@ -792,7 +792,8 @@ clippy with `-D warnings`) and `test` (`cargo test`).
 seed and formula always print the same roll. Without `--seed`, the RNG is
 seeded from OS entropy. The algorithm is pinned to ChaCha8 on purpose: changing
 it (or the way dice are drawn) changes seeded output and invalidates every
-golden fixture, so treat it as a deliberate decision.
+golden fixture, so treat it as a deliberate decision (the rand 0.10 upgrade in
+#71 was one; see ADR 0003).
 
 #### Adding a golden case (data only)
 

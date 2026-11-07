@@ -1,5 +1,5 @@
 {
   "formula": "d20r>=19",
   "seed": 16,
-  "expected": {"schema_version":1,"rolls":[{"formula":"d20r>=19","total":1,"expr":{"type":"dice","term":"d20r>=19","sides":20,"modifiers":["r>=19"],"dice":[{"value":19,"status":"rerolled","reason":{"clause":"r>=19"}},{"value":1,"status":"kept","natural":"one","reason":{"clause":"r>=19","from":0}}],"subtotal":1}}]}
+  "expected": {"schema_version":1,"rolls":[{"formula":"d20r>=19","total":3,"expr":{"type":"dice","term":"d20r>=19","sides":20,"modifiers":["r>=19"],"dice":[{"value":19,"status":"rerolled","reason":{"clause":"r>=19"}},{"value":3,"status":"kept","reason":{"clause":"r>=19","from":0}}],"subtotal":3}}]}
 }

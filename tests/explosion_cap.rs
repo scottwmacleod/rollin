@@ -1,8 +1,9 @@
 //! The 100-explosions-per-die boundary, pinned exactly with a scripted RNG
 //! (the CLI seam can only hit the cap by seed hunting).
 
-use rand::RngCore;
+use rand::TryRng;
 use rollin::{roll, Cap, Error, Status};
+use std::convert::Infallible;
 
 /// Yields `lows` draws that make a die show 1, then draws that make a d2 show
 /// 2 (a plain `u32::MAX` would be rejected by the sampler forever).
@@ -10,26 +11,24 @@ struct Script {
     lows: usize,
 }
 
-impl RngCore for Script {
-    fn next_u32(&mut self) -> u32 {
+impl TryRng for Script {
+    type Error = Infallible;
+
+    fn try_next_u32(&mut self) -> Result<u32, Infallible> {
         if self.lows > 0 {
             self.lows -= 1;
-            0
+            Ok(0)
         } else {
-            1 << 31
+            Ok(1 << 31)
         }
     }
 
-    fn next_u64(&mut self) -> u64 {
-        u64::from(self.next_u32())
+    fn try_next_u64(&mut self) -> Result<u64, Infallible> {
+        self.try_next_u32().map(u64::from)
     }
 
-    fn fill_bytes(&mut self, dest: &mut [u8]) {
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Infallible> {
         dest.fill(0);
-    }
-
-    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand::Error> {
-        self.fill_bytes(dest);
         Ok(())
     }
 }

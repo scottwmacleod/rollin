@@ -40,6 +40,7 @@ pub use session::{format_history, help_text, session_command, SessionCommand};
 pub use settings::SettingsStore;
 pub use system::{Crit, CritRange, System};
 
+use rand::rngs::SysRng;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use serde::Serialize;
@@ -56,7 +57,7 @@ pub fn seeded_rng(seed: u64) -> ChaCha8Rng {
 
 /// Builds the pinned RNG from OS entropy (used when no seed is given).
 pub fn entropy_rng() -> ChaCha8Rng {
-    ChaCha8Rng::from_entropy()
+    ChaCha8Rng::try_from_rng(&mut SysRng).expect("OS entropy unavailable")
 }
 
 /// Whether a die counted toward the total.
