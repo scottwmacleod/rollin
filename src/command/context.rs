@@ -3,7 +3,6 @@ use crate::characters::{CharacterStore, DEFAULT};
 use crate::completion::CompletionData;
 use crate::name::Name;
 use crate::presets::Store;
-use crate::session::SESSION_WORDS;
 use std::path::PathBuf;
 
 /// Errors unless the character exists, suggesting a near miss.
@@ -123,7 +122,7 @@ impl Context {
             presets,
             characters,
             variables: own.vars.into_keys().collect(),
-            session_words: SESSION_WORDS.iter().map(|w| w.to_string()).collect(),
+            session_words: crate::vocab::session_words().map(String::from).collect(),
         }
     }
 
