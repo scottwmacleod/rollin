@@ -1,7 +1,15 @@
 /* Toolbar */
 .toolbar > * { -webkit-app-region: no-drag; }
 .tb-spacer { flex: 1; }
-.tb-word { font-weight: 600; letter-spacing: -0.01em; margin: 0 var(--space-1); }
+/* The logo: "rollin" and a signal-coloured underscore cursor (ui/logo). The
+   cursor is 0.46em x 0.11em with its bottom on the text baseline. */
+.tb-word { font-weight: 600; letter-spacing: -0.06em; margin: 0 var(--space-1); }
+.tb-cursor { display: inline-block; width: 0.46em; height: 0.11em; margin-left: 0.06em; background: var(--signal); }
+@media (prefers-reduced-motion: no-preference) {
+  .tb-cursor { animation: tb-blink 1.2s steps(1) infinite; }
+  .tb-word.is-busy .tb-cursor { animation-duration: 0.4s; }
+}
+@keyframes tb-blink { 55% { opacity: 0; } }
 
 .tb-btn {
   all: unset;

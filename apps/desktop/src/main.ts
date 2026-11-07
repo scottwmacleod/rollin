@@ -104,6 +104,8 @@ void listen("about:open", () => void aboutView.open());
 
 const updater = createUpdater({ check: checkForUpdate, relaunch });
 bindAboutToUpdater(aboutView, updater);
+// The logo cursor blinks fast while an update is being checked or installed.
+updater.subscribe((state) => chrome?.setBusy(state.kind === "checking" || state.kind === "installing"));
 mountUpdateBanner(updater);
 void updater.check();
 startUpdateSchedule(updater);
