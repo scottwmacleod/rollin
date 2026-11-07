@@ -3,7 +3,7 @@
 .tb-spacer { flex: 1; }
 .tb-word { font-weight: 600; letter-spacing: -0.01em; margin: 0 var(--space-1); }
 
-.tb-btn, .tb-seed-input {
+.tb-btn {
   all: unset;
   box-sizing: border-box;
   display: inline-flex;
@@ -20,17 +20,13 @@
 }
 .tb-btn:hover { background: var(--surface-hover); }
 .tb-btn.is-open { background: var(--surface-hover); border-color: var(--line-strong); }
-.tb-btn:focus-visible, .tb-seed-input:focus-visible,
+.tb-btn:focus-visible,
 .sw-pick:focus-visible, .sw-act:focus-visible, .sw-confirm:focus-visible, .sw-input:focus-visible,
 .dlg-btn:focus-visible, .dlg-input:focus-visible { outline: 2px solid var(--signal-ink); outline-offset: -2px; }
-.tb-icon { width: var(--size-control); justify-content: center; padding: 0; border-color: transparent; background: none; color: var(--text-2); }
 .tb-chev { color: var(--muted); font-size: 11px; }
 .tb-search { flex: 1; max-width: 220px; justify-content: space-between; color: var(--muted); font-weight: 400; }
-.tb-search kbd, .tb-seed { font: 11px/16px var(--font-mono); }
+.tb-search kbd { font: 11px/16px var(--font-mono); }
 .tb-search kbd { color: var(--muted); }
-.tb-seed { color: var(--text-2); font-weight: 400; }
-.tb-seed-input { cursor: text; width: 148px; font: 12px/16px var(--font-mono); background: var(--bg); border-color: var(--line-strong); }
-.tb-seed-input[aria-invalid] { border-color: var(--danger); }
 
 /* Status bar */
 .status-bar { gap: var(--space-4); }

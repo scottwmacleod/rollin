@@ -24,7 +24,6 @@ describe("chrome", () => {
   let st: SessionState;
   let deps: ChromeDeps;
   let execute: ReturnType<typeof vi.fn>;
-  let setSeed: ReturnType<typeof vi.fn>;
   let toolbar: HTMLElement;
   let status: HTMLElement;
   let mounted: Chrome | null = null;
@@ -42,14 +41,9 @@ describe("chrome", () => {
   beforeEach(() => {
     st = base();
     execute = vi.fn(async (): Promise<Execution> => ({ status: "empty" }));
-    setSeed = vi.fn(async (n: number | null) => {
-      st.seed = n;
-      return n;
-    });
     deps = {
       execute: execute as never,
       state: async () => structuredClone(st),
-      setSeed: setSeed as never,
       setSystem: async (scope, character, system) => {
         if (scope === "default") st.default_system = system;
         else if (character === null || character === st.active_character) st.system = system;
@@ -59,7 +53,6 @@ describe("chrome", () => {
       about: async () => ({ name: "Rollin", app_version: "0.1.2", library_version: "1", license: "MIT", repository: "" }),
       run: vi.fn(),
       toggleSidebar: vi.fn(),
-      clearLog: vi.fn(),
       changed: vi.fn(),
     };
   });
@@ -117,39 +110,11 @@ describe("chrome", () => {
     expect(status.querySelector(".st-system")!.textContent).toBe("dnd5e");
   });
 
-  it("sets the seed from the toolbar, and back to random", async () => {
+  it("has no seed, clear-log or sidebar controls in the toolbar", async () => {
     await mount();
-    toolbar.querySelector<HTMLButtonElement>(".tb-seed")!.click();
-    const input = toolbar.querySelector<HTMLInputElement>(".tb-seed-input")!;
-    input.value = "42";
-    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-    await flush();
-    expect(setSeed).toHaveBeenCalledWith(42);
-    expect(toolbar.querySelector(".tb-seed")?.textContent).toBe("seed 42");
-    toolbar.querySelector<HTMLButtonElement>(".tb-seed")!.click();
-    const again = toolbar.querySelector<HTMLInputElement>(".tb-seed-input")!;
-    again.value = "random";
-    again.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-    await flush();
-    expect(setSeed).toHaveBeenLastCalledWith(null);
-  });
-
-  it("refuses a seed that is not a whole number", async () => {
-    await mount();
-    toolbar.querySelector<HTMLButtonElement>(".tb-seed")!.click();
-    const input = toolbar.querySelector<HTMLInputElement>(".tb-seed-input")!;
-    input.value = "abc";
-    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-    expect(setSeed).not.toHaveBeenCalled();
-    expect(input.hasAttribute("aria-invalid")).toBe(true);
-  });
-
-  it("clears the log and toggles the sidebar", async () => {
-    await mount();
-    toolbar.querySelector<HTMLButtonElement>('[aria-label="Clear log"]')!.click();
-    toolbar.querySelector<HTMLButtonElement>('[aria-label="Toggle sidebar"]')!.click();
-    expect(deps.clearLog).toHaveBeenCalled();
-    expect(deps.toggleSidebar).toHaveBeenCalled();
+    expect(toolbar.querySelector(".tb-seed")).toBeNull();
+    expect(toolbar.querySelector('[aria-label="Clear log"]')).toBeNull();
+    expect(toolbar.querySelector('[aria-label="Toggle sidebar"]')).toBeNull();
   });
 
   describe("character switcher", () => {

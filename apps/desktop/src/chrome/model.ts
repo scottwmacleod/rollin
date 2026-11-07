@@ -59,7 +59,7 @@ export type PaletteAction =
   | { type: "run"; line: string }
   | { type: "switch"; name: string }
   | { type: "scope"; prefix: "@" | ">" }
-  | { type: "ui"; id: "new-character" | "new-preset" | "clear-log" | "toggle-sidebar" | "set-seed" | "random-seed" };
+  | { type: "ui"; id: "new-character" | "new-preset" | "toggle-sidebar" };
 
 export interface PaletteRow {
   kind: "preset" | "character" | "command" | "recent" | "tip";
@@ -80,7 +80,6 @@ export interface PaletteView {
 export const COMMANDS: PaletteRow[] = [
   { kind: "command", label: "New character…", action: { type: "ui", id: "new-character" } },
   { kind: "command", label: "New preset…", action: { type: "ui", id: "new-preset" } },
-  { kind: "command", label: "Clear log", action: { type: "ui", id: "clear-log" } },
   {
     kind: "command",
     label: "Toggle sidebar",
@@ -89,8 +88,6 @@ export const COMMANDS: PaletteRow[] = [
     },
     action: { type: "ui", id: "toggle-sidebar" },
   },
-  { kind: "command", label: "Set seed…", action: { type: "ui", id: "set-seed" } },
-  { kind: "command", label: "Random seed", action: { type: "ui", id: "random-seed" } },
   { kind: "command", label: "List presets", detail: "presets", action: { type: "run", line: "presets" } },
   { kind: "command", label: "List variables", detail: "vars", action: { type: "run", line: "vars" } },
   { kind: "command", label: "List characters", detail: "characters", action: { type: "run", line: "characters" } },

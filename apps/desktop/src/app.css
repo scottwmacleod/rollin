@@ -30,7 +30,8 @@ body {
 
 /* macOS uses an overlay titlebar (tauri.macos.conf.json) that draws the window
    buttons over the top-left corner; the 84px inset below keeps toolbar content
-   clear of them. Windows and Linux keep the native title bar. */
+   clear of them. In full screen macOS hides them, so the inset goes
+   (fullscreen.ts sets data-fullscreen). Windows and Linux keep the native title bar. */
 .toolbar {
   grid-area: toolbar;
   display: flex;
@@ -41,7 +42,7 @@ body {
   border-bottom: 1px solid var(--line);
 }
 
-:root[data-platform="macos"] .toolbar {
+:root[data-platform="macos"]:not([data-fullscreen]) .toolbar {
   padding-left: 84px;
 }
 
