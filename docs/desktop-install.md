@@ -38,7 +38,7 @@ Characters, presets and settings are TOML files in `%APPDATA%\rollin` (that is `
 
 ## Cutting a release
 
-No local git is needed. The "Release desktop app" workflow (`.github/workflows/release.yml`) works out the version, builds macOS then Windows (in sequence, so `latest.json` gets both), and creates the tag and GitHub Release itself.
+No local git is needed. The "Release desktop app" workflow (`.github/workflows/release.yml`) works out the version, builds macOS and Windows in parallel into a draft release, then writes `latest.json` for both and publishes it (which creates the tag). If a build fails the draft stays unpublished; re-run the failed jobs from the run page rather than starting a new run.
 
 - **Daily:** at 05:17 UTC it releases a patch bump if `main` has changed `apps/desktop`, `src`, or the root `Cargo.toml`/`Cargo.lock` since the last release. It skips quietly when nothing changed or when the required CI checks (`lint`, `test`, `test-linux`, `desktop`, `desktop-windows`) have not all passed on `main`'s head; it tries again the next day.
 - **Manually:** Actions > Release desktop app > Run workflow (also available in GitHub Mobile). Choose `patch`, `minor` or `major`, or type an exact version, which wins over the bump. Run it on `main`. A version with a hyphen (`0.2.0-rc.1`) is marked as a pre-release.
