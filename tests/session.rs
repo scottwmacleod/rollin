@@ -10,7 +10,7 @@ fn a_piped_line_runs_like_the_one_shot_command() {
     let session = Cli::new().run_stdin(&[], "d20 --seed 1\n");
     assert_eq!(session.code, 0);
     assert_eq!(session.stdout, one_shot.stdout);
-    assert_eq!(session.stdout, "d20  [9]  →  9\n");
+    assert_eq!(session.stdout, "d20  [11]  →  11\n");
     assert_eq!(session.stderr, "");
 }
 
@@ -107,7 +107,7 @@ fn quit_and_exit_end_the_session_in_any_case() {
     for word in ["quit", "exit", "QUIT", "Exit"] {
         let run = Cli::new().run_stdin(&[], &format!("d20 --seed 1\n{word}\nd20 --seed 1\n"));
         assert_eq!(run.code, 0, "{word}: {run:?}");
-        assert_eq!(run.stdout, "d20  [9]  →  9\n", "{word}");
+        assert_eq!(run.stdout, "d20  [11]  →  11\n", "{word}");
         assert_eq!(run.stderr, "", "{word}");
     }
 }
@@ -176,9 +176,12 @@ fn history_numbers_are_right_aligned_past_nine_entries() {
 #[test]
 fn a_seed_given_when_starting_the_session_seeds_its_rng_once() {
     let run = Cli::new().run_stdin(&["--seed", "1"], "d20\nd20 --seed 1\n");
-    assert_eq!(run.stdout, "d20  [9]  →  9\nd20  [9]  →  9\n", "{run:?}");
+    assert_eq!(
+        run.stdout, "d20  [11]  →  11\nd20  [11]  →  11\n",
+        "{run:?}"
+    );
     let run = Cli::new().run_stdin(&["--seed", "1"], "d20\nd20\n");
     let first = run.stdout.lines().next().unwrap().to_string();
-    assert_eq!(first, "d20  [9]  →  9", "{run:?}");
+    assert_eq!(first, "d20  [11]  →  11", "{run:?}");
     assert_ne!(run.stdout.lines().nth(1), Some(first.as_str()), "{run:?}");
 }

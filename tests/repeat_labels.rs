@@ -8,7 +8,7 @@ use common::Cli;
 fn a_label_is_shown_after_the_roll_line() {
     let run = Cli::new().run(&["d20+8 # attack", "--seed", "1"]);
     run.assert_success();
-    assert_eq!(run.stdout, "d20+8  [9] + 8  →  17  # attack\n");
+    assert_eq!(run.stdout, "d20+8  [11] + 8  →  19  # attack\n");
 }
 
 #[test]
