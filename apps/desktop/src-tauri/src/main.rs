@@ -4,7 +4,7 @@
 //! The Tauri commands. Each one locks the session and calls
 //! `rollin-desktop-core`; the logic and its tests live there.
 
-use rollin_desktop_core::{About, Completions, Execution, Failure, Session, State};
+use rollin_desktop_core::{About, Completions, Execution, Failure, Session, State, SystemScope};
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 use tauri::menu::{Menu, MenuItem};
@@ -52,6 +52,18 @@ fn sample(
 #[tauri::command]
 fn state(session: tauri::State<'_, AppSession>) -> Result<State, Failure> {
     session.lock().state()
+}
+
+#[tauri::command]
+fn set_system(
+    session: tauri::State<'_, AppSession>,
+    scope: SystemScope,
+    character: Option<String>,
+    system: Option<String>,
+) -> Result<(), String> {
+    session
+        .lock()
+        .set_system(scope, character.as_deref(), system.as_deref())
 }
 
 #[tauri::command]
@@ -145,6 +157,7 @@ fn main() {
             sample,
             state,
             set_seed,
+            set_system,
             about,
             relaunch_app
         ])

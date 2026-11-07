@@ -117,8 +117,12 @@ export function nameProblem(name: string, taken: string[], what: string): string
 
 export interface NewCharacterDeps {
   characters: string[];
-  /** Runs `char new`; resolves to the library's error text, or null on success. */
-  create(name: string): Promise<string | null>;
+  /** The game systems to offer, and the global default (for the "Use default" row). */
+  systems: string[];
+  defaultSystem: string | null;
+  /** Runs `char new`, then sets `system` (null: use the default); resolves to
+   * the library's error text, or null on success. */
+  create(name: string, system: string | null): Promise<string | null>;
 }
 
 export function openNewCharacter(deps: NewCharacterDeps): Dialog {
@@ -126,6 +130,23 @@ export function openNewCharacter(deps: NewCharacterDeps): Dialog {
   const msg = note();
   const body = el("div", "dlg-body");
   body.append(field("Name", input, msg));
+  const system = el("select");
+  const inherit = el("option", "", deps.defaultSystem ? `Use default (${deps.defaultSystem})` : "Use default (no system)");
+  inherit.value = "";
+  system.append(inherit);
+  for (const name of deps.systems) {
+    const o = el("option", "", name);
+    o.value = name;
+    system.append(o);
+  }
+  system.className = "dlg-input";
+  const systemId = `dlg-sys-${++counter}`;
+  system.id = systemId;
+  const systemLabel = el("label", "", "Game system");
+  systemLabel.htmlFor = systemId;
+  const systemField = el("div", "dlg-field");
+  systemField.append(systemLabel, system);
+  if (deps.systems.length > 0) body.append(systemField);
   const cancel = button("Cancel");
   const create = button("Create", "is-primary");
   create.disabled = true;
@@ -142,7 +163,7 @@ export function openNewCharacter(deps: NewCharacterDeps): Dialog {
   const submit = async () => {
     if (!check()) return;
     create.disabled = true;
-    const error = await deps.create(input.value.trim());
+    const error = await deps.create(input.value.trim(), system.value === "" ? null : system.value);
     if (error === null) dialog.close();
     else {
       setNote(msg, input, error, true);

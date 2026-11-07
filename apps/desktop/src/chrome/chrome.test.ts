@@ -12,6 +12,9 @@ function base(): SessionState {
     vars: [["str", 4]],
     presets: [{ name: "attack", formula: "d20+5", source: { kind: "character", name: "grog" }, shadow: { kind: "none" } }],
     global_presets: [],
+    system: null,
+    default_system: null,
+    systems: ["dnd5e"],
     seed: null,
     history: [],
   };
@@ -47,6 +50,10 @@ describe("chrome", () => {
       execute: execute as never,
       state: async () => structuredClone(st),
       setSeed: setSeed as never,
+      setSystem: async (scope, character, system) => {
+        if (scope === "default") st.default_system = system;
+        else if (character === null || character === st.active_character) st.system = system;
+      },
       check: async () => undefined,
       sample: async () => [],
       about: async () => ({ name: "Rollin", app_version: "0.1.2", library_version: "1", license: "MIT", repository: "" }),
@@ -85,6 +92,29 @@ describe("chrome", () => {
     } as never);
     expect(status.textContent).toContain("2 rolls this session");
     expect(status.querySelector(".st-event")?.textContent).toBe("+ saved 'braceup' on 'grog': 2d6");
+  });
+
+  it("shows the system in force, and sets the character's and the default from the chip", async () => {
+    await mount();
+    const chip = status.querySelector<HTMLButtonElement>(".st-system")!;
+    expect(chip.textContent).toBe("no system");
+    chip.click();
+    const [own, fallback] = [...document.querySelectorAll<HTMLSelectElement>(".sys-select")];
+    fallback.value = "dnd5e";
+    fallback.dispatchEvent(new Event("change"));
+    await flush();
+    expect(st.default_system).toBe("dnd5e");
+    expect(status.querySelector(".st-system")!.textContent).toBe("dnd5e");
+    expect(document.querySelectorAll<HTMLSelectElement>(".sys-select")[0].options[0].textContent).toBe("Use default (dnd5e)");
+    own.value = "dnd5e";
+    own.dispatchEvent(new Event("change"));
+    await flush();
+    expect(st.system).toBe("dnd5e");
+    document.querySelectorAll<HTMLSelectElement>(".sys-select")[1].value = "";
+    document.querySelectorAll<HTMLSelectElement>(".sys-select")[1].dispatchEvent(new Event("change"));
+    await flush();
+    expect(st.default_system).toBeNull();
+    expect(status.querySelector(".st-system")!.textContent).toBe("dnd5e");
   });
 
   it("sets the seed from the toolbar, and back to random", async () => {

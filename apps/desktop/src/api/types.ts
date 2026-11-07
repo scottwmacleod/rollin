@@ -119,6 +119,12 @@ export interface SessionState {
   vars: [string, number][];
   presets: PresetEntry[];
   global_presets: PresetEntry[];
+  /** The active character's own game system, if it names one. */
+  system: string | null;
+  /** The global default game system, if one is set. */
+  default_system: string | null;
+  /** Every game system that can be chosen. */
+  systems: string[];
   seed: number | null;
   history: string[];
 }

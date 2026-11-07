@@ -165,7 +165,7 @@ impl CharacterStore {
 
 /// Makes the top-level `system` key hold `system` (absent for `None`), keeping
 /// an unchanged key, with its comments, as it is.
-fn sync_system(doc: &mut toml_edit::DocumentMut, system: Option<System>) {
+pub(crate) fn sync_system(doc: &mut toml_edit::DocumentMut, system: Option<System>) {
     let Some(system) = system else {
         doc.remove("system");
         return;

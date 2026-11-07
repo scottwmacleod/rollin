@@ -290,3 +290,33 @@ fn a_sample_leaves_the_seeded_stream_and_history_alone() {
     assert_eq!([first, second].concat(), expected);
     assert_eq!(app.state().unwrap().history, ["4d6dl1", "d20+5"]);
 }
+
+#[test]
+fn system_is_read_and_written_in_the_cli_files() {
+    use rollin_desktop_core::SystemScope;
+    let dir = TempDir::new().unwrap();
+    let mut s = session(&dir);
+    let state = s.state().unwrap();
+    assert_eq!((state.system, state.default_system), (None, None));
+    assert_eq!(state.systems, ["dnd5e"]);
+
+    s.set_system(SystemScope::Default, None, Some("DnD5e"))
+        .unwrap();
+    s.set_system(SystemScope::Character, None, Some("dnd5e"))
+        .unwrap();
+    let state = s.state().unwrap();
+    assert_eq!(state.system.as_deref(), Some("dnd5e"));
+    assert_eq!(state.default_system.as_deref(), Some("dnd5e"));
+    let file = std::fs::read_to_string(dir.path().join("rollin/characters/default.toml")).unwrap();
+    assert!(file.contains("system = \"dnd5e\""), "{file}");
+
+    s.set_system(SystemScope::Character, None, None).unwrap();
+    s.set_system(SystemScope::Default, None, None).unwrap();
+    let state = s.state().unwrap();
+    assert_eq!((state.system, state.default_system), (None, None));
+
+    let err = s
+        .set_system(SystemScope::Default, None, Some("pathfinder"))
+        .unwrap_err();
+    assert!(err.contains("dnd5e"), "{err}");
+}

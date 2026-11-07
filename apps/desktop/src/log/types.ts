@@ -49,6 +49,10 @@ export interface Roll {
   kind?: "count";
   label?: string;
   iteration?: number;
+  /** Under a game system: the attack was a critical hit or a critical miss. */
+  crit?: "hit" | "miss";
+  /** This roll's dice were doubled, by a `crit` suffix or a critical hit. */
+  doubled?: boolean;
 }
 
 export interface RollDocument {

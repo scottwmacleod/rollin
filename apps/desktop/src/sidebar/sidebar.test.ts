@@ -14,7 +14,7 @@ const ch = { kind: "character", name: "aria" } as const;
 const gl = { kind: "global" } as const;
 
 function stateWith(presets: PresetEntry[], globals: PresetEntry[], vars: [string, number][] = [["str", 3]]): SessionState {
-  return { active_character: "aria", characters: ["aria"], vars, presets, global_presets: globals, seed: null, history: [] };
+  return { active_character: "aria", characters: ["aria"], vars, presets, global_presets: globals, system: null, default_system: null, systems: ["dnd5e"], seed: null, history: [] };
 }
 
 describe("presetRows", () => {
