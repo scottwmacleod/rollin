@@ -8,6 +8,7 @@ mod exec;
 mod import;
 mod output;
 mod parse;
+mod scope;
 
 pub use context::Context;
 pub use error::{CommandError, ErrorReport};

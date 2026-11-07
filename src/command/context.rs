@@ -1,5 +1,6 @@
+use super::scope::PresetScope;
 use super::{edit_distance, CommandError};
-use crate::characters::{CharacterStore, DEFAULT};
+use crate::characters::{Character, CharacterStore, DEFAULT};
 use crate::completion::CompletionData;
 use crate::name::Name;
 use crate::presets::Store;
@@ -79,11 +80,24 @@ impl Context {
     /// Every preset name rolling can reach: the character's own and global.
     pub fn preset_names(&self) -> Result<Vec<String>, CommandError> {
         let (characters, name) = self.current()?;
-        let mut names: Vec<String> = characters.load(&name)?.presets.into_keys().collect();
-        names.extend(self.store()?.load()?.into_keys());
+        let scope = PresetScope::new(characters.load(&name)?.presets, self.store()?.load()?);
+        let mut names = scope.names();
         names.sort();
-        names.dedup();
         Ok(names)
+    }
+
+    /// Loads the acting character, lets `change` edit it, and saves it. The
+    /// character is saved only if `change` succeeds. Returns what `change`
+    /// returned and the character's name.
+    pub(super) fn update_character<T>(
+        &self,
+        change: impl FnOnce(&mut Character, &Name) -> Result<T, CommandError>,
+    ) -> Result<(T, Name), CommandError> {
+        let (characters, active) = self.current()?;
+        let mut character = characters.load(&active)?;
+        let value = change(&mut character, &active)?;
+        characters.save(&active, &character)?;
+        Ok((value, active))
     }
 
     /// The session prompt: `rollin> ` for the `default` character, else
@@ -112,12 +126,7 @@ impl Context {
         });
         let (characters, own) = character.unwrap_or_default();
         let global = self.store().and_then(|s| Ok(s.load()?)).unwrap_or_default();
-        let mut presets: Vec<String> = Vec::new();
-        for name in own.presets.into_keys().chain(global.into_keys()) {
-            if !presets.contains(&name) {
-                presets.push(name);
-            }
-        }
+        let presets = PresetScope::new(own.presets, global).names();
         CompletionData {
             presets,
             characters,
