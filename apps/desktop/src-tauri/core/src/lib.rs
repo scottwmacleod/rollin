@@ -9,9 +9,8 @@
 
 use rand_chacha::ChaCha8Rng;
 use rollin::{
-    entropy_rng, execute, format_history, help_text, seeded_rng, session_command, Command,
-    CommandError, Context, ErrorReport, Output, OutputReport, PresetEntry, PresetSource,
-    SessionCommand,
+    entropy_rng, execute, run_line, seeded_rng, Command, CommandError, Context, ErrorReport,
+    LineOutcome, LinePolicy, Output, OutputReport, PresetEntry, PresetSource,
 };
 use serde::Serialize;
 use std::ops::Range;
@@ -231,34 +230,29 @@ impl Session {
         if self.history.last().map(String::as_str) != Some(line) {
             self.history.push(line.to_string());
         }
-        let words: Vec<&str> = line.split_whitespace().collect();
-        match session_command(&words) {
-            Some(SessionCommand::Quit) => return Execution::Quit,
-            Some(SessionCommand::Help) => return text(help_text()),
-            Some(SessionCommand::History) => {
-                return text(&format_history(self.history.iter().map(String::as_str)))
-            }
-            None => {}
-        }
-        let (words, character) = match take_line_flags(&words) {
-            Ok(parsed) => parsed,
-            Err(message) => return Execution::Rejected(message),
-        };
-        let mut ctx = self.context();
-        ctx.character = character;
-        let command = match rollin::parse_command(&words, &mut || ctx.preset_names()) {
-            Ok(command) => command,
-            Err(e) => return Execution::Error(e),
-        };
-        match execute(&command, &ctx, &mut self.rng) {
-            Ok(output) => Execution::Output(output),
-            Err(e) => Execution::Error(e),
+        match run_line(
+            line,
+            LinePolicy::DESKTOP,
+            self.config_dir.clone(),
+            &mut self.rng,
+            &|| self.history.clone(),
+        ) {
+            LineOutcome::Empty => Execution::Empty,
+            LineOutcome::Quit => Execution::Quit,
+            LineOutcome::Text(lines) => text(&lines),
+            LineOutcome::Output { output, .. } => Execution::Output(output),
+            LineOutcome::Error(e) => Execution::Error(e),
+            LineOutcome::Rejected(message) => Execution::Rejected(message),
         }
     }
 
     /// Completes the word ending at byte offset `pos` of `line`.
     pub fn complete(&self, line: &str, pos: usize) -> Completions {
-        let c = rollin::complete(line, pos, &self.context().completion_data());
+        let c = rollin::complete(
+            line,
+            pos,
+            &self.context().completion_data(LinePolicy::DESKTOP),
+        );
         Completions {
             start: c.start,
             candidates: c.candidates,
@@ -348,28 +342,4 @@ impl Session {
 
 fn text(text: &str) -> Execution {
     Execution::Text(text.lines().map(str::to_string).collect())
-}
-
-/// Pulls `--char NAME` / `--char=NAME` out of a line and refuses `--seed`,
-/// which is a session control in the app, not a per-line flag (ADR-0007).
-fn take_line_flags(words: &[&str]) -> Result<(Vec<String>, Option<String>), String> {
-    let mut rest = Vec::new();
-    let mut character = None;
-    let mut iter = words.iter();
-    while let Some(&word) = iter.next() {
-        let lower = word.to_lowercase();
-        if lower == "--seed" || lower.starts_with("--seed=") {
-            return Err("--seed is not a per-line flag here; use the seed control".into());
-        } else if lower == "--char" {
-            match iter.next() {
-                Some(name) => character = Some(name.to_string()),
-                None => return Err("--char needs a character name".into()),
-            }
-        } else if let Some(name) = word.strip_prefix("--char=") {
-            character = Some(name.to_string());
-        } else {
-            rest.push(word.to_string());
-        }
-    }
-    Ok((rest, character))
 }

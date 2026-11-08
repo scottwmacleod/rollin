@@ -1,5 +1,7 @@
 //! Pure pieces of the interactive session: which lines are session commands,
-//! and the text they print. The binary owns all I/O.
+//! and the text they print. The front ends own all I/O.
+
+use crate::line::LinePolicy;
 
 /// A command only the session understands (one-shot treats these words as
 /// ordinary, unknown words).
@@ -23,23 +25,24 @@ pub fn session_command(words: &[&str]) -> Option<SessionCommand> {
     }
 }
 
-/// What `help` prints. Kept in one place and short; the README has the rest.
-pub fn help_text() -> &'static str {
-    static HELP: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-    HELP.get_or_init(|| {
-        format!(
-            "\
+/// What `help` prints for a front end. Kept in one place and short; the README
+/// has the rest. It lists only the per-line flags `policy` accepts.
+pub fn help_text(policy: LinePolicy) -> String {
+    let flags = if policy == LinePolicy::REPL {
+        "Flags such\nas --seed 7, -q, --json, --color and --char NAME work on any line and\napply to that line only."
+    } else {
+        "The flag\n--char NAME works on any line and applies to that line only."
+    };
+    format!(
+        "\
 Type a formula to roll it (d20+5, 4d6dl1, 6x 4d6dl1, d20 # attack), or a
-preset name. Spaces and '#' work as typed; no quotes are needed. Flags such
-as --seed 7, -q, --json, --color and --char NAME work on any line and
-apply to that line only.
+preset name. Spaces and '#' work as typed; no quotes are needed. {flags}
 
 {}
 Tab completes commands, preset and character names, and @variables.
 ",
-            crate::vocab::help_rows()
-        )
-    })
+        crate::vocab::help_rows()
+    )
 }
 
 /// The `history` listing: one numbered line per entry, oldest first, numbers

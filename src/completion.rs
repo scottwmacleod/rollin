@@ -13,6 +13,9 @@ pub struct CompletionData {
     pub variables: Vec<String>,
     /// Words only the session understands (`help`, `quit`, ...).
     pub session_words: Vec<String>,
+    /// The long flags the front end accepts, offered when a word starts with
+    /// a dash (see [`crate::LinePolicy::flags`]).
+    pub flags: Vec<String>,
 }
 
 /// Where the word being completed starts, and what it could become.
@@ -53,10 +56,13 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
     if typed.starts_with('-') {
         return Completion {
             start,
-            candidates: matching(&FLAGS, typed),
+            candidates: matching(
+                &data.flags.iter().map(String::as_str).collect::<Vec<_>>(),
+                typed,
+            ),
         };
     }
-    let (words, pending) = positional_words(&before[..start]);
+    let (words, pending) = positional_words(&before[..start], &data.flags);
     let chars = || {
         data.characters
             .iter()
@@ -91,17 +97,12 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
     }
 }
 
-/// The long flags, offered when a word starts with a dash.
-const FLAGS: [&str; 7] = [
-    "--seed", "--json", "--color", "--char", "--global", "--force", "--quiet",
-];
-
 /// Flags that take a value in the next word.
 const VALUE_FLAGS: [&str; 3] = ["--seed", "--char", "--color"];
 
 /// The lowercase words before the cursor that are not flags or flag values,
 /// and the value flag the cursor's word is the value of, if any.
-fn positional_words(before: &str) -> (Vec<String>, Option<&'static str>) {
+fn positional_words<'a>(before: &str, flags: &'a [String]) -> (Vec<String>, Option<&'a str>) {
     let mut words = Vec::new();
     let mut pending = None;
     for word in before.split_whitespace() {
@@ -110,7 +111,10 @@ fn positional_words(before: &str) -> (Vec<String>, Option<&'static str>) {
             continue;
         }
         if word.starts_with('-') {
-            pending = VALUE_FLAGS.iter().copied().find(|f| *f == word);
+            pending = VALUE_FLAGS
+                .iter()
+                .copied()
+                .find(|f| *f == word && flags.iter().any(|a| a == f));
         } else {
             words.push(word);
         }

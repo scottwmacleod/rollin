@@ -34,8 +34,28 @@ fn assert_parity(lines: &[&str]) {
 }
 
 #[test]
-fn a_command_line_parse_error_is_printed_and_the_session_continues() {
-    assert_parity(&["--bogus", "d20 --seed 1"]);
+fn a_bad_flag_is_reported_and_the_session_continues() {
+    let run = Cli::new().run_stdin(
+        &[],
+        "--bogus\n--seed\n--seed x d20\n--color puce d20\nd20 --seed 1\n",
+    );
+    assert_eq!(run.code, 0, "{run:?}");
+    assert_eq!(run.stdout, "d20  [11]  →  11\n");
+    assert_eq!(
+        run.stderr,
+        "error: unexpected argument '--bogus'\n\
+         error: --seed needs a number\n\
+         error: invalid --seed value 'x': expected a whole number\n\
+         error: invalid --color value 'puce': choose auto, always or never\n"
+    );
+}
+
+#[test]
+fn help_as_a_flag_prints_the_session_help() {
+    let run = Cli::new().run_stdin(&[], "--help\nhelp\n");
+    let (first, second) = run.stdout.split_at(run.stdout.len() / 2);
+    assert_eq!(first, second);
+    assert!(first.contains("--seed"), "{first}");
 }
 
 #[test]
@@ -50,9 +70,6 @@ fn every_kind_of_line_matches_the_one_shot_output_byte_for_byte() {
         "6d10>=8f1 --seed 2",
         // flag-only and malformed command lines
         "--json",
-        "--seed",
-        "--help",
-        "--color puce d20",
         // formula errors with spans
         "d20+",
         "d20 / (3-3)",

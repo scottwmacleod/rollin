@@ -110,9 +110,9 @@ impl Context {
         }
     }
 
-    /// What completion can offer right now, read fresh from the store. Each
+    /// What completion can offer right now for a front end, read fresh from the store. Each
     /// list that fails to load is simply empty: completing never errors.
-    pub fn completion_data(&self) -> CompletionData {
+    pub fn completion_data(&self, policy: crate::LinePolicy) -> CompletionData {
         let character = self.current().ok().and_then(|(characters, name)| {
             Some((
                 characters
@@ -132,6 +132,7 @@ impl Context {
             characters,
             variables: own.vars.into_keys().collect(),
             session_words: crate::vocab::session_words().map(String::from).collect(),
+            flags: policy.flags().into_iter().map(String::from).collect(),
         }
     }
 

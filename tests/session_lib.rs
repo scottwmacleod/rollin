@@ -3,7 +3,7 @@
 
 mod common;
 use common::Cli;
-use rollin::Context;
+use rollin::{Context, LinePolicy};
 
 #[test]
 fn the_prompt_names_the_active_character_unless_it_is_default() {
@@ -40,7 +40,7 @@ fn completion_data_lists_what_the_active_character_can_reach() {
     ] {
         cli.run(args).assert_success();
     }
-    let data = Context::new(Some(cli.config_dir().to_path_buf())).completion_data();
+    let data = Context::new(Some(cli.config_dir().to_path_buf())).completion_data(LinePolicy::REPL);
     // The character's own presets first, then global ones, no repeats.
     assert_eq!(data.presets, ["atk", "sneak", "house"]);
     assert_eq!(data.characters, ["default", "grog"]);
@@ -54,10 +54,10 @@ fn completion_data_ignores_load_errors_without_failing() {
     cli.run(&["set", "str", "5"]).assert_success();
     let dir = cli.config_dir().join("rollin");
     std::fs::write(dir.join("presets.toml"), "[[[").unwrap();
-    let data = Context::new(Some(cli.config_dir().to_path_buf())).completion_data();
+    let data = Context::new(Some(cli.config_dir().to_path_buf())).completion_data(LinePolicy::REPL);
     assert_eq!(data.presets, Vec::<String>::new());
     assert_eq!(data.variables, ["str"]);
-    let none = Context::new(None).completion_data();
+    let none = Context::new(None).completion_data(LinePolicy::REPL);
     assert!(none.presets.is_empty() && none.characters.is_empty() && none.variables.is_empty());
     assert_eq!(none.session_words, ["help", "quit", "exit", "history"]);
 }
