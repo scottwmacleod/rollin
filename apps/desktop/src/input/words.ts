@@ -9,7 +9,14 @@ export function isFormulaLine(line: string, vocabulary: CommandInfo[]): boolean 
   const first = line.trim().split(/\s+/)[0] ?? "";
   if (first === "") return false;
   if (first.startsWith("-")) return false;
-  return !vocabulary.some((c) => c.words.includes(first));
+  return !findCommand(first, vocabulary);
+}
+
+/** The command `word` invokes. Command words match in any case, as they do
+ * in the library's parser. */
+function findCommand(word: string, vocabulary: CommandInfo[]): CommandInfo | undefined {
+  const w = word.toLowerCase();
+  return vocabulary.find((c) => c.words.includes(w));
 }
 
 /** The usage line for the command word at the start of `line`, once that word
@@ -19,7 +26,7 @@ export function isFormulaLine(line: string, vocabulary: CommandInfo[]): boolean 
 export function usageFor(line: string, vocabulary: CommandInfo[]): string | null {
   const m = /^\s*(\S+)(\s|$)/.exec(line);
   if (!m) return null;
-  return vocabulary.find((c) => c.words.includes(m[1]))?.usage ?? null;
+  return findCommand(m[1], vocabulary)?.usage ?? null;
 }
 
 export type Piece = { text: string; kind: "plain" | "variable" | "label" };

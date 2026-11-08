@@ -76,7 +76,7 @@ pub fn complete(line: &str, pos: usize, data: &CompletionData) -> Completion {
         [command] if command == "roll" || command == "delete" => presets(),
         [command] if command == "char" => {
             let mut names = chars();
-            names.extend(["new", "rename", "delete"]);
+            names.extend(crate::vocab::subcommands("char"));
             names
         }
         [command] if command == "set" || command == "unset" => {

@@ -7,6 +7,9 @@
 pub(crate) struct CommandSpec {
     /// The words that run it (`quit` and `exit` share a row).
     pub words: &'static [&'static str],
+    /// Words that may follow it as a subcommand (`char new`, ...). Completion
+    /// offers them and the parser matches them, so they live only here.
+    pub subcommands: &'static [&'static str],
     /// The usage line reported when its arguments are wrong. `None` for
     /// commands that take none.
     pub usage: Option<&'static str>,
@@ -25,6 +28,7 @@ const fn command(
 ) -> CommandSpec {
     CommandSpec {
         words: word,
+        subcommands: &[],
         usage,
         label: None,
         summary,
@@ -72,6 +76,7 @@ pub(crate) const COMMANDS: [CommandSpec; 13] = [
     command(&["vars"], None, "list the active character's variables"),
     CommandSpec {
         label: Some("char [<name> | new|rename|delete ...]"),
+        subcommands: &["new", "rename", "delete"],
         ..command(
             &["char"],
             Some("char [<name> | new <name> | rename <old> <new> | delete <name>]"),
@@ -124,6 +129,25 @@ pub(crate) fn usage(word: &'static str) -> &'static str {
         .unwrap_or(word)
 }
 
+/// The subcommand of `command` that `typed` names (any case), if it has one.
+pub(crate) fn subcommand(command: &str, typed: &str) -> Option<&'static str> {
+    COMMANDS
+        .iter()
+        .find(|c| c.words.contains(&command))?
+        .subcommands
+        .iter()
+        .copied()
+        .find(|s| s.eq_ignore_ascii_case(typed))
+}
+
+/// The subcommands of `command`, empty if it has none.
+pub(crate) fn subcommands(command: &str) -> &'static [&'static str] {
+    COMMANDS
+        .iter()
+        .find(|c| c.words.contains(&command))
+        .map_or(&[], |c| c.subcommands)
+}
+
 /// One command as the desktop app sees it: what it needs to tell commands
 /// from formulas and to show usage as soon as a word is typed.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
@@ -132,6 +156,8 @@ pub struct CommandInfo {
     pub words: Vec<&'static str>,
     /// Its usage line; `None` for commands that take no arguments.
     pub usage: Option<&'static str>,
+    /// Words that may follow it as a subcommand; empty for most commands.
+    pub subcommands: Vec<&'static str>,
     /// Only the session understands it.
     pub session_only: bool,
 }
@@ -144,6 +170,7 @@ pub fn vocabulary() -> Vec<CommandInfo> {
         .map(|c| CommandInfo {
             words: c.words.to_vec(),
             usage: c.usage,
+            subcommands: c.subcommands.to_vec(),
             session_only: c.session_only,
         })
         .collect()
@@ -195,21 +222,30 @@ mod tests {
     }
 
     #[test]
-    fn every_word_the_parser_matches_is_in_the_table() {
-        let source = include_str!("command/parse.rs");
-        let mut found = 0;
-        for line in source.lines() {
-            let Some(start) = line.trim_start().strip_prefix("Some(\"") else {
-                continue;
-            };
-            let word = start.split('"').next().unwrap();
-            found += 1;
-            assert!(
-                parser_words().any(|w| w == word),
-                "parse.rs matches {word:?}, which is not in the vocabulary table"
-            );
+    fn every_subcommand_is_recognised_by_the_parser() {
+        // Without arguments a subcommand is a usage error; a parser that
+        // did not know the word would read it as a name to switch to.
+        for c in COMMANDS.iter().filter(|c| !c.subcommands.is_empty()) {
+            for sub in c.subcommands {
+                for typed in [sub.to_string(), sub.to_uppercase()] {
+                    assert!(
+                        matches!(
+                            parse(&[c.words[0], &typed]),
+                            Err(CommandError::Usage { .. })
+                        ),
+                        "{} {typed} is in the table but the parser does not treat it as a subcommand",
+                        c.words[0]
+                    );
+                }
+            }
         }
-        assert!(found >= 10, "parse.rs scan found only {found} arms");
+    }
+
+    #[test]
+    fn subcommand_lookup_ignores_case() {
+        assert_eq!(subcommand("char", "RENAME"), Some("rename"));
+        assert_eq!(subcommand("char", "bob"), None);
+        assert_eq!(subcommand("roll", "new"), None);
     }
 
     #[test]

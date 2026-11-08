@@ -4,11 +4,11 @@ import { mountInput, type InputApi } from "./index";
 import { commonPrefix, History, isFormulaLine, pieces, usageFor } from "./words";
 
 const vocabulary: CommandInfo[] = [
-  { words: ["save"], usage: "save <name> <formula> [--global]", session_only: false },
-  { words: ["set"], usage: "set <name> <integer>", session_only: false },
-  { words: ["char"], usage: "char [<name> | new <name> | rename <old> <new> | delete <name>]", session_only: false },
-  { words: ["presets"], usage: null, session_only: false },
-  { words: ["quit", "exit"], usage: null, session_only: true },
+  { words: ["save"], usage: "save <name> <formula> [--global]", subcommands: [], session_only: false },
+  { words: ["set"], usage: "set <name> <integer>", subcommands: [], session_only: false },
+  { words: ["char"], usage: "char [<name> | new <name> | rename <old> <new> | delete <name>]", subcommands: ["new", "rename", "delete"], session_only: false },
+  { words: ["presets"], usage: null, subcommands: [], session_only: false },
+  { words: ["quit", "exit"], usage: null, subcommands: [], session_only: true },
 ];
 
 const failure = (message: string) => ({ status: "error", error: { kind: "x", message, hints: [] }, span: null, source: null });
@@ -63,11 +63,14 @@ describe("words", () => {
     expect(isFormulaLine("  ", vocabulary)).toBe(false);
     expect(isFormulaLine("-h", vocabulary)).toBe(false);
     expect(isFormulaLine("exit", vocabulary)).toBe(false);
+    expect(isFormulaLine("SAVE x d20", vocabulary)).toBe(false);
+    expect(isFormulaLine("Exit", vocabulary)).toBe(false);
     expect(isFormulaLine("save x d20", [])).toBe(true);
   });
   it("usage appears once a command word is typed", () => {
     expect(usageFor("sav", vocabulary)).toBeNull();
     expect(usageFor("save", vocabulary)).toContain("<name> <formula>");
+    expect(usageFor("SAVE ", vocabulary)).toContain("<name> <formula>");
     expect(usageFor("  set prof", vocabulary)).toContain("<integer>");
     expect(usageFor("char ", vocabulary)).toContain("new <name>");
     expect(usageFor("d20+5", vocabulary)).toBeNull();

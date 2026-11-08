@@ -150,6 +150,8 @@ export interface CommandInfo {
   words: string[];
   /** Its usage line; null for commands that take no arguments. */
   usage: string | null;
+  /** Words that may follow it as a subcommand (`char new`); empty for most. */
+  subcommands: string[];
   /** Only the session understands it. */
   session_only: boolean;
 }
