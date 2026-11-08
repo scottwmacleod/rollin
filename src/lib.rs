@@ -40,6 +40,7 @@ pub use presets::{Store, StoreError};
 pub use session::{format_history, help_text, session_command, SessionCommand};
 pub use settings::SettingsStore;
 pub use system::{Crit, CritRange, System};
+pub use vocab::{vocabulary, CommandInfo};
 
 use rand::rngs::SysRng;
 use rand::{Rng, SeedableRng};

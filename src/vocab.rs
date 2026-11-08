@@ -124,6 +124,31 @@ pub(crate) fn usage(word: &'static str) -> &'static str {
         .unwrap_or(word)
 }
 
+/// One command as the desktop app sees it: what it needs to tell commands
+/// from formulas and to show usage as soon as a word is typed.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct CommandInfo {
+    /// The words that run it.
+    pub words: Vec<&'static str>,
+    /// Its usage line; `None` for commands that take no arguments.
+    pub usage: Option<&'static str>,
+    /// Only the session understands it.
+    pub session_only: bool,
+}
+
+/// The whole command vocabulary, in `help` order, for front ends that cannot
+/// call the crate-private table.
+pub fn vocabulary() -> Vec<CommandInfo> {
+    COMMANDS
+        .iter()
+        .map(|c| CommandInfo {
+            words: c.words.to_vec(),
+            usage: c.usage,
+            session_only: c.session_only,
+        })
+        .collect()
+}
+
 /// The command rows of `help`, aligned in two columns.
 pub(crate) fn help_rows() -> String {
     const WIDTH: usize = 35;
@@ -185,6 +210,23 @@ mod tests {
             );
         }
         assert!(found >= 10, "parse.rs scan found only {found} arms");
+    }
+
+    #[test]
+    fn the_public_vocabulary_mirrors_the_table() {
+        let public = vocabulary();
+        assert_eq!(public.len(), COMMANDS.len());
+        let words: Vec<&str> = public
+            .iter()
+            .flat_map(|c| c.words.iter().copied())
+            .collect();
+        assert_eq!(words, words_in_table());
+        let quit = public.iter().find(|c| c.words.contains(&"exit")).unwrap();
+        assert!(quit.session_only && quit.usage.is_none());
+    }
+
+    fn words_in_table() -> Vec<&'static str> {
+        words().collect()
     }
 
     #[test]

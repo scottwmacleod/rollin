@@ -73,6 +73,12 @@ fn set_seed(session: tauri::State<'_, AppSession>, seed: Option<u64>) -> Option<
     session.current_seed()
 }
 
+/// The command words and their usage lines, from the library's table.
+#[tauri::command]
+fn vocabulary() -> Vec<rollin::CommandInfo> {
+    rollin::vocabulary()
+}
+
 #[tauri::command]
 fn about(app: AppHandle) -> About {
     rollin_desktop_core::about(&app.package_info().version.to_string())
@@ -158,6 +164,7 @@ fn main() {
             state,
             set_seed,
             set_system,
+            vocabulary,
             about,
             relaunch_app
         ])
