@@ -143,3 +143,13 @@ export interface About {
   license: string;
   repository: string;
 }
+
+/** One command from the library's vocabulary table (src/vocab.rs). */
+export interface CommandInfo {
+  /** The words that run it (`quit` and `exit` share an entry). */
+  words: string[];
+  /** Its usage line; null for commands that take no arguments. */
+  usage: string | null;
+  /** Only the session understands it. */
+  session_only: boolean;
+}

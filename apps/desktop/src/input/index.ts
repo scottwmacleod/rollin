@@ -1,6 +1,6 @@
 import "./input.css";
 import * as api from "../api";
-import type { Completions, Execution } from "../api";
+import type { CommandInfo, Completions, Execution } from "../api";
 import { commonPrefix, History, isFormulaLine, pieces, usageFor } from "./words";
 
 export { isFormulaLine, pieces, commonPrefix, History } from "./words";
@@ -10,6 +10,8 @@ export interface InputApi {
   check(formula: string): Promise<void>;
   complete(line: string, pos: number): Promise<Completions>;
   execute(line: string): Promise<Execution>;
+  /** The library's command table: which first words are not formulas. */
+  vocabulary(): Promise<CommandInfo[]>;
 }
 
 export interface InputOptions {
@@ -46,6 +48,12 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
   const backend: InputApi = options.api ?? api;
   const debounceMs = options.debounceMs ?? 150;
   const history = new History(options.history);
+  // Until the table arrives every line counts as a formula; it is one local call.
+  let vocabulary: CommandInfo[] = [];
+  void backend.vocabulary().then(
+    (table) => (vocabulary = table),
+    () => undefined,
+  );
   const id = `fx${++counter}`;
 
   container.classList.add("formula-mounted");
@@ -121,7 +129,7 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
 
   /** Usage for a typed command word, unless an error is already showing. */
   function showHint(): void {
-    const usage = error.hidden ? usageFor(input.value) : null;
+    const usage = error.hidden ? usageFor(input.value, vocabulary) : null;
     hint.hidden = usage === null;
     hint.textContent = usage ?? "";
   }
@@ -230,7 +238,7 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
 
   /** Parses `line` through `check`; null if fine (or not a formula). */
   async function problem(line: string): Promise<string | null> {
-    if (!isFormulaLine(line)) return null;
+    if (!isFormulaLine(line, vocabulary)) return null;
     try {
       await backend.check(line);
       return null;
@@ -243,7 +251,7 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
     clearTimeout(timer);
     const line = input.value;
     const mine = ++seq;
-    if (!isFormulaLine(line)) return showError(null);
+    if (!isFormulaLine(line, vocabulary)) return showError(null);
     timer = setTimeout(() => {
       void problem(line).then((message) => {
         if (mine === seq) showError(message);

@@ -1,7 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Execution } from "../api";
+import type { CommandInfo, Execution } from "../api";
 import { mountInput, type InputApi } from "./index";
 import { commonPrefix, History, isFormulaLine, pieces, usageFor } from "./words";
+
+const vocabulary: CommandInfo[] = [
+  { words: ["save"], usage: "save <name> <formula> [--global]", session_only: false },
+  { words: ["set"], usage: "set <name> <integer>", session_only: false },
+  { words: ["char"], usage: "char [<name> | new <name> | rename <old> <new> | delete <name>]", session_only: false },
+  { words: ["presets"], usage: null, session_only: false },
+  { words: ["quit", "exit"], usage: null, session_only: true },
+];
 
 const failure = (message: string) => ({ status: "error", error: { kind: "x", message, hints: [] }, span: null, source: null });
 const ok: Execution = { status: "empty" };
@@ -16,6 +24,7 @@ function setup(over: Partial<InputApi> = {}, history: string[] = []) {
     check: vi.fn().mockResolvedValue(undefined),
     complete: vi.fn().mockResolvedValue({ start: 0, candidates: [] }),
     execute: vi.fn().mockResolvedValue(ok),
+    vocabulary: vi.fn().mockResolvedValue(vocabulary),
     ...over,
   };
   const onSubmit = vi.fn();
@@ -48,19 +57,21 @@ describe("words", () => {
     expect(ps.filter((p) => p.kind === "label").map((p) => p.text)).toEqual(["# attack"]);
   });
   it("only formulas go to check", () => {
-    expect(isFormulaLine("d20+5")).toBe(true);
-    expect(isFormulaLine("adv-attack")).toBe(true);
-    expect(isFormulaLine("save x d20")).toBe(false);
-    expect(isFormulaLine("  ")).toBe(false);
-    expect(isFormulaLine("-h")).toBe(false);
+    expect(isFormulaLine("d20+5", vocabulary)).toBe(true);
+    expect(isFormulaLine("adv-attack", vocabulary)).toBe(true);
+    expect(isFormulaLine("save x d20", vocabulary)).toBe(false);
+    expect(isFormulaLine("  ", vocabulary)).toBe(false);
+    expect(isFormulaLine("-h", vocabulary)).toBe(false);
+    expect(isFormulaLine("exit", vocabulary)).toBe(false);
+    expect(isFormulaLine("save x d20", [])).toBe(true);
   });
   it("usage appears once a command word is typed", () => {
-    expect(usageFor("sav")).toBeNull();
-    expect(usageFor("save")).toContain("<name> <formula>");
-    expect(usageFor("  set prof")).toContain("<integer>");
-    expect(usageFor("char ")).toContain("new <name>");
-    expect(usageFor("d20+5")).toBeNull();
-    expect(usageFor("toString")).toBeNull();
+    expect(usageFor("sav", vocabulary)).toBeNull();
+    expect(usageFor("save", vocabulary)).toContain("<name> <formula>");
+    expect(usageFor("  set prof", vocabulary)).toContain("<integer>");
+    expect(usageFor("char ", vocabulary)).toContain("new <name>");
+    expect(usageFor("d20+5", vocabulary)).toBeNull();
+    expect(usageFor("toString", vocabulary)).toBeNull();
   });
 
   it("common prefix", () => {
@@ -117,8 +128,9 @@ describe("formula box", () => {
     expect(error().hidden).toBe(true);
   });
 
-  it("shows usage under the box for a typed command, and not for formulas", () => {
+  it("shows usage under the box for a typed command, and not for formulas", async () => {
     const { host, type } = setup();
+    await flush(); // the library's vocabulary arrives
     const hint = () => host.querySelector<HTMLElement>(".fx-hint")!;
     expect(hint().hidden).toBe(true);
     type("save");

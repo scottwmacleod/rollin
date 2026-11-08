@@ -1,40 +1,25 @@
 // Pure helpers for the formula box. No library logic lives here: the library
 // decides what parses and what completes; this only decides what to ask it.
 
-/** First words that start a command or session word rather than a formula.
- * `check` would reject these as formulas, so the live parse skips them. */
-const NON_FORMULA = new Set([
-  "save", "presets", "delete", "import", "roll", "set", "unset", "vars", "char",
-  "characters", "help", "history", "quit", "exit",
-]);
+import type { CommandInfo } from "../api/types";
 
-/** Whether `line` is a formula (or preset name) worth sending to `check`. */
-export function isFormulaLine(line: string): boolean {
+/** Whether `line` is a formula (or preset name) worth sending to `check`.
+ * A line starting with a command word is not: `check` would reject it. */
+export function isFormulaLine(line: string, vocabulary: CommandInfo[]): boolean {
   const first = line.trim().split(/\s+/)[0] ?? "";
   if (first === "") return false;
   if (first.startsWith("-")) return false;
-  return !NON_FORMULA.has(first);
+  return !vocabulary.some((c) => c.words.includes(first));
 }
 
-/** Usage for commands that take arguments. Mirrors the usage strings the
- * library's parser reports (src/command/parse.rs) so the shape is visible as
- * soon as the word is typed, before it can be rejected. */
-const USAGE: Record<string, string> = {
-  save: "save <name> <formula> [--global]   e.g. save attack d20+5",
-  set: "set <name> <integer>   e.g. set prof 3, then use @prof in a formula",
-  unset: "unset <name>",
-  delete: "delete <name> [--global]",
-  import: "import <path> [--force]",
-  roll: "roll <formula or preset name>",
-  char: "char [<name> | new <name> | delete <name>]",
-};
-
 /** The usage line for the command word at the start of `line`, once that word
- * is fully typed (a space after it, or the whole line is exactly the word). */
-export function usageFor(line: string): string | null {
+ * is fully typed (a space after it, or the whole line is exactly the word).
+ * The words and usage lines come from the library's table, so a new command
+ * shows up here without a change. */
+export function usageFor(line: string, vocabulary: CommandInfo[]): string | null {
   const m = /^\s*(\S+)(\s|$)/.exec(line);
   if (!m) return null;
-  return Object.hasOwn(USAGE, m[1]) ? USAGE[m[1]] : null;
+  return vocabulary.find((c) => c.words.includes(m[1]))?.usage ?? null;
 }
 
 export type Piece = { text: string; kind: "plain" | "variable" | "label" };

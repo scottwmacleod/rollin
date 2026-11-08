@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { About, Completions, Execution, Failure, Roll, SessionState } from "./types";
+import type { About, CommandInfo, Completions, Execution, Failure, Roll, SessionState } from "./types";
 
 export type * from "./types";
 
@@ -67,6 +67,11 @@ export function setSeed(seed: number | null): Promise<number | null> {
 }
 
 /** Name, versions (from the build), licence and repository for the About view. */
+/** The command words and usage lines, from the library's vocabulary table. */
+export function vocabulary(): Promise<CommandInfo[]> {
+  return invoke<CommandInfo[]>("vocabulary");
+}
+
 export function about(): Promise<About> {
   return invoke<About>("about");
 }
