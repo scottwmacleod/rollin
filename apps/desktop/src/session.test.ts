@@ -64,8 +64,8 @@ describe("entryFor", () => {
     });
   });
 
-  it("lays out listings from the typed data and words hints for the desktop", () => {
-    const vars: Execution = { status: "ok", output: { kind: "vars", vars: [["str", 3], ["dex", 4]], lines: [], hints: [] } };
+  it("shows the library's listing lines and words hints for the desktop", () => {
+    const vars: Execution = { status: "ok", output: { kind: "vars", vars: [["str", 3], ["dex", 4]], lines: ["str = 3", "dex = 4"], hints: [] } };
     expect(entryFor("vars", vars, t)?.result).toEqual({ ok: true, notice: { lines: ["str = 3", "dex = 4"], hints: [] } });
 
     const none: Execution = {
@@ -85,7 +85,7 @@ describe("entryFor", () => {
           { name: "atk", formula: "d20+5", source: { kind: "character", name: "mira" }, shadow: { kind: "shadows" } },
           { name: "fireball", formula: "8d6", source: { kind: "global" }, shadow: { kind: "none" } },
         ],
-        lines: [],
+        lines: ["atk       d20+5  [mira, shadows global]", "fireball  8d6    [global]"],
         hints: [],
       },
     };
@@ -94,7 +94,7 @@ describe("entryFor", () => {
       notice: { lines: ["atk       d20+5  [mira, shadows global]", "fireball  8d6    [global]"], hints: [] },
     });
 
-    const chars: Execution = { status: "ok", output: { kind: "characters", names: ["default", "mira"], active: "mira", lines: [], hints: [] } };
+    const chars: Execution = { status: "ok", output: { kind: "characters", names: ["default", "mira"], active: "mira", lines: ["  default", "* mira"], hints: [] } };
     expect(entryFor("characters", chars, t)?.result).toEqual({ ok: true, notice: { lines: ["  default", "* mira"], hints: [] } });
   });
 });

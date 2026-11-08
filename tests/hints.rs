@@ -1,7 +1,10 @@
 //! Typed hints, neutral output text and the serialized shape of commands'
 //! results, all through the library (no binary spawned). ADR 0007.
 
-use rollin::{execute, parse_command, Command, CommandError, Context, Hint, Output};
+use rollin::{
+    execute, parse_command, Command, CommandError, Context, Hint, Output, PresetEntry,
+    PresetSource, Shadow,
+};
 use serde_json::json;
 use tempfile::TempDir;
 
@@ -158,7 +161,7 @@ fn lines_are_neutral_sentences_for_single_line_outputs() {
 }
 
 #[test]
-fn structured_outputs_have_no_lines_and_empty_lists_carry_hints() {
+fn rolls_have_no_lines_and_empty_lists_carry_hints() {
     let (_d, ctx) = sandbox();
     let presets = ok(&ctx, "presets");
     assert_eq!(presets.lines(), ["No presets saved."]);
@@ -169,11 +172,48 @@ fn structured_outputs_have_no_lines_and_empty_lists_carry_hints() {
 
     ok(&ctx, "save atk d20");
     ok(&ctx, "set str 3");
+    assert!(ok(&ctx, "d20").lines().is_empty());
     for line in ["presets", "vars", "characters", "d20"] {
-        let out = ok(&ctx, line);
-        assert!(out.lines().is_empty(), "{line}");
-        assert!(out.hints().is_empty(), "{line}");
+        assert!(ok(&ctx, line).hints().is_empty(), "{line}");
     }
+}
+
+#[test]
+fn listings_carry_their_layout_as_lines() {
+    let (_d, ctx) = sandbox();
+    ok(&ctx, "set str 3");
+    ok(&ctx, "set dex 14");
+    assert_eq!(ok(&ctx, "vars").lines(), ["dex = 14", "str = 3"]);
+
+    ok(&ctx, "char new mira");
+    ok(&ctx, "char default");
+    assert_eq!(ok(&ctx, "characters").lines(), ["* default", "  mira"]);
+
+    ok(&ctx, "save atk d20 --global");
+    ok(&ctx, "save atk d20+5");
+    ok(&ctx, "save fb 8d6");
+    assert_eq!(
+        ok(&ctx, "presets").lines(),
+        [
+            "atk  d20+5  [default, shadows global]",
+            "fb   8d6    [default]",
+            "atk  d20    [global, shadowed by default]",
+        ]
+    );
+}
+
+#[test]
+fn preset_table_pads_wide_names_by_character_count() {
+    let entry = |name: &str, formula: &str| PresetEntry {
+        name: name.into(),
+        formula: formula.into(),
+        source: PresetSource::Global,
+        shadow: Shadow::None,
+    };
+    let out = Output::Presets {
+        presets: vec![entry("é", "d20"), entry("日本語", "8d6")],
+    };
+    assert_eq!(out.lines(), ["é    d20  [global]", "日本語  8d6  [global]"]);
 }
 
 #[test]

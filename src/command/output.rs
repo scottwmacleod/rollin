@@ -72,12 +72,12 @@ pub enum Output {
 }
 
 impl Output {
-    /// Neutral sentences for the outputs that are a few fixed lines: saves,
-    /// deletes, imports, variable and character changes, and the empty
-    /// preset and variable lists. Structured outputs (rolls, the preset
-    /// table, the character list, variables) return nothing: callers lay
-    /// those out themselves. Wording that tells the user what to run next
-    /// is not here; see [`Output::hints`].
+    /// Neutral text for everything but rolls: saves, deletes, imports,
+    /// variable and character changes, and the `characters`, `vars` and
+    /// `presets` listings (the active-character marker, `name = value`, the
+    /// padded preset table with its shadowing notes). Rolls return nothing:
+    /// callers render those themselves. Wording that tells the user what to
+    /// run next is not here; see [`Output::hints`].
     pub fn lines(&self) -> Vec<String> {
         let on = |character: &Option<String>| {
             character
@@ -85,7 +85,17 @@ impl Output {
                 .map_or(String::new(), |c| format!(" on '{c}'"))
         };
         match self {
-            Output::Rolls { .. } | Output::Characters { .. } => vec![],
+            Output::Rolls { .. } => vec![],
+            Output::Characters { names, active } => {
+                let mut lines: Vec<String> = names
+                    .iter()
+                    .map(|n| format!("{} {n}", if n == active { '*' } else { ' ' }))
+                    .collect();
+                if !names.contains(active) {
+                    lines.push(format!("* {active} (missing)"));
+                }
+                lines
+            }
             Output::Saved {
                 name,
                 formula,
@@ -147,9 +157,9 @@ impl Output {
                 vec![format!("active character: {name}")]
             }
             Output::Vars { vars } if vars.is_empty() => vec!["No variables set.".into()],
-            Output::Vars { .. } => vec![],
+            Output::Vars { vars } => vars.iter().map(|(n, v)| format!("{n} = {v}")).collect(),
             Output::Presets { presets } if presets.is_empty() => vec!["No presets saved.".into()],
-            Output::Presets { .. } => vec![],
+            Output::Presets { presets } => preset_table(presets),
         }
     }
 
@@ -170,6 +180,32 @@ impl Output {
             _ => vec![],
         }
     }
+}
+
+/// The padded preset table, one line per preset. Widths count `char`s so
+/// non-ASCII names line up.
+fn preset_table(presets: &[PresetEntry]) -> Vec<String> {
+    let width = |f: fn(&PresetEntry) -> usize| presets.iter().map(f).max().unwrap_or(0);
+    let name_w = width(|p| p.name.chars().count());
+    let formula_w = width(|p| p.formula.chars().count());
+    presets
+        .iter()
+        .map(|p| {
+            let source = match &p.source {
+                PresetSource::Character(c) => c.as_str(),
+                PresetSource::Global => "global",
+            };
+            let note = match &p.shadow {
+                Shadow::None => String::new(),
+                Shadow::Shadows => ", shadows global".to_string(),
+                Shadow::ShadowedBy(c) => format!(", shadowed by {c}"),
+            };
+            format!(
+                "{:<name_w$}  {:<formula_w$}  [{source}{note}]",
+                p.name, p.formula
+            )
+        })
+        .collect()
 }
 
 /// An [`Output`] with its neutral text and hints alongside, for callers

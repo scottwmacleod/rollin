@@ -6,7 +6,7 @@ use rand_chacha::ChaCha8Rng;
 use render::{color_enabled, render_line, ColorChoice, Painter};
 use rollin::{
     entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Hint, Output,
-    PresetEntry, PresetSource, RollResult, Shadow,
+    RollResult,
 };
 use serde::Serialize;
 use std::io::IsTerminal;
@@ -189,45 +189,9 @@ fn hint_line(hint: &Hint) -> String {
 fn show(args: &Args, output: Output) {
     match output {
         Output::Rolls { preset, rolls } => show_rolls(args, preset, rolls),
-        Output::Characters { names, active } => {
-            for name in &names {
-                let mark = if *name == active { '*' } else { ' ' };
-                println!("{mark} {name}");
-            }
-            if !names.contains(&active) {
-                println!("* {active} (missing)");
-            }
-        }
-        Output::Vars { vars } if !vars.is_empty() => {
-            for (name, value) in vars {
-                println!("{name} = {value}");
-            }
-        }
-        Output::Presets { presets } if !presets.is_empty() => {
-            let width = |f: fn(&PresetEntry) -> usize| presets.iter().map(f).max().unwrap_or(0);
-            let (name_w, formula_w) = (
-                width(|p| p.name.chars().count()),
-                width(|p| p.formula.chars().count()),
-            );
-            for p in &presets {
-                let source = match &p.source {
-                    PresetSource::Character(c) => c.as_str(),
-                    PresetSource::Global => "global",
-                };
-                let note = match &p.shadow {
-                    Shadow::None => String::new(),
-                    Shadow::Shadows => ", shadows global".to_string(),
-                    Shadow::ShadowedBy(c) => format!(", shadowed by {c}"),
-                };
-                println!(
-                    "{:<name_w$}  {:<formula_w$}  [{source}{note}]",
-                    p.name, p.formula
-                );
-            }
-        }
         other => {
-            // Single-line outputs carry neutral text; an empty list's hint
-            // continues its last line.
+            // Everything but rolls carries neutral text from the library; an
+            // empty list's hint continues its last line.
             let mut lines = other.lines();
             if let (Some(last), Some(hint)) = (lines.last_mut(), other.hints().first()) {
                 *last = format!("{last} {}", hint_line(hint));

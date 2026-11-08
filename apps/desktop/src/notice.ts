@@ -1,4 +1,4 @@
-import type { Hint, Output, PresetEntry } from "./api/types";
+import type { Hint, Output } from "./api/types";
 import type { Notice } from "./log/types";
 
 /** The desktop wording of a hint. Hints are data from the library; each front
@@ -33,43 +33,14 @@ export function hintText(hint: Hint): string {
   }
 }
 
-function presetLines(presets: PresetEntry[]): string[] {
-  const width = (f: (p: PresetEntry) => string) => Math.max(...presets.map((p) => [...f(p)].length));
-  const nameW = width((p) => p.name);
-  const formulaW = width((p) => p.formula);
-  const pad = (s: string, w: number) => s + " ".repeat(w - [...s].length);
-  return presets.map((p) => {
-    const source = p.source.kind === "global" ? "global" : p.source.name;
-    const note =
-      p.shadow.kind === "shadows" ? ", shadows global" : p.shadow.kind === "shadowed_by" ? `, shadowed by ${p.shadow.by}` : "";
-    return `${pad(p.name, nameW)}  ${pad(p.formula, formulaW)}  [${source}${note}]`;
-  });
-}
-
-/** What a command prints. The library's `lines` are the neutral text for
- * single-line results; listings (`vars`, `presets`, `characters`) come back
- * empty and are laid out here from the typed data, as the CLI does. An empty
- * listing's hint continues its line, as it does in the CLI. */
+/** What a command prints: the library's `lines` (neutral text, listings
+ * included) plus hints worded for the desktop. An empty listing's hint
+ * continues its line, as it does in the CLI. */
 export function noticeFor(output: Output): Notice | null {
+  if (output.kind === "rolls") return null;
   let lines = output.lines;
   let hints = output.hints.map(hintText);
-  switch (output.kind) {
-    case "rolls":
-      return null;
-    case "characters": {
-      lines = output.names.map((n) => `${n === output.active ? "*" : " "} ${n}`);
-      if (!output.names.includes(output.active)) lines.push(`* ${output.active} (missing)`);
-      break;
-    }
-    case "vars":
-      if (output.vars.length > 0) lines = output.vars.map(([name, value]) => `${name} = ${value}`);
-      break;
-    case "presets":
-      if (output.presets.length > 0) lines = presetLines(output.presets);
-      break;
-  }
-  if (lines.length > 0 && hints.length > 0 && output.lines.length > 0) {
-    // Single-line outputs: the first hint continues the last line.
+  if (lines.length > 0 && hints.length > 0) {
     lines = [...lines.slice(0, -1), `${lines[lines.length - 1]} ${hints[0]}`];
     hints = hints.slice(1);
   }
