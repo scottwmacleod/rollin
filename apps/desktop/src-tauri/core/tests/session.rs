@@ -320,3 +320,18 @@ fn system_is_read_and_written_in_the_cli_files() {
         .unwrap_err();
     assert!(err.contains("dnd5e"), "{err}");
 }
+
+#[test]
+fn help_and_completion_offer_only_the_flags_the_app_accepts() {
+    let dir = TempDir::new().unwrap();
+    let mut app = session(&dir);
+    let help = wire(&app.execute("help"))["lines"].to_string();
+    assert!(help.contains("--char"), "{help}");
+    for flag in ["--seed", "--json", "--color", "-q"] {
+        assert!(!help.contains(flag), "help advertises {flag}: {help}");
+    }
+    assert_eq!(
+        app.complete("--", 2).candidates,
+        ["--char", "--force", "--global"]
+    );
+}

@@ -2,7 +2,7 @@
 //! in, a start offset and candidates out.
 
 use proptest::prelude::*;
-use rollin::{complete, Completion, CompletionData};
+use rollin::{complete, Completion, CompletionData, LinePolicy};
 
 fn data() -> CompletionData {
     let list = |names: &[&str]| names.iter().map(|n| n.to_string()).collect();
@@ -11,6 +11,11 @@ fn data() -> CompletionData {
         characters: list(&["default", "grog"]),
         variables: list(&["dex", "stealth", "str"]),
         session_words: list(&["help", "quit", "exit", "history"]),
+        flags: LinePolicy::REPL
+            .flags()
+            .into_iter()
+            .map(String::from)
+            .collect(),
     }
 }
 

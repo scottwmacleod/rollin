@@ -1,10 +1,8 @@
 //! The interactive session: a line editor over a terminal, or a plain loop
 //! over piped stdin. Both run each line through [`handle_line`].
 
-use crate::run_line;
-use clap::Parser;
 use rand_chacha::ChaCha8Rng;
-use rollin::{format_history, help_text, session_command, Context, SessionCommand};
+use rollin::{run_line, session_command, Context, LineOutcome, LinePolicy, SessionCommand};
 use rustyline::completion::Completer;
 use rustyline::highlight::Highlighter;
 use rustyline::hint::Hinter;
@@ -33,23 +31,15 @@ pub fn session(rng: &mut ChaCha8Rng) -> ExitCode {
 
 /// Runs one session line. Returns `true` when the session should end.
 fn handle_line(line: &str, rng: &mut ChaCha8Rng, history: &dyn Fn() -> Vec<String>) -> bool {
-    let words: Vec<&str> = line.split_whitespace().collect();
-    match session_command(&words) {
-        Some(SessionCommand::Quit) => return true,
-        Some(SessionCommand::Help) => print!("{}", help_text()),
-        Some(SessionCommand::History) => {
-            print!("{}", format_history(history().iter().map(String::as_str)));
+    match run_line(line, LinePolicy::REPL, crate::config_dir(), rng, history) {
+        LineOutcome::Quit => return true,
+        LineOutcome::Empty => {}
+        LineOutcome::Text(text) => print!("{text}"),
+        LineOutcome::Output { output, flags } => crate::show(&flags.into(), output),
+        LineOutcome::Error(e) => {
+            crate::fail(&e);
         }
-        None => match crate::Args::try_parse_from(std::iter::once("rollin").chain(words)) {
-            Ok(args) if args.words.is_empty() => {}
-            Ok(args) => {
-                run_line(&args, rng);
-            }
-            // Print the clap error (or --help text) and carry on.
-            Err(e) => {
-                let _ = e.print();
-            }
-        },
+        LineOutcome::Rejected(message) => eprintln!("error: {message}"),
     }
     false
 }
@@ -85,7 +75,7 @@ impl Completer for Completions {
         pos: usize,
         _: &rustyline::Context<'_>,
     ) -> rustyline::Result<(usize, Vec<String>)> {
-        let data = Context::new(self.config_dir.clone()).completion_data();
+        let data = Context::new(self.config_dir.clone()).completion_data(LinePolicy::REPL);
         let completion = rollin::complete(line, pos, &data);
         Ok((completion.start, completion.candidates))
     }

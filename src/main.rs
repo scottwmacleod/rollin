@@ -5,8 +5,8 @@ use clap::Parser;
 use rand_chacha::ChaCha8Rng;
 use render::{color_enabled, render_line, ColorChoice, Painter};
 use rollin::{
-    entropy_rng, execute, parse_command, seeded_rng, CommandError, Context, Error, Hint, Output,
-    RollResult,
+    entropy_rng, execute, parse_command, seeded_rng, ColorWhen, CommandError, Context, Error, Hint,
+    LineFlags, Output, RollResult,
 };
 use serde::Serialize;
 use std::io::IsTerminal;
@@ -99,12 +99,13 @@ fn main() -> ExitCode {
         }
         return repl::session(&mut rng);
     }
-    run_line(&args, &mut rng)
+    run_args(&args, &mut rng)
 }
 
 /// Runs one parsed command line against a fresh context, printing its
-/// output or error. The one-shot path and the session both come through here.
-pub fn run_line(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
+/// output or error. This is the one-shot path; the session runs typed lines
+/// through the library's `run_line`.
+fn run_args(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
     let mut ctx = Context::new(config_dir());
     ctx.character = args.character.clone();
     let names = &mut || ctx.preset_names();
@@ -124,7 +125,7 @@ pub fn run_line(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
     }
     match execute(&command, &ctx, rng) {
         Ok(output) => {
-            show(args, output);
+            show(&Display::from(args), output);
             ExitCode::SUCCESS
         }
         Err(e) => fail(&e),
@@ -136,7 +137,7 @@ pub fn config_dir() -> Option<PathBuf> {
     rollin::config_dir_from_env()
 }
 
-fn fail(e: &CommandError) -> ExitCode {
+pub fn fail(e: &CommandError) -> ExitCode {
     match e {
         CommandError::Formula { source, error } => {
             eprint!("{}", render_error(source, error, &e.message()));
@@ -186,9 +187,40 @@ fn hint_line(hint: &Hint) -> String {
     }
 }
 
-fn show(args: &Args, output: Output) {
+/// How output is shown: the flags that change its form, not its content.
+pub struct Display {
+    pub json: bool,
+    pub quiet: bool,
+    pub color: ColorChoice,
+}
+
+impl From<&Args> for Display {
+    fn from(args: &Args) -> Self {
+        Display {
+            json: args.json,
+            quiet: args.quiet,
+            color: args.color,
+        }
+    }
+}
+
+impl From<LineFlags> for Display {
+    fn from(flags: LineFlags) -> Self {
+        Display {
+            json: flags.json,
+            quiet: flags.quiet,
+            color: match flags.color {
+                None | Some(ColorWhen::Auto) => ColorChoice::Auto,
+                Some(ColorWhen::Always) => ColorChoice::Always,
+                Some(ColorWhen::Never) => ColorChoice::Never,
+            },
+        }
+    }
+}
+
+pub fn show(display: &Display, output: Output) {
     match output {
-        Output::Rolls { preset, rolls } => show_rolls(args, preset, rolls),
+        Output::Rolls { preset, rolls } => show_rolls(display, preset, rolls),
         other => {
             // Everything but rolls carries neutral text from the library; an
             // empty list's hint continues its last line.
@@ -203,7 +235,7 @@ fn show(args: &Args, output: Output) {
     }
 }
 
-fn show_rolls(args: &Args, preset: Option<(String, String)>, rolls: Vec<RollResult>) {
+fn show_rolls(args: &Display, preset: Option<(String, String)>, rolls: Vec<RollResult>) {
     if args.json {
         let out = JsonOutput {
             schema_version: SCHEMA_VERSION,
