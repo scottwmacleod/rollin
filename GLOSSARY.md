@@ -39,8 +39,12 @@ A `#` note attached to one roll that is shown in the output, e.g. `# attack`.
 _Avoid_: Comment, tag
 
 **Game system**:
-A rule set a character plays under (`dnd5e` so far) that gives rolls meaning: an **attack** (a single d20 check) can be a **critical hit** (natural 20 on the kept die, or any kept d20 at or above the character's `crit_range`) or **critical miss** (natural 1), and a critical hit doubles the dice of its **damage** (later rolls without a d20, or marked `atk` / `dmg`).
+A rule set a character plays under (`dnd5e` so far) that gives rolls meaning: an **attack** (a **d20 check**) can be a **critical hit** (natural 20 on the kept die, or any kept d20 at or above the character's `crit_range`) or **critical miss** (natural 1), and a critical hit doubles the dice of its **damage** (later rolls without a d20, or marked `atk` / `dmg`).
 _Avoid_: Ruleset, mode
+
+**d20 check**:
+A roll with exactly one d20 group that is either one d20, or two d20s keeping one (`adv`, `dis`, `kh1`, `kl1`). Its result is the one die left standing, and a natural 20 or 1 on it can crit. Other terms (`+5`) do not matter. Three or more d20s, a bare `2d20`, a success count (`6d20>=15`) and two separate d20 terms (`d20+d20`) are never a check. A game system uses this one rule for both a roll's attack role and its crit verdict.
+_Avoid_: Attack roll, save
 
 **Repeat**:
 Evaluating the same list of rolls N times, written `Nx`.

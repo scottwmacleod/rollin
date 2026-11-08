@@ -43,7 +43,11 @@ pub fn evaluate(roll: &Roll, double: bool, rng: &mut impl Rng) -> Result<RollRes
         doubled: 0,
     };
     let mut expr = eval_expr(&roll.expr, &mut ctx)?;
-    let check = mark_natural(&mut expr);
+    let check = if roll.expr.is_d20_check() {
+        mark_natural(&mut expr)
+    } else {
+        None
+    };
     Ok(RollResult {
         formula: roll.source.clone(),
         kind: if expr.is_count() {
@@ -285,10 +289,10 @@ fn apply_drops(dice: &mut [Die], (lowest, highest): (i64, i64), clause: &str) {
 
 /// Marks the kept die of a d20 check that rolled a natural 20 or 1.
 ///
-/// A roll is a d20 check when it holds exactly one d20 term, and that term is
-/// not a success count. Its result is the one die left standing: rerolled
-/// dice are history and dropped dice are out, so `d20adv` and `2d20kh1` read
-/// the kept die while `3d20` (three standing dice) is not a check.
+/// Only called for a roll that [`Arith::is_d20_check`] accepts, so this finds
+/// that roll's single d20 group and reads its result: the one die left
+/// standing (rerolled dice are history, dropped dice are out), so `d20adv` and
+/// `2d20kh1` read the kept die.
 ///
 /// Returns the kept die's face, natural or not, for a game system's crit
 /// range.
