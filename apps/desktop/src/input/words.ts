@@ -59,22 +59,23 @@ export function commonPrefix(words: string[]): string {
   return p;
 }
 
-/** Input history: ↑ goes back, ↓ forward, and ↓ past the newest restores the
- * line that was being typed. */
+/** Walking the Session's history: ↑ goes back, ↓ forward, and ↓ past the
+ * newest restores the line that was being typed. The lines themselves belong
+ * to the Session; this only holds the cursor into the list it was given. */
 export class History {
-  private items: string[];
-  private cursor: number;
+  private items: string[] = [];
+  private cursor = 0;
   private draft = "";
 
-  constructor(initial: string[] = []) {
-    this.items = [...initial];
+  /** Starts a walk over `items` (oldest first), from past the newest. */
+  begin(items: string[]): void {
+    this.items = [...items];
     this.cursor = this.items.length;
   }
 
-  push(line: string): void {
-    if (line !== "" && this.items[this.items.length - 1] !== line) this.items.push(line);
-    this.cursor = this.items.length;
-    this.draft = "";
+  /** Whether a walk is under way, so ↑ should not fetch a fresh list. */
+  browsing(): boolean {
+    return this.cursor < this.items.length;
   }
 
   /** The earlier line, or null at the oldest. `current` is kept as the draft. */

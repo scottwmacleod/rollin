@@ -30,6 +30,11 @@ export async function complete(line: string, pos: number): Promise<Completions> 
   return { start: head.length, candidates: result.candidates };
 }
 
+/** The lines typed this session, oldest first; the Session owns this list. */
+export function history(): Promise<string[]> {
+  return invoke<string[]>("history");
+}
+
 /** Resolves if `formula` (or a preset name) would roll; rejects with a `Failure`. */
 export function check(formula: string): Promise<void> {
   return invoke<null>("check", { formula }).then(() => undefined);

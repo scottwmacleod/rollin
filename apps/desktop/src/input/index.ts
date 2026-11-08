@@ -10,6 +10,8 @@ export interface InputApi {
   check(formula: string): Promise<void>;
   complete(line: string, pos: number): Promise<Completions>;
   execute(line: string): Promise<Execution>;
+  /** The Session's typed lines, oldest first: what ↑ walks. */
+  history(): Promise<string[]>;
   /** The library's command table: which first words are not formulas. */
   vocabulary(): Promise<CommandInfo[]>;
 }
@@ -17,8 +19,6 @@ export interface InputApi {
 export interface InputOptions {
   /** Called with an accepted line and its result (anything but an error). */
   onSubmit?: (line: string, execution: Execution) => void;
-  /** Earlier input to seed ↑ with, oldest first (`SessionState.history`). */
-  history?: string[];
   /** Quiet period before the live parse runs. Default 150 ms. */
   debounceMs?: number;
   api?: InputApi;
@@ -47,7 +47,7 @@ let counter = 0;
 export function mountInput(container: HTMLElement, options: InputOptions = {}): FormulaInput {
   const backend: InputApi = options.api ?? api;
   const debounceMs = options.debounceMs ?? 150;
-  const history = new History(options.history);
+  const history = new History();
   // Until the table arrives every line counts as a formula; it is one local call.
   let vocabulary: CommandInfo[] = [];
   void backend.vocabulary().then(
@@ -282,7 +282,7 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
       if (execution.status === "error") return showError(execution.error.message);
       if (execution.status === "rejected") return showError(execution.message);
       showError(null);
-      history.push(line);
+      history.reset(); // the Session logged the line; the next ↑ asks again
       input.value = "";
       closeList();
       paint();
@@ -302,6 +302,22 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
     input.setSelectionRange(line.length, line.length);
     paint();
     live();
+  }
+
+  /** ↑: the Session's history, fetched when a walk starts. */
+  async function recallPrev(): Promise<void> {
+    if (!history.browsing()) {
+      const draft = input.value;
+      let lines: string[];
+      try {
+        lines = await backend.history();
+      } catch {
+        return;
+      }
+      if (input.value !== draft) return; // typed meanwhile
+      history.begin(lines);
+    }
+    recall(history.prev(input.value));
   }
 
   input.addEventListener("input", () => {
@@ -329,7 +345,7 @@ export function mountInput(container: HTMLElement, options: InputOptions = {}): 
       case "ArrowUp":
         e.preventDefault();
         if (open) setActive(active <= 0 ? candidates.length - 1 : active - 1);
-        else recall(history.prev(input.value));
+        else void recallPrev();
         break;
       case "ArrowDown":
         e.preventDefault();

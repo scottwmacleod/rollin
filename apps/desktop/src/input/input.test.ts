@@ -25,10 +25,11 @@ function setup(over: Partial<InputApi> = {}, history: string[] = []) {
     complete: vi.fn().mockResolvedValue({ start: 0, candidates: [] }),
     execute: vi.fn().mockResolvedValue(ok),
     vocabulary: vi.fn().mockResolvedValue(vocabulary),
+    history: vi.fn().mockResolvedValue(history),
     ...over,
   };
   const onSubmit = vi.fn();
-  const box = mountInput(host, { api, onSubmit, history, debounceMs: 10 });
+  const box = mountInput(host, { api, onSubmit, debounceMs: 10 });
   current = box;
   const input = host.querySelector("input")!;
   const type = (v: string) => {
@@ -82,7 +83,9 @@ describe("words", () => {
     expect(commonPrefix([])).toBe("");
   });
   it("history walks back and restores the draft", () => {
-    const h = new History(["a", "b"]);
+    const h = new History();
+    h.begin(["a", "b"]);
+    expect(h.browsing()).toBe(false);
     expect(h.prev("draft")).toBe("b");
     expect(h.prev("")).toBe("a");
     expect(h.prev("")).toBeNull();
@@ -246,10 +249,11 @@ describe("formula box", () => {
     expect(outer).not.toHaveBeenCalled();
   });
 
-  it("↑ and ↓ walk history in order and restore the draft", () => {
+  it("↑ and ↓ walk the Session's history in order and restore the draft", async () => {
     const { type, key, input } = setup({}, ["d4", "d6", "d8"]);
     type("dra");
     key("ArrowUp");
+    await flush();
     expect(input.value).toBe("d8");
     key("ArrowUp");
     expect(input.value).toBe("d6");
@@ -259,13 +263,19 @@ describe("formula box", () => {
     expect(input.value).toBe("dra");
   });
 
-  it("a submitted line joins the history", async () => {
-    const { type, key, input } = setup();
-    type("d20");
+  it("↑ asks the Session for its history afresh after each submit", async () => {
+    const lines = ["d4"];
+    const { key, input, api } = setup({ history: vi.fn(async () => [...lines]) });
+    key("ArrowUp");
+    await flush();
+    expect(input.value).toBe("d4");
     key("Enter");
     await flush();
+    lines.push("d20"); // the Session logged the submit
     key("ArrowUp");
+    await flush();
     expect(input.value).toBe("d20");
+    expect(api.history).toHaveBeenCalledTimes(2);
   });
 
   it("a printable key anywhere else in the window lands in the box", () => {

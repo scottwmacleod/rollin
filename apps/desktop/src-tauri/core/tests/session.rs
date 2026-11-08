@@ -218,6 +218,7 @@ fn session_words_work_and_history_dedupes_repeats() {
     app.execute("d6");
     app.execute("d8");
     assert_eq!(app.state().unwrap().history, ["d6", "d8"]);
+    assert_eq!(app.history(), ["d6", "d8"]);
     let Execution::Text(lines) = app.execute("history") else {
         panic!("history is text");
     };
