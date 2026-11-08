@@ -30,31 +30,7 @@ pub fn parse_command(
         }),
         Some("roll") => roll_or_preset(rest, preset_names),
         Some("characters") => Ok(Command::Characters),
-        Some("char") => match rest {
-            [] => Ok(Command::CharShow),
-            [delete, name] if delete.eq_ignore_ascii_case("delete") => Ok(Command::CharDelete(
-                Name::shaped(name).map_err(CommandError::InvalidCharName)?,
-            )),
-            [rename, from, to] if rename.eq_ignore_ascii_case("rename") => {
-                Ok(Command::CharRename {
-                    from: Name::shaped(from).map_err(CommandError::InvalidCharName)?,
-                    to: normalise(to),
-                })
-            }
-            [rename, ..] if rename.eq_ignore_ascii_case("rename") => Err(CommandError::Usage {
-                usage: "char rename <old> <new>".into(),
-            }),
-            [new, name] if new.eq_ignore_ascii_case("new") => Ok(Command::CharNew(normalise(name))),
-            [new] if new.eq_ignore_ascii_case("new") => Err(CommandError::Usage {
-                usage: "char new <name>".into(),
-            }),
-            [name] => Ok(Command::CharSwitch(
-                Name::shaped(name).map_err(CommandError::InvalidCharName)?,
-            )),
-            _ => Err(CommandError::Usage {
-                usage: usage("char"),
-            }),
-        },
+        Some("char") => parse_char(rest),
         Some("unset") => match rest {
             [name] => Ok(Command::Unset {
                 name: normalise(name),
@@ -92,6 +68,36 @@ pub fn parse_command(
             }
         }
         _ => roll_or_preset(words, preset_names),
+    }
+}
+
+/// `char` and its subcommands, which the vocabulary table names.
+fn parse_char(rest: &[String]) -> Result<Command, CommandError> {
+    let sub = rest
+        .first()
+        .and_then(|w| crate::vocab::subcommand("char", w));
+    match (sub, rest) {
+        (None, []) => Ok(Command::CharShow),
+        (None, [name]) => Ok(Command::CharSwitch(
+            Name::shaped(name).map_err(CommandError::InvalidCharName)?,
+        )),
+        (Some("delete"), [_, name]) => Ok(Command::CharDelete(
+            Name::shaped(name).map_err(CommandError::InvalidCharName)?,
+        )),
+        (Some("rename"), [_, from, to]) => Ok(Command::CharRename {
+            from: Name::shaped(from).map_err(CommandError::InvalidCharName)?,
+            to: normalise(to),
+        }),
+        (Some("rename"), _) => Err(CommandError::Usage {
+            usage: "char rename <old> <new>".into(),
+        }),
+        (Some("new"), [_, name]) => Ok(Command::CharNew(normalise(name))),
+        (Some("new"), _) => Err(CommandError::Usage {
+            usage: "char new <name>".into(),
+        }),
+        _ => Err(CommandError::Usage {
+            usage: usage("char"),
+        }),
     }
 }
 
