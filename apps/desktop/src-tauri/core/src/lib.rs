@@ -246,6 +246,12 @@ impl Session {
         }
     }
 
+    /// The lines typed this session, oldest first, consecutive repeats
+    /// dropped. The formula box's ↑ and ↓ walk this list.
+    pub fn history(&self) -> &[String] {
+        &self.history
+    }
+
     /// Completes the word ending at byte offset `pos` of `line`.
     pub fn complete(&self, line: &str, pos: usize) -> Completions {
         let c = rollin::complete(

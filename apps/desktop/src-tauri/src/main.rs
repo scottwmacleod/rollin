@@ -36,6 +36,12 @@ fn complete(session: tauri::State<'_, AppSession>, line: String, pos: usize) -> 
     session.lock().complete(&line, pos)
 }
 
+/// The lines typed this session, for the formula box's ↑ and ↓.
+#[tauri::command]
+fn history(session: tauri::State<'_, AppSession>) -> Vec<String> {
+    session.lock().history().to_vec()
+}
+
 #[tauri::command]
 fn check(session: tauri::State<'_, AppSession>, formula: String) -> Result<(), Failure> {
     session.lock().check(&formula)
@@ -159,6 +165,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             execute,
             complete,
+            history,
             check,
             sample,
             state,
