@@ -40,10 +40,14 @@ impl Roll {
     /// The role a game system gives this roll: the marker if it has one,
     /// else attack for a single d20 check and damage for dice with no d20.
     pub fn role(&self) -> Option<Role> {
-        self.role.or_else(|| match self.expr.d20_terms() {
-            (1, false) => Some(Role::Attack),
-            (0, _) if self.expr.has_dice() => Some(Role::Damage),
-            _ => None,
+        self.role.or_else(|| {
+            if self.expr.is_d20_check() {
+                Some(Role::Attack)
+            } else if self.expr.d20_terms() == 0 && self.expr.has_dice() {
+                Some(Role::Damage)
+            } else {
+                None
+            }
         })
     }
 }
@@ -83,19 +87,36 @@ impl Arith {
         }
     }
 
-    /// How many d20 groups this arithmetic holds, and whether any of them is
-    /// a success count (which is never a check).
-    pub fn d20_terms(&self) -> (usize, bool) {
+    /// How many d20 groups this arithmetic holds, of any kind.
+    fn d20_terms(&self) -> usize {
         match &self.kind {
-            ArithKind::Number(_) => (0, false),
-            ArithKind::Dice(d) if d.sides == 20 => (1, d.success.is_some()),
-            ArithKind::Dice(_) => (0, false),
+            ArithKind::Number(_) => 0,
+            ArithKind::Dice(d) => usize::from(d.sides == 20),
             ArithKind::Neg(inner) | ArithKind::Group(inner) => inner.d20_terms(),
-            ArithKind::Chain { first, rest } => rest
-                .iter()
-                .map(|(_, e)| e.d20_terms())
-                .fold(first.d20_terms(), |(n, count), (m, c)| (n + m, count || c)),
+            ArithKind::Chain { first, rest } => {
+                first.d20_terms() + rest.iter().map(|(_, e)| e.d20_terms()).sum::<usize>()
+            }
         }
+    }
+
+    /// Whether this is a d20 check: the one definition behind both a roll's
+    /// attack role and its natural 20 / natural 1 verdict.
+    ///
+    /// The arithmetic holds exactly one d20 group, and that group is a check
+    /// die (see [`DiceTerm::is_check_die`]). Other terms, such as the
+    /// modifier in `d20+5`, do not matter.
+    pub fn is_d20_check(&self) -> bool {
+        fn check_die(a: &Arith) -> Option<&DiceTerm> {
+            match &a.kind {
+                ArithKind::Dice(d) if d.sides == 20 => Some(d),
+                ArithKind::Neg(inner) | ArithKind::Group(inner) => check_die(inner),
+                ArithKind::Chain { first, rest } => std::iter::once(&**first)
+                    .chain(rest.iter().map(|(_, e)| e))
+                    .find_map(check_die),
+                _ => None,
+            }
+        }
+        self.d20_terms() == 1 && check_die(self).is_some_and(DiceTerm::is_check_die)
     }
 
     /// Whether this is a success count (a dice group with a
@@ -305,6 +326,19 @@ pub enum SelectKind {
 }
 
 impl DiceTerm {
+    /// Whether this d20 group can be a check: a lone `d20`, or two d20s of
+    /// which exactly one is kept (`adv`, `dis`, `kh1`, `kl1`, `dl1`, `dh1`).
+    /// Three or more d20s, a bare `2d20` and a success count are never a
+    /// check. Rerolls are fine: the die that stands is the result. So is an
+    /// explode clause on the kept pair, but a lone exploding d20 is not, since
+    /// its pool can grow past one die.
+    pub fn is_check_die(&self) -> bool {
+        let one_kept = matches!(self.select, Some(Select { n: 1, .. }));
+        self.sides == 20
+            && self.success.is_none()
+            && ((self.count == 1 && self.explode.is_none()) || (self.count == 2 && one_kept))
+    }
+
     /// How many of the lowest and highest dice this group drops from a pool
     /// of `pool` dice (more than `count` when dice explode).
     pub fn drops(&self, pool: usize) -> (i64, i64) {
@@ -318,5 +352,45 @@ impl DiceTerm {
                 SelectKind::KeepLowest => (0, pool - n),
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parser::parse_with;
+
+    fn role(formula: &str) -> Option<Role> {
+        let parsed = parse_with(formula, &|_| None).unwrap();
+        parsed.rolls[0].role()
+    }
+
+    /// The d20 check definition decides the attack role, one formula at a time.
+    #[test]
+    fn a_d20_check_is_an_attack_and_nothing_else_is() {
+        for check in [
+            "d20",
+            "d20+5",
+            "1d20-2",
+            "d20adv+5",
+            "d20dis",
+            "2d20kh1+5",
+            "2d20kl1",
+            "2d20dl1",
+            "2d20dh1",
+            "d20r1+5",
+            "d20rr1+5",
+            "2d20!kh1",
+            "(d20+5)*2",
+        ] {
+            assert_eq!(role(check), Some(Role::Attack), "{check}");
+        }
+        for not_check in [
+            "3d20+5", "2d20", "2d20+5", "3d20kh1", "6d20>=15", "d20>=15", "d20!", "d20+d20",
+        ] {
+            assert_ne!(role(not_check), Some(Role::Attack), "{not_check}");
+        }
+        assert_eq!(role("3d20+5"), None);
+        assert_eq!(role("d20+d20"), None);
     }
 }
