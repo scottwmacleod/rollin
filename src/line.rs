@@ -5,8 +5,8 @@
 //! own way.
 
 use crate::{
-    execute, format_history, help_text, parse_command, seeded_rng, session_command, CommandError,
-    Context, Output, SessionCommand,
+    execute_with, format_history, help_text, parse_command, seeded_rng, session_command,
+    CommandError, Context, Output, SessionCommand,
 };
 use rand_chacha::ChaCha8Rng;
 use std::path::PathBuf;
@@ -108,14 +108,15 @@ pub fn run_line(
     }
     let mut ctx = Context::new(config_dir);
     ctx.character = parsed.character;
-    let command = match parse_command(&parsed.words, &mut || ctx.preset_names()) {
+    let acting = ctx.acting();
+    let command = match parse_command(&parsed.words, &mut || acting.preset_names()) {
         Ok(command) => command,
         Err(e) => return LineOutcome::Error(e),
     };
     if let Some(seed) = parsed.seed {
         *rng = seeded_rng(seed);
     }
-    match execute(&command, &ctx, rng) {
+    match execute_with(&command, &ctx, &acting, rng) {
         Ok(output) => LineOutcome::Output {
             output,
             flags: parsed.flags,

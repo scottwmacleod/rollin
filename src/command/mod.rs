@@ -2,6 +2,7 @@
 //! and one executor that runs it against a [`Context`]. The one-shot binary
 //! and the later interactive session both use it. It never prints.
 
+mod acting;
 mod context;
 mod error;
 mod exec;
@@ -10,9 +11,10 @@ mod output;
 mod parse;
 mod scope;
 
+pub use acting::ActingCharacter;
 pub use context::Context;
 pub use error::{CommandError, ErrorReport};
-pub use exec::{check, execute, sample};
+pub use exec::{check, execute, execute_with, sample};
 pub use output::{ImportReport, Output, OutputReport, PresetEntry, PresetSource, Shadow};
 pub use parse::parse_command;
 

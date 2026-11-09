@@ -1,5 +1,5 @@
 use super::scope::PresetScope;
-use super::{edit_distance, CommandError};
+use super::{edit_distance, ActingCharacter, CommandError};
 use crate::characters::{Character, CharacterStore, DEFAULT};
 use crate::completion::CompletionData;
 use crate::name::Name;
@@ -77,13 +77,25 @@ impl Context {
             .ok_or(CommandError::NoConfigDir)
     }
 
+    /// Every character's name, sorted; `default` is always one.
+    pub fn character_names(&self) -> Result<Vec<String>, CommandError> {
+        Ok(self
+            .characters()?
+            .names()?
+            .into_iter()
+            .map(Name::into_string)
+            .collect())
+    }
+
+    /// The character this call acts on, to be read once and asked about its
+    /// Presets, Variables and Game system. Nothing is read until asked.
+    pub fn acting(&self) -> ActingCharacter<'_> {
+        ActingCharacter::on_disk(self)
+    }
+
     /// Every preset name rolling can reach: the character's own and global.
     pub fn preset_names(&self) -> Result<Vec<String>, CommandError> {
-        let (characters, name) = self.current()?;
-        let scope = PresetScope::new(characters.load(&name)?.presets, self.store()?.load()?);
-        let mut names = scope.names();
-        names.sort();
-        Ok(names)
+        self.acting().preset_names()
     }
 
     /// Loads the acting character, lets `change` edit it, and saves it. The
@@ -126,7 +138,7 @@ impl Context {
         });
         let (characters, own) = character.unwrap_or_default();
         let global = self.store().and_then(|s| Ok(s.load()?)).unwrap_or_default();
-        let presets = PresetScope::new(own.presets, global).names();
+        let presets = PresetScope::new(&own.presets, &global).names();
         CompletionData {
             presets,
             characters,
@@ -139,17 +151,12 @@ impl Context {
     /// The rules the acting character rolls under: its own game system, else
     /// the global default, else none.
     pub fn rules(&self) -> Result<crate::Rules, CommandError> {
-        let (characters, name) = self.current()?;
-        let character = characters.load(&name)?;
-        crate::Rules::resolve(character.system, character.crit_range, || {
-            self.default_system()
-        })
+        self.acting().rules()
     }
 
     /// The acting character's own game system, if it names one.
     pub fn character_system(&self) -> Result<Option<crate::System>, CommandError> {
-        let (characters, name) = self.current()?;
-        Ok(characters.load(&name)?.system)
+        self.acting().system()
     }
 
     /// The global default game system, if one is set.

@@ -5,8 +5,8 @@ use clap::Parser;
 use rand_chacha::ChaCha8Rng;
 use render::{color_enabled, render_line, ColorChoice, Painter};
 use rollin::{
-    entropy_rng, execute, parse_command, seeded_rng, ColorWhen, CommandError, Context, Error, Hint,
-    LineFlags, Output, RollResult,
+    entropy_rng, execute_with, parse_command, seeded_rng, ColorWhen, CommandError, Context, Error,
+    Hint, LineFlags, Output, RollResult,
 };
 use serde::Serialize;
 use std::io::IsTerminal;
@@ -108,7 +108,8 @@ fn main() -> ExitCode {
 fn run_args(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
     let mut ctx = Context::new(config_dir());
     ctx.character = args.character.clone();
-    let names = &mut || ctx.preset_names();
+    let acting = ctx.acting();
+    let names = &mut || acting.preset_names();
     let mut words = args.words.clone();
     if args.global {
         words.push("--global".into());
@@ -123,7 +124,7 @@ fn run_args(args: &Args, rng: &mut ChaCha8Rng) -> ExitCode {
     if let Some(seed) = args.seed {
         *rng = seeded_rng(seed);
     }
-    match execute(&command, &ctx, rng) {
+    match execute_with(&command, &ctx, &acting, rng) {
         Ok(output) => {
             show(&Display::from(args), output);
             ExitCode::SUCCESS
