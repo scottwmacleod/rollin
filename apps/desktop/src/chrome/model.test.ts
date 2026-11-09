@@ -21,6 +21,7 @@ const state = (over: Partial<SessionState> = {}): SessionState => ({
   global_presets: [preset("fireball", "8d6", true), preset("attack", "d20", true, "grog")],
   system: null,
   default_system: null,
+  effective_system: null,
   systems: ["dnd5e"],  seed: null,
   history: ["d20", "attack", "d20", "vars"],
   ...over,

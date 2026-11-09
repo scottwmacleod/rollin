@@ -5,7 +5,7 @@ use super::{edit_distance, import, Command, CommandError, Context, Output, Undef
 use crate::characters::{Character, DEFAULT};
 use crate::name::{normalise, Name};
 use crate::presets::Store;
-use crate::{CritRange, Error, System};
+use crate::{CritRange, Error, Rules, System};
 use rand::Rng;
 use std::collections::BTreeMap;
 
@@ -250,15 +250,9 @@ pub fn sample(
     rng: &mut impl Rng,
 ) -> Result<Vec<crate::RollResult>, CommandError> {
     let (scope, source) = resolve(formula, ctx)?;
-    let system = scope.system(ctx)?;
-    crate::roll_in(
-        &source,
-        &|name| scope.vars.get(name).copied(),
-        system,
-        scope.crit_range.unwrap_or_default(),
-        rng,
-    )
-    .map_err(|error| scope.error(&source, error))
+    let rules = scope.rules(ctx)?;
+    crate::roll_in(&source, &|name| scope.vars.get(name).copied(), rules, rng)
+        .map_err(|error| scope.error(&source, error))
 }
 
 /// The scope a formula is read in and its source text, with a lone preset
@@ -334,13 +328,9 @@ impl Scope {
         Ok(found.unwrap_or_default())
     }
 
-    /// The game system rolls run under: the character's, else the global
-    /// default, else none.
-    fn system(&self, ctx: &Context) -> Result<Option<System>, CommandError> {
-        match self.system {
-            Some(system) => Ok(Some(system)),
-            None => Ok(ctx.settings()?.system()?),
-        }
+    /// The rules this character rolls under.
+    fn rules(&self, ctx: &Context) -> Result<Rules, CommandError> {
+        Rules::resolve(self.system, self.crit_range, || ctx.default_system())
     }
 
     /// Turns a library error for `source` into a command error, adding the
@@ -379,14 +369,8 @@ fn roll_formula(
     ctx: &Context,
     rng: &mut impl Rng,
 ) -> Result<Output, CommandError> {
-    let system = scope.system(ctx)?;
-    crate::roll_in(
-        formula,
-        &|name| scope.vars.get(name).copied(),
-        system,
-        scope.crit_range.unwrap_or_default(),
-        rng,
-    )
-    .map(|rolls| Output::Rolls { preset, rolls })
-    .map_err(|error| scope.error(formula, error))
+    let rules = scope.rules(ctx)?;
+    crate::roll_in(formula, &|name| scope.vars.get(name).copied(), rules, rng)
+        .map(|rolls| Output::Rolls { preset, rolls })
+        .map_err(|error| scope.error(formula, error))
 }

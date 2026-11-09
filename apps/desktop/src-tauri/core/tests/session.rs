@@ -299,10 +299,15 @@ fn system_is_read_and_written_in_the_cli_files() {
     let mut s = session(&dir);
     let state = s.state().unwrap();
     assert_eq!((state.system, state.default_system), (None, None));
+    assert_eq!(state.effective_system, None);
     assert_eq!(state.systems, ["dnd5e"]);
 
     s.set_system(SystemScope::Default, None, Some("DnD5e"))
         .unwrap();
+    assert_eq!(
+        s.state().unwrap().effective_system.as_deref(),
+        Some("dnd5e")
+    );
     s.set_system(SystemScope::Character, None, Some("dnd5e"))
         .unwrap();
     let state = s.state().unwrap();
@@ -319,7 +324,12 @@ fn system_is_read_and_written_in_the_cli_files() {
     let err = s
         .set_system(SystemScope::Default, None, Some("pathfinder"))
         .unwrap_err();
-    assert!(err.contains("dnd5e"), "{err}");
+    let json = serde_json::to_value(&err).unwrap();
+    assert_eq!(json["error"]["kind"], "unknown_system", "{json}");
+    assert!(
+        json["error"]["message"].as_str().unwrap().contains("dnd5e"),
+        "{json}"
+    );
 }
 
 #[test]

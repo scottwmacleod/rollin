@@ -2,14 +2,13 @@
 //! damage dice. The RNG is injected (ADR-0003): each test scans seeds for the
 //! rolls it needs.
 
-use rollin::{roll_in, seeded_rng, Crit, CritRange, Node, RollResult, System};
+use rollin::{roll_in, seeded_rng, Crit, CritRange, Node, RollResult, Rules, System};
 
 fn run(formula: &str, system: Option<System>, seed: u64) -> Vec<RollResult> {
     roll_in(
         formula,
         &|_| None,
-        system,
-        CritRange::default(),
+        Rules::new(system, None),
         &mut seeded_rng(seed),
     )
     .unwrap()
@@ -230,4 +229,90 @@ fn crit_and_doubled_serialise_only_when_set() {
     assert!(json[1].get("crit").is_none());
     let miss = find("d20", |r| r[0].crit == Some(Crit::Miss));
     assert_eq!(serde_json::to_value(&miss).unwrap()[0]["crit"], "miss");
+}
+
+fn with_range(formula: &str, range: u8, seed: u64) -> Vec<RollResult> {
+    let rules = Rules::new(Some(System::Dnd5e), CritRange::new(i64::from(range)));
+    roll_in(formula, &|_| None, rules, &mut seeded_rng(seed)).unwrap()
+}
+
+/// The face of the kept d20 of an attack, read off its die.
+fn kept_face(roll: &RollResult) -> i64 {
+    fn walk(node: &Node) -> Option<i64> {
+        match node {
+            Node::Dice { dice, .. } => dice.iter().find(|d| d.status.counts()).map(|d| d.value),
+            Node::Neg { operand, .. } => walk(operand),
+            Node::Group { inner, .. } => walk(inner),
+            Node::Chain { first, rest, .. } => {
+                walk(first).or_else(|| rest.iter().find_map(|l| walk(&l.node)))
+            }
+            Node::Number { .. } => None,
+        }
+    }
+    walk(&roll.expr).unwrap()
+}
+
+#[test]
+fn a_crit_range_makes_every_face_at_or_above_it_a_hit_that_doubles_damage() {
+    let mut seen = [false; 3];
+    for seed in 0..2000 {
+        let rolls = with_range("d20+5, 1d6", 18, seed);
+        let face = kept_face(&rolls[0]);
+        match face {
+            1 => {
+                assert_eq!(rolls[0].crit, Some(Crit::Miss));
+                assert!(!rolls[1].doubled);
+                seen[0] = true;
+            }
+            18..=20 => {
+                assert_eq!(rolls[0].crit, Some(Crit::Hit), "face {face}");
+                assert!(rolls[1].doubled, "face {face}");
+                seen[1] = true;
+            }
+            _ => {
+                assert_eq!(rolls[0].crit, None, "face {face}");
+                assert!(!rolls[1].doubled);
+                seen[2] = true;
+            }
+        }
+    }
+    assert_eq!(seen, [true; 3]);
+}
+
+#[test]
+fn a_crit_range_applies_to_the_kept_die_of_advantage() {
+    for seed in 0..500 {
+        let rolls = with_range("d20adv", 19, seed);
+        assert_eq!(rolls[0].crit == Some(Crit::Hit), kept_face(&rolls[0]) >= 19);
+    }
+}
+
+#[test]
+fn rules_without_a_system_ignore_the_crit_range() {
+    for seed in 0..200 {
+        let rules = Rules::new(None, CritRange::new(2));
+        let rolls = roll_in("d20, 1d6", &|_| None, rules, &mut seeded_rng(seed)).unwrap();
+        assert!(rolls[0].crit.is_none() && !rolls[1].doubled);
+    }
+}
+
+#[test]
+fn a_characters_own_system_wins_and_the_default_fills_in() {
+    type Lookup = Result<Option<System>, ()>;
+    let dnd: fn() -> Lookup = || Ok(Some(System::Dnd5e));
+    let asked_for_nothing: fn() -> Lookup =
+        || panic!("the default is not asked when the character has its own");
+    let own = Rules::resolve(Some(System::Dnd5e), None, asked_for_nothing).unwrap();
+    assert_eq!(own.system(), Some(System::Dnd5e));
+    assert_eq!(
+        Rules::resolve(None, None, dnd).unwrap().system(),
+        Some(System::Dnd5e)
+    );
+    assert_eq!(
+        Rules::resolve(None, None, || Ok::<_, ()>(None))
+            .unwrap()
+            .system(),
+        None
+    );
+    assert!(Rules::resolve(None, None, || Err(())).is_err());
 }

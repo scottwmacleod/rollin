@@ -1,7 +1,7 @@
 //! The manual `crit` suffix: doubles a roll's dice by hand, with or without a
 //! game system. The RNG is injected (ADR-0003).
 
-use rollin::{roll, roll_in, seeded_rng, CritRange, Node, RollResult, System};
+use rollin::{roll, roll_in, seeded_rng, Node, RollResult, Rules, System};
 
 fn plain(formula: &str, seed: u64) -> Vec<RollResult> {
     roll(formula, &mut seeded_rng(seed)).unwrap()
@@ -50,8 +50,7 @@ fn crit_works_under_a_system_and_overrides_the_pairing() {
         let rolls = roll_in(
             "d20, 1d8 crit",
             &|_| None,
-            Some(System::Dnd5e),
-            CritRange::default(),
+            Rules::new(Some(System::Dnd5e), None),
             &mut seeded_rng(seed),
         )
         .unwrap();

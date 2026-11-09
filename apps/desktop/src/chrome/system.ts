@@ -1,12 +1,6 @@
 import type { SessionState } from "../api/types";
 import { el } from "./dialog";
 
-/** The game system rolls run under: the character's own, else the global
- * default, else none. The library decides the same way. */
-export function effectiveSystem(s: Pick<SessionState, "system" | "default_system">): string | null {
-  return s.system ?? s.default_system ?? null;
-}
-
 const SYSTEM_NAMES: Record<string, string> = { dnd5e: "D&D 5e" };
 
 /** The name a person knows a game system by; unknown ids show as they are. */
@@ -15,8 +9,8 @@ export function systemName(id: string): string {
 }
 
 /** The status-bar text for the system in force. */
-export function systemLabel(s: Pick<SessionState, "system" | "default_system">): string {
-  const id = effectiveSystem(s);
+export function systemLabel(s: Pick<SessionState, "effective_system">): string {
+  const id = s.effective_system;
   return id === null ? "no system" : systemName(id);
 }
 

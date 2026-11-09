@@ -50,6 +50,7 @@ fn error_kind(e: &CommandError) -> &'static str {
         CommandError::InvalidName(_) => "invalid_name",
         CommandError::InvalidVarName { .. } => "invalid_var_name",
         CommandError::NotAnInteger { .. } => "not_an_integer",
+        CommandError::UnknownSystem { .. } => "unknown_system",
         CommandError::Store(_) => "store",
     }
 }
@@ -175,6 +176,9 @@ fn errors() -> Vec<CommandError> {
         CommandError::InvalidName(name_error),
         CommandError::InvalidVarName { name: s("1x") },
         CommandError::NotAnInteger { value: s("x") },
+        CommandError::UnknownSystem {
+            name: s("pathfinder"),
+        },
         CommandError::Store(StoreError {
             path: PathBuf::from("presets.toml"),
             message: s("permission denied"),
@@ -227,7 +231,7 @@ fn output_covers_every_kind() {
     let mut kinds: Vec<&str> = errors().iter().map(error_kind).collect();
     kinds.sort();
     kinds.dedup();
-    assert_eq!(kinds.len(), 20);
+    assert_eq!(kinds.len(), 21);
 }
 
 #[test]

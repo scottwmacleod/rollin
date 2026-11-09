@@ -3,7 +3,7 @@
 use crate::ast::{Arith, ArithKind, BinOp, DiceTerm, ExplodeMode, RerollMode, Roll};
 use crate::error::Error;
 use crate::limits::{Cap, MAX_DICE_PER_ROLL, MAX_EXPLOSIONS_PER_DIE, MAX_REROLLS_PER_DIE};
-use crate::{Die, Kind, Link, Natural, Node, Outcome, Reason, RollResult, Status, Tally};
+use crate::{Die, Kind, Link, Node, Outcome, Reason, RollResult, Status, Tally};
 use rand::{Rng, RngExt};
 use std::ops::Range;
 
@@ -43,11 +43,7 @@ pub fn evaluate(roll: &Roll, double: bool, rng: &mut impl Rng) -> Result<RollRes
         doubled: 0,
     };
     let mut expr = eval_expr(&roll.expr, &mut ctx)?;
-    let check = if roll.expr.is_d20_check() {
-        mark_natural(&mut expr)
-    } else {
-        None
-    };
+    crate::system::mark_natural(roll, &mut expr);
     Ok(RollResult {
         formula: roll.source.clone(),
         kind: if expr.is_count() {
@@ -61,7 +57,6 @@ pub fn evaluate(roll: &Roll, double: bool, rng: &mut impl Rng) -> Result<RollRes
         iteration: None,
         crit: None,
         doubled: ctx.doubled > 0,
-        check,
     })
 }
 
@@ -285,52 +280,4 @@ fn apply_drops(dice: &mut [Die], (lowest, highest): (i64, i64), clause: &str) {
         dice[i].status = Status::Dropped;
         dice[i].reason = Some(Reason::new(clause, None));
     }
-}
-
-/// Marks the kept die of a d20 check that rolled a natural 20 or 1.
-///
-/// Only called for a roll that [`Arith::is_d20_check`] accepts, so this finds
-/// that roll's single d20 group and reads its result: the one die left
-/// standing (rerolled dice are history, dropped dice are out), so `d20adv` and
-/// `2d20kh1` read the kept die.
-///
-/// Returns the kept die's face, natural or not, for a game system's crit
-/// range.
-fn mark_natural(root: &mut Node) -> Option<i64> {
-    fn d20_terms<'a>(node: &'a mut Node, out: &mut Vec<&'a mut Node>) {
-        match node {
-            Node::Dice { sides: 20, .. } => out.push(node),
-            Node::Dice { .. } | Node::Number { .. } => {}
-            Node::Neg { operand, .. } => d20_terms(operand, out),
-            Node::Group { inner, .. } => d20_terms(inner, out),
-            Node::Chain { first, rest, .. } => {
-                d20_terms(first, out);
-                for link in rest {
-                    d20_terms(&mut link.node, out);
-                }
-            }
-        }
-    }
-    let mut terms = Vec::new();
-    d20_terms(root, &mut terms);
-    let [Node::Dice { dice, tally, .. }] = terms.as_mut_slice() else {
-        return None;
-    };
-    if tally.is_some() {
-        return None;
-    }
-    let mut standing = dice.iter_mut().filter(|d| d.status.counts());
-    let (Some(die), None) = (standing.next(), standing.next()) else {
-        return None;
-    };
-    // A compounded explosion is a sum of rolls, not a face.
-    if die.parts.len() > 1 {
-        return None;
-    }
-    die.natural = match die.value {
-        20 => Some(Natural::Twenty),
-        1 => Some(Natural::One),
-        _ => None,
-    };
-    Some(die.value)
 }

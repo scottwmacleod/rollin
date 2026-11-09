@@ -25,7 +25,6 @@ mod settings;
 mod system;
 mod vocab;
 
-use ast::Role;
 pub use ast::{BinOp, Special};
 pub use command::{
     check, execute, parse_command, sample, Command, CommandError, Context, ErrorReport,
@@ -41,7 +40,7 @@ pub use paths::{app_dir, config_dir, config_dir_from_env, windows_config_dir};
 pub use presets::{Store, StoreError};
 pub use session::{format_history, help_text, session_command, SessionCommand};
 pub use settings::SettingsStore;
-pub use system::{Crit, CritRange, System};
+pub use system::{Crit, CritRange, Rules, System};
 pub use vocab::{vocabulary, CommandInfo};
 
 use rand::rngs::SysRng;
@@ -279,10 +278,6 @@ pub struct RollResult {
     /// game system because its attack was a critical hit.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub doubled: bool,
-    /// The face of this roll's d20 check die (see [`RollResult::natural`]), for a
-    /// game system's crit range. Not serialised.
-    #[serde(skip)]
-    pub(crate) check: Option<i64>,
 }
 
 impl RollResult {
@@ -311,7 +306,7 @@ impl RollResult {
 /// Parses and evaluates a formula (one or more comma-separated rolls) using
 /// the injected RNG, returning one [`RollResult`] per roll.
 pub fn roll(formula: &str, rng: &mut impl Rng) -> Result<Vec<RollResult>, Error> {
-    roll_in(formula, &|_| None, None, CritRange::default(), rng)
+    roll_in(formula, &|_| None, Rules::NONE, rng)
 }
 
 /// Like [`roll`], resolving `@name` variables through `vars` (given the
@@ -322,32 +317,25 @@ pub fn roll_with(
     vars: &dyn Fn(&str) -> Option<i64>,
     rng: &mut impl Rng,
 ) -> Result<Vec<RollResult>, Error> {
-    roll_in(formula, vars, None, CritRange::default(), rng)
+    roll_in(formula, vars, Rules::NONE, rng)
 }
 
-/// Like [`roll_with`], under a game `system` (`None` rolls every comma-separated roll
-/// independently). Each `Nx` repeat pairs its attacks and damage afresh.
-/// `crit_range` is the lowest kept d20 that is a critical hit under a system.
+/// Like [`roll_with`], under game `rules` ([`Rules::NONE`] rolls every
+/// comma-separated roll independently). Each `Nx` repeat pairs its attacks and
+/// damage afresh.
 pub fn roll_in(
     formula: &str,
     vars: &dyn Fn(&str) -> Option<i64>,
-    system: Option<System>,
-    crit_range: CritRange,
+    rules: Rules,
     rng: &mut impl Rng,
 ) -> Result<Vec<RollResult>, Error> {
     let parsed = parser::parse_with(formula, vars)?;
     let mut rolls = Vec::new();
     for iteration in 1..=parsed.repeat.unwrap_or(1) {
-        // The latest attack's crit, which later damage rolls belong to.
-        let mut attack: Option<Crit> = None;
+        let mut pairing = rules.pairing();
         for spec in &parsed.rolls {
-            let role = system.and_then(|_| spec.role());
-            let double = spec.crit || (role == Some(Role::Damage) && attack == Some(Crit::Hit));
-            let mut roll = eval::evaluate(spec, double, rng)?;
-            if role == Some(Role::Attack) {
-                roll.crit = Crit::of(&roll, crit_range);
-                attack = roll.crit;
-            }
+            let mut roll = eval::evaluate(spec, pairing.doubles(spec), rng)?;
+            pairing.judge(spec, &mut roll);
             roll.iteration = parsed.repeat.map(|_| iteration);
             rolls.push(roll);
         }

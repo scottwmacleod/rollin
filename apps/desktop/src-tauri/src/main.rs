@@ -66,7 +66,7 @@ fn set_system(
     scope: SystemScope,
     character: Option<String>,
     system: Option<String>,
-) -> Result<(), String> {
+) -> Result<(), Failure> {
     session
         .lock()
         .set_system(scope, character.as_deref(), system.as_deref())

@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { effectiveSystem, systemLabel } from "./system";
+import { systemLabel } from "./system";
 
 describe("game system in force", () => {
-  it("prefers the character's own over the default", () => {
-    expect(effectiveSystem({ system: "dnd5e", default_system: null })).toBe("dnd5e");
-    expect(effectiveSystem({ system: null, default_system: "dnd5e" })).toBe("dnd5e");
+  it("shows the system the library says rolls run under", () => {
+    expect(systemLabel({ effective_system: "dnd5e" })).toBe("D&D 5e");
   });
 
-  it("is none when neither is set", () => {
-    expect(effectiveSystem({ system: null, default_system: null })).toBeNull();
-    expect(systemLabel({ system: null, default_system: null })).toBe("no system");
+  it("is none when the library says there is none", () => {
+    expect(systemLabel({ effective_system: null })).toBe("no system");
   });
 });
