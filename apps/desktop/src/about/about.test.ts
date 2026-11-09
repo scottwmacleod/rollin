@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { About } from "../api/types";
+import type { About } from "../api/generated";
 import { mountAbout } from "./index";
 
 const info: About = {

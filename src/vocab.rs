@@ -150,7 +150,7 @@ pub(crate) fn subcommands(command: &str) -> &'static [&'static str] {
 
 /// One command as the desktop app sees it: what it needs to tell commands
 /// from formulas and to show usage as soon as a word is typed.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, ts_rs::TS)]
 pub struct CommandInfo {
     /// The words that run it.
     pub words: Vec<&'static str>,

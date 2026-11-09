@@ -1,4 +1,4 @@
-import type { Die, Node, Roll } from "./types";
+import type { Die, Node, Roll } from "../api/generated";
 
 /** How a die is drawn. Each state has a glyph, so colour is never the only
  * signal. */

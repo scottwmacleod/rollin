@@ -3,7 +3,7 @@
 use crate::ast::{Arith, ArithKind, BinOp, DiceTerm, ExplodeMode, RerollMode, Roll};
 use crate::error::Error;
 use crate::limits::{Cap, MAX_DICE_PER_ROLL, MAX_EXPLOSIONS_PER_DIE, MAX_REROLLS_PER_DIE};
-use crate::{Die, Kind, Link, Node, Outcome, Reason, RollResult, Status, Tally};
+use crate::{Counting, Die, Kind, Link, Node, Outcome, Reason, RollResult, Status, Tally};
 use rand::{Rng, RngExt};
 use std::ops::Range;
 
@@ -201,7 +201,7 @@ fn eval_expr(expr: &Arith, ctx: &mut Ctx<'_, impl Rng>) -> Result<Node, Error> {
                 special: d.special,
                 dice,
                 subtotal,
-                tally,
+                tally: Counting(tally),
             })
         }
         ArithKind::Neg(inner) => {

@@ -1,5 +1,5 @@
-import type { Hint, Output } from "./api/types";
-import type { Notice } from "./log/types";
+import type { Hint, Output } from "./api/generated";
+import type { Notice } from "./log/model";
 
 /** The desktop wording of a hint. Hints are data from the library; each front
  * end words them for itself. The desktop has one command box, so commands are

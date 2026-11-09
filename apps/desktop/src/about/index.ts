@@ -1,5 +1,5 @@
 import "./about.css";
-import type { About } from "../api/types";
+import type { About } from "../api/generated";
 
 export interface AboutDeps {
   /** Reads the About data (`api.about`). */

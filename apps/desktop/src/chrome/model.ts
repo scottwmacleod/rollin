@@ -1,5 +1,5 @@
 import { modHint } from "../platform";
-import type { Execution, Output, PresetEntry, SessionState } from "../api/types";
+import type { Execution, Output, PresetEntry, SessionState } from "../api/generated";
 
 /** Rows shown before a menu or the palette list scrolls (28px each). */
 export const LIST_ROWS = 8;

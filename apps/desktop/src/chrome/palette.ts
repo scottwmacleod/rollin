@@ -1,7 +1,7 @@
 import { hasMod } from "../platform";
 import { el } from "./dialog";
 import { LIST_ROWS, paletteView, type PaletteAction, type PaletteRow, type PaletteView } from "./model";
-import type { SessionState } from "../api/types";
+import type { SessionState } from "../api/generated";
 
 export interface PaletteDeps {
   state(): Promise<SessionState>;

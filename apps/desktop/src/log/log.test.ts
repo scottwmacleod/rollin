@@ -3,7 +3,8 @@ import { breakdown, totalText } from "./breakdown";
 import { caretLines } from "./caret";
 import { renderEntry } from "./entry";
 import { mountLog } from "./index";
-import type { Die, LogEntry, Roll, RollDocument } from "./types";
+import type { Die, Roll } from "../api/generated";
+import type { LogEntry, RollDocument } from "./model";
 
 interface Fixture {
   formula: string;

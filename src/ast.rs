@@ -130,7 +130,7 @@ impl Arith {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ts_rs::TS)]
 pub enum BinOp {
     #[serde(rename = "+")]
     Add,
@@ -200,7 +200,7 @@ impl Clauses {
 }
 
 /// A die that is not written as `d<number>`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Special {
     /// `d%`, a d100.

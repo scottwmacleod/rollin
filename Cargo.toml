@@ -22,6 +22,7 @@ rand = "0.10"
 rand_chacha = "0.10"
 rustyline = { version = "19.0.0", default-features = false, features = ["with-file-history"] }
 serde = { version = "1.0.229", features = ["derive"] }
+ts-rs = "12.0.1"
 serde_json = "1.0.154"
 toml = "1.1.8"
 toml_edit = "0.25.17"
@@ -32,4 +33,5 @@ assert_cmd = "2.2.2"
 proptest = "1.12.0"
 rexpect = "0.7.1"
 serde = { version = "1.0.229", features = ["derive"] }
+ts-rs = "12.0.1"
 tempfile = "3.27.0"

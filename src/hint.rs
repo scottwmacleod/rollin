@@ -6,7 +6,7 @@
 use serde::Serialize;
 
 /// A suggested next step.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Hint {
     /// A saved preset or character name close to the one typed.

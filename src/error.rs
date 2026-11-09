@@ -8,8 +8,9 @@ use std::ops::Range;
 /// Anything that can go wrong turning a formula into rolls. Every variant
 /// carries the byte range of the offending input (into the formula as given),
 /// so callers can point at it.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
+#[ts(rename = "FormulaError")]
 pub enum Error {
     /// The text is not a well-formed formula.
     Syntax { message: String, span: Range<usize> },

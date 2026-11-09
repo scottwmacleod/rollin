@@ -1,6 +1,7 @@
 import { breakdown, totalDetail, totalText, type Cell } from "./breakdown";
 import { caretLines } from "./caret";
-import type { LogEntry, Roll } from "./types";
+import type { Roll } from "../api/generated";
+import type { LogEntry } from "./model";
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,

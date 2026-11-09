@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { entryFor } from "./session";
-import type { Execution, Output } from "./api/types";
+import type { Execution, Output } from "./api/generated";
 
 const t = new Date(0);
 const roll = { formula: "d20", total: 7, expr: { type: "number", value: 7 } } as const;
@@ -20,7 +20,7 @@ describe("entryFor", () => {
   it("makes an error entry carrying the caret span", () => {
     const e = entryFor(
       "d20+",
-      { status: "error", error: { kind: "parse", message: "bad", hints: [] }, span: { start: 4, end: 4 }, source: "d20+" },
+      { status: "error", error: { kind: "usage", usage: "x", message: "bad", hints: [] }, span: { start: 4, end: 4 }, source: "d20+" },
       t,
     );
     expect(e?.result).toEqual({ ok: false, message: "bad", source: "d20+", span: [4, 4] });
@@ -53,7 +53,7 @@ describe("entryFor", () => {
   it("words error hints for the desktop", () => {
     const failed: Execution = {
       status: "error",
-      error: { kind: "unknown_preset", message: "no preset 'x'", hints: [{ kind: "list_presets" }] },
+      error: { kind: "unknown_preset", word: "x", suggestion: null, message: "no preset 'x'", hints: [{ kind: "list_presets" }] },
       span: null,
       source: null,
     };

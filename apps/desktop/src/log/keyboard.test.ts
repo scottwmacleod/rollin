@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { mountLog } from "./index";
 import { dieTree } from "./tree";
-import type { LogEntry, RollDocument } from "./types";
+import type { LogEntry, RollDocument } from "./model";
 
 interface Fixture {
   formula: string;

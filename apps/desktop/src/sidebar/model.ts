@@ -1,4 +1,4 @@
-import type { PresetEntry, SessionState } from "../api/types";
+import type { PresetEntry, SessionState } from "../api/generated";
 
 /** One preset as the sidebar draws it. */
 export interface PresetRow {
