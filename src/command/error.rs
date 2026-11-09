@@ -60,6 +60,8 @@ pub enum CommandError {
     InvalidVarName { name: String },
     /// `set` was given a value that is not an `i64`.
     NotAnInteger { value: String },
+    /// A game system name that no system answers to; the text is as given.
+    UnknownSystem { name: String },
     /// The presets file could not be read or written.
     Store(StoreError),
 }
@@ -201,6 +203,14 @@ impl std::fmt::Display for CommandError {
                 i64::MIN,
                 i64::MAX
             ),
+            CommandError::UnknownSystem { name } => {
+                let known: Vec<&str> = crate::System::ALL.iter().map(|s| s.as_str()).collect();
+                write!(
+                    f,
+                    "unknown system `{name}`; choose one of {}",
+                    known.join(", ")
+                )
+            }
             CommandError::Store(e) => write!(f, "{e}"),
         }
     }

@@ -2,14 +2,13 @@
 //! both pairs as an attack and can crit; one that is not does neither. The RNG
 //! is injected (ADR-0003): each test scans seeds for the rolls it needs.
 
-use rollin::{roll_in, seeded_rng, Crit, CritRange, Natural, RollResult, System};
+use rollin::{roll_in, seeded_rng, Crit, Natural, RollResult, Rules, System};
 
 fn dnd(formula: &str, seed: u64) -> Vec<RollResult> {
     roll_in(
         formula,
         &|_| None,
-        Some(System::Dnd5e),
-        CritRange::default(),
+        Rules::new(Some(System::Dnd5e), None),
         &mut seeded_rng(seed),
     )
     .unwrap()

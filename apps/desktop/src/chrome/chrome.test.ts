@@ -14,6 +14,7 @@ function base(): SessionState {
     global_presets: [],
     system: null,
     default_system: null,
+    effective_system: null,
     systems: ["dnd5e"],
     seed: null,
     history: [],
@@ -47,6 +48,7 @@ describe("chrome", () => {
       setSystem: async (scope, character, system) => {
         if (scope === "default") st.default_system = system;
         else if (character === null || character === st.active_character) st.system = system;
+        st.effective_system = st.system ?? st.default_system;
       },
       check: async () => undefined,
       sample: async () => [],

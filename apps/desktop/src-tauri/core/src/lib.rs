@@ -156,6 +156,9 @@ pub struct State {
     pub system: Option<String>,
     /// The global default game system, if one is set.
     pub default_system: Option<String>,
+    /// The game system rolls run under: the character's own, else the global
+    /// default, else none.
+    pub effective_system: Option<String>,
     /// Every game system that can be chosen.
     pub systems: Vec<String>,
     /// The session seed; `None` while the RNG comes from entropy.
@@ -281,30 +284,20 @@ impl Session {
     /// Sets (`Some`) or clears (`None`) a game system: a character's own
     /// (`character`, else the active one), or the global default every
     /// character without one falls back to. Writes the same TOML the CLI
-    /// reads. An unknown name is an error.
+    /// reads. An unknown name is the library's error.
     pub fn set_system(
         &self,
         scope: SystemScope,
         character: Option<&str>,
         system: Option<&str>,
-    ) -> Result<(), String> {
-        let system = match system {
-            None => None,
-            Some(text) => Some(rollin::System::parse(text).ok_or_else(|| {
-                let known: Vec<&str> = rollin::System::ALL.iter().map(|s| s.as_str()).collect();
-                format!(
-                    "unknown system `{text}`; choose one of {}",
-                    known.join(", ")
-                )
-            })?),
-        };
+    ) -> Result<(), Failure> {
         let mut ctx = self.context();
         ctx.character = character.map(str::to_string);
         match scope {
             SystemScope::Character => ctx.set_character_system(system),
             SystemScope::Default => ctx.set_default_system(system),
-        }
-        .map_err(|e| e.to_string())
+        }?;
+        Ok(())
     }
 
     /// The sidebar's data, read fresh from the files the CLI also uses.
@@ -336,6 +329,7 @@ impl Session {
             global_presets,
             system: ctx.character_system()?.map(|s| s.as_str().to_string()),
             default_system: ctx.default_system()?.map(|s| s.as_str().to_string()),
+            effective_system: ctx.rules()?.system().map(|s| s.as_str().to_string()),
             systems: rollin::System::ALL
                 .iter()
                 .map(|s| s.as_str().to_string())

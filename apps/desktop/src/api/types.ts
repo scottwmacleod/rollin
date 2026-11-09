@@ -123,6 +123,9 @@ export interface SessionState {
   system: string | null;
   /** The global default game system, if one is set. */
   default_system: string | null;
+  /** The game system rolls run under: the character's own, else the global
+   * default, else none. The library decides; the desktop does not re-derive it. */
+  effective_system: string | null;
   /** Every game system that can be chosen. */
   systems: string[];
   seed: number | null;

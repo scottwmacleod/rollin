@@ -136,6 +136,16 @@ impl Context {
         }
     }
 
+    /// The rules the acting character rolls under: its own game system, else
+    /// the global default, else none.
+    pub fn rules(&self) -> Result<crate::Rules, CommandError> {
+        let (characters, name) = self.current()?;
+        let character = characters.load(&name)?;
+        crate::Rules::resolve(character.system, character.crit_range, || {
+            self.default_system()
+        })
+    }
+
     /// The acting character's own game system, if it names one.
     pub fn character_system(&self) -> Result<Option<crate::System>, CommandError> {
         let (characters, name) = self.current()?;
@@ -148,8 +158,10 @@ impl Context {
     }
 
     /// Sets (or with `None` clears) the acting character's own game system,
-    /// leaving the rest of its file as it is.
-    pub fn set_character_system(&self, system: Option<crate::System>) -> Result<(), CommandError> {
+    /// leaving the rest of its file as it is. An unknown name is an
+    /// [`CommandError::UnknownSystem`].
+    pub fn set_character_system(&self, system: Option<&str>) -> Result<(), CommandError> {
+        let system = parse_system(system)?;
         let (characters, name) = self.current()?;
         let mut character = characters.load(&name)?;
         character.system = system;
@@ -157,8 +169,10 @@ impl Context {
         Ok(())
     }
 
-    /// Sets (or with `None` clears) the global default game system.
-    pub fn set_default_system(&self, system: Option<crate::System>) -> Result<(), CommandError> {
+    /// Sets (or with `None` clears) the global default game system. An
+    /// unknown name is an [`CommandError::UnknownSystem`].
+    pub fn set_default_system(&self, system: Option<&str>) -> Result<(), CommandError> {
+        let system = parse_system(system)?;
         Ok(self.settings()?.set_system(system)?)
     }
 
@@ -177,4 +191,14 @@ impl Context {
             .map(Store::in_config_dir)
             .ok_or(CommandError::NoConfigDir)
     }
+}
+
+/// The system a name picks, or an error for a name no system answers to.
+fn parse_system(name: Option<&str>) -> Result<Option<crate::System>, CommandError> {
+    name.map(|text| {
+        crate::System::parse(text).ok_or_else(|| CommandError::UnknownSystem {
+            name: text.to_string(),
+        })
+    })
+    .transpose()
 }
