@@ -2,7 +2,7 @@ use crate::{Hint, RollResult};
 use serde::Serialize;
 
 /// What a command produced, for the caller to render.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Output {
     Rolls {
@@ -211,7 +211,8 @@ fn preset_table(presets: &[PresetEntry]) -> Vec<String> {
 /// An [`Output`] with its neutral text and hints alongside, for callers
 /// that send results over a wire (the desktop app). The output's fields
 /// and `kind` tag stay at the top level; `lines` and `hints` are added.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
+#[ts(rename = "Output")]
 pub struct OutputReport<'a> {
     #[serde(flatten)]
     pub output: &'a Output,
@@ -222,7 +223,7 @@ pub struct OutputReport<'a> {
 }
 
 /// Where a saved preset lives.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(tag = "kind", content = "name", rename_all = "snake_case")]
 pub enum PresetSource {
     /// On the named character.
@@ -231,7 +232,7 @@ pub enum PresetSource {
 }
 
 /// One line of the `presets` listing.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 pub struct PresetEntry {
     pub name: String,
     pub formula: String,
@@ -240,7 +241,7 @@ pub struct PresetEntry {
 }
 
 /// How a preset relates to a same-named one in the other scope.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(tag = "kind", content = "by", rename_all = "snake_case")]
 pub enum Shadow {
     None,
@@ -251,7 +252,7 @@ pub enum Shadow {
 }
 
 /// What an import did.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, ts_rs::TS)]
 pub struct ImportReport {
     /// Names added (or replaced, with `--force`).
     pub imported: Vec<String>,

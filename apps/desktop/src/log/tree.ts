@@ -1,5 +1,5 @@
 import { totalDetail } from "./breakdown";
-import type { Die, Node, Roll } from "./types";
+import type { Die, Node, Roll } from "../api/generated";
 
 type Dice = Extract<Node, { type: "dice" }>;
 

@@ -17,6 +17,8 @@ use std::ops::Range;
 use std::path::PathBuf;
 
 /// The licence the app and the library ship under.
+pub mod wire;
+
 pub const LICENSE: &str = "MIT";
 
 /// Where the source lives.
@@ -24,7 +26,7 @@ pub const REPOSITORY: &str = "https://github.com/scottwmacleod/rollin";
 
 /// What the About view shows. The versions come from the build, never from
 /// strings typed into the front end.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 pub struct About {
     pub name: &'static str,
     /// The desktop app's version (the bundle version in `tauri.conf.json`).
@@ -64,8 +66,9 @@ pub enum Execution {
     Empty,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ts_rs::TS)]
 #[serde(tag = "status", rename_all = "snake_case")]
+#[ts(rename = "Execution")]
 enum ExecutionWire<'a> {
     Ok {
         output: OutputReport<'a>,
@@ -142,7 +145,8 @@ impl From<CommandError> for Failure {
 }
 
 /// Everything the sidebar shows.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
+#[ts(rename = "SessionState")]
 pub struct State {
     pub active_character: String,
     pub characters: Vec<String>,
@@ -168,7 +172,7 @@ pub struct State {
 }
 
 /// Completion candidates for the word ending at a cursor.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 pub struct Completions {
     /// Byte offset in the line where the replacement starts.
     pub start: usize,

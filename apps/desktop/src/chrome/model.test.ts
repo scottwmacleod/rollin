@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Execution, PresetEntry, SessionState } from "../api/types";
+import type { Execution, PresetEntry, SessionState } from "../api/generated";
 import { presetClash, presetSaveLines } from "./dialog";
 import { eventFor, matchScore, paletteView, parseQuery, rollsIn } from "./model";
 

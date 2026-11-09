@@ -6,7 +6,7 @@ use serde::Serialize;
 use std::path::PathBuf;
 
 /// Why a command could not be parsed or run.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum CommandError {
     /// Wrong arguments for a command; the text is the usage line.
@@ -70,7 +70,8 @@ pub enum CommandError {
 /// callers that send errors over a wire (the desktop app). The error's
 /// fields and `kind` tag stay at the top level; `message` and `hints` are
 /// added.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
+#[ts(rename = "CommandError")]
 pub struct ErrorReport<'a> {
     #[serde(flatten)]
     pub error: &'a CommandError,

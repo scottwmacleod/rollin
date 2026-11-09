@@ -35,7 +35,7 @@ impl System {
 }
 
 /// How an attack under a game system turned out at the extremes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Crit {
     /// A natural 20.
@@ -234,7 +234,7 @@ pub(crate) fn check_die<'a>(spec: &Roll, root: &'a mut Node) -> Option<&'a mut D
     let (1, Some(Node::Dice { dice, tally, .. })) = (terms.len(), terms.pop()) else {
         return None;
     };
-    if tally.is_some() {
+    if tally.as_ref().is_some() {
         return None;
     }
     let mut standing = dice.iter_mut().filter(|d| d.status.counts());

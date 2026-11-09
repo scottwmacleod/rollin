@@ -1,7 +1,7 @@
 // Pure helpers for the formula box. No library logic lives here: the library
 // decides what parses and what completes; this only decides what to ask it.
 
-import type { CommandInfo } from "../api/types";
+import type { CommandInfo } from "../api/generated";
 
 /** Whether `line` is a formula (or preset name) worth sending to `check`.
  * A line starting with a command word is not: `check` would reject it. */

@@ -65,7 +65,7 @@ pub fn entropy_rng() -> ChaCha8Rng {
 }
 
 /// Whether a die counted toward the total.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Status {
     Kept,
@@ -86,31 +86,34 @@ impl Status {
 }
 
 /// One individual random value inside a roll.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 pub struct Die {
     pub value: i64,
     pub status: Status,
     /// For a compounded exploding die (`!!`): the rolls added into `value`,
     /// in order. Empty for every other die.
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub parts: Vec<i64>,
     /// On a success-count roll, whether this counting die was a success.
     /// Absent on dice that matched nothing, and on every die of a sum.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub outcome: Option<Outcome>,
     /// Set on the kept die of a d20 check when it rolled a natural 20 or 1
     /// (see [`RollResult::natural`]). Absent on every other die.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub natural: Option<Natural>,
     /// The clause that made this die what it is: the reroll that replaced or
     /// was replaced, the explosion that added it, or the keep/drop that
     /// dropped it. Absent on a die no clause touched.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub reason: Option<Reason>,
 }
 
 /// The natural result of a d20 check's kept die.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Natural {
     /// The kept d20 rolled a 20.
@@ -120,18 +123,20 @@ pub enum Natural {
 }
 
 /// Why a die is in the pool or out of it.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 pub struct Reason {
     /// The clause as written in the term, e.g. `r1`, `!`, `dl1`.
     pub clause: String,
     /// The index in the group's `dice` of the die that caused this one: the
     /// rerolled die a replacement follows, or the die an extra die exploded
     /// from.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub from: Option<usize>,
     /// A second clause that also shaped this die: the compound `!!` on a die
     /// that is also a reroll replacement.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub also: Option<String>,
 }
 
@@ -146,7 +151,7 @@ impl Reason {
 }
 
 /// How a counting die scored in a success-count roll.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Outcome {
     Success,
@@ -154,7 +159,7 @@ pub enum Outcome {
 }
 
 /// What kind of number a roll produces.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Kind {
     /// A sum of faces (and flat numbers).
@@ -170,16 +175,70 @@ impl Kind {
 }
 
 /// The tally of a success-count dice group.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 pub struct Tally {
     pub kind: Kind,
     pub successes: i64,
     pub failures: i64,
 }
 
+/// The tally a dice node carries, flattened into the node's JSON: all of
+/// `kind`, `successes` and `failures`, or none of them for a sum.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize)]
+#[serde(transparent)]
+pub struct Counting(pub Option<Tally>);
+
+impl Counting {
+    /// The tally, if the group counts successes.
+    pub fn as_ref(&self) -> Option<&Tally> {
+        self.0.as_ref()
+    }
+
+    fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+}
+
+/// How TypeScript sees [`Counting`]: the same three fields, each optional
+/// (the generator cannot flatten an `Option`, and cannot say "all or none").
+#[derive(ts_rs::TS)]
+#[allow(dead_code)]
+struct TallyFields {
+    #[ts(optional)]
+    kind: Option<Kind>,
+    #[ts(optional)]
+    successes: Option<i64>,
+    #[ts(optional)]
+    failures: Option<i64>,
+}
+
+impl ts_rs::TS for Counting {
+    type WithoutGenerics = Self;
+    type OptionInnerType = Self;
+
+    fn name(cfg: &ts_rs::Config) -> String {
+        TallyFields::name(cfg)
+    }
+
+    fn inline(cfg: &ts_rs::Config) -> String {
+        TallyFields::inline(cfg)
+    }
+
+    fn inline_flattened(cfg: &ts_rs::Config) -> String {
+        TallyFields::inline_flattened(cfg)
+    }
+
+    fn visit_dependencies(v: &mut impl ts_rs::TypeVisitor)
+    where
+        Self: 'static,
+    {
+        TallyFields::visit_dependencies(v);
+    }
+}
+
 /// One node of a roll's result tree. Every node carries what it contributed,
 /// so any roll can be shown term by term.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Node {
     Number {
@@ -191,18 +250,19 @@ pub enum Node {
         sides: i64,
         /// The group's modifiers as written, in the order they apply.
         /// Absent when the group has none.
-        #[serde(skip_serializing_if = "Vec::is_empty")]
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
         modifiers: Vec<String>,
         /// Present only for `d%`; absent on ordinary dice.
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
         special: Option<Special>,
         dice: Vec<Die>,
         /// The sum of the counting dice, or on a success count the net
         /// successes (successes minus failures).
         subtotal: i64,
         /// Present only on a success count.
-        #[serde(flatten, skip_serializing_if = "Option::is_none")]
-        tally: Option<Tally>,
+        #[serde(flatten, skip_serializing_if = "Counting::is_none")]
+        tally: Counting,
     },
     Neg {
         operand: Box<Node>,
@@ -222,7 +282,7 @@ pub enum Node {
 }
 
 /// An operator and the operand on its right.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
 pub struct Link {
     pub op: BinOp,
     pub node: Node,
@@ -257,27 +317,31 @@ impl Node {
 }
 
 /// The result of evaluating one roll.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ts_rs::TS)]
+#[ts(rename = "Roll")]
 pub struct RollResult {
     pub formula: String,
     /// Omitted from JSON for an ordinary sum.
-    #[serde(skip_serializing_if = "Kind::is_sum")]
+    #[serde(default, skip_serializing_if = "Kind::is_sum")]
     pub kind: Kind,
     pub total: i64,
     pub expr: Node,
     /// The `# text` note on this roll, if it had one.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub label: Option<String>,
     /// For a repeated formula (`Nx`), which repeat (from 1) this roll is in.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub iteration: Option<u32>,
     /// Under a game system: whether this attack was a critical hit or miss.
     /// Absent on every other roll.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
     pub crit: Option<Crit>,
     /// Whether this roll's dice were doubled: by a `crit` suffix, or under a
     /// game system because its attack was a critical hit.
-    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub doubled: bool,
 }
 

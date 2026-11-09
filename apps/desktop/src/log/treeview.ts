@@ -1,5 +1,5 @@
 import { dieTree } from "./tree";
-import type { Roll } from "./types";
+import type { Roll } from "../api/generated";
 
 function cell(tag: "th" | "td", text: string, className = ""): HTMLElement {
   const n = document.createElement(tag);

@@ -1,4 +1,4 @@
-import type { SessionState } from "../api/types";
+import type { SessionState } from "../api/generated";
 import { el } from "./dialog";
 
 const SYSTEM_NAMES: Record<string, string> = { dnd5e: "D&D 5e" };

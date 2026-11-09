@@ -1,9 +1,8 @@
 import { systemName } from "./system";
 import { commands } from "../sidebar/model";
-import type { PresetEntry, Roll, SessionState } from "../api/types";
+import type { PresetEntry, Roll, SessionState } from "../api/generated";
 import { breakdown, totalText } from "../log/breakdown";
 import { cellNode } from "../log/entry";
-import type { Roll as LogRoll } from "../log/types";
 
 /** A modal dialog frame: scrim, title, body, footer. Esc closes it, Tab stays
  * inside it, and focus goes back to where it was. */
@@ -210,9 +209,7 @@ export function presetClash(
 }
 
 /** One sample row: the log's breakdown cells and total for a roll. */
-function sampleRow(wire: Roll): HTMLElement {
-  // The wire `Roll` is the `--json` roll; the log types it a little more narrowly.
-  const roll = wire as unknown as LogRoll;
+function sampleRow(roll: Roll): HTMLElement {
   const row = el("div", "dlg-sample-row");
   const bd = el("span", "dlg-sample-bd");
   for (const cell of breakdown(roll)) bd.append(cellNode(cell));

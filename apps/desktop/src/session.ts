@@ -1,6 +1,6 @@
-import type { Execution } from "./api/types";
+import type { Execution } from "./api/generated";
 import { hintText, noticeFor } from "./notice";
-import type { LogEntry, RollDocument } from "./log/types";
+import type { LogEntry } from "./log/model";
 
 let nextId = 1;
 
@@ -26,8 +26,7 @@ export function entryFor(line: string, execution: Execution, time: Date = new Da
         time,
         input: line,
         preset,
-        // The wire `Roll` is the `--json` roll; the log types it a little more narrowly.
-        result: { ok: true, doc: { schema_version: 1, rolls: out.rolls as RollDocument["rolls"] } },
+        result: { ok: true, doc: { schema_version: 1, rolls: out.rolls } },
       };
     }
     case "error": {

@@ -1,5 +1,5 @@
 import "./sidebar.css";
-import type { Execution, SessionState } from "../api/types";
+import type { Execution, SessionState } from "../api/generated";
 import { hasMod, modAria } from "../platform";
 import { commands, presetRows, type PresetRow } from "./model";
 

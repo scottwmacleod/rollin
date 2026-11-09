@@ -1,7 +1,25 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { About, CommandInfo, Completions, Execution, Failure, Roll, SessionState } from "./types";
+import type {
+  About,
+  CommandInfo,
+  Completions as WireCompletions,
+  Execution,
+  Roll,
+  SessionState,
+} from "./generated";
 
-export type * from "./types";
+export type * from "./generated";
+export type { WireCompletions };
+
+/** What a command that returns `Result` rejects with. */
+export type Failure = Extract<Execution, { status: "error" }>;
+
+/** Completion candidates for the word ending at a cursor. */
+export interface Completions {
+  /** UTF-16 index into the line, ready for `String.slice`. */
+  start: number;
+  candidates: string[];
+}
 
 /**
  * Runs one typed line as the REPL would: rolls, `save`, `set`, `char`, and
@@ -22,7 +40,7 @@ const decoder = new TextDecoder();
  */
 export async function complete(line: string, pos: number): Promise<Completions> {
   const bytePos = encoder.encode(line.slice(0, pos)).length;
-  const result = await invoke<{ start: number; candidates: string[] }>("complete", {
+  const result = await invoke<WireCompletions>("complete", {
     line,
     pos: bytePos,
   });

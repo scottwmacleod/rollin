@@ -1,5 +1,5 @@
 import "./chrome.css";
-import type { About, Execution, Roll, SessionState } from "../api/types";
+import type { About, Execution, Roll, SessionState } from "../api/generated";
 import { hasMod, modAria, modHint } from "../platform";
 import { presetRows } from "../sidebar/model";
 import { el, openNewCharacter, openPresetDialog } from "./dialog";

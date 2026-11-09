@@ -2,9 +2,9 @@ import "./log.css";
 import { renderEntry } from "./entry";
 import { classify, isPrintable } from "./keys";
 import { renderTree } from "./treeview";
-import type { LogEntry } from "./types";
+import type { LogEntry } from "./model";
 
-export type { LogEntry } from "./types";
+export type { LogEntry } from "./model";
 export { renderEntry } from "./entry";
 
 export interface LogOptions {

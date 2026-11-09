@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Execution, PresetEntry, SessionState } from "../api/types";
+import type { Execution, PresetEntry, SessionState } from "../api/generated";
 import { asPlatform } from "../platform.test";
 import { commands, presetRows } from "./model";
 import { mountSidebar } from "./index";

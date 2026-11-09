@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Execution, SessionState } from "../api/types";
+import type { Execution, SessionState } from "../api/generated";
 import { asPlatform } from "../platform.test";
 import { mountChrome, type Chrome, type ChromeDeps } from "./index";
 
