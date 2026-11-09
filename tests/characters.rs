@@ -1011,3 +1011,28 @@ fn char_rename_errors() {
         .join("rollin/characters/grog.toml")
         .exists());
 }
+
+#[test]
+fn the_acting_character_answers_for_the_override_or_the_active_one() {
+    let cli = Cli::new();
+    cli.run(&["set", "str", "3"]).assert_success();
+    cli.run(&["save", "--global", "atk", "d20"])
+        .assert_success();
+    cli.run(&["char", "new", "grog"]).assert_success();
+    cli.run(&["set", "dex", "2"]).assert_success();
+    cli.run(&["save", "atk", "d20+@dex"]).assert_success();
+
+    let mut ctx = rollin::Context::new(Some(cli.config_dir().to_path_buf()));
+    let active = ctx.acting();
+    assert_eq!(active.name().unwrap().as_str(), "grog");
+    assert_eq!(active.vars().unwrap().keys().collect::<Vec<_>>(), ["dex"]);
+    assert_eq!(active.preset_formula("atk").unwrap().unwrap(), "d20+@dex");
+
+    drop(active);
+    ctx.character = Some("default".into());
+    let other = ctx.acting();
+    assert_eq!(other.name().unwrap().as_str(), "default");
+    assert!(other.explicit().unwrap());
+    assert_eq!(other.vars().unwrap().keys().collect::<Vec<_>>(), ["str"]);
+    assert_eq!(other.preset_formula("atk").unwrap().unwrap(), "d20");
+}

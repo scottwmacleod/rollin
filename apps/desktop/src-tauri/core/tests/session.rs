@@ -296,7 +296,7 @@ fn a_sample_leaves_the_seeded_stream_and_history_alone() {
 fn system_is_read_and_written_in_the_cli_files() {
     use rollin_desktop_core::SystemScope;
     let dir = TempDir::new().unwrap();
-    let mut s = session(&dir);
+    let s = session(&dir);
     let state = s.state().unwrap();
     assert_eq!((state.system, state.default_system), (None, None));
     assert_eq!(state.effective_system, None);

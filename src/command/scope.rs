@@ -7,13 +7,13 @@ use std::collections::BTreeMap;
 type Formulas = BTreeMap<String, String>;
 
 /// The presets one character can reach: its own, then the global ones.
-pub(super) struct PresetScope {
-    own: Formulas,
-    global: Formulas,
+pub(super) struct PresetScope<'a> {
+    own: &'a Formulas,
+    global: &'a Formulas,
 }
 
-impl PresetScope {
-    pub(super) fn new(own: Formulas, global: Formulas) -> Self {
+impl<'a> PresetScope<'a> {
+    pub(super) fn new(own: &'a Formulas, global: &'a Formulas) -> Self {
         PresetScope { own, global }
     }
 
@@ -23,11 +23,11 @@ impl PresetScope {
     pub(super) fn find<E>(
         own: &Formulas,
         name: &str,
-        global: impl FnOnce() -> Result<Formulas, E>,
+        global: impl FnOnce() -> Result<&'a Formulas, E>,
     ) -> Result<Option<String>, E> {
         match own.get(name) {
             Some(formula) => Ok(Some(formula.clone())),
-            None => Ok(global()?.remove(name)),
+            None => Ok(global()?.get(name).cloned()),
         }
     }
 
@@ -85,9 +85,8 @@ mod tests {
     #[test]
     fn an_own_preset_shadows_the_global_one() {
         let own = formulas(&[("atk", "d20+7")]);
-        let found = PresetScope::find(&own, "atk", || -> Result<_, Infallible> {
-            Ok(formulas(&[("atk", "d20")]))
-        });
+        let global = formulas(&[("atk", "d20")]);
+        let found = PresetScope::find(&own, "atk", || -> Result<_, Infallible> { Ok(&global) });
         assert_eq!(found, Ok(Some("d20+7".into())));
     }
 
@@ -100,31 +99,34 @@ mod tests {
 
     #[test]
     fn a_global_preset_is_used_when_the_character_has_none() {
+        let global = formulas(&[("atk", "d20")]);
         let found = PresetScope::find(&Formulas::new(), "atk", || -> Result<_, Infallible> {
-            Ok(formulas(&[("atk", "d20")]))
+            Ok(&global)
         });
         assert_eq!(found, Ok(Some("d20".into())));
         let missing = PresetScope::find(&Formulas::new(), "nope", || -> Result<_, Infallible> {
-            Ok(Formulas::new())
+            Ok(&global)
         });
         assert_eq!(missing, Ok(None));
     }
 
     #[test]
     fn names_list_each_once_with_the_characters_first() {
-        let scope = PresetScope::new(
+        let (own, global) = (
             formulas(&[("b", "d6"), ("a", "d4")]),
             formulas(&[("a", "d20"), ("c", "d8")]),
         );
+        let scope = PresetScope::new(&own, &global);
         assert_eq!(scope.names(), ["a", "b", "c"]);
     }
 
     #[test]
     fn entries_mark_what_shadows_what() {
-        let scope = PresetScope::new(
+        let (own, global) = (
             formulas(&[("a", "d4")]),
             formulas(&[("a", "d20"), ("c", "d8")]),
         );
+        let scope = PresetScope::new(&own, &global);
         let entries = scope.entries("grog");
         let marks: Vec<_> = entries
             .iter()

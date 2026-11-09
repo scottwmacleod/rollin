@@ -27,8 +27,9 @@ mod vocab;
 
 pub use ast::{BinOp, Special};
 pub use command::{
-    check, execute, parse_command, sample, Command, CommandError, Context, ErrorReport,
-    ImportReport, Output, OutputReport, PresetEntry, PresetSource, Shadow, UndefinedVariable,
+    check, execute, execute_with, parse_command, sample, ActingCharacter, Command, CommandError,
+    Context, ErrorReport, ImportReport, Output, OutputReport, PresetEntry, PresetSource, Shadow,
+    UndefinedVariable,
 };
 pub use completion::{complete, Completion, CompletionData};
 pub use error::Error;

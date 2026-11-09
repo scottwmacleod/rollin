@@ -9,8 +9,8 @@
 
 use rand_chacha::ChaCha8Rng;
 use rollin::{
-    entropy_rng, execute, run_line, seeded_rng, Command, CommandError, Context, ErrorReport,
-    LineOutcome, LinePolicy, Output, OutputReport, PresetEntry, PresetSource,
+    entropy_rng, run_line, seeded_rng, CommandError, Context, ErrorReport, LineOutcome, LinePolicy,
+    Output, OutputReport, PresetEntry, PresetSource,
 };
 use serde::Serialize;
 use std::ops::Range;
@@ -301,35 +301,27 @@ impl Session {
     }
 
     /// The sidebar's data, read fresh from the files the CLI also uses.
-    pub fn state(&mut self) -> Result<State, Failure> {
+    pub fn state(&self) -> Result<State, Failure> {
         let ctx = self.context();
-        // Reads only: these commands never touch the RNG.
-        let mut run = |command: Command| execute(&command, &ctx, &mut self.rng);
-        let Output::Characters {
-            names: characters,
-            active,
-        } = run(Command::Characters)?
-        else {
-            unreachable!("characters gives Characters");
-        };
-        let Output::Vars { vars } = run(Command::Vars)? else {
-            unreachable!("vars gives Vars");
-        };
-        let Output::Presets { presets } = run(Command::Presets)? else {
-            unreachable!("presets gives Presets");
-        };
-        let (global_presets, presets) = presets
+        let acting = ctx.acting();
+        let characters = ctx.character_names()?;
+        let (global_presets, presets) = acting
+            .preset_entries()?
             .into_iter()
             .partition(|p| p.source == PresetSource::Global);
         Ok(State {
-            active_character: active,
+            active_character: acting.name()?.to_string(),
             characters,
-            vars,
+            vars: acting
+                .vars()?
+                .iter()
+                .map(|(k, v)| (k.clone(), *v))
+                .collect(),
             presets,
             global_presets,
-            system: ctx.character_system()?.map(|s| s.as_str().to_string()),
-            default_system: ctx.default_system()?.map(|s| s.as_str().to_string()),
-            effective_system: ctx.rules()?.system().map(|s| s.as_str().to_string()),
+            system: acting.system()?.map(|s| s.as_str().to_string()),
+            default_system: acting.default_system()?.map(|s| s.as_str().to_string()),
+            effective_system: acting.rules()?.system().map(|s| s.as_str().to_string()),
             systems: rollin::System::ALL
                 .iter()
                 .map(|s| s.as_str().to_string())

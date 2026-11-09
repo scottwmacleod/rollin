@@ -1,36 +1,35 @@
 use super::context::require_character;
 use super::parse::roll_or_preset;
-use super::scope::PresetScope;
-use super::{edit_distance, import, Command, CommandError, Context, Output, UndefinedVariable};
+use super::{import, ActingCharacter, Command, CommandError, Context, Output};
 use crate::characters::{Character, DEFAULT};
 use crate::name::{normalise, Name};
-use crate::presets::Store;
-use crate::{CritRange, Error, Rules, System};
+use crate::Error;
 use rand::Rng;
-use std::collections::BTreeMap;
 
-/// Runs a command.
+/// Runs a command, reading the acting character as the command needs it.
 pub fn execute(
     command: &Command,
     ctx: &Context,
     rng: &mut impl Rng,
 ) -> Result<Output, CommandError> {
+    execute_with(command, ctx, &ctx.acting(), rng)
+}
+
+/// Runs a command against an acting character that parsing the same line
+/// has already used, so the line reads each file once. `acting` must be
+/// `ctx.acting()` from before this command writes anything.
+pub fn execute_with(
+    command: &Command,
+    ctx: &Context,
+    acting: &ActingCharacter,
+    rng: &mut impl Rng,
+) -> Result<Output, CommandError> {
     let store = ctx.store()?;
     match command {
-        Command::Roll(formula) => {
-            let scope = Scope::load(ctx)?;
-            roll_formula(formula, None, &scope, ctx, rng)
-        }
+        Command::Roll(formula) => roll_formula(formula, None, acting, rng),
         Command::RollPreset(name) => {
-            let scope = Scope::load(ctx)?;
-            let formula = scope.preset_formula(&store, name)?;
-            roll_formula(
-                &formula,
-                Some((name.clone(), formula.clone())),
-                &scope,
-                ctx,
-                rng,
-            )
+            let formula = acting.preset_formula(name)?.unwrap_or_default();
+            roll_formula(&formula, Some((name.clone(), formula.clone())), acting, rng)
         }
         Command::Save {
             name,
@@ -91,13 +90,9 @@ pub fn execute(
             })
         }
         Command::Import { path, force } => import::run(path, *force, &store),
-        Command::Presets => {
-            let (characters, active) = ctx.current()?;
-            let scope = PresetScope::new(characters.load(&active)?.presets, store.load()?);
-            Ok(Output::Presets {
-                presets: scope.entries(active.as_str()),
-            })
-        }
+        Command::Presets => Ok(Output::Presets {
+            presets: acting.preset_entries()?,
+        }),
         Command::Set { name, value } => {
             let ((), active) = ctx.update_character(|character, _| {
                 character.vars.insert(name.clone(), *value);
@@ -203,13 +198,13 @@ pub fn execute(
                 character: active.into_string(),
             })
         }
-        Command::Vars => {
-            let (characters, active) = ctx.current()?;
-            let character = characters.load(&active)?;
-            Ok(Output::Vars {
-                vars: character.vars.into_iter().collect(),
-            })
-        }
+        Command::Vars => Ok(Output::Vars {
+            vars: acting
+                .vars()?
+                .iter()
+                .map(|(k, v)| (k.clone(), *v))
+                .collect(),
+        }),
     }
 }
 
@@ -231,9 +226,11 @@ pub fn execute(
 /// can only fail when actually rolling. A blank formula is an error, as it is
 /// when rolling.
 pub fn check(formula: &str, ctx: &Context) -> Result<(), CommandError> {
-    let (scope, source) = resolve(formula, ctx)?;
-    crate::parser::check_with(&source, &|name| scope.vars.get(name).copied())
-        .map_err(|error| scope.error(&source, error))
+    let acting = ctx.acting();
+    let source = resolve(formula, ctx, &acting)?;
+    let vars = acting.vars()?;
+    crate::parser::check_with(&source, &|name| vars.get(name).copied())
+        .map_err(|error| acting.error(&source, error))
 }
 
 /// Rolls a formula the way [`check`] reads it, for a preview.
@@ -249,24 +246,24 @@ pub fn sample(
     ctx: &Context,
     rng: &mut impl Rng,
 ) -> Result<Vec<crate::RollResult>, CommandError> {
-    let (scope, source) = resolve(formula, ctx)?;
-    let rules = scope.rules(ctx)?;
-    crate::roll_in(&source, &|name| scope.vars.get(name).copied(), rules, rng)
-        .map_err(|error| scope.error(&source, error))
+    let acting = ctx.acting();
+    let source = resolve(formula, ctx, &acting)?;
+    let vars = acting.vars()?;
+    let rules = acting.rules()?;
+    crate::roll_in(&source, &|name| vars.get(name).copied(), rules, rng)
+        .map_err(|error| acting.error(&source, error))
 }
 
-/// The scope a formula is read in and its source text, with a lone preset
-/// name replaced by that preset's formula.
-fn resolve(formula: &str, ctx: &Context) -> Result<(Scope, String), CommandError> {
-    let store = ctx.store()?;
-    let command = roll_or_preset(&[formula.to_string()], &mut || ctx.preset_names())?;
-    let scope = Scope::load(ctx)?;
-    let source = match command {
-        Command::RollPreset(name) => scope.preset_formula(&store, &name)?,
-        Command::Roll(formula) => formula,
+/// The text a formula resolves to, with a lone preset name replaced by that
+/// preset's formula.
+fn resolve(formula: &str, ctx: &Context, acting: &ActingCharacter) -> Result<String, CommandError> {
+    ctx.store()?;
+    let command = roll_or_preset(&[formula.to_string()], &mut || acting.preset_names())?;
+    match command {
+        Command::RollPreset(name) => Ok(acting.preset_formula(&name)?.unwrap_or_default()),
+        Command::Roll(formula) => Ok(formula),
         _ => unreachable!("roll_or_preset gives a roll or a preset roll"),
-    };
-    Ok((scope, source))
+    }
 }
 
 /// Whether `formula` is acceptable to save. Variables are not known until
@@ -292,85 +289,15 @@ pub(super) fn check_formula(formula: &str) -> Result<(), CommandError> {
     }
 }
 
-/// The character whose variables a formula is rolled against.
-struct Scope {
-    name: Name,
-    vars: BTreeMap<String, i64>,
-    /// The character's own presets, which shadow global ones.
-    presets: BTreeMap<String, String>,
-    /// Whether the character was chosen with `--char`.
-    explicit: bool,
-    /// The character's own game system, if it names one.
-    system: Option<System>,
-    /// The character's crit range, if it sets one.
-    crit_range: Option<CritRange>,
-}
-
-impl Scope {
-    fn load(ctx: &Context) -> Result<Scope, CommandError> {
-        let (characters, name) = ctx.current()?;
-        let character = characters.load(&name)?;
-        Ok(Scope {
-            name,
-            vars: character.vars,
-            presets: character.presets,
-            explicit: ctx.character.is_some(),
-            system: character.system,
-            crit_range: character.crit_range,
-        })
-    }
-
-    /// The formula of preset `name`: the character's own, else the global one.
-    fn preset_formula(&self, store: &Store, name: &str) -> Result<String, CommandError> {
-        let found = PresetScope::find(&self.presets, name, || {
-            store.load().map_err(CommandError::from)
-        })?;
-        Ok(found.unwrap_or_default())
-    }
-
-    /// The rules this character rolls under.
-    fn rules(&self, ctx: &Context) -> Result<Rules, CommandError> {
-        Rules::resolve(self.system, self.crit_range, || ctx.default_system())
-    }
-
-    /// Turns a library error for `source` into a command error, adding the
-    /// character's details to an undefined variable.
-    fn error(&self, source: &str, error: Error) -> CommandError {
-        match &error {
-            Error::UndefinedVariable { name, .. } => {
-                let suggestion = self
-                    .vars
-                    .keys()
-                    .filter(|v| edit_distance(v, name) <= 2)
-                    .min_by_key(|v| edit_distance(v, name))
-                    .cloned();
-                CommandError::UndefinedVariable(Box::new(UndefinedVariable {
-                    source: source.to_string(),
-                    name: name.clone(),
-                    character: self.name.to_string(),
-                    defined: self.vars.keys().cloned().collect(),
-                    suggestion,
-                    explicit: self.explicit,
-                    error,
-                }))
-            }
-            _ => CommandError::Formula {
-                source: source.to_string(),
-                error,
-            },
-        }
-    }
-}
-
 fn roll_formula(
     formula: &str,
     preset: Option<(String, String)>,
-    scope: &Scope,
-    ctx: &Context,
+    acting: &ActingCharacter,
     rng: &mut impl Rng,
 ) -> Result<Output, CommandError> {
-    let rules = scope.rules(ctx)?;
-    crate::roll_in(formula, &|name| scope.vars.get(name).copied(), rules, rng)
+    let vars = acting.vars()?;
+    let rules = acting.rules()?;
+    crate::roll_in(formula, &|name| vars.get(name).copied(), rules, rng)
         .map(|rolls| Output::Rolls { preset, rolls })
-        .map_err(|error| scope.error(formula, error))
+        .map_err(|error| acting.error(formula, error))
 }
