@@ -1,7 +1,8 @@
 import "./chrome.css";
-import type { About, Edit, Execution, Roll, SessionState } from "../api/generated";
+import type { About, Edit, Execution, Roll } from "../api/generated";
 import { hasMod, modAria, modHint } from "../platform";
 import { presetRows } from "../sidebar/model";
+import type { SessionStore } from "../store";
 import { el, openNewCharacter, openPresetDialog } from "./dialog";
 import { eventFor, failureText, messageOf, rollsIn, type AppEvent, type PaletteAction, type PaletteRow } from "./model";
 import { mountPalette } from "./palette";
@@ -11,7 +12,8 @@ import { mountSystemChip, systemLabel, systemName } from "./system";
 export interface ChromeDeps {
   /** Runs a typed edit of saved data (`api.edit`). */
   edit(change: Edit): Promise<Execution>;
-  state(): Promise<SessionState>;
+  /** The Session's saved data; the top bar draws it and never keeps a copy. */
+  store: SessionStore;
   /** Sets or clears a game system; rejects with the library's message. */
   setSystem(scope: "character" | "default", character: string | null, system: string | null): Promise<void>;
   check(formula: string): Promise<void>;
@@ -20,14 +22,12 @@ export interface ChromeDeps {
   /** Rolls or runs a line into the log exactly as if it had been typed. */
   run(line: string): void;
   toggleSidebar(): void;
-  /** A command run from the chrome changed saved data. */
-  changed(): void;
 }
 
 export interface Chrome {
-  /** Call for every line that reached the log: counts rolls, shows the event. */
-  record(execution: Execution): Promise<void>;
-  refresh(): Promise<void>;
+  /** Call for every line that reached the log: counts rolls, shows the event.
+   * It does not read the state; whoever recorded the line refreshes the store. */
+  note(execution: Execution): void;
   openPalette(initial?: string): void;
   /** Blinks the logo cursor faster while something is loading, such as an update check. */
   setBusy(busy: boolean): void;
@@ -39,7 +39,7 @@ export interface Chrome {
  * switcher and their dialogs. Every change is a typed edit that runs the
  * library's own command, so the library validates and words it, as in the CLI. */
 export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: ChromeDeps): Chrome {
-  let current: SessionState | null = null;
+  const { store } = deps;
   let event: AppEvent | null = null;
   let rolls = 0;
   let version = "";
@@ -70,14 +70,13 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
         return messageOf(failure);
       }
       event = { glyph: "~", text: value === null ? `${scope === "default" ? "default " : ""}system cleared` : `${scope === "default" ? "default " : ""}system set to ${systemName(value)}` };
-      await refresh();
-      deps.changed();
+      await store.refresh();
       return null;
     },
   });
 
   function paintStatus() {
-    const s = current;
+    const s = store.state;
     const parts: (Node | string)[] = [];
     const cell = (text: string) => el("span", "st-cell", text);
     if (s) {
@@ -95,12 +94,8 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
     status.replaceChildren(...parts, el("span", "tb-spacer"), el("span", "st-cell", version ? `v${version}` : ""));
   }
 
-  async function refresh() {
-    try {
-      current = await deps.state();
-    } catch {
-      current = null;
-    }
+  function paintAll() {
+    const current = store.state;
     if (current) {
       switcher.update(current.characters, current.active_character);
       system.update(current);
@@ -119,8 +114,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
     const error = failureText(result);
     if (error !== null) return error;
     event = eventFor(result) ?? event;
-    await refresh();
-    deps.changed();
+    await store.refresh();
     return null;
   }
 
@@ -133,14 +127,15 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
 
   function newCharacter() {
     openNewCharacter({
-      characters: current?.characters ?? [],
-      systems: current?.systems ?? [],
-      defaultSystem: current?.default_system ?? null,
+      characters: store.state?.characters ?? [],
+      systems: store.state?.systems ?? [],
+      defaultSystem: store.state?.default_system ?? null,
       create: (name, system) => exec({ kind: "new_character", name, system }),
     });
   }
 
   function presetDialog(original: { name: string; formula: string; global: boolean } | null) {
+    const current = store.state;
     if (!current) return;
     openPresetDialog({
       state: current,
@@ -154,7 +149,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
   }
 
   function editPreset(name: string, global: boolean) {
-    const entry = (global ? current?.global_presets : current?.presets)?.find((p) => p.name === name);
+    const entry = (global ? store.state?.global_presets : store.state?.presets)?.find((p) => p.name === name);
     if (entry) presetDialog({ name: entry.name, formula: entry.formula, global });
   }
 
@@ -180,7 +175,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
   }
 
   const palette = mountPalette({
-    state: deps.state,
+    store,
     perform,
     edit: (row: PaletteRow) => {
       const p = row.preset;
@@ -210,16 +205,14 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
     },
     () => undefined,
   );
-  paintStatus();
-  void refresh();
+  store.subscribe(paintAll);
+  paintAll();
 
   return {
-    async record(execution) {
+    note(execution) {
       rolls += rollsIn(execution);
       event = eventFor(execution) ?? event;
-      await refresh();
     },
-    refresh,
     openPalette: (initial) => palette.open(initial),
     setBusy: (busy) => word.classList.toggle("is-busy", busy),
     dispose() {

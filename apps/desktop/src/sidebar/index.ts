@@ -1,6 +1,7 @@
 import "./sidebar.css";
-import type { Edit, Execution, SessionState } from "../api/generated";
+import type { Edit, Execution } from "../api/generated";
 import { hasMod, modAria } from "../platform";
+import type { SessionStore } from "../store";
 import { edits, presetRows, type PresetRow } from "./model";
 
 export { presetRows } from "./model";
@@ -8,14 +9,13 @@ export { presetRows } from "./model";
 export interface SidebarDeps {
   /** Runs a typed edit (`api.edit`). */
   edit(change: Edit): Promise<Execution>;
-  /** Reads the sidebar's data (`api.state`). */
-  state(): Promise<SessionState>;
+  /** The Session's saved data; the sidebar draws it and never keeps a copy. */
+  store: SessionStore;
   /** Rolls a line into the log exactly as if it had been typed and submitted. */
   run(line: string): void;
 }
 
 export interface Sidebar {
-  refresh(): Promise<void>;
   /** ⌘B: hides or shows the sidebar (a slide-over below 960px). */
   toggle(): void;
   /** Rolls the nth displayed preset (1–9). False if there is none. */
@@ -40,9 +40,8 @@ function failureText(r: Execution): string | null {
 export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar {
   container.classList.add("sidebar-root");
   const app = container.parentElement;
-  let current: SessionState | null = null;
   let rows: PresetRow[] = [];
-  let errorText = "";
+  let editError = "";
   let menu: HTMLElement | null = null;
   const narrow = () => window.matchMedia?.(NARROW).matches ?? false;
 
@@ -51,22 +50,12 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
     menu = null;
   };
 
-  const refresh = async () => {
-    try {
-      current = await deps.state();
-    } catch (e) {
-      current = null;
-      errorText = (e as { error?: { message?: string } })?.error?.message ?? "Could not read saved data.";
-    }
-    render();
-  };
-
   /** Runs an edit; on failure keeps the CLI's message visible, else reloads. */
   const edit = async (change: Edit): Promise<boolean> => {
     const r = await deps.edit(change);
     const failure = failureText(r);
-    errorText = failure ?? "";
-    await refresh();
+    editError = failure ?? "";
+    await deps.store.refresh();
     return failure === null;
   };
 
@@ -221,7 +210,7 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
 
   function render() {
     closeMenu();
-    const s = current;
+    const s = deps.store.state;
     const body: Node[] = [];
     if (s) {
       rows = presetRows(s);
@@ -239,7 +228,7 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
     } else {
       rows = [];
     }
-    const err = el("div", "sb-error", errorText);
+    const err = el("div", "sb-error", editError || deps.store.error);
     err.setAttribute("role", "alert");
     container.replaceChildren(...body, err);
   }
@@ -275,6 +264,7 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
     if (narrow() && (e.target as HTMLElement).closest(".sb-preset")) app?.classList.remove("sidebar-open");
   });
 
-  void refresh();
-  return { refresh, toggle, rollShortcut };
+  deps.store.subscribe(render);
+  render();
+  return { toggle, rollShortcut };
 }
