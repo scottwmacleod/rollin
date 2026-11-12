@@ -11,7 +11,7 @@ void trackFullscreen(document.documentElement);
 import { listen } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { check as checkForUpdate } from "@tauri-apps/plugin-updater";
-import { about, check, execute, relaunch, sample, setSystem, state } from "./api";
+import { about, check, edit, execute, relaunch, sample, setSystem, state } from "./api";
 import { mountAbout } from "./about";
 import { mountChrome } from "./chrome";
 import type { Execution } from "./api";
@@ -70,7 +70,7 @@ if (inputEl) {
 if (sidebarEl) {
   // A preset click and typing its name give the same log entry.
   sidebar = mountSidebar(sidebarEl, {
-    execute,
+    edit,
     state,
     run: (line) => window.dispatchEvent(new CustomEvent("rollin:submit", { detail: line })),
   });
@@ -80,7 +80,7 @@ if (sidebarEl) {
 
 if (toolbarEl && statusEl) {
   chrome = mountChrome(toolbarEl, statusEl, {
-    execute,
+    edit,
     state,
     setSystem,
     check,

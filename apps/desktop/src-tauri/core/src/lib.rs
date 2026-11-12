@@ -17,7 +17,10 @@ use std::ops::Range;
 use std::path::PathBuf;
 
 /// The licence the app and the library ship under.
+mod edit;
 pub mod wire;
+
+pub use edit::{Edit, PresetKey};
 
 pub const LICENSE: &str = "MIT";
 
@@ -251,6 +254,14 @@ impl Session {
             LineOutcome::Error(e) => Execution::Error(e),
             LineOutcome::Rejected(message) => Execution::Rejected(message),
         }
+    }
+
+    /// Runs a typed edit from the sidebar, a dialog or the switcher. It is
+    /// the same library command a typed line would run, and gives the same
+    /// output or error, but it is not in the history. The session RNG does
+    /// not move.
+    pub fn edit(&mut self, edit: &Edit) -> Execution {
+        edit::run(edit, &self.context(), &mut self.sample_rng)
     }
 
     /// The lines typed this session, oldest first, consecutive repeats

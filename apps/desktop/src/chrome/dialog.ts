@@ -1,6 +1,5 @@
 import { systemName } from "./system";
-import { commands } from "../sidebar/model";
-import type { PresetEntry, Roll, SessionState } from "../api/generated";
+import type { Edit, PresetEntry, Roll, SessionState } from "../api/generated";
 import { breakdown, totalText } from "../log/breakdown";
 import { cellNode } from "../log/entry";
 
@@ -120,7 +119,7 @@ export interface NewCharacterDeps {
   /** The game systems to offer, and the global default (for the "Use default" row). */
   systems: string[];
   defaultSystem: string | null;
-  /** Runs `char new`, then sets `system` (null: use the default); resolves to
+  /** Creates the character with `system` (null: use the default); resolves to
    * the library's error text, or null on success. */
   create(name: string, system: string | null): Promise<string | null>;
 }
@@ -182,18 +181,18 @@ export function openNewCharacter(deps: NewCharacterDeps): Dialog {
   return dialog;
 }
 
-/** The command lines that save a preset and, for a rename or a move between
- * character and global, remove the old one. Save comes first, so a failure
- * never loses the preset. */
-export function presetSaveLines(
+/** The edit that saves a preset: a plain save, or for a rename or a move
+ * between character and global one operation that saves the new preset and
+ * removes the old, and leaves the old in place if anything fails. */
+export function presetEdit(
   original: { name: string; global: boolean } | null,
   next: { name: string; formula: string; global: boolean },
-): string[] {
-  const lines = [commands.savePreset(next.name, next.formula, next.global)];
-  if (original && (original.name !== next.name.toLowerCase() || original.global !== next.global)) {
-    lines.push(commands.deletePreset(original.name, original.global));
+): Edit {
+  const moved = original && (original.name !== next.name.toLowerCase() || original.global !== next.global);
+  if (original && moved) {
+    return { kind: "move_preset", from: { name: original.name, global: original.global }, ...next };
   }
-  return lines;
+  return { kind: "save_preset", ...next };
 }
 
 /** The existing preset that saving here would replace, if any. */
@@ -226,8 +225,8 @@ export interface PresetDialogDeps {
   /** A throwaway roll of the formula: not logged, off the session seed. */
   sample(formula: string): Promise<Roll[]>;
   describe(failure: unknown): string;
-  /** Runs the lines in order; resolves to the first error text, or null. */
-  apply(lines: string[]): Promise<string | null>;
+  /** Runs the edit; resolves to the library's error text, or null. */
+  apply(change: Edit): Promise<string | null>;
   remove(name: string, global: boolean): Promise<string | null>;
 }
 
@@ -359,12 +358,12 @@ export function openPresetDialog(deps: PresetDialogDeps): Dialog {
   const submit = async () => {
     if (save.disabled) return;
     save.disabled = true;
-    const lines = presetSaveLines(original && { name: original.name, global: original.global }, {
+    const change = presetEdit(original && { name: original.name, global: original.global }, {
       name: nameIn.value.trim(),
       formula: formulaIn.value.trim(),
       global,
     });
-    const error = await deps.apply(lines);
+    const error = await deps.apply(change);
     if (error === null) dialog.close();
     else {
       setNote(formulaNote, formulaIn, error, true);

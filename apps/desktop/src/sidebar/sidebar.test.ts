@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Execution, PresetEntry, SessionState } from "../api/generated";
 import { asPlatform } from "../platform.test";
-import { commands, presetRows } from "./model";
+import { edits, presetRows } from "./model";
 import { mountSidebar } from "./index";
 
 const preset = (name: string, source: PresetEntry["source"], shadow: PresetEntry["shadow"] = { kind: "none" }): PresetEntry => ({
@@ -37,14 +37,14 @@ describe("presetRows", () => {
 
 describe("sidebar", () => {
   let run: ReturnType<typeof vi.fn>;
-  let execute: ReturnType<typeof vi.fn>;
+  let edit: ReturnType<typeof vi.fn>;
   let current: SessionState;
   const ok: Execution = { status: "empty" };
 
   async function mount() {
     document.body.innerHTML = `<div id="app"><aside class="sidebar"></aside></div>`;
     const sb = mountSidebar(document.querySelector(".sidebar")!, {
-      execute: execute as never,
+      edit: edit as never,
       state: async () => current,
       run: run as never,
     });
@@ -54,7 +54,7 @@ describe("sidebar", () => {
 
   beforeEach(() => {
     run = vi.fn();
-    execute = vi.fn(async () => ok);
+    edit = vi.fn(async () => ok);
     current = stateWith([preset("attack", ch)], [preset("save", gl)]);
   });
 
@@ -90,8 +90,8 @@ describe("sidebar", () => {
     expect(run).toHaveBeenCalledWith("save");
   });
 
-  it("edits a variable through execute and shows the CLI error", async () => {
-    execute.mockResolvedValueOnce({
+  it("edits a variable with a typed edit and shows the library error", async () => {
+    edit.mockResolvedValueOnce({
       status: "error",
       error: { kind: "not_an_integer", message: "'x' is not an integer", hints: [] },
       span: null,
@@ -103,7 +103,7 @@ describe("sidebar", () => {
     input.value = "x";
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
     await vi.waitFor(() => expect(document.querySelector(".sb-error")!.textContent).toBe("'x' is not an integer"));
-    expect(execute).toHaveBeenCalledWith("set str x");
+    expect(edit).toHaveBeenCalledWith({ kind: "set_variable", name: "str", value: "x" });
   });
 
   it("⌘B toggles the sidebar", async () => {
@@ -126,10 +126,16 @@ describe("sidebar", () => {
   });
 });
 
-describe("commands", () => {
-  it("builds CLI lines", () => {
-    expect(commands.setVar("@str", " 4 ")).toBe("set str 4");
-    expect(commands.savePreset("hit", "d20+5", true)).toBe("save hit d20+5 --global");
-    expect(commands.deletePreset("hit", false)).toBe("delete hit");
+describe("edits", () => {
+  it("builds typed edits, not command lines", () => {
+    expect(edits.setVar("@str", " 4 ")).toEqual({ kind: "set_variable", name: "str", value: " 4 " });
+    expect(edits.deletePreset("hit", false)).toEqual({ kind: "delete_preset", name: "hit", global: false });
+    expect(edits.makeGlobal("hit", "d20+5")).toEqual({
+      kind: "move_preset",
+      from: { name: "hit", global: false },
+      name: "hit",
+      formula: "d20+5",
+      global: true,
+    });
   });
 });

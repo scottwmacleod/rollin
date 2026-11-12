@@ -8,7 +8,7 @@ use std::any::TypeId;
 use std::collections::HashSet;
 use ts_rs::{Config, TypeVisitor, TS};
 
-use crate::{About, Completions, ExecutionWire, State};
+use crate::{About, Completions, Edit, ExecutionWire, State};
 
 /// The roots: every type a Tauri command returns. Their dependencies follow.
 fn visit_roots(v: &mut impl TypeVisitor) {
@@ -17,6 +17,7 @@ fn visit_roots(v: &mut impl TypeVisitor) {
     v.visit::<State>();
     v.visit::<Completions>();
     v.visit::<About>();
+    v.visit::<Edit>();
     v.visit::<CommandInfo>();
 }
 

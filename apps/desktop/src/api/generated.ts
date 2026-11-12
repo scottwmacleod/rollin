@@ -87,6 +87,8 @@ natural?: Natural,
  */
 reason?: Reason, };
 
+export type Edit = { "kind": "save_preset", name: string, formula: string, global: boolean, } | { "kind": "delete_preset", name: string, global: boolean, } | { "kind": "move_preset", from: PresetKey, name: string, formula: string, global: boolean, } | { "kind": "set_variable", name: string, value: string, } | { "kind": "unset_variable", name: string, } | { "kind": "switch_character", name: string, } | { "kind": "rename_character", from: string, to: string, } | { "kind": "delete_character", name: string, } | { "kind": "new_character", name: string, system: string | null, };
+
 export type Execution = { "status": "ok", output: Output, } | { "status": "error", error: CommandError, 
 /**
  * The byte range of the formula the error points at, if any.
@@ -178,6 +180,8 @@ replaced: string | null, } | { "kind": "deleted", name: string,
 character: string | null, } | { "kind": "imported" } & ImportReport | { "kind": "var_unset", name: string, character: string, } | { "kind": "characters", names: Array<string>, active: string, } | { "kind": "active_character", name: string, } | { "kind": "char_deleted", name: string, was_active: boolean, } | { "kind": "char_renamed", from: string, to: string, } | { "kind": "char_created", name: string, } | { "kind": "char_switched", name: string, } | { "kind": "vars", vars: Array<[string, number]>, } | { "kind": "var_set", name: string, value: number, character: string, } | { "kind": "presets", presets: Array<PresetEntry>, });
 
 export type PresetEntry = { name: string, formula: string, source: PresetSource, shadow: Shadow, };
+
+export type PresetKey = { name: string, global: boolean, };
 
 export type PresetSource = { "kind": "character", "name": string } | { "kind": "global" };
 

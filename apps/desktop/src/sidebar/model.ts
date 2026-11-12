@@ -1,4 +1,4 @@
-import type { PresetEntry, SessionState } from "../api/generated";
+import type { Edit, PresetEntry, SessionState } from "../api/generated";
 
 /** One preset as the sidebar draws it. */
 export interface PresetRow {
@@ -30,12 +30,18 @@ export function presetRows(state: Pick<SessionState, "presets" | "global_presets
   return rows;
 }
 
-/** Command lines for the sidebar's edits. They go through `execute`, so
- * validation and saved data are the CLI's. */
-export const commands = {
-  setVar: (name: string, value: string) => `set ${name.replace(/^@/, "")} ${value.trim()}`,
-  unsetVar: (name: string) => `unset ${name.replace(/^@/, "")}`,
-  savePreset: (name: string, formula: string, global: boolean) =>
-    `save ${name} ${formula.trim()}${global ? " --global" : ""}`,
-  deletePreset: (name: string, global: boolean) => `delete ${name}${global ? " --global" : ""}`,
+/** The typed edits the sidebar makes. The Session runs them as the library's
+ * own commands, so validation and saved data are the CLI's. */
+export const edits = {
+  setVar: (name: string, value: string): Edit => ({ kind: "set_variable", name: name.replace(/^@/, ""), value }),
+  unsetVar: (name: string): Edit => ({ kind: "unset_variable", name: name.replace(/^@/, "") }),
+  deletePreset: (name: string, global: boolean): Edit => ({ kind: "delete_preset", name, global }),
+  /** Moves a Character's preset to the Global presets in one operation. */
+  makeGlobal: (name: string, formula: string): Edit => ({
+    kind: "move_preset",
+    from: { name, global: false },
+    name,
+    formula,
+    global: true,
+  }),
 };
