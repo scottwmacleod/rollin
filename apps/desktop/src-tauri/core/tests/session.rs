@@ -11,22 +11,31 @@ fn session(dir: &TempDir) -> Session {
     Session::new(Some(dir.path().to_path_buf()))
 }
 
-/// Builds the CLI once: `cargo test -p rollin-desktop-core` alone does not.
-fn build_cli() {
-    static BUILD: std::sync::Once = std::sync::Once::new();
-    BUILD.call_once(|| {
+/// Builds the CLI once and returns the path cargo reports for it:
+/// `cargo test -p rollin-desktop-core` alone does not build it, and where
+/// cargo puts a binary depends on its target layout, so it is asked rather
+/// than guessed.
+fn build_cli() -> &'static std::path::Path {
+    static BIN: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+    BIN.get_or_init(|| {
         let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
-        let status = std::process::Command::new(cargo)
-            .args(["build", "--quiet", "--package", "rollin", "--bin", "rollin"])
-            .status()
+        let output = std::process::Command::new(cargo)
+            .args(["build", "--quiet", "--message-format=json"])
+            .args(["--package", "rollin", "--bin", "rollin"])
+            .stderr(std::process::Stdio::inherit())
+            .output()
             .expect("run cargo");
-        assert!(status.success(), "cargo build -p rollin failed");
-    });
+        assert!(output.status.success(), "cargo build -p rollin failed");
+        String::from_utf8_lossy(&output.stdout)
+            .lines()
+            .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+            .find_map(|message| message["executable"].as_str().map(std::path::PathBuf::from))
+            .expect("cargo reports the rollin binary")
+    })
 }
 
 fn cli(dir: &TempDir) -> Cli {
-    build_cli();
-    let mut cmd = Cli::cargo_bin("rollin").expect("rollin binary");
+    let mut cmd = Cli::new(build_cli());
     cmd.env("XDG_CONFIG_HOME", dir.path()).env_remove("HOME");
     cmd
 }
