@@ -11,22 +11,31 @@ fn session(dir: &TempDir) -> Session {
     Session::new(Some(dir.path().to_path_buf()))
 }
 
-/// Builds the CLI once: `cargo test -p rollin-desktop-core` alone does not.
-fn build_cli() {
-    static BUILD: std::sync::Once = std::sync::Once::new();
-    BUILD.call_once(|| {
+/// Builds the CLI once and returns the path cargo reports for it:
+/// `cargo test -p rollin-desktop-core` alone does not build it, and where
+/// cargo puts a binary depends on its target layout, so it is asked rather
+/// than guessed.
+fn build_cli() -> &'static std::path::Path {
+    static BIN: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+    BIN.get_or_init(|| {
         let cargo = std::env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
-        let status = std::process::Command::new(cargo)
-            .args(["build", "--quiet", "--package", "rollin", "--bin", "rollin"])
-            .status()
+        let output = std::process::Command::new(cargo)
+            .args(["build", "--quiet", "--message-format=json"])
+            .args(["--package", "rollin", "--bin", "rollin"])
+            .stderr(std::process::Stdio::inherit())
+            .output()
             .expect("run cargo");
-        assert!(status.success(), "cargo build -p rollin failed");
-    });
+        assert!(output.status.success(), "cargo build -p rollin failed");
+        String::from_utf8_lossy(&output.stdout)
+            .lines()
+            .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+            .find_map(|message| message["executable"].as_str().map(std::path::PathBuf::from))
+            .expect("cargo reports the rollin binary")
+    })
 }
 
 fn cli(dir: &TempDir) -> Cli {
-    build_cli();
-    let mut cmd = Cli::cargo_bin("rollin").expect("rollin binary");
+    let mut cmd = Cli::new(build_cli());
     cmd.env("XDG_CONFIG_HOME", dir.path()).env_remove("HOME");
     cmd
 }
@@ -344,5 +353,158 @@ fn help_and_completion_offer_only_the_flags_the_app_accepts() {
     assert_eq!(
         app.complete("--", 2).candidates,
         ["--char", "--force", "--global"]
+    );
+}
+
+fn edit(s: &mut Session, edit: Value) -> Value {
+    let edit = serde_json::from_value(edit).expect("a valid edit");
+    wire(&s.edit(&edit))
+}
+
+#[test]
+fn typed_edits_are_in_the_files_the_cli_reads_and_not_in_the_history() {
+    let dir = TempDir::new().unwrap();
+    let mut s = session(&dir);
+    edit(
+        &mut s,
+        json!({"kind": "new_character", "name": "grog", "system": null}),
+    );
+    edit(
+        &mut s,
+        json!({"kind": "set_variable", "name": "str", "value": " 3 "}),
+    );
+    let saved = edit(
+        &mut s,
+        json!({"kind": "save_preset", "name": "atk", "formula": "d20+@str", "global": false}),
+    );
+    assert_eq!(saved["status"], "ok", "{saved}");
+    assert!(s.history().is_empty(), "edits are not typed lines");
+    let out = cli(&dir)
+        .args(["--json", "--seed", "1", "atk"])
+        .output()
+        .unwrap();
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert_eq!(cli_totals(&out.stdout).len(), 1);
+}
+
+#[test]
+fn a_typed_edit_fails_with_the_same_error_as_the_typed_line() {
+    let dir = TempDir::new().unwrap();
+    let mut s = session(&dir);
+    let typed = wire(&s.execute("set str x"));
+    let edited = edit(
+        &mut s,
+        json!({"kind": "set_variable", "name": "str", "value": "x"}),
+    );
+    assert_eq!(typed["status"], "error", "{typed}");
+    assert_eq!(edited, typed);
+    let typed = wire(&s.execute("save atk d20+"));
+    let edited = edit(
+        &mut s,
+        json!({"kind": "save_preset", "name": "atk", "formula": "d20+", "global": false}),
+    );
+    assert_eq!(edited, typed);
+}
+
+fn preset_names(s: &mut Session) -> (Vec<String>, Vec<String>) {
+    let state = serde_json::to_value(s.state().unwrap()).unwrap();
+    let names = |key: &str| {
+        state[key]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|p| {
+                format!(
+                    "{}={}",
+                    p["name"].as_str().unwrap(),
+                    p["formula"].as_str().unwrap()
+                )
+            })
+            .collect()
+    };
+    (names("presets"), names("global_presets"))
+}
+
+#[test]
+fn moving_a_preset_renames_it_or_moves_it_to_the_global_ones() {
+    let dir = TempDir::new().unwrap();
+    let mut s = session(&dir);
+    edit(
+        &mut s,
+        json!({"kind": "save_preset", "name": "atk", "formula": "d20", "global": false}),
+    );
+    let renamed = edit(
+        &mut s,
+        json!({"kind": "move_preset", "from": {"name": "atk", "global": false},
+               "name": "strike", "formula": "d20+5", "global": false}),
+    );
+    assert_eq!(renamed["status"], "ok", "{renamed}");
+    assert_eq!(preset_names(&mut s), (vec!["strike=d20+5".into()], vec![]));
+    edit(
+        &mut s,
+        json!({"kind": "move_preset", "from": {"name": "strike", "global": false},
+               "name": "strike", "formula": "d20+5", "global": true}),
+    );
+    assert_eq!(preset_names(&mut s), (vec![], vec!["strike=d20+5".into()]));
+}
+
+#[test]
+fn a_failed_move_leaves_the_original_and_changes_nothing() {
+    let dir = TempDir::new().unwrap();
+    let mut s = session(&dir);
+    edit(
+        &mut s,
+        json!({"kind": "save_preset", "name": "atk", "formula": "d20", "global": false}),
+    );
+    edit(
+        &mut s,
+        json!({"kind": "save_preset", "name": "dmg", "formula": "d8", "global": false}),
+    );
+    let before = preset_names(&mut s);
+    // A formula that does not parse: nothing is saved, nothing deleted.
+    let bad_formula = edit(
+        &mut s,
+        json!({"kind": "move_preset", "from": {"name": "atk", "global": false},
+               "name": "strike", "formula": "d20+", "global": false}),
+    );
+    assert_eq!(bad_formula["status"], "error", "{bad_formula}");
+    assert_eq!(preset_names(&mut s), before);
+    // The original is not there to delete: the new name is not left behind,
+    // and a preset the move would have overwritten keeps its formula.
+    let missing = edit(
+        &mut s,
+        json!({"kind": "move_preset", "from": {"name": "ghost", "global": false},
+               "name": "dmg", "formula": "d12", "global": false}),
+    );
+    assert_eq!(missing["status"], "error", "{missing}");
+    assert_eq!(preset_names(&mut s), before);
+}
+
+#[test]
+fn a_new_character_can_start_with_a_game_system_and_a_bad_one_creates_nothing() {
+    let dir = TempDir::new().unwrap();
+    let mut s = session(&dir);
+    let bad = edit(
+        &mut s,
+        json!({"kind": "new_character", "name": "tess", "system": "nope"}),
+    );
+    assert_eq!(bad["status"], "error", "{bad}");
+    assert_eq!(
+        serde_json::to_value(s.state().unwrap()).unwrap()["characters"],
+        json!(["default"])
+    );
+    let ok = edit(
+        &mut s,
+        json!({"kind": "new_character", "name": "tess", "system": "dnd5e"}),
+    );
+    assert_eq!(ok["status"], "ok", "{ok}");
+    let state = serde_json::to_value(s.state().unwrap()).unwrap();
+    assert_eq!(
+        (&state["active_character"], &state["system"]),
+        (&json!("tess"), &json!("dnd5e"))
     );
 }

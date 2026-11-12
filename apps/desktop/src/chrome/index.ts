@@ -1,5 +1,5 @@
 import "./chrome.css";
-import type { About, Execution, Roll, SessionState } from "../api/generated";
+import type { About, Edit, Execution, Roll, SessionState } from "../api/generated";
 import { hasMod, modAria, modHint } from "../platform";
 import { presetRows } from "../sidebar/model";
 import { el, openNewCharacter, openPresetDialog } from "./dialog";
@@ -9,7 +9,8 @@ import { mountSwitcher } from "./switcher";
 import { mountSystemChip, systemLabel, systemName } from "./system";
 
 export interface ChromeDeps {
-  execute(line: string): Promise<Execution>;
+  /** Runs a typed edit of saved data (`api.edit`). */
+  edit(change: Edit): Promise<Execution>;
   state(): Promise<SessionState>;
   /** Sets or clears a game system; rejects with the library's message. */
   setSystem(scope: "character" | "default", character: string | null, system: string | null): Promise<void>;
@@ -35,8 +36,8 @@ export interface Chrome {
 }
 
 /** Fills the toolbar and the status bar and owns the palette, the character
- * switcher and their dialogs. Every change goes through `execute`, so the
- * library validates and words it, as in the CLI. */
+ * switcher and their dialogs. Every change is a typed edit that runs the
+ * library's own command, so the library validates and words it, as in the CLI. */
 export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: ChromeDeps): Chrome {
   let current: SessionState | null = null;
   let event: AppEvent | null = null;
@@ -107,11 +108,11 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
     paintStatus();
   }
 
-  /** Runs a command line from the chrome; resolves to the library's error text. */
-  async function exec(line: string): Promise<string | null> {
+  /** Runs an edit from the chrome; resolves to the library's error text. */
+  async function exec(change: Edit): Promise<string | null> {
     let result: Execution;
     try {
-      result = await deps.execute(line);
+      result = await deps.edit(change);
     } catch (failure) {
       return messageOf(failure);
     }
@@ -124,9 +125,9 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
   }
 
   const switcher = mountSwitcher(charBtn, {
-    switchTo: (name) => exec(`char ${name}`),
-    rename: (from, to) => exec(`char rename ${from} ${to}`),
-    remove: (name) => exec(`char delete ${name}`),
+    switchTo: (name) => exec({ kind: "switch_character", name }),
+    rename: (from, to) => exec({ kind: "rename_character", from, to }),
+    remove: (name) => exec({ kind: "delete_character", name }),
     newCharacter: () => newCharacter(),
   });
 
@@ -135,17 +136,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
       characters: current?.characters ?? [],
       systems: current?.systems ?? [],
       defaultSystem: current?.default_system ?? null,
-      create: async (name, chosen) => {
-        const error = await exec(`char new ${name}`);
-        if (error !== null || chosen === null) return error;
-        try {
-          await deps.setSystem("character", name, chosen);
-        } catch (failure) {
-          return messageOf(failure);
-        }
-        await refresh();
-        return null;
-      },
+      create: (name, system) => exec({ kind: "new_character", name, system }),
     });
   }
 
@@ -157,14 +148,8 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
       check: deps.check,
       sample: deps.sample,
       describe: messageOf,
-      apply: async (lines) => {
-        for (const line of lines) {
-          const error = await exec(line);
-          if (error !== null) return error;
-        }
-        return null;
-      },
-      remove: (name, global) => exec(`delete ${name}${global ? " --global" : ""}`),
+      apply: exec,
+      remove: (name, global) => exec({ kind: "delete_preset", name, global }),
     });
   }
 
@@ -179,7 +164,7 @@ export function mountChrome(toolbar: HTMLElement, status: HTMLElement, deps: Chr
       case "run":
         return deps.run(action.line);
       case "switch":
-        return void exec(`char ${action.name}`);
+        return void exec({ kind: "switch_character", name: action.name });
       case "scope":
         return palette.open(action.prefix);
       case "ui":

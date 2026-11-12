@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   About,
+  Edit,
   CommandInfo,
   Completions as WireCompletions,
   Execution,
@@ -28,6 +29,15 @@ export interface Completions {
  */
 export function execute(line: string): Promise<Execution> {
   return invoke<Execution>("execute", { line });
+}
+
+/**
+ * Runs a typed edit of saved data (sidebar, dialogs, switcher). It runs the
+ * same library command a typed line would and resolves the same way, but it
+ * is not a typed line: the Session keeps it out of its history.
+ */
+export function edit(change: Edit): Promise<Execution> {
+  return invoke<Execution>("edit", { edit: change });
 }
 
 const encoder = new TextEncoder();

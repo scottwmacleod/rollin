@@ -24,7 +24,7 @@ function base(): SessionState {
 describe("chrome", () => {
   let st: SessionState;
   let deps: ChromeDeps;
-  let execute: ReturnType<typeof vi.fn>;
+  let edit: ReturnType<typeof vi.fn>;
   let toolbar: HTMLElement;
   let status: HTMLElement;
   let mounted: Chrome | null = null;
@@ -41,9 +41,9 @@ describe("chrome", () => {
 
   beforeEach(() => {
     st = base();
-    execute = vi.fn(async (): Promise<Execution> => ({ status: "empty" }));
+    edit = vi.fn(async (): Promise<Execution> => ({ status: "empty" }));
     deps = {
-      execute: execute as never,
+      edit: edit as never,
       state: async () => structuredClone(st),
       setSystem: async (scope, character, system) => {
         if (scope === "default") st.default_system = system;
@@ -131,13 +131,13 @@ describe("chrome", () => {
   });
 
   describe("character switcher", () => {
-    it("switches with char <name> and rename/delete go through the CLI commands", async () => {
+    it("switches, renames and deletes with typed edits", async () => {
       await mount();
       const open = () => toolbar.querySelector<HTMLButtonElement>(".tb-char-btn")!.click();
       open();
       document.querySelector<HTMLButtonElement>('.sw-pick[data-name="mira"]')!.click();
       await flush();
-      expect(execute).toHaveBeenCalledWith("char mira");
+      expect(edit).toHaveBeenCalledWith({ kind: "switch_character", name: "mira" });
       expect(document.querySelector(".sw-menu")).toBeNull();
 
       open();
@@ -146,13 +146,13 @@ describe("chrome", () => {
       input.value = "mirabel";
       input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
       await flush();
-      expect(execute).toHaveBeenCalledWith("char rename mira mirabel");
+      expect(edit).toHaveBeenCalledWith({ kind: "rename_character", from: "mira", to: "mirabel" });
 
       open();
       document.querySelector<HTMLButtonElement>('[aria-label="Delete mira"]')!.click();
       document.querySelector<HTMLButtonElement>(".sw-confirm.is-danger")!.click();
       await flush();
-      expect(execute).toHaveBeenCalledWith("char delete mira");
+      expect(edit).toHaveBeenCalledWith({ kind: "delete_character", name: "mira" });
     });
 
     it("cannot rename default and caps the list at eight rows", async () => {
@@ -164,7 +164,7 @@ describe("chrome", () => {
     });
 
     it("shows the library's error and keeps the menu open", async () => {
-      execute.mockResolvedValueOnce({ status: "rejected", message: "character 'x' does not exist" });
+      edit.mockResolvedValueOnce({ status: "rejected", message: "character 'x' does not exist" });
       await mount();
       toolbar.querySelector<HTMLButtonElement>(".tb-char-btn")!.click();
       document.querySelector<HTMLButtonElement>('.sw-pick[data-name="mira"]')!.click();
@@ -224,7 +224,7 @@ describe("chrome", () => {
       input.dispatchEvent(new Event("input"));
       input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
       await flush();
-      expect(execute).toHaveBeenCalledWith("char mira");
+      expect(edit).toHaveBeenCalledWith({ kind: "switch_character", name: "mira" });
     });
 
     it("teaches the scopes when empty, and a tip row fills the prefix in", async () => {
@@ -238,7 +238,7 @@ describe("chrome", () => {
   });
 
   describe("dialogs", () => {
-    it("creates a character with char new, and disables Create for a name that exists", async () => {
+    it("creates a character with a typed edit, and disables Create for a name that exists", async () => {
       await mount();
       toolbar.querySelector<HTMLButtonElement>(".tb-char-btn")!.click();
       document.querySelector<HTMLButtonElement>(".sw-new")!.click();
@@ -254,11 +254,11 @@ describe("chrome", () => {
       expect(create.disabled).toBe(false);
       create.click();
       await flush();
-      expect(execute).toHaveBeenCalledWith("char new tess");
+      expect(edit).toHaveBeenCalledWith({ kind: "new_character", name: "tess", system: null });
       expect(document.querySelector(".dlg")).toBeNull();
     });
 
-    it("edits a preset: renames by saving the new name and deleting the old", async () => {
+    it("edits a preset: a rename is one move edit", async () => {
       await mount();
       window.dispatchEvent(new CustomEvent("rollin:edit-preset", { detail: { name: "attack", global: false } }));
       const [name, formula] = document.querySelectorAll<HTMLInputElement>(".dlg-input");
@@ -269,7 +269,9 @@ describe("chrome", () => {
       await flush();
       [...document.querySelectorAll<HTMLButtonElement>(".dlg-btn")].find((b) => b.textContent === "Save")!.click();
       await flush();
-      expect(execute.mock.calls.map((c) => c[0])).toEqual(["save strike d20+5", "delete attack"]);
+      expect(edit.mock.calls.map((c) => c[0])).toEqual([
+        { kind: "move_preset", from: { name: "attack", global: false }, name: "strike", formula: "d20+5", global: false },
+      ]);
     });
 
     it("previews a sample roll, re-rolls it, and hides it when the formula is invalid", async () => {
@@ -293,7 +295,7 @@ describe("chrome", () => {
       const box = document.querySelector<HTMLElement>(".dlg-sample")!;
       expect(box.hidden).toBe(false);
       expect(box.querySelector(".dlg-sample-total")?.textContent).toBe("12");
-      expect(execute).not.toHaveBeenCalled();
+      expect(edit).not.toHaveBeenCalled();
       box.querySelector<HTMLButtonElement>(".dlg-sample-btn")!.click();
       await flush();
       expect(box.querySelector(".dlg-sample-total")?.textContent).toBe("21");

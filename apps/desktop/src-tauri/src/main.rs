@@ -4,7 +4,9 @@
 //! The Tauri commands. Each one locks the session and calls
 //! `rollin-desktop-core`; the logic and its tests live there.
 
-use rollin_desktop_core::{About, Completions, Execution, Failure, Session, State, SystemScope};
+use rollin_desktop_core::{
+    About, Completions, Edit, Execution, Failure, Session, State, SystemScope,
+};
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 use tauri::menu::{Menu, MenuItem};
@@ -29,6 +31,12 @@ impl AppSession {
 #[tauri::command]
 fn execute(session: tauri::State<'_, AppSession>, line: String) -> Execution {
     session.lock().execute(&line)
+}
+
+/// A typed edit of saved data: not a typed line, so not in the history.
+#[tauri::command]
+fn edit(session: tauri::State<'_, AppSession>, edit: Edit) -> Execution {
+    session.lock().edit(&edit)
 }
 
 #[tauri::command]
@@ -164,6 +172,7 @@ fn main() {
         .manage(AppSession(Mutex::new(Session::new(config_dir()))))
         .invoke_handler(tauri::generate_handler![
             execute,
+            edit,
             complete,
             history,
             check,

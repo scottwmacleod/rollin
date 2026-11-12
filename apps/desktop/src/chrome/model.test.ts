@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Execution, PresetEntry, SessionState } from "../api/generated";
-import { presetClash, presetSaveLines } from "./dialog";
+import { presetClash, presetEdit } from "./dialog";
 import { eventFor, matchScore, paletteView, parseQuery, rollsIn } from "./model";
 
 const ok = (output: object, lines: string[]): Execution =>
@@ -99,15 +99,19 @@ describe("palette", () => {
 
 describe("preset dialog logic", () => {
   const s = state();
-  it("saves first, then deletes the old name after a rename or move", () => {
+  it("moves in one edit after a rename or move, and saves plainly otherwise", () => {
     const next = { name: "strike", formula: "d20", global: false };
-    expect(presetSaveLines({ name: "attack", global: false }, next)).toEqual(["save strike d20", "delete attack"]);
-    expect(presetSaveLines({ name: "attack", global: false }, { ...next, name: "attack", global: true })).toEqual([
-      "save attack d20 --global",
-      "delete attack",
-    ]);
-    expect(presetSaveLines({ name: "attack", global: false }, { ...next, name: "Attack" })).toEqual(["save Attack d20"]);
-    expect(presetSaveLines(null, next)).toEqual(["save strike d20"]);
+    const from = { name: "attack", global: false };
+    expect(presetEdit(from, next)).toEqual({ kind: "move_preset", from, ...next });
+    expect(presetEdit(from, { ...next, name: "attack", global: true })).toEqual({
+      kind: "move_preset",
+      from,
+      name: "attack",
+      formula: "d20",
+      global: true,
+    });
+    expect(presetEdit(from, { ...next, name: "Attack" })).toEqual({ kind: "save_preset", ...next, name: "Attack" });
+    expect(presetEdit(null, next)).toEqual({ kind: "save_preset", ...next });
   });
 
   it("finds the preset a save would replace, but not the one being edited", () => {

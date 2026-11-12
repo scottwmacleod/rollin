@@ -3,6 +3,74 @@ use crate::name::{is_name_shaped, normalise, Name};
 use crate::Error;
 use std::path::PathBuf;
 
+impl Command {
+    /// `save <name> <formula>`, on the active character or `global`.
+    pub fn save(name: &str, formula: &str, global: bool) -> Command {
+        Command::Save {
+            name: name.to_string(),
+            formula: formula.to_string(),
+            global,
+        }
+    }
+
+    /// `delete <name>`, from the active character or `global`.
+    pub fn delete(name: &str, global: bool) -> Command {
+        Command::Delete {
+            name: name.to_string(),
+            global,
+        }
+    }
+
+    /// `set <name> <value>`: the name must be a variable name and the value
+    /// an integer.
+    pub fn set(name: &str, value: &str) -> Result<Command, CommandError> {
+        Ok(Command::Set {
+            name: Name::variable(name)
+                .ok_or_else(|| CommandError::InvalidVarName {
+                    name: name.to_string(),
+                })?
+                .into_string(),
+            value: value.parse().map_err(|_| CommandError::NotAnInteger {
+                value: value.to_string(),
+            })?,
+        })
+    }
+
+    /// `unset <name>`.
+    pub fn unset(name: &str) -> Command {
+        Command::Unset {
+            name: normalise(name),
+        }
+    }
+
+    /// `char <name>`: make an existing character active.
+    pub fn char_switch(name: &str) -> Result<Command, CommandError> {
+        Ok(Command::CharSwitch(char_name(name)?))
+    }
+
+    /// `char delete <name>`.
+    pub fn char_delete(name: &str) -> Result<Command, CommandError> {
+        Ok(Command::CharDelete(char_name(name)?))
+    }
+
+    /// `char rename <from> <to>`.
+    pub fn char_rename(from: &str, to: &str) -> Result<Command, CommandError> {
+        Ok(Command::CharRename {
+            from: char_name(from)?,
+            to: normalise(to),
+        })
+    }
+
+    /// `char new <name>`.
+    pub fn char_new(name: &str) -> Command {
+        Command::CharNew(normalise(name))
+    }
+}
+
+fn char_name(name: &str) -> Result<Name, CommandError> {
+    Name::shaped(name).map_err(CommandError::InvalidCharName)
+}
+
 /// Parses a line of words into a command. `preset_names` lists the saved
 /// preset names; it is only called when a lone word might be a preset name.
 pub fn parse_command(
@@ -15,11 +83,9 @@ pub fn parse_command(
         Some("save") => {
             let (rest, global) = take_flag(rest, "--global");
             match rest.as_slice() {
-                [name, formula @ ..] if !formula.is_empty() => Ok(Command::Save {
-                    name: name.clone(),
-                    formula: formula.join(" "),
-                    global,
-                }),
+                [name, formula @ ..] if !formula.is_empty() => {
+                    Ok(Command::save(name, &formula.join(" "), global))
+                }
                 _ => Err(CommandError::Usage {
                     usage: usage("save"),
                 }),
@@ -32,23 +98,14 @@ pub fn parse_command(
         Some("characters") => Ok(Command::Characters),
         Some("char") => parse_char(rest),
         Some("unset") => match rest {
-            [name] => Ok(Command::Unset {
-                name: normalise(name),
-            }),
+            [name] => Ok(Command::unset(name)),
             _ => Err(CommandError::Usage {
                 usage: usage("unset"),
             }),
         },
         Some("vars") => Ok(Command::Vars),
         Some("set") => match rest {
-            [name, value] => Ok(Command::Set {
-                name: Name::variable(name)
-                    .ok_or_else(|| CommandError::InvalidVarName { name: name.clone() })?
-                    .into_string(),
-                value: value.parse().map_err(|_| CommandError::NotAnInteger {
-                    value: value.clone(),
-                })?,
-            }),
+            [name, value] => Command::set(name, value),
             _ => Err(CommandError::Usage {
                 usage: usage("set"),
             }),
@@ -58,10 +115,7 @@ pub fn parse_command(
         Some("delete") => {
             let (rest, global) = take_flag(rest, "--global");
             match rest.as_slice() {
-                [name] => Ok(Command::Delete {
-                    name: name.clone(),
-                    global,
-                }),
+                [name] => Ok(Command::delete(name, global)),
                 _ => Err(CommandError::Usage {
                     usage: usage("delete"),
                 }),
@@ -78,20 +132,13 @@ fn parse_char(rest: &[String]) -> Result<Command, CommandError> {
         .and_then(|w| crate::vocab::subcommand("char", w));
     match (sub, rest) {
         (None, []) => Ok(Command::CharShow),
-        (None, [name]) => Ok(Command::CharSwitch(
-            Name::shaped(name).map_err(CommandError::InvalidCharName)?,
-        )),
-        (Some("delete"), [_, name]) => Ok(Command::CharDelete(
-            Name::shaped(name).map_err(CommandError::InvalidCharName)?,
-        )),
-        (Some("rename"), [_, from, to]) => Ok(Command::CharRename {
-            from: Name::shaped(from).map_err(CommandError::InvalidCharName)?,
-            to: normalise(to),
-        }),
+        (None, [name]) => Command::char_switch(name),
+        (Some("delete"), [_, name]) => Command::char_delete(name),
+        (Some("rename"), [_, from, to]) => Command::char_rename(from, to),
         (Some("rename"), _) => Err(CommandError::Usage {
             usage: "char rename <old> <new>".into(),
         }),
-        (Some("new"), [_, name]) => Ok(Command::CharNew(normalise(name))),
+        (Some("new"), [_, name]) => Ok(Command::char_new(name)),
         (Some("new"), _) => Err(CommandError::Usage {
             usage: "char new <name>".into(),
         }),

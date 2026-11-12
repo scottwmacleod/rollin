@@ -1,13 +1,13 @@
 import "./sidebar.css";
-import type { Execution, SessionState } from "../api/generated";
+import type { Edit, Execution, SessionState } from "../api/generated";
 import { hasMod, modAria } from "../platform";
-import { commands, presetRows, type PresetRow } from "./model";
+import { edits, presetRows, type PresetRow } from "./model";
 
 export { presetRows } from "./model";
 
 export interface SidebarDeps {
-  /** Runs a line as typed (`api.execute`). */
-  execute(line: string): Promise<Execution>;
+  /** Runs a typed edit (`api.edit`). */
+  edit(change: Edit): Promise<Execution>;
   /** Reads the sidebar's data (`api.state`). */
   state(): Promise<SessionState>;
   /** Rolls a line into the log exactly as if it had been typed and submitted. */
@@ -62,8 +62,8 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
   };
 
   /** Runs an edit; on failure keeps the CLI's message visible, else reloads. */
-  const edit = async (line: string): Promise<boolean> => {
-    const r = await deps.execute(line);
+  const edit = async (change: Edit): Promise<boolean> => {
+    const r = await deps.edit(change);
     const failure = failureText(r);
     errorText = failure ?? "";
     await refresh();
@@ -110,14 +110,14 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
       const input = inlineInput(
         String(value),
         `Value of @${name}`,
-        (v) => void edit(commands.setVar(name, v)),
+        (v) => void edit(edits.setVar(name, v)),
         () => render(),
       );
       b.replaceWith(input);
     });
     b.addEventListener("contextmenu", (e) => {
       e.preventDefault();
-      openMenu(b, [["Delete", () => void edit(commands.unsetVar(name))]], e);
+      openMenu(b, [["Delete", () => void edit(edits.unsetVar(name))]], e);
     });
     li.append(b);
     return li;
@@ -134,7 +134,7 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
         (v) => {
           const [name, value = ""] = v.trim().replace(/^@/, "").split(/\s+/, 2);
           if (!name) return render();
-          void edit(commands.setVar(name, value));
+          void edit(edits.setVar(name, value));
         },
         () => render(),
       );
@@ -181,16 +181,11 @@ export function mountSidebar(container: HTMLElement, deps: SidebarDeps): Sidebar
         if (!global) {
           items.push([
             "Make global",
-            () =>
-              void (async () => {
-                if (await edit(commands.savePreset(entry.name, entry.formula, true))) {
-                  await edit(commands.deletePreset(entry.name, false));
-                }
-              })(),
+            () => void edit(edits.makeGlobal(entry.name, entry.formula)),
           ]);
         }
       }
-      items.push(["Delete", () => void edit(commands.deletePreset(entry.name, global))]);
+      items.push(["Delete", () => void edit(edits.deletePreset(entry.name, global))]);
       openMenu(b, items, e);
     });
     li.append(b);

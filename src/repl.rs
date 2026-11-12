@@ -37,7 +37,8 @@ fn handle_line(line: &str, rng: &mut ChaCha8Rng, history: &dyn Fn() -> Vec<Strin
         LineOutcome::Text(text) => print!("{text}"),
         LineOutcome::Output { output, flags } => crate::show(&flags.into(), output),
         LineOutcome::Error(e) => {
-            crate::fail(&e);
+            // The session goes on; the exit code is only for one-shot runs.
+            let _ = crate::fail(&e);
         }
         LineOutcome::Rejected(message) => eprintln!("error: {message}"),
     }
