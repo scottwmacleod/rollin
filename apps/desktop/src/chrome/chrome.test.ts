@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Execution, SessionState } from "../api/generated";
 import { asPlatform } from "../platform.test";
+import { createStore, type SessionStore } from "../store";
 import { mountChrome, type Chrome, type ChromeDeps } from "./index";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -23,6 +24,7 @@ function base(): SessionState {
 
 describe("chrome", () => {
   let st: SessionState;
+  let store: SessionStore;
   let deps: ChromeDeps;
   let edit: ReturnType<typeof vi.fn>;
   let toolbar: HTMLElement;
@@ -34,6 +36,7 @@ describe("chrome", () => {
     toolbar = document.querySelector(".toolbar")!;
     status = document.querySelector(".status-bar")!;
     const chrome = mountChrome(toolbar, status, deps);
+    await store.refresh();
     mounted = chrome;
     await flush();
     return chrome;
@@ -42,9 +45,10 @@ describe("chrome", () => {
   beforeEach(() => {
     st = base();
     edit = vi.fn(async (): Promise<Execution> => ({ status: "empty" }));
+    store = createStore(async () => structuredClone(st));
     deps = {
       edit: edit as never,
-      state: async () => structuredClone(st),
+      store,
       setSystem: async (scope, character, system) => {
         if (scope === "default") st.default_system = system;
         else if (character === null || character === st.active_character) st.system = system;
@@ -55,7 +59,6 @@ describe("chrome", () => {
       about: async () => ({ name: "Rollin", app_version: "0.1.2", library_version: "1", license: "MIT", repository: "" }),
       run: vi.fn(),
       toggleSidebar: vi.fn(),
-      changed: vi.fn(),
     };
   });
   afterEach(() => {
@@ -91,11 +94,12 @@ describe("chrome", () => {
 
   it("counts rolls and shows the library's text for the last event", async () => {
     const chrome = await mount();
-    await chrome.record({ status: "ok", output: { kind: "rolls", preset: null, rolls: [{}, {}], lines: [], hints: [] } } as never);
-    await chrome.record({
+    chrome.note({ status: "ok", output: { kind: "rolls", preset: null, rolls: [{}, {}], lines: [], hints: [] } } as never);
+    chrome.note({
       status: "ok",
       output: { kind: "saved", name: "braceup", formula: "2d6", character: "grog", replaced: null, lines: ["saved 'braceup' on 'grog': 2d6"], hints: [] },
     } as never);
+    await store.refresh();
     expect(status.textContent).toContain("2 rolls this session");
     expect(status.querySelector(".st-event")?.textContent).toBe("+ saved 'braceup' on 'grog': 2d6");
   });

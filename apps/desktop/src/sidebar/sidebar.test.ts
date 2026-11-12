@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Execution, PresetEntry, SessionState } from "../api/generated";
 import { asPlatform } from "../platform.test";
 import { edits, presetRows } from "./model";
+import { createStore, type SessionStore } from "../store";
 import { mountSidebar } from "./index";
 
 const preset = (name: string, source: PresetEntry["source"], shadow: PresetEntry["shadow"] = { kind: "none" }): PresetEntry => ({
@@ -39,16 +40,19 @@ describe("sidebar", () => {
   let run: ReturnType<typeof vi.fn>;
   let edit: ReturnType<typeof vi.fn>;
   let current: SessionState;
+  let store: SessionStore;
   const ok: Execution = { status: "empty" };
 
   async function mount() {
     document.body.innerHTML = `<div id="app"><aside class="sidebar"></aside></div>`;
+    store = createStore(async () => current);
     const sb = mountSidebar(document.querySelector(".sidebar")!, {
       edit: edit as never,
-      state: async () => current,
+      store,
       run: run as never,
     });
-    await vi.waitFor(() => expect(document.querySelector(".sb-header")).not.toBeNull());
+    await store.refresh();
+    expect(document.querySelector(".sb-header")).not.toBeNull();
     return sb;
   }
 

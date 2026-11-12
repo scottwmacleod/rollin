@@ -14,88 +14,60 @@ import { check as checkForUpdate } from "@tauri-apps/plugin-updater";
 import { about, check, edit, execute, relaunch, sample, setSystem, state } from "./api";
 import { mountAbout } from "./about";
 import { mountChrome } from "./chrome";
-import type { Execution } from "./api";
+import { createLines } from "./lines";
 import { mountInput } from "./input";
 import { mountLog, type LogEntry } from "./log";
 import { entryFor } from "./session";
 import { mountSidebar } from "./sidebar";
+import { createStore } from "./store";
 import { mountSlideOverDismiss } from "./sidebar/dismiss";
 import { createUpdater } from "./updater";
 import { bindAboutToUpdater } from "./updater/about";
 import { mountUpdateBanner } from "./updater/banner";
 import { startUpdateSchedule } from "./updater/schedule";
 
-const logEl = document.querySelector<HTMLElement>(".roll-log");
-const inputEl = document.querySelector<HTMLElement>(".formula-box");
-const sidebarEl = document.querySelector<HTMLElement>(".sidebar");
-const toolbarEl = document.querySelector<HTMLElement>(".toolbar");
-const statusEl = document.querySelector<HTMLElement>(".status-bar");
-
-let sidebar: ReturnType<typeof mountSidebar> | null = null;
-let input: ReturnType<typeof mountInput> | null = null;
-let chrome: ReturnType<typeof mountChrome> | null = null;
-
-// One way into the log: every line, typed or not, ends up here.
-function record(line: string, execution: Execution): void {
-  const entry = entryFor(line, execution);
-  if (entry) log?.append(entry);
-  // `save`, `set`, `char` and friends change what the sidebar shows.
-  void sidebar?.refresh();
-  void chrome?.record(execution);
+function must(selector: string): HTMLElement {
+  const found = document.querySelector<HTMLElement>(selector);
+  if (!found) throw new Error(`index.html has no ${selector}`);
+  return found;
 }
 
-/** Runs a line that did not come from the box (preset click, ⌘1–9, reroll). */
-async function run(line: string): Promise<void> {
-  try {
-    record(line, await execute(line));
-  } catch (failure) {
-    const message = (failure as { message?: unknown } | null)?.message;
-    record(line, { status: "rejected", message: typeof message === "string" ? message : String(failure) });
-  }
-}
+// The Session's saved data lives in one store; every line goes through `lines`.
+const store = createStore(state);
+const lines = createLines({ execute, store });
 
-const log = logEl
-  ? mountLog(logEl, {
-      focusInput: () => input?.focus(),
-      reroll: (entry: LogEntry) => void run(entry.input),
-    })
-  : null;
-
-if (inputEl) {
-  input = mountInput(inputEl, { onSubmit: record });
-  if (logEl) log?.bindInput(inputEl);
-  input.focus();
-}
-
-if (sidebarEl) {
-  // A preset click and typing its name give the same log entry.
-  sidebar = mountSidebar(sidebarEl, {
-    edit,
-    state,
-    run: (line) => window.dispatchEvent(new CustomEvent("rollin:submit", { detail: line })),
-  });
-  const appEl = document.getElementById("app");
-  if (appEl) mountSlideOverDismiss(appEl, sidebarEl);
-}
-
-if (toolbarEl && statusEl) {
-  chrome = mountChrome(toolbarEl, statusEl, {
-    edit,
-    state,
-    setSystem,
-    check,
-    sample,
-    about,
-    run: (line) => void run(line),
-    toggleSidebar: () => sidebar?.toggle(),
-    changed: () => void sidebar?.refresh(),
-  });
-}
-
-window.addEventListener("rollin:submit", (e) => {
-  const line = (e as CustomEvent<unknown>).detail;
-  if (typeof line === "string" && line.trim() !== "") void run(line);
+const input = mountInput(must(".formula-box"), { onSubmit: lines.record });
+const log = mountLog(must(".roll-log"), {
+  focusInput: () => input.focus(),
+  reroll: (entry: LogEntry) => void lines.run(entry.input),
 });
+log.bindInput(must(".formula-box"));
+input.focus();
+
+// A preset click and typing its name give the same log entry.
+const sidebarEl = must(".sidebar");
+const sidebar = mountSidebar(sidebarEl, { edit, store, run: (line) => void lines.run(line) });
+const appEl = document.getElementById("app");
+if (appEl) mountSlideOverDismiss(appEl, sidebarEl);
+
+const chrome = mountChrome(must(".toolbar"), must(".status-bar"), {
+  edit,
+  store,
+  setSystem,
+  check,
+  sample,
+  about,
+  run: (line) => void lines.run(line),
+  toggleSidebar: () => sidebar.toggle(),
+});
+
+lines.onRecord((line, execution) => {
+  const entry = entryFor(line, execution);
+  if (entry) log.append(entry);
+  chrome.note(execution);
+});
+
+void store.refresh();
 
 // `Rollin ▸ About Rollin` (and its shortcut) is a native menu item; it sends
 // this event. Auto-update reports in the dialog and in a banner on launch.
@@ -105,7 +77,7 @@ void listen("about:open", () => void aboutView.open());
 const updater = createUpdater({ check: checkForUpdate, relaunch });
 bindAboutToUpdater(aboutView, updater);
 // The logo cursor blinks fast while an update is being checked or installed.
-updater.subscribe((state) => chrome?.setBusy(state.kind === "checking" || state.kind === "installing"));
+updater.subscribe((state) => chrome.setBusy(state.kind === "checking" || state.kind === "installing"));
 mountUpdateBanner(updater);
 void updater.check();
 startUpdateSchedule(updater);

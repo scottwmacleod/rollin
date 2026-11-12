@@ -1,10 +1,11 @@
 import { hasMod } from "../platform";
 import { el } from "./dialog";
 import { LIST_ROWS, paletteView, type PaletteAction, type PaletteRow, type PaletteView } from "./model";
-import type { SessionState } from "../api/generated";
+import type { SessionStore } from "../store";
 
 export interface PaletteDeps {
-  state(): Promise<SessionState>;
+  /** The Session's saved data; the palette reads it each time it opens and while open. */
+  store: SessionStore;
   /** Carries out a chosen row. */
   perform(action: PaletteAction): void;
   /** ⌘E on a preset row. */
@@ -23,8 +24,11 @@ export interface Palette {
 export function mountPalette(deps: PaletteDeps): Palette {
   let root: HTMLElement | null = null;
   let before: HTMLElement | null = null;
+  let unsubscribe: (() => void) | null = null;
 
   function close() {
+    unsubscribe?.();
+    unsubscribe = null;
     root?.remove();
     root = null;
     before?.focus?.();
@@ -58,7 +62,6 @@ export function mountPalette(deps: PaletteDeps): Palette {
     root.append(box);
     document.body.append(root);
 
-    let state: SessionState | null = null;
     let view: PaletteView = { scope: "all", headings: new Map(), rows: [] };
     let active = 0;
     // The text after the scope prefix is what the input holds when scoped.
@@ -67,7 +70,11 @@ export function mountPalette(deps: PaletteDeps): Palette {
     const query = () => prefix + input.value;
 
     function paint() {
-      if (!state) return;
+      const state = deps.store.state;
+      if (!state) {
+        list.replaceChildren(el("div", "pal-empty", deps.store.error || "Could not read saved data."));
+        return;
+      }
       view = paletteView(state, query());
       active = Math.min(active, Math.max(view.rows.length - 1, 0));
       chip.hidden = prefix === "";
@@ -162,13 +169,8 @@ export function mountPalette(deps: PaletteDeps): Palette {
 
     if (initial === "@" || initial === ">") prefix = initial;
     else input.value = initial;
-    void deps.state().then(
-      (s) => {
-        state = s;
-        paint();
-      },
-      () => list.replaceChildren(el("div", "pal-empty", "Could not read saved data.")),
-    );
+    unsubscribe = deps.store.subscribe(paint);
+    paint();
     input.focus();
   }
 
