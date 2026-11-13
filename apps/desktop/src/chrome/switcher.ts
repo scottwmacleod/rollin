@@ -50,7 +50,7 @@ export function mountSwitcher(button: HTMLButtonElement, deps: SwitcherDeps): Sw
           const to = input.value.trim();
           if (to === "" || to === name) {
             mode = null;
-            draw();
+            draw(name);
             return;
           }
           void deps.rename(name, to).then((err) => {
@@ -86,7 +86,7 @@ export function mountSwitcher(button: HTMLButtonElement, deps: SwitcherDeps): Sw
           error = err ?? "";
           mode = null;
           if (err === null) close();
-          else draw();
+          else draw(name);
         }),
       );
       no.addEventListener("click", () => {
@@ -102,6 +102,7 @@ export function mountSwitcher(button: HTMLButtonElement, deps: SwitcherDeps): Sw
     pick.dataset.name = name;
     pick.setAttribute("role", "menuitemradio");
     pick.setAttribute("aria-checked", String(isActive));
+    pick.setAttribute("aria-keyshortcuts", name === "default" ? "Delete" : "F2 Delete");
     pick.append(el("span", "sw-check", isActive ? "✓" : ""), el("span", "sw-name", name));
     pick.addEventListener("click", () => {
       if (isActive) return close();
@@ -151,6 +152,7 @@ export function mountSwitcher(button: HTMLButtonElement, deps: SwitcherDeps): Sw
   function draw(focusName?: string) {
     if (!menu) return;
     const list = el("div", "sw-list");
+    list.setAttribute("role", "none");
     list.style.maxHeight = `${LIST_ROWS * 28}px`;
     for (const name of characters) list.append(rowFor(name));
     const add = el("button", "sw-pick sw-new");
@@ -163,14 +165,19 @@ export function mountSwitcher(button: HTMLButtonElement, deps: SwitcherDeps): Sw
     });
     const err = el("div", "sw-error", error);
     err.setAttribute("role", "alert");
-    menu.replaceChildren(list, el("div", "sw-sep"), add, err);
+    const sep = el("div", "sw-sep");
+    sep.setAttribute("role", "separator");
+    menu.replaceChildren(list, sep, add, err);
     if (focusName) menu.querySelector<HTMLElement>(`.sw-pick[data-name="${CSS.escape(focusName)}"]`)?.focus();
   }
 
   function close() {
     if (!menu) return;
+    // Focus would otherwise fall to the page when the focused row goes away.
+    const hadFocus = menu.contains(document.activeElement);
     menu.remove();
     menu = null;
+    if (hadFocus) button.focus();
     mode = null;
     error = "";
     button.setAttribute("aria-expanded", "false");
@@ -187,6 +194,8 @@ export function mountSwitcher(button: HTMLButtonElement, deps: SwitcherDeps): Sw
     menu = el("div", "sw-menu");
     menu.setAttribute("role", "menu");
     menu.setAttribute("aria-label", "Characters");
+    menu.id = "sw-menu";
+    button.setAttribute("aria-controls", "sw-menu");
     const r = button.getBoundingClientRect();
     menu.style.left = `${r.left}px`;
     menu.style.top = `${r.bottom + 4}px`;
@@ -195,7 +204,15 @@ export function mountSwitcher(button: HTMLButtonElement, deps: SwitcherDeps): Sw
         e.preventDefault();
         e.stopPropagation();
         close();
+      } else if (e.key === "Tab") {
+        // A menu is one stop: Tab leaves it and lands back on the button.
+        e.preventDefault();
+        close();
         button.focus();
+      } else if (e.key === "Home" || e.key === "End") {
+        e.preventDefault();
+        const items = [...menu!.querySelectorAll<HTMLElement>(".sw-pick")];
+        (e.key === "Home" ? items[0] : items[items.length - 1])?.focus();
       } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         e.preventDefault();
         const items = [...menu!.querySelectorAll<HTMLElement>(".sw-pick")];
@@ -212,6 +229,12 @@ export function mountSwitcher(button: HTMLButtonElement, deps: SwitcherDeps): Sw
   }
 
   button.addEventListener("click", () => (menu ? close() : open()));
+  button.addEventListener("keydown", (e) => {
+    if (!menu && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      e.preventDefault();
+      open();
+    }
+  });
 
   return {
     update(next, current) {
