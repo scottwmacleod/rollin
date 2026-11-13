@@ -1,0 +1,66 @@
+name: Bug report
+description: Something in rollin does the wrong thing, crashes or gives a wrong result.
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. The more exact the steps, the faster it gets fixed.
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it happen?
+      options:
+        - Desktop app
+        - Command line (built from source)
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: For the desktop app, use the version in the installer name (for example 0.4.2). For the CLI, run `rollin --version`.
+      placeholder: "2.0.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: Operating system version
+      placeholder: "macOS 15.1, Windows 11 23H2"
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: If a formula is involved, paste it exactly, and the seed if you used one.
+      placeholder: |
+        1. Open the app
+        2. Roll `4d6!dl1`
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: Paste any error text or add a screenshot.
+    validations:
+      required: true
