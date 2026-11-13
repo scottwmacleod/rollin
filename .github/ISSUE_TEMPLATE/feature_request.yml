@@ -1,0 +1,43 @@
+name: Feature request
+description: Suggest a new feature or a change to how rollin works.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check the [open issues](https://github.com/scottwmacleod/rollin/issues) first in case someone has asked already. For a half-formed idea, start a [discussion](https://github.com/scottwmacleod/rollin/discussions) instead.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the situation at the table or in the app that the feature would help with.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like rollin to do?
+      description: For a new formula, give example inputs and the result you expect.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you have tried
+  - type: dropdown
+    id: system
+    attributes:
+      label: Game system, if it matters
+      options:
+        - Not specific to a system
+        - D&D 5e
+        - Other (say which below)
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where would it apply?
+      options:
+        - Desktop app
+        - Command line
+        - Both
+        - Not sure
