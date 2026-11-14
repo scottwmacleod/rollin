@@ -24,6 +24,7 @@ export type FormulaError =
   | { kind: "invalid_dice"; message: string; span: Span }
   | { kind: "limit_exceeded"; cap: Cap; limit: number; term: string; span: Span }
   | { kind: "division_by_zero"; span: Span }
+  | { kind: "count_in_arithmetic"; span: Span }
   | { kind: "overflow"; span: Span }
   | {
       kind: "repeat_without_dice";
@@ -53,6 +54,8 @@ export type BinOp = "+" | "-" | "*" | "/";
 export interface Die {
   value: number;
   status: "kept";
+  /** Set on a counting die that was a success or a failure. */
+  outcome?: "success" | "failure";
 }
 
 export type Node =
@@ -62,9 +65,16 @@ export type Node =
       /** The term as written, such as `2d6`. */
       term: string;
       sides: number;
+      /** The modifier clauses as written, such as `>=8f1`. Left out when there are none. */
+      modifiers?: string[];
       special?: "percentile";
       dice: Die[];
+      /** The sum of the dice, or successes minus failures for a count. */
       subtotal: number;
+      /** Present on a success count. */
+      kind?: "count";
+      successes?: number;
+      failures?: number;
     }
   | { type: "neg"; operand: Node; total: number }
   | { type: "group"; inner: Node; total: number }
@@ -72,6 +82,8 @@ export type Node =
 
 export interface Roll {
   formula: string;
+  /** `count` for a success count; left out for a sum. */
+  kind?: "count";
   total: number;
   expr: Node;
   /** The `# text` note on this roll, if it had one. */

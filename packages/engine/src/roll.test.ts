@@ -147,6 +147,39 @@ describe("the die source", () => {
   });
 });
 
+describe("success counting", () => {
+  const sixes = (...values: number[]) => scriptedDice(values.map((face) => ({ sides: 6, face })));
+
+  test("a failure subtracts, so the total can be negative", () => {
+    const [result] = ok(roll("3d6>=5f<=2", sixes(1, 2, 6))).rolls;
+    expect(result).toMatchObject({ kind: "count", total: -1 });
+    expect(result?.expr).toMatchObject({
+      kind: "count",
+      successes: 1,
+      failures: 2,
+      dice: [{ outcome: "failure" }, { outcome: "failure" }, { outcome: "success" }],
+    });
+  });
+
+  test("a die that is neither carries no outcome", () => {
+    const [result] = ok(roll("d6>=5", sixes(3))).rolls;
+    expect(result?.expr).toMatchObject({ dice: [{ value: 3 }], subtotal: 0 });
+    expect(result?.expr).not.toHaveProperty("dice.0.outcome");
+  });
+
+  test("a count cannot be an operand, with or without parentheses", () => {
+    for (const line of ["d6>=3+1", "1+d6>=3", "-d6>=3", "(d6>=3)*2"]) {
+      expect(failure(roll(line, always(6))).error.kind, line).toBe("count_in_arithmetic");
+    }
+  });
+
+  test("a failure clause alone is a syntax error", () => {
+    expect(failure(roll("4d6f1", always(6))).message).toBe(
+      "a failure clause 'f' must follow a success clause, as in 6d10>=8f1",
+    );
+  });
+});
+
 describe("labels and repeats", () => {
   const d = (faces: number[]): DieSource => {
     let i = 0;
