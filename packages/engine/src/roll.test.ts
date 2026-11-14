@@ -146,3 +146,36 @@ describe("the die source", () => {
     expect(faces(1).remaining()).toBe(1);
   });
 });
+
+describe("special dice", () => {
+  test("d% is a d100 marked percentile, and the term is kept as typed", () => {
+    const dice = scriptedDice([
+      { sides: 100, face: 37 },
+      { sides: 100, face: 92 },
+    ]);
+    const [result] = ok(roll("2D%+1", dice)).rolls;
+    expect(result?.total).toBe(130);
+    expect(result?.expr).toMatchObject({
+      type: "chain",
+      first: {
+        type: "dice",
+        term: "2D%",
+        sides: 100,
+        special: "percentile",
+        dice: [{ value: 37 }, { value: 92 }],
+      },
+    });
+    expect(dice.remaining()).toBe(0);
+  });
+
+  test("a plain d100 is not marked percentile", () => {
+    const [result] = ok(roll("d100", always(50))).rolls;
+    expect(result?.expr).not.toHaveProperty("special");
+  });
+
+  test("fudge dice are not supported, as in the Rust engine", () => {
+    for (const line of ["4dF", "4df", "4dF+2"]) {
+      expect(failure(roll(line, always(1))).message, line).toMatch(/found 'df'/);
+    }
+  });
+});

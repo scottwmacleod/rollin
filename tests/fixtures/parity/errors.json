@@ -218,6 +218,92 @@
         "error": {
           "error": {
             "kind": "syntax",
+            "message": "expected ',' or the end of the formula, found 'df'",
+            "span": {
+              "end": 3,
+              "start": 1
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "expected ',' or the end of the formula, found 'df'",
+          "source": "4dF"
+        }
+      },
+      "line": "4dF",
+      "name": "fudge_unsupported"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "syntax",
+            "message": "expected ',' or the end of the formula, found 'df'",
+            "span": {
+              "end": 3,
+              "start": 1
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "expected ',' or the end of the formula, found 'df'",
+          "source": "4df+2"
+        }
+      },
+      "line": "4df+2",
+      "name": "fudge_lowercase_unsupported"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "invalid_dice",
+            "message": "dice count must be at least 1",
+            "span": {
+              "end": 1,
+              "start": 0
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "dice count must be at least 1",
+          "source": "0d%"
+        }
+      },
+      "line": "0d%",
+      "name": "percentile_zero_count"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "dice_per_term",
+            "kind": "limit_exceeded",
+            "limit": 1000,
+            "span": {
+              "end": 4,
+              "start": 0
+            },
+            "term": "1001d%"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "dice per term cap (1000) exceeded by '1001d%'",
+          "source": "1001d%"
+        }
+      },
+      "line": "1001d%",
+      "name": "percentile_count_limit"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "syntax",
             "message": "expected ',' or the end of the formula, found 'z'",
             "span": {
               "end": 4,

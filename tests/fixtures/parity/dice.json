@@ -580,6 +580,158 @@
     {
       "draws": [
         {
+          "face": 46,
+          "sides": 100
+        },
+        {
+          "face": 79,
+          "sides": 100
+        },
+        {
+          "face": 54,
+          "sides": 100
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 46
+                  },
+                  {
+                    "status": "kept",
+                    "value": 79
+                  },
+                  {
+                    "status": "kept",
+                    "value": 54
+                  }
+                ],
+                "sides": 100,
+                "special": "percentile",
+                "subtotal": 179,
+                "term": "3D%",
+                "type": "dice"
+              },
+              "formula": "3D%",
+              "total": 179
+            }
+          ]
+        }
+      },
+      "line": "3D%",
+      "name": "percentile_uppercase"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 100
+        },
+        {
+          "face": 58,
+          "sides": 100
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 1
+                    },
+                    {
+                      "status": "kept",
+                      "value": 58
+                    }
+                  ],
+                  "sides": 100,
+                  "special": "percentile",
+                  "subtotal": 59,
+                  "term": "2d %",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 1
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 60,
+                "type": "chain"
+              },
+              "formula": "2d % + 1",
+              "total": 60
+            }
+          ]
+        }
+      },
+      "line": "2d % + 1",
+      "name": "percentile_spaced"
+    },
+    {
+      "draws": [
+        {
+          "face": 38,
+          "sides": 100
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "operand": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 38
+                    }
+                  ],
+                  "sides": 100,
+                  "special": "percentile",
+                  "subtotal": 38,
+                  "term": "d%",
+                  "type": "dice"
+                },
+                "total": -38,
+                "type": "neg"
+              },
+              "formula": "-d%",
+              "total": -38
+            }
+          ]
+        }
+      },
+      "line": "-d%",
+      "name": "percentile_negated"
+    },
+    {
+      "draws": [
+        {
           "face": 1,
           "sides": 6
         },
