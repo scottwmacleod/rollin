@@ -23,6 +23,8 @@ export type FormulaError =
   | { kind: "syntax"; message: string; span: Span }
   | { kind: "invalid_dice"; message: string; span: Span }
   | { kind: "limit_exceeded"; cap: Cap; limit: number; term: string; span: Span }
+  | { kind: "infinite_explosion"; clause: string; sides: number; span: Span }
+  | { kind: "infinite_reroll"; clause: string; sides: number; span: Span }
   | { kind: "division_by_zero"; span: Span }
   | { kind: "overflow"; span: Span };
 
@@ -42,9 +44,23 @@ export type Hint =
 
 export type BinOp = "+" | "-" | "*" | "/";
 
+/** Why a die is in the pool: the clause as written, and the die that caused it. */
+export interface Reason {
+  /** The clause as written in the term, such as `r1` or `!`. */
+  clause: string;
+  /** The index in the group's `dice` of the die that caused this one. */
+  from?: number;
+  /** A second clause that also shaped this die: a compound `!!` on a reroll replacement. */
+  also?: string;
+}
+
 export interface Die {
   value: number;
-  status: "kept";
+  /** `exploded` is an extra die an earlier die set off. `rerolled` is a die a reroll replaced: it never counts. */
+  status: "kept" | "exploded" | "rerolled";
+  /** For a compounded exploding die (`!!`): the rolls added into `value`, in order. */
+  parts?: number[];
+  reason?: Reason;
 }
 
 export type Node =
@@ -55,6 +71,8 @@ export type Node =
       term: string;
       sides: number;
       special?: "percentile";
+      /** The clauses as written, in the order they apply. Left out when there are none. */
+      modifiers?: string[];
       dice: Die[];
       subtotal: number;
     }

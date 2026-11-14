@@ -146,3 +146,69 @@ describe("the die source", () => {
     expect(faces(1).remaining()).toBe(1);
   });
 });
+
+describe("exploding dice and rerolls", () => {
+  const scripted = (sides: number, ...values: number[]) =>
+    scriptedDice(values.map((face) => ({ sides, face })));
+
+  test("an exploding die adds a die marked as exploded", () => {
+    const dice = scripted(6, 6, 2, 3);
+    const [result] = ok(roll("2d6!", dice)).rolls;
+    expect(result?.total).toBe(11);
+    expect(result?.expr).toMatchObject({
+      modifiers: ["!"],
+      dice: [
+        { value: 6, status: "kept" },
+        { value: 2, status: "exploded", reason: { clause: "!", from: 0 } },
+        { value: 3, status: "kept" },
+      ],
+    });
+    expect(dice.remaining()).toBe(0);
+  });
+
+  test("a penetrating die counts one less, with no floor", () => {
+    const [result] = ok(roll("d6!p", scripted(6, 6, 1))).rolls;
+    expect(result?.total).toBe(6);
+  });
+
+  test("a compound die records its parts", () => {
+    const [result] = ok(roll("d6!!", scripted(6, 6, 6, 4))).rolls;
+    expect(result?.total).toBe(16);
+    expect(result?.expr).toMatchObject({ dice: [{ value: 16, parts: [6, 6, 4] }] });
+  });
+
+  test("r rerolls once and the second result stands", () => {
+    const [result] = ok(roll("d6r1", scripted(6, 1, 1))).rolls;
+    expect(result?.total).toBe(1);
+    expect(result?.expr).toMatchObject({
+      dice: [
+        { value: 1, status: "rerolled", reason: { clause: "r1" } },
+        { value: 1, status: "kept", reason: { clause: "r1", from: 0 } },
+      ],
+    });
+  });
+
+  test("rr rerolls until the die stops matching", () => {
+    const [result] = ok(roll("d6rr<3", scripted(6, 1, 2, 5))).rolls;
+    expect(result?.total).toBe(5);
+  });
+
+  test("a reroll replacement that explodes compound keeps both clauses", () => {
+    const [result] = ok(roll("d6r1!!", scripted(6, 1, 6, 2))).rolls;
+    expect(result?.expr).toMatchObject({
+      dice: [
+        { status: "rerolled" },
+        { value: 8, parts: [6, 2], reason: { clause: "r1", from: 0, also: "!!" } },
+      ],
+    });
+  });
+
+  test("a condition true for every face is an error", () => {
+    expect(roll("d6!>=1", () => 1)).toMatchObject({
+      error: { error: { kind: "infinite_explosion", clause: "!>=1" } },
+    });
+    expect(roll("d6rr<=6", () => 1)).toMatchObject({
+      error: { error: { kind: "infinite_reroll", clause: "rr<=6" } },
+    });
+  });
+});

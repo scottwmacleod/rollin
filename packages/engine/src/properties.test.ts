@@ -185,3 +185,33 @@ test("generated formulas: the total is what the tree adds up to", () => {
     { numRuns: 500 },
   );
 });
+
+test("exploding dice and rerolls never pass either cap, and the totals add up", () => {
+  fc.assert(
+    fc.property(
+      fc.integer({ min: 1, max: 20 }),
+      fc.integer({ min: 2, max: 20 }),
+      fc.constantFrom("!", "!!", "!p", "r1", "rr1", "r1!", "rr1!!"),
+      seeds,
+      (count, sides, clause, s) => {
+        const report = roll(`${count}d${sides}${clause}`, fromSeeds(s));
+        if ("error" in report) {
+          // The only way a valid formula fails is by hitting a cap.
+          expect(report.error).toMatchObject({ error: { kind: "limit_exceeded" } });
+          return;
+        }
+        const [result] = report.ok.rolls;
+        const node = result?.expr;
+        if (node?.type !== "dice") throw new Error("expected a dice term");
+        const rerolled = node.dice.filter((d) => d.status === "rerolled").length;
+        const exploded = node.dice.filter((d) => d.status === "exploded").length;
+        // Each original die stands once, so only extras and rerolls add to the count.
+        expect(node.dice.length).toBe(count + rerolled + exploded);
+        expect(rerolled).toBeLessThanOrEqual(count * 100);
+        expect(exploded).toBeLessThanOrEqual(count * 100);
+        const counted = node.dice.filter((d) => d.status !== "rerolled");
+        expect(result?.total).toBe(counted.reduce((sum, d) => sum + d.value, 0));
+      },
+    ),
+  );
+});

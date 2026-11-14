@@ -19,6 +19,12 @@ export const invalidDice = (message: string, span: Span): FormulaFailure =>
 export const limitExceeded = (cap: Cap, term: string, span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "limit_exceeded", cap, limit: CAP_LIMITS[cap], term, span });
 
+export const infiniteExplosion = (clause: string, sides: number, span: Span): FormulaFailure =>
+  new FormulaFailure({ kind: "infinite_explosion", clause, sides, span });
+
+export const infiniteReroll = (clause: string, sides: number, span: Span): FormulaFailure =>
+  new FormulaFailure({ kind: "infinite_reroll", clause, sides, span });
+
 export const divisionByZero = (span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "division_by_zero", span });
 
@@ -42,6 +48,10 @@ export function messageOf(error: FormulaError): string {
       return error.message;
     case "limit_exceeded":
       return `${CAP_NAMES[error.cap]} cap (${error.limit}) exceeded by '${error.term}'`;
+    case "infinite_explosion":
+      return `explosion condition '${error.clause}' is true for every face of a d${error.sides}, so it would never stop`;
+    case "infinite_reroll":
+      return `reroll condition '${error.clause}' is true for every face of a d${error.sides}, so it would never stop`;
     case "division_by_zero":
       return "division by zero";
     case "overflow":
