@@ -3,12 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "rollin dice engine: no UI, no browser APIs. Empty until loop 1 (#216).",
+  "description": "rollin dice engine: no UI, no browser APIs. Dice terms and integer arithmetic so far (#216).",
   "exports": {
     ".": "./src/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "fast-check": "4.10.2"
   }
 }

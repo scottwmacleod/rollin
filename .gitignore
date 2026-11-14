@@ -3,6 +3,7 @@
 # Web app (apps/web) and workspace
 node_modules/
 dist/
+dist-e2e/
 apps/web/src/generated/
 apps/web/playwright-report/
 apps/web/test-results/

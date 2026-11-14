@@ -131,6 +131,16 @@ Never a check, even when a 20 or a 1 comes up: `3d20`, a bare `2d20`, a lone
 `d20!` or `d20!!`, a pair with an explode clause (`2d20!kh1`), success counts, and `d20+d20`. Those cases are named
 `not_a_check_*` and expect no `crit`, no `natural` and no doubled damage.
 
+## Where the TypeScript engine differs
+
+The Rust engine does its sums in 64-bit integers. The TypeScript engine keeps
+every number inside JavaScript's safe integers (2^53 - 1), so a total never
+loses precision. Two cases in `errors` (`overflow_add`, `overflow_mul`) therefore
+give "number is too large" in TypeScript where Rust gives an overflow. The
+harness in `packages/engine/src/parity.test.ts` names them and the answer it
+expects instead, and lists which areas and cases a later loop of #216 still has
+to bring.
+
 ## Adding a case
 
 Add it to the list for its area in `tests/parity.rs`, then run `just parity`.
