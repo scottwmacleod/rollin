@@ -31,3 +31,14 @@ updates:
     groups:
       desktop-npm-minor-patch:
         update-types: ["minor", "patch"]
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      web-npm-minor-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      # Beta library pinned behind apps/web/src/ui; upgrade by hand.
+      - dependency-name: "@ui-sdk/*"

@@ -1,0 +1,14 @@
+{
+  "name": "@rollin/engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "rollin dice engine: no UI, no browser APIs. Empty until loop 1 (#216).",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}

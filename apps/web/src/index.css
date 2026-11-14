@@ -1,0 +1,36 @@
+@import "tailwindcss";
+@import "@fontsource/geist/400.css";
+@import "@fontsource/geist/500.css";
+@import "@fontsource/geist/600.css";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/600.css";
+@import "./generated/tokens.css";
+
+/* Tailwind utilities read the design tokens (ui/tokens.css), so light and dark
+   follow the OS exactly as the desktop app does. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-sunken: var(--sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-muted: var(--muted);
+  --color-signal: var(--signal);
+  --color-on-signal: var(--on-signal);
+  --color-signal-ink: var(--signal-ink);
+  --color-signal-tint: var(--signal-tint);
+  --color-wip: var(--wip);
+  --color-danger: var(--danger);
+  --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  margin: 0;
+}
