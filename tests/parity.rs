@@ -721,12 +721,14 @@ fn d20_checks() -> Vec<Case> {
 
     // Never a check, whatever the faces: a 20 and a 1 come up and nothing is
     // flagged, nothing crits, and the damage is not doubled.
-    let never: [(&str, &str); 10] = [
+    let never: [(&str, &str); 12] = [
         ("three_d20", "3d20+5"),
         ("three_d20_keep_one", "3d20kh1+5"),
         ("three_d20_keep_two", "3d20kh2+5"),
         ("bare_2d20", "2d20"),
         ("2d20_exploding_drop_one", "2d20!dl1"),
+        ("2d20_exploding_keep_one", "2d20!kh1"),
+        ("2d20_exploding_disadvantage", "2d20!kl1"),
         ("lone_d20_exploding", "d20!"),
         ("lone_d20_compound", "d20!!"),
         ("success_count", "6d20>=15"),
@@ -743,16 +745,6 @@ fn d20_checks() -> Vec<Case> {
             );
         }
     }
-    // Two d20 keeping one with exploding is a check too: the rule looks at the
-    // count and the keep clause, not at explosions on a pair.
-    cases.push(
-        Case::new(
-            "check_2d20_exploding_keep_one_natural_20",
-            &format!("2d20!kh1{damage}"),
-        )
-        .ctx(dnd())
-        .find(kept_face_is(20)),
-    );
     // d20 plus a different die is still one d20 group, so still a check.
     cases.push(
         Case::new("check_with_other_dice", "d20+d6+2, 1d8+3")

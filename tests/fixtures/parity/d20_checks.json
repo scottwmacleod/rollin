@@ -4355,6 +4355,396 @@
           "sides": 20
         },
         {
+          "face": 13,
+          "sides": 20
+        },
+        {
+          "face": 1,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 20
+                  },
+                  {
+                    "reason": {
+                      "clause": "kh1"
+                    },
+                    "status": "dropped",
+                    "value": 15
+                  },
+                  {
+                    "reason": {
+                      "clause": "kh1"
+                    },
+                    "status": "dropped",
+                    "value": 13
+                  }
+                ],
+                "modifiers": [
+                  "!",
+                  "kh1"
+                ],
+                "sides": 20,
+                "subtotal": 20,
+                "term": "2d20!kh1",
+                "type": "dice"
+              },
+              "formula": "2d20!kh1",
+              "total": 20
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 1
+                    }
+                  ],
+                  "sides": 8,
+                  "subtotal": 1,
+                  "term": "1d8",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 4,
+                "type": "chain"
+              },
+              "formula": "1d8+3",
+              "total": 4
+            }
+          ]
+        }
+      },
+      "line": "2d20!kh1, 1d8+3",
+      "name": "not_a_check_2d20_exploding_keep_one_20"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 2,
+          "sides": 20
+        },
+        {
+          "face": 1,
+          "sides": 20
+        },
+        {
+          "face": 8,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "reason": {
+                      "clause": "kh1"
+                    },
+                    "status": "dropped",
+                    "value": 1
+                  }
+                ],
+                "modifiers": [
+                  "!",
+                  "kh1"
+                ],
+                "sides": 20,
+                "subtotal": 2,
+                "term": "2d20!kh1",
+                "type": "dice"
+              },
+              "formula": "2d20!kh1",
+              "total": 2
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 8
+                    }
+                  ],
+                  "sides": 8,
+                  "subtotal": 8,
+                  "term": "1d8",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 11,
+                "type": "chain"
+              },
+              "formula": "1d8+3",
+              "total": 11
+            }
+          ]
+        }
+      },
+      "line": "2d20!kh1, 1d8+3",
+      "name": "not_a_check_2d20_exploding_keep_one_1"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 20,
+          "sides": 20
+        },
+        {
+          "face": 15,
+          "sides": 20
+        },
+        {
+          "face": 13,
+          "sides": 20
+        },
+        {
+          "face": 1,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "reason": {
+                      "clause": "kl1"
+                    },
+                    "status": "dropped",
+                    "value": 20
+                  },
+                  {
+                    "reason": {
+                      "clause": "kl1"
+                    },
+                    "status": "dropped",
+                    "value": 15
+                  },
+                  {
+                    "status": "kept",
+                    "value": 13
+                  }
+                ],
+                "modifiers": [
+                  "!",
+                  "kl1"
+                ],
+                "sides": 20,
+                "subtotal": 13,
+                "term": "2d20!kl1",
+                "type": "dice"
+              },
+              "formula": "2d20!kl1",
+              "total": 13
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 1
+                    }
+                  ],
+                  "sides": 8,
+                  "subtotal": 1,
+                  "term": "1d8",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 4,
+                "type": "chain"
+              },
+              "formula": "1d8+3",
+              "total": 4
+            }
+          ]
+        }
+      },
+      "line": "2d20!kl1, 1d8+3",
+      "name": "not_a_check_2d20_exploding_disadvantage_20"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 2,
+          "sides": 20
+        },
+        {
+          "face": 1,
+          "sides": 20
+        },
+        {
+          "face": 8,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "reason": {
+                      "clause": "kl1"
+                    },
+                    "status": "dropped",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "modifiers": [
+                  "!",
+                  "kl1"
+                ],
+                "sides": 20,
+                "subtotal": 1,
+                "term": "2d20!kl1",
+                "type": "dice"
+              },
+              "formula": "2d20!kl1",
+              "total": 1
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 8
+                    }
+                  ],
+                  "sides": 8,
+                  "subtotal": 8,
+                  "term": "1d8",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 11,
+                "type": "chain"
+              },
+              "formula": "1d8+3",
+              "total": 11
+            }
+          ]
+        }
+      },
+      "line": "2d20!kl1, 1d8+3",
+      "name": "not_a_check_2d20_exploding_disadvantage_1"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 20,
+          "sides": 20
+        },
+        {
+          "face": 15,
+          "sides": 20
+        },
+        {
           "face": 6,
           "sides": 8
         }
@@ -5302,120 +5692,6 @@
       },
       "line": "d20+d20, 1d8+3",
       "name": "not_a_check_two_d20_terms_1"
-    },
-    {
-      "context": {
-        "character": {
-          "name": "hero",
-          "presets": {},
-          "system": "dnd5e",
-          "vars": {}
-        }
-      },
-      "draws": [
-        {
-          "face": 20,
-          "sides": 20
-        },
-        {
-          "face": 15,
-          "sides": 20
-        },
-        {
-          "face": 13,
-          "sides": 20
-        },
-        {
-          "face": 1,
-          "sides": 8
-        },
-        {
-          "face": 4,
-          "sides": 8
-        }
-      ],
-      "expected": {
-        "ok": {
-          "hints": [],
-          "kind": "rolls",
-          "lines": [],
-          "preset": null,
-          "rolls": [
-            {
-              "crit": "hit",
-              "expr": {
-                "dice": [
-                  {
-                    "natural": "twenty",
-                    "status": "kept",
-                    "value": 20
-                  },
-                  {
-                    "reason": {
-                      "clause": "kh1"
-                    },
-                    "status": "dropped",
-                    "value": 15
-                  },
-                  {
-                    "reason": {
-                      "clause": "kh1"
-                    },
-                    "status": "dropped",
-                    "value": 13
-                  }
-                ],
-                "modifiers": [
-                  "!",
-                  "kh1"
-                ],
-                "sides": 20,
-                "subtotal": 20,
-                "term": "2d20!kh1",
-                "type": "dice"
-              },
-              "formula": "2d20!kh1",
-              "total": 20
-            },
-            {
-              "doubled": true,
-              "expr": {
-                "first": {
-                  "dice": [
-                    {
-                      "status": "kept",
-                      "value": 1
-                    },
-                    {
-                      "status": "kept",
-                      "value": 4
-                    }
-                  ],
-                  "sides": 8,
-                  "subtotal": 5,
-                  "term": "1d8",
-                  "type": "dice"
-                },
-                "rest": [
-                  {
-                    "node": {
-                      "type": "number",
-                      "value": 3
-                    },
-                    "op": "+"
-                  }
-                ],
-                "total": 8,
-                "type": "chain"
-              },
-              "formula": "1d8+3",
-              "total": 8
-            }
-          ]
-        }
-      },
-      "line": "2d20!kh1, 1d8+3",
-      "name": "check_2d20_exploding_keep_one_natural_20"
     },
     {
       "context": {

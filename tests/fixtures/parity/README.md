@@ -128,13 +128,8 @@ check form, a natural 20, a natural 1 and a face between, plus the dropped-die
 cases (a 20 or a 1 on a die that did not count is nothing).
 
 Never a check, even when a 20 or a 1 comes up: `3d20`, a bare `2d20`, a lone
-`d20!` or `d20!!`, success counts, and `d20+d20`. Those cases are named
+`d20!` or `d20!!`, a pair with an explode clause (`2d20!kh1`), success counts, and `d20+d20`. Those cases are named
 `not_a_check_*` and expect no `crit`, no `natural` and no doubled damage.
-
-`2d20!kh1` is a check in the Rust engine (the rule reads the count and the
-keep clause, and ignores explosions on a pair). It is pinned here as
-`check_2d20_exploding_keep_one_natural_20`; the TypeScript engine must match
-it until someone decides otherwise.
 
 ## Adding a case
 

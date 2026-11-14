@@ -329,14 +329,15 @@ impl DiceTerm {
     /// Whether this d20 group can be a check: a lone `d20`, or two d20s of
     /// which exactly one is kept (`adv`, `dis`, `kh1`, `kl1`, `dl1`, `dh1`).
     /// Three or more d20s, a bare `2d20` and a success count are never a
-    /// check. Rerolls are fine: the die that stands is the result. So is an
-    /// explode clause on the kept pair, but a lone exploding d20 is not, since
-    /// its pool can grow past one die.
+    /// check. Rerolls are fine: the die that stands is the result. An explode
+    /// clause is not, on a lone d20 or on a kept pair, since the pool can grow
+    /// past the dice the rule allows.
     pub fn is_check_die(&self) -> bool {
         let one_kept = matches!(self.select, Some(Select { n: 1, .. }));
         self.sides == 20
             && self.success.is_none()
-            && ((self.count == 1 && self.explode.is_none()) || (self.count == 2 && one_kept))
+            && self.explode.is_none()
+            && (self.count == 1 || (self.count == 2 && one_kept))
     }
 
     /// How many of the lowest and highest dice this group drops from a pool
@@ -380,13 +381,13 @@ mod tests {
             "2d20dh1",
             "d20r1+5",
             "d20rr1+5",
-            "2d20!kh1",
             "(d20+5)*2",
         ] {
             assert_eq!(role(check), Some(Role::Attack), "{check}");
         }
         for not_check in [
             "3d20+5", "2d20", "2d20+5", "3d20kh1", "6d20>=15", "d20>=15", "d20!", "d20+d20",
+            "2d20!kh1", "2d20!kl1",
         ] {
             assert_ne!(role(not_check), Some(Role::Attack), "{not_check}");
         }
