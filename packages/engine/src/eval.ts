@@ -1,5 +1,5 @@
 /** Evaluator: walks the syntax tree, drawing dice from the injected source. */
-import type { Arith, RollAst } from "./ast";
+import type { Arith, RollAst, Select } from "./ast";
 import type { DieSource } from "./dice";
 import { divisionByZero, limitExceeded, overflow } from "./errors";
 import { MAX_DICE_PER_ROLL, MAX_INT } from "./limits";
@@ -22,7 +22,6 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
       case "dice": {
         const term = kind.dice;
         const faces: Die[] = [];
-        let subtotal = 0;
         for (let i = 0; i < term.count; i += 1) {
           rolled += 1;
           if (rolled > MAX_DICE_PER_ROLL)
@@ -32,12 +31,17 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
             throw new RangeError(`the die source returned ${value} for a d${term.sides}`);
           }
           faces.push({ value, status: "kept" });
-          subtotal += value;
         }
+        if (term.select) applyDrops(faces, term.select, term.selectText ?? "");
+        const subtotal = faces.reduce(
+          (sum, die) => (die.status === "kept" ? sum + die.value : sum),
+          0,
+        );
         return {
           type: "dice",
           term: term.text,
           sides: term.sides,
+          ...(term.selectText === undefined ? {} : { modifiers: [term.selectText] }),
           ...(term.special ? { special: term.special } : {}),
           dice: faces,
           subtotal,
@@ -96,4 +100,29 @@ function apply(op: BinOp, lhs: number, rhs: number, span: Span, rhsSpan: Span): 
   if (Math.abs(result) > MAX_INT) throw overflow(span);
   // Normalise -0 (`0 * -5`) to 0.
   return result === 0 ? 0 : result;
+}
+
+/**
+ * Marks the dice a keep/drop clause removes. Keeping `n` of a pool drops the
+ * rest from the other end; ties fall by roll order, as in the Rust engine.
+ */
+function applyDrops(dice: Die[], { kind, n }: Select, clause: string): void {
+  const pool = dice.length;
+  const [lowest, highest] =
+    kind === "drop_lowest"
+      ? [n, 0]
+      : kind === "drop_highest"
+        ? [0, n]
+        : kind === "keep_highest"
+          ? [pool - n, 0]
+          : [0, pool - n];
+  // Array.prototype.sort is stable, so equal faces keep their roll order.
+  const order = dice.map((_, i) => i).sort((a, b) => (dice[a]?.value ?? 0) - (dice[b]?.value ?? 0));
+  for (const i of [...order.slice(0, lowest), ...order.slice(pool - highest)]) {
+    const die = dice[i];
+    if (die) {
+      die.status = "dropped";
+      die.reason = { clause };
+    }
+  }
 }

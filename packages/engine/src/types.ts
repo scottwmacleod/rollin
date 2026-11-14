@@ -42,9 +42,15 @@ export type Hint =
 
 export type BinOp = "+" | "-" | "*" | "/";
 
+/** The clause that made a die what it is, such as the `dl1` that dropped it. */
+export interface Reason {
+  clause: string;
+}
+
 export interface Die {
   value: number;
-  status: "kept";
+  status: "kept" | "dropped";
+  reason?: Reason;
 }
 
 export type Node =
@@ -54,6 +60,8 @@ export type Node =
       /** The term as written, such as `2d6`. */
       term: string;
       sides: number;
+      /** The group's modifiers as written, in the order they apply. Left out when it has none. */
+      modifiers?: string[];
       special?: "percentile";
       dice: Die[];
       subtotal: number;

@@ -20,8 +20,14 @@ function RollRow({ roll }: { roll: Roll }) {
             // The cells are a fixed, ordered rendering of one roll, so the index is the identity.
             <span key={i}>{cell.text}</span>
           ) : (
-            <span key={i} className="rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5">
+            <span
+              key={i}
+              className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 ${
+                cell.dropped ? "text-muted line-through" : ""
+              }`}
+            >
               {cell.face}
+              {cell.dropped && <span className="sr-only"> dropped</span>}
             </span>
           ),
         )}

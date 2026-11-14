@@ -1,7 +1,7 @@
 import type { Node, Roll } from "@rollin/engine";
 
 /** One piece of a roll's breakdown: plain text, or a die with its face. */
-export type Cell = { type: "text"; text: string } | { type: "die"; face: number };
+export type Cell = { type: "text"; text: string } | { type: "die"; face: number; dropped: boolean };
 
 function walk(node: Node, out: Cell[]): void {
   const text = (t: string) => out.push({ type: "text", text: t });
@@ -13,7 +13,7 @@ function walk(node: Node, out: Cell[]): void {
       text("[");
       node.dice.forEach((die, i) => {
         if (i > 0) text(", ");
-        out.push({ type: "die", face: die.value });
+        out.push({ type: "die", face: die.value, dropped: die.status === "dropped" });
       });
       text("]");
       break;
