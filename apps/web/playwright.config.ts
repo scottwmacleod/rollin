@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Tests run against the built app, served by `vite preview`.
+// Tests run against a test build (`--mode e2e`, which lets a test script the dice),
+// served by `vite preview`.
 export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
@@ -20,7 +21,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run build && npx vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    command:
+      "npm run build:e2e && npx vite preview --outDir dist-e2e --host 127.0.0.1 --port 4173 --strictPort",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
