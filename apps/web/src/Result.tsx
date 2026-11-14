@@ -13,7 +13,18 @@ function RollRow({ roll }: { roll: Roll }) {
   const cells = breakdown(roll);
   return (
     <li className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-line py-3 first:border-t-0">
-      <span className="font-mono text-sm text-text-2">{roll.formula}</span>
+      <span className="font-mono text-sm text-text-2">
+        {roll.iteration !== undefined && (
+          <span className="mr-2 text-muted">
+            <span className="sr-only">repeat </span>
+            {roll.iteration}
+          </span>
+        )}
+        {roll.iteration !== undefined && " "}
+        {roll.formula}
+        {roll.label !== undefined && " "}
+        {roll.label !== undefined && <span className="ml-2 text-muted"># {roll.label}</span>}
+      </span>
       <span className="font-mono text-sm text-text">
         {cells.map((cell, i) =>
           cell.type === "text" ? (
