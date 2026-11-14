@@ -22,6 +22,9 @@ export const limitExceeded = (cap: Cap, term: string, span: Span): FormulaFailur
 export const divisionByZero = (span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "division_by_zero", span });
 
+export const countInArithmetic = (span: Span): FormulaFailure =>
+  new FormulaFailure({ kind: "count_in_arithmetic", span });
+
 export const overflow = (span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "overflow", span });
 
@@ -42,6 +45,8 @@ export function messageOf(error: FormulaError): string {
       return error.message;
     case "limit_exceeded":
       return `${CAP_NAMES[error.cap]} cap (${error.limit}) exceeded by '${error.term}'`;
+    case "count_in_arithmetic":
+      return "a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice";
     case "division_by_zero":
       return "division by zero";
     case "overflow":

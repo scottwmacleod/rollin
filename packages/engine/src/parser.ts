@@ -3,8 +3,8 @@
  * numbers), parsed by precedence climbing. A port of the Rust parser for dice
  * terms and integer arithmetic; later loops of #216 add the rest of the syntax.
  */
-import { type Arith, precedence, type RollAst } from "./ast";
-import { invalidDice, limitExceeded, syntax } from "./errors";
+import { type Arith, type Cmp, isCount, precedence, type RollAst, type Success } from "./ast";
+import { countInArithmetic, invalidDice, limitExceeded, syntax } from "./errors";
 import { type Spanned, type Token, tokenize } from "./lexer";
 import { MAX_DEPTH, MAX_DICE_PER_ROLL, MAX_DICE_PER_TERM, MAX_SIDES } from "./limits";
 import type { Source } from "./source";
@@ -63,6 +63,19 @@ const BINOPS: Partial<Record<Token["kind"], BinOp>> = {
   minus: "-",
   star: "*",
   slash: "/",
+};
+
+/** A success count is its own kind of result and cannot be an operand. */
+function rejectCount(operand: Arith): void {
+  if (isCount(operand)) throw countInArithmetic(operand.span);
+}
+
+const COMPARISONS: Partial<Record<Token["kind"], Cmp>> = {
+  gt: "gt",
+  ge: "ge",
+  lt: "lt",
+  le: "le",
+  eq: "eq",
 };
 
 /** Joins `lhs op rhs`, extending a flat chain when the operator's level matches. */
@@ -156,6 +169,8 @@ class Parser {
       if (op === undefined || precedence(op) < minPrec) break;
       this.pos += 1;
       const rhs = this.parseExpr(precedence(op) + 1);
+      rejectCount(lhs);
+      rejectCount(rhs);
       lhs = link(lhs, op, rhs);
     }
     return lhs;
@@ -169,6 +184,7 @@ class Parser {
       this.enter(start);
       this.pos += 1;
       const operand = this.parseUnary();
+      rejectCount(operand);
       this.depth -= 1;
       return { kind: { type: "neg", operand }, span: { start, end: operand.span.end } };
     }
@@ -204,6 +220,44 @@ class Parser {
     }
     if (token === undefined) throw syntax("unclosed '('", open);
     throw this.unexpected("')'");
+  }
+
+  private atComparison(): boolean {
+    const kind = this.peek()?.kind;
+    return kind !== undefined && kind in COMPARISONS;
+  }
+
+  /** A condition on a face: a comparison then a number, or a bare number meaning equals. */
+  private parseCondition(what: string): { cmp: Cmp; value: number } {
+    const kind = this.peek()?.kind;
+    const cmp = (kind !== undefined && COMPARISONS[kind]) || "eq";
+    if (this.atComparison()) this.pos += 1;
+    return { cmp, value: this.number(what) };
+  }
+
+  /** Optional success clause such as `>=8`, with an optional failure clause `f1`. */
+  private parseCount(): Success | undefined {
+    const isF = (): boolean => {
+      const token = this.peek();
+      return token?.kind === "word" && token.word === "f";
+    };
+    if (!this.atComparison()) {
+      if (isF()) {
+        throw syntax(
+          "a failure clause 'f' must follow a success clause, as in 6d10>=8f1",
+          this.tokens[this.pos]?.span as Span,
+        );
+      }
+      return undefined;
+    }
+    const { cmp, value } = this.parseCondition("a number after the success condition");
+    if (!isF()) return { cmp, value };
+    this.pos += 1;
+    if (!this.atComparison() && this.peek()?.kind !== "number") {
+      throw this.unexpected("a failure condition (a number, or a comparison such as <=2, >9, =1)");
+    }
+    const failure = this.parseCondition("a number after the failure condition");
+    return { cmp, value, failure };
   }
 
   /** A parenthesised group, a number or a dice group. */
@@ -251,6 +305,9 @@ class Parser {
     if (sides < 2 || sides > MAX_SIDES) {
       throw invalidDice(`sides must be between 2 and ${MAX_SIDES}`, sidesSpan);
     }
+    const successStart = this.here();
+    const success = this.parseCount();
+    const modifiers = success ? [this.src.slice(successStart, this.prevEnd())] : [];
     const span = { start: countSpan.start, end: this.prevEnd() };
     this.itemDice += count;
     if (this.itemDice > MAX_DICE_PER_ROLL) {
@@ -264,6 +321,8 @@ class Parser {
           count,
           sides,
           ...(special ? { special } : {}),
+          ...(success ? { success } : {}),
+          modifiers,
         },
       },
       span,

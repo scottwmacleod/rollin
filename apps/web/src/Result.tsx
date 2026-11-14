@@ -20,8 +20,29 @@ function RollRow({ roll }: { roll: Roll }) {
             // The cells are a fixed, ordered rendering of one roll, so the index is the identity.
             <span key={i}>{cell.text}</span>
           ) : (
-            <span key={i} className="rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5">
+            <span
+              key={i}
+              className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 ${
+                cell.outcome === "success"
+                  ? "text-signal-ink"
+                  : cell.outcome === "failure"
+                    ? "text-danger"
+                    : ""
+              }`}
+            >
               {cell.face}
+              {cell.outcome === "success" && (
+                <>
+                  <span aria-hidden="true"> ✓</span>
+                  <span className="sr-only"> success</span>
+                </>
+              )}
+              {cell.outcome === "failure" && (
+                <>
+                  <span aria-hidden="true"> ✗</span>
+                  <span className="sr-only"> failure</span>
+                </>
+              )}
             </span>
           ),
         )}
