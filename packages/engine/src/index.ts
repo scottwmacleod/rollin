@@ -8,7 +8,7 @@ import { FormulaFailure, hintsOf, messageOf } from "./errors";
 import { evaluate } from "./eval";
 import { parse } from "./parser";
 import { Source } from "./source";
-import type { RollReport } from "./types";
+import type { Roll, RollReport } from "./types";
 
 export const ENGINE_NAME = "rollin-engine";
 
@@ -38,7 +38,14 @@ export function roll(line: string, dice: DieSource): RollReport {
   }
   const text = rest.join(" ");
   try {
-    const rolls = parse(new Source(text)).map((ast) => evaluate(ast, dice));
+    const formula = parse(new Source(text));
+    const rolls: Roll[] = [];
+    for (let iteration = 1; iteration <= (formula.repeat ?? 1); iteration += 1) {
+      for (const ast of formula.rolls) {
+        const rolled = evaluate(ast, dice);
+        rolls.push(formula.repeat === undefined ? rolled : { ...rolled, iteration });
+      }
+    }
     return { ok: { kind: "rolls", rolls, hints: [], lines: [], preset: null } };
   } catch (failure) {
     if (!(failure instanceof FormulaFailure)) throw failure;

@@ -38,6 +38,32 @@ export interface RollAst {
   /** The roll's source text, trimmed. */
   source: string;
   expr: Arith;
+  /** The `# text` note after the roll. */
+  label?: string;
+}
+
+/** A parsed formula: an optional repeat count and the rolls it applies to. */
+export interface FormulaAst {
+  /** The `N` of a leading `Nx`; undefined when the formula is not repeated. */
+  repeat?: number;
+  rolls: RollAst[];
+}
+
+/** Whether the expression rolls any dice (flat numbers do not). */
+export function hasDice(expr: Arith): boolean {
+  const kind = expr.kind;
+  switch (kind.type) {
+    case "number":
+      return false;
+    case "dice":
+      return true;
+    case "neg":
+      return hasDice(kind.operand);
+    case "group":
+      return hasDice(kind.inner);
+    case "chain":
+      return hasDice(kind.first) || kind.rest.some((r) => hasDice(r.operand));
+  }
 }
 
 export const precedence = (op: BinOp): number => (op === "+" || op === "-" ? 1 : 2);
