@@ -146,3 +146,26 @@ describe("the die source", () => {
     expect(faces(1).remaining()).toBe(1);
   });
 });
+
+describe("labels and repeats", () => {
+  const d = (faces: number[]): DieSource => {
+    let i = 0;
+    return () => faces[i++] ?? 1;
+  };
+  test("a label trails its roll and a repeat numbers each pass", () => {
+    const report = roll("2x d6 # hit, d4", d([3, 2, 5, 4]));
+    if (!("ok" in report)) throw new Error("expected rolls");
+    expect(report.ok.rolls.map((r) => [r.iteration, r.label, r.total])).toEqual([
+      [1, "hit", 3],
+      [1, undefined, 2],
+      [2, "hit", 5],
+      [2, undefined, 4],
+    ]);
+  });
+  test("a label with no roll, or a mid-formula repeat, is a syntax error", () => {
+    for (const line of ["# x", "d20, # x", "d6 + 2x d6"]) {
+      const report = roll(line, d([]));
+      expect("error" in report, line).toBe(true);
+    }
+  });
+});
