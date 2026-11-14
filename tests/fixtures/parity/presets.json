@@ -1,0 +1,988 @@
+{
+  "about": "Rolling presets: shadowing, variables, near misses.",
+  "area": "presets",
+  "cases": [
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "attack": "d20+5"
+          },
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 4,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "attack",
+            "d20+5"
+          ],
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 4
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 4,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 9,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 9
+            }
+          ]
+        }
+      },
+      "line": "attack",
+      "name": "preset_own"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {}
+        },
+        "global_presets": {
+          "attack": "d20+5"
+        }
+      },
+      "draws": [
+        {
+          "face": 10,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "attack",
+            "d20+5"
+          ],
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 10
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 10,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 15,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "attack",
+      "name": "preset_global"
+    },
+    {
+      "context": {
+        "global_presets": {
+          "attack": "d20+5"
+        }
+      },
+      "draws": [
+        {
+          "face": 17,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "attack",
+            "d20+5"
+          ],
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 17
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 17,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 22,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 22
+            }
+          ]
+        }
+      },
+      "line": "attack",
+      "name": "preset_default_character_global"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "attack": "d20+7"
+          },
+          "vars": {}
+        },
+        "global_presets": {
+          "attack": "d20+5"
+        }
+      },
+      "draws": [
+        {
+          "face": 15,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "attack",
+            "d20+7"
+          ],
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 15
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 15,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 7
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 22,
+                "type": "chain"
+              },
+              "formula": "d20+7",
+              "total": 22
+            }
+          ]
+        }
+      },
+      "line": "attack",
+      "name": "preset_shadowing"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "attack": "d20+@str"
+          },
+          "vars": {
+            "str": 4
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 9,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "attack",
+            "d20+@str"
+          ],
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 9
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 9,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 4
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 13,
+                "type": "chain"
+              },
+              "formula": "d20+@str",
+              "total": 13
+            }
+          ]
+        }
+      },
+      "line": "attack",
+      "name": "preset_variables_resolve_when_rolled"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "attack": "d20+5 # sword"
+          },
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 3,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "attack",
+            "d20+5 # sword"
+          ],
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 3
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 3,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 8,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "label": "sword",
+              "total": 8
+            }
+          ]
+        }
+      },
+      "line": "attack",
+      "name": "preset_with_label"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "smite": "d20+5, 2d8+3"
+          },
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 16,
+          "sides": 20
+        },
+        {
+          "face": 3,
+          "sides": 8
+        },
+        {
+          "face": 8,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "smite",
+            "d20+5, 2d8+3"
+          ],
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 16
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 16,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 21,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 21
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 3
+                    },
+                    {
+                      "status": "kept",
+                      "value": 8
+                    }
+                  ],
+                  "sides": 8,
+                  "subtotal": 11,
+                  "term": "2d8",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 14,
+                "type": "chain"
+              },
+              "formula": "2d8+3",
+              "total": 14
+            }
+          ]
+        }
+      },
+      "line": "smite",
+      "name": "preset_list"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "attack": "d20+5"
+          },
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 17,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "attack",
+            "d20+5"
+          ],
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 17
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 17,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 22,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 22
+            }
+          ]
+        }
+      },
+      "line": "roll attack",
+      "name": "preset_roll_keyword"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "attack": "d20+5"
+          },
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 15,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "attack",
+            "d20+5"
+          ],
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 15
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 15,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 20,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 20
+            }
+          ]
+        }
+      },
+      "line": "ATTACK",
+      "name": "preset_uppercase"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "volley": "3x d20+5"
+          },
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 13,
+          "sides": 20
+        },
+        {
+          "face": 20,
+          "sides": 20
+        },
+        {
+          "face": 15,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "volley",
+            "3x d20+5"
+          ],
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 13
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 13,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 18,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "iteration": 1,
+              "total": 18
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "twenty",
+                      "status": "kept",
+                      "value": 20
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 20,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 25,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "iteration": 2,
+              "total": 25
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 15
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 15,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 20,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "iteration": 3,
+              "total": 20
+            }
+          ]
+        }
+      },
+      "line": "volley",
+      "name": "preset_repeat"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "attack": "d20+@str"
+          },
+          "vars": {}
+        }
+      },
+      "draws": [],
+      "expected": {
+        "error": {
+          "character": "hero",
+          "defined": [],
+          "error": {
+            "kind": "undefined_variable",
+            "name": "str",
+            "span": {
+              "end": 8,
+              "start": 4
+            }
+          },
+          "explicit": false,
+          "hints": [
+            {
+              "kind": "defined_variables",
+              "names": []
+            },
+            {
+              "character": "hero",
+              "explicit": false,
+              "kind": "set_variable",
+              "name": "str"
+            }
+          ],
+          "kind": "undefined_variable",
+          "message": "undefined variable @str on character 'hero'",
+          "name": "str",
+          "source": "d20+@str",
+          "suggestion": null
+        }
+      },
+      "line": "attack",
+      "name": "preset_undefined_variable"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "d6": "d20"
+          },
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 1,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 6,
+                "subtotal": 1,
+                "term": "d6",
+                "type": "dice"
+              },
+              "formula": "d6",
+              "total": 1
+            }
+          ]
+        }
+      },
+      "line": "d6",
+      "name": "preset_name_that_is_a_formula"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "smite": "d20+5, 1d8+3"
+          },
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 20,
+          "sides": 20
+        },
+        {
+          "face": 6,
+          "sides": 8
+        },
+        {
+          "face": 6,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": [
+            "smite",
+            "d20+5, 1d8+3"
+          ],
+          "rolls": [
+            {
+              "crit": "hit",
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "twenty",
+                      "status": "kept",
+                      "value": 20
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 20,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 25,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 25
+            },
+            {
+              "doubled": true,
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 6
+                    },
+                    {
+                      "status": "kept",
+                      "value": 6
+                    }
+                  ],
+                  "sides": 8,
+                  "subtotal": 12,
+                  "term": "1d8",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 15,
+                "type": "chain"
+              },
+              "formula": "1d8+3",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "smite",
+      "name": "preset_dnd5e_crit"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "attack": "d20+5"
+          },
+          "vars": {}
+        }
+      },
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "syntax",
+            "message": "expected a number, a dice group or '(', found 'attack'",
+            "span": {
+              "end": 6,
+              "start": 0
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "expected a number, a dice group or '(', found 'attack'",
+          "source": "attack d6"
+        }
+      },
+      "line": "attack d6",
+      "name": "presets_two_words_not_preset"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {
+            "attack": "d20+5"
+          },
+          "vars": {}
+        },
+        "global_presets": {
+          "dash": "d6"
+        }
+      },
+      "draws": [],
+      "expected": {
+        "error": {
+          "hints": [
+            {
+              "kind": "list_presets"
+            }
+          ],
+          "kind": "unknown_preset",
+          "message": "'dodge' is not a valid formula or a known preset",
+          "suggestion": null,
+          "word": "dodge"
+        }
+      },
+      "line": "dodge",
+      "name": "preset_unknown_with_presets"
+    }
+  ],
+  "format_version": 1
+}

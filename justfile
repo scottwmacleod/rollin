@@ -44,6 +44,12 @@ desktop-dev:
     npm --prefix apps/desktop ci
     npm --prefix apps/desktop run tauri -- dev
 
+# Regenerate the parity fixtures the TypeScript port replays
+# (tests/fixtures/parity). `check` fails (via the `parity` test) while they are
+# out of date.
+parity:
+    PARITY_BLESS=1 cargo test --test parity
+
 # Web app and engine (#216): needs Node 22. Not part of `check`, which stays
 # buildable without Node; CI runs the same steps in .github/workflows/web.yml.
 web-check:

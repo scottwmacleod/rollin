@@ -1,0 +1,2607 @@
+{
+  "about": "Rerolls, and the reroll cap.",
+  "area": "rerolls",
+  "cases": [
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "r1"
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "r1",
+                      "from": 3
+                    },
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "r1"
+                ],
+                "sides": 6,
+                "subtotal": 15,
+                "term": "4d6r1",
+                "type": "dice"
+              },
+              "formula": "4d6r1",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "4d6r1",
+      "name": "reroll_once"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1"
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 3
+                    },
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "rr1"
+                ],
+                "sides": 6,
+                "subtotal": 15,
+                "term": "4d6rr1",
+                "type": "dice"
+              },
+              "formula": "4d6rr1",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "4d6rr1",
+      "name": "reroll_until"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr<3"
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr<3",
+                      "from": 3
+                    },
+                    "status": "rerolled",
+                    "value": 2
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr<3",
+                      "from": 4
+                    },
+                    "status": "kept",
+                    "value": 4
+                  }
+                ],
+                "modifiers": [
+                  "rr<3"
+                ],
+                "sides": 6,
+                "subtotal": 17,
+                "term": "4d6rr<3",
+                "type": "dice"
+              },
+              "formula": "4d6rr<3",
+              "total": 17
+            }
+          ]
+        }
+      },
+      "line": "4d6rr<3",
+      "name": "reroll_condition_lt"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "r<=2"
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "r<=2",
+                      "from": 3
+                    },
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "r<=2"
+                ],
+                "sides": 6,
+                "subtotal": 15,
+                "term": "4d6r<=2",
+                "type": "dice"
+              },
+              "formula": "4d6r<=2",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "4d6r<=2",
+      "name": "reroll_condition_le"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "r1"
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl1"
+                    },
+                    "status": "dropped",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "r1",
+                  "dl1"
+                ],
+                "sides": 6,
+                "subtotal": 13,
+                "term": "4d6r1dl1",
+                "type": "dice"
+              },
+              "formula": "4d6r1dl1",
+              "total": 13
+            }
+          ]
+        }
+      },
+      "line": "4d6r1dl1",
+      "name": "reroll_then_drop"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "!",
+                      "from": 2
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "r1",
+                  "!"
+                ],
+                "sides": 6,
+                "subtotal": 16,
+                "term": "4d6r1!",
+                "type": "dice"
+              },
+              "formula": "4d6r1!",
+              "total": 16
+            }
+          ]
+        }
+      },
+      "line": "4d6r1!",
+      "name": "reroll_then_explode"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl1"
+                    },
+                    "status": "dropped",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "r1",
+                  "!",
+                  "dl1"
+                ],
+                "sides": 6,
+                "subtotal": 15,
+                "term": "4d6r1!dl1",
+                "type": "dice"
+              },
+              "formula": "4d6r1!dl1",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "4d6r1!dl1",
+      "name": "reroll_explode_drop"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "parts": [
+                      6,
+                      1
+                    ],
+                    "reason": {
+                      "clause": "!!"
+                    },
+                    "status": "kept",
+                    "value": 7
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "r1",
+                  "!!"
+                ],
+                "sides": 6,
+                "subtotal": 16,
+                "term": "4d6r1!!",
+                "type": "dice"
+              },
+              "formula": "4d6r1!!",
+              "total": 16
+            }
+          ]
+        }
+      },
+      "line": "4d6r1!!",
+      "name": "reroll_compound_explode"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 20
+        },
+        {
+          "face": 10,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "reason": {
+                        "clause": "r1"
+                      },
+                      "status": "rerolled",
+                      "value": 1
+                    },
+                    {
+                      "reason": {
+                        "clause": "r1",
+                        "from": 0
+                      },
+                      "status": "kept",
+                      "value": 10
+                    }
+                  ],
+                  "modifiers": [
+                    "r1"
+                  ],
+                  "sides": 20,
+                  "subtotal": 10,
+                  "term": "d20r1",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 15,
+                "type": "chain"
+              },
+              "formula": "d20r1+5",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "d20r1+5",
+      "name": "reroll_d20"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "modifiers": [
+                  "r1"
+                ],
+                "sides": 6,
+                "subtotal": 7,
+                "term": "2d6r1",
+                "type": "dice"
+              },
+              "formula": "2d6r1",
+              "iteration": 1,
+              "total": 7
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "r1"
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "r1",
+                      "from": 1
+                    },
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "r1"
+                ],
+                "sides": 6,
+                "subtotal": 8,
+                "term": "2d6r1",
+                "type": "dice"
+              },
+              "formula": "2d6r1",
+              "iteration": 2,
+              "total": 8
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "modifiers": [
+                  "r1"
+                ],
+                "sides": 6,
+                "subtotal": 7,
+                "term": "2d6r1",
+                "type": "dice"
+              },
+              "formula": "2d6r1",
+              "iteration": 3,
+              "total": 7
+            }
+          ]
+        }
+      },
+      "line": "3x 2d6r1",
+      "name": "reroll_in_repeat"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "modifiers": [
+                  "r1"
+                ],
+                "sides": 6,
+                "subtotal": 17,
+                "term": "4d6r1",
+                "type": "dice"
+              },
+              "formula": "4d6r1",
+              "total": 17
+            }
+          ]
+        }
+      },
+      "line": "4d6r1",
+      "name": "reroll_nothing_rerolls"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "reason": {
+                      "clause": "rr1"
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 0
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 1
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 2
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 3
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 4
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 5
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 6
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 7
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 8
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 9
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 10
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 11
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 12
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 13
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 14
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 15
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 16
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 17
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 18
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 19
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 20
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 21
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 22
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 23
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 24
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 25
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 26
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 27
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 28
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 29
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 30
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 31
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 32
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 33
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 34
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 35
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 36
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 37
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 38
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 39
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 40
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 41
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 42
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 43
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 44
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 45
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 46
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 47
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 48
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 49
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 50
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 51
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 52
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 53
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 54
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 55
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 56
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 57
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 58
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 59
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 60
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 61
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 62
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 63
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 64
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 65
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 66
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 67
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 68
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 69
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 70
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 71
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 72
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 73
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 74
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 75
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 76
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 77
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 78
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 79
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 80
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 81
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 82
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 83
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 84
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 85
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 86
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 87
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 88
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 89
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 90
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 91
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 92
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 93
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 94
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 95
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 96
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 97
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 98
+                    },
+                    "status": "rerolled",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "rr1",
+                      "from": 99
+                    },
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "rr1"
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2rr1",
+                "type": "dice"
+              },
+              "formula": "d2rr1",
+              "total": 2
+            }
+          ]
+        }
+      },
+      "line": "d2rr1",
+      "name": "reroll_cap_ok"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "rerolls_per_die",
+            "kind": "limit_exceeded",
+            "limit": 100,
+            "span": {
+              "end": 5,
+              "start": 0
+            },
+            "term": "d2rr1"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "rerolls per die cap (100) exceeded by 'd2rr1'",
+          "source": "d2rr1"
+        }
+      },
+      "line": "d2rr1",
+      "name": "reroll_cap_hit"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "clause": "rr<=6",
+            "kind": "infinite_reroll",
+            "sides": 6,
+            "span": {
+              "end": 7,
+              "start": 2
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "reroll condition 'rr<=6' is true for every face of a d6, so it would never stop",
+          "source": "d6rr<=6"
+        }
+      },
+      "line": "d6rr<=6",
+      "name": "reroll_infinite"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "clause": "rr>=1",
+            "kind": "infinite_reroll",
+            "sides": 6,
+            "span": {
+              "end": 7,
+              "start": 2
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "reroll condition 'rr>=1' is true for every face of a d6, so it would never stop",
+          "source": "d6rr>=1"
+        }
+      },
+      "line": "d6rr>=1",
+      "name": "reroll_infinite_all"
+    }
+  ],
+  "format_version": 1
+}

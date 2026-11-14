@@ -1,0 +1,5384 @@
+{
+  "about": "Exploding dice in each mode, and the explosion cap.",
+  "area": "exploding",
+  "cases": [
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "!",
+                      "from": 2
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  }
+                ],
+                "modifiers": [
+                  "!"
+                ],
+                "sides": 6,
+                "subtotal": 14,
+                "term": "3d6!",
+                "type": "dice"
+              },
+              "formula": "3d6!",
+              "total": 14
+            }
+          ]
+        }
+      },
+      "line": "3d6!",
+      "name": "explode_plain"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "parts": [
+                      6,
+                      1
+                    ],
+                    "reason": {
+                      "clause": "!!"
+                    },
+                    "status": "kept",
+                    "value": 7
+                  }
+                ],
+                "modifiers": [
+                  "!!"
+                ],
+                "sides": 6,
+                "subtotal": 14,
+                "term": "3d6!!",
+                "type": "dice"
+              },
+              "formula": "3d6!!",
+              "total": 14
+            }
+          ]
+        }
+      },
+      "line": "3d6!!",
+      "name": "explode_compound"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p",
+                      "from": 2
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  }
+                ],
+                "modifiers": [
+                  "!p"
+                ],
+                "sides": 6,
+                "subtotal": 13,
+                "term": "3d6!p",
+                "type": "dice"
+              },
+              "formula": "3d6!p",
+              "total": 13
+            }
+          ]
+        }
+      },
+      "line": "3d6!p",
+      "name": "explode_penetrating"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  }
+                ],
+                "modifiers": [
+                  "!"
+                ],
+                "sides": 6,
+                "subtotal": 14,
+                "term": "3d6!",
+                "type": "dice"
+              },
+              "formula": "3d6!",
+              "total": 14
+            }
+          ]
+        }
+      },
+      "line": "3d6!",
+      "name": "explode_nothing_explodes"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "reason": {
+                      "clause": "!>=5",
+                      "from": 1
+                    },
+                    "status": "exploded",
+                    "value": 5
+                  },
+                  {
+                    "reason": {
+                      "clause": "!>=5",
+                      "from": 2
+                    },
+                    "status": "exploded",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  }
+                ],
+                "modifiers": [
+                  "!>=5"
+                ],
+                "sides": 6,
+                "subtotal": 21,
+                "term": "3d6!>=5",
+                "type": "dice"
+              },
+              "formula": "3d6!>=5",
+              "total": 21
+            }
+          ]
+        }
+      },
+      "line": "3d6!>=5",
+      "name": "explode_condition_ge"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=2",
+                      "from": 3
+                    },
+                    "status": "exploded",
+                    "value": 2
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=2",
+                      "from": 4
+                    },
+                    "status": "exploded",
+                    "value": 4
+                  }
+                ],
+                "modifiers": [
+                  "!<=2"
+                ],
+                "sides": 6,
+                "subtotal": 20,
+                "term": "4d6!<=2",
+                "type": "dice"
+              },
+              "formula": "4d6!<=2",
+              "total": 20
+            }
+          ]
+        }
+      },
+      "line": "4d6!<=2",
+      "name": "explode_condition_le"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "reason": {
+                      "clause": "!=3",
+                      "from": 1
+                    },
+                    "status": "exploded",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "modifiers": [
+                  "!=3"
+                ],
+                "sides": 6,
+                "subtotal": 14,
+                "term": "3d6!=3",
+                "type": "dice"
+              },
+              "formula": "3d6!=3",
+              "total": 14
+            }
+          ]
+        }
+      },
+      "line": "3d6!=3",
+      "name": "explode_condition_eq"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "parts": [
+                      5,
+                      5,
+                      3
+                    ],
+                    "reason": {
+                      "clause": "!!>4"
+                    },
+                    "status": "kept",
+                    "value": 13
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  }
+                ],
+                "modifiers": [
+                  "!!>4"
+                ],
+                "sides": 6,
+                "subtotal": 21,
+                "term": "3d6!!>4",
+                "type": "dice"
+              },
+              "formula": "3d6!!>4",
+              "total": 21
+            }
+          ]
+        }
+      },
+      "line": "3d6!!>4",
+      "name": "explode_condition_gt"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p>4",
+                      "from": 2
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  }
+                ],
+                "modifiers": [
+                  "!p>4"
+                ],
+                "sides": 6,
+                "subtotal": 13,
+                "term": "3d6!p>4",
+                "type": "dice"
+              },
+              "formula": "3d6!p>4",
+              "total": 13
+            }
+          ]
+        }
+      },
+      "line": "3d6!p>4",
+      "name": "explode_penetrating_condition"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "reason": {
+                      "clause": "kh2"
+                    },
+                    "status": "dropped",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "kh2"
+                    },
+                    "status": "dropped",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "kh2"
+                    },
+                    "status": "dropped",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "!",
+                  "kh2"
+                ],
+                "sides": 6,
+                "subtotal": 10,
+                "term": "4d6!kh2",
+                "type": "dice"
+              },
+              "formula": "4d6!kh2",
+              "total": 10
+            }
+          ]
+        }
+      },
+      "line": "4d6!kh2",
+      "name": "explode_then_keep"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl1"
+                    },
+                    "status": "dropped",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "!",
+                  "dl1"
+                ],
+                "sides": 6,
+                "subtotal": 15,
+                "term": "4d6!dl1",
+                "type": "dice"
+              },
+              "formula": "4d6!dl1",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "4d6!dl1",
+      "name": "explode_then_drop"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "reason": {
+                      "clause": "kh2"
+                    },
+                    "status": "dropped",
+                    "value": 3
+                  },
+                  {
+                    "parts": [
+                      6,
+                      1
+                    ],
+                    "reason": {
+                      "clause": "!!"
+                    },
+                    "status": "kept",
+                    "value": 7
+                  },
+                  {
+                    "reason": {
+                      "clause": "kh2"
+                    },
+                    "status": "dropped",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "!!",
+                  "kh2"
+                ],
+                "sides": 6,
+                "subtotal": 11,
+                "term": "4d6!!kh2",
+                "type": "dice"
+              },
+              "formula": "4d6!!kh2",
+              "total": 11
+            }
+          ]
+        }
+      },
+      "line": "4d6!!kh2",
+      "name": "explode_compound_then_keep"
+    },
+    {
+      "draws": [
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 2
+                    },
+                    {
+                      "status": "kept",
+                      "value": 6
+                    },
+                    {
+                      "reason": {
+                        "clause": "!",
+                        "from": 1
+                      },
+                      "status": "exploded",
+                      "value": 4
+                    }
+                  ],
+                  "modifiers": [
+                    "!"
+                  ],
+                  "sides": 6,
+                  "subtotal": 12,
+                  "term": "2d6!",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 15,
+                "type": "chain"
+              },
+              "formula": "2d6!+3",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "2d6!+3",
+      "name": "explode_with_modifier"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "!>=5",
+                      "from": 2
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "modifiers": [
+                  "!>=5"
+                ],
+                "sides": 6,
+                "subtotal": 23,
+                "term": "6d6!>=5",
+                "type": "dice"
+              },
+              "formula": "6d6!>=5",
+              "total": 23
+            }
+          ]
+        }
+      },
+      "line": "6d6!>=5",
+      "name": "explode_success_count"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 0
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 1
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 2
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 3
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 4
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 5
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 6
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 7
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 8
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 9
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 10
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 11
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 12
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 13
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 14
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 15
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 16
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 17
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 18
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 19
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 20
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 21
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 22
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 23
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 24
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 25
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 26
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 27
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 28
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 29
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 30
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 31
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 32
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 33
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 34
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 35
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 36
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 37
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 38
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 39
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 40
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 41
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 42
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 43
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 44
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 45
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 46
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 47
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 48
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 49
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 50
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 51
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 52
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 53
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 54
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 55
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 56
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 57
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 58
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 59
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 60
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 61
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 62
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 63
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 64
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 65
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 66
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 67
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 68
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 69
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 70
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 71
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 72
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 73
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 74
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 75
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 76
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 77
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 78
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 79
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 80
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 81
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 82
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 83
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 84
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 85
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 86
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 87
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 88
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 89
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 90
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 91
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 92
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 93
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 94
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 95
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 96
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 97
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 98
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!<=1",
+                      "from": 99
+                    },
+                    "status": "exploded",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "!<=1"
+                ],
+                "sides": 2,
+                "subtotal": 102,
+                "term": "d2!<=1",
+                "type": "dice"
+              },
+              "formula": "d2!<=1",
+              "total": 102
+            }
+          ]
+        }
+      },
+      "line": "d2!<=1",
+      "name": "explode_cap_ok_plain"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "parts": [
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      1,
+                      2
+                    ],
+                    "reason": {
+                      "clause": "!!<=1"
+                    },
+                    "status": "kept",
+                    "value": 102
+                  }
+                ],
+                "modifiers": [
+                  "!!<=1"
+                ],
+                "sides": 2,
+                "subtotal": 102,
+                "term": "d2!!<=1",
+                "type": "dice"
+              },
+              "formula": "d2!!<=1",
+              "total": 102
+            }
+          ]
+        }
+      },
+      "line": "d2!!<=1",
+      "name": "explode_cap_ok_compound"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 0
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 1
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 2
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 3
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 4
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 5
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 6
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 7
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 8
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 9
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 10
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 11
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 12
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 13
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 14
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 15
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 16
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 17
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 18
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 19
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 20
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 21
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 22
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 23
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 24
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 25
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 26
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 27
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 28
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 29
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 30
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 31
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 32
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 33
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 34
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 35
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 36
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 37
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 38
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 39
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 40
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 41
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 42
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 43
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 44
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 45
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 46
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 47
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 48
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 49
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 50
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 51
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 52
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 53
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 54
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 55
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 56
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 57
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 58
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 59
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 60
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 61
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 62
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 63
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 64
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 65
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 66
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 67
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 68
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 69
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 70
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 71
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 72
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 73
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 74
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 75
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 76
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 77
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 78
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 79
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 80
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 81
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 82
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 83
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 84
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 85
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 86
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 87
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 88
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 89
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 90
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 91
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 92
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 93
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 94
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 95
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 96
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 97
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 98
+                    },
+                    "status": "exploded",
+                    "value": 0
+                  },
+                  {
+                    "reason": {
+                      "clause": "!p<=1",
+                      "from": 99
+                    },
+                    "status": "exploded",
+                    "value": 1
+                  }
+                ],
+                "modifiers": [
+                  "!p<=1"
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2!p<=1",
+                "type": "dice"
+              },
+              "formula": "d2!p<=1",
+              "total": 2
+            }
+          ]
+        }
+      },
+      "line": "d2!p<=1",
+      "name": "explode_cap_ok_penetrating"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "explosions_per_die",
+            "kind": "limit_exceeded",
+            "limit": 100,
+            "span": {
+              "end": 6,
+              "start": 0
+            },
+            "term": "d2!<=1"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "explosions per die cap (100) exceeded by 'd2!<=1'",
+          "source": "d2!<=1"
+        }
+      },
+      "line": "d2!<=1",
+      "name": "explode_cap_hit_plain"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "explosions_per_die",
+            "kind": "limit_exceeded",
+            "limit": 100,
+            "span": {
+              "end": 7,
+              "start": 0
+            },
+            "term": "d2!!<=1"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "explosions per die cap (100) exceeded by 'd2!!<=1'",
+          "source": "d2!!<=1"
+        }
+      },
+      "line": "d2!!<=1",
+      "name": "explode_cap_hit_compound"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "explosions_per_die",
+            "kind": "limit_exceeded",
+            "limit": 100,
+            "span": {
+              "end": 7,
+              "start": 0
+            },
+            "term": "d2!p<=1"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "explosions per die cap (100) exceeded by 'd2!p<=1'",
+          "source": "d2!p<=1"
+        }
+      },
+      "line": "d2!p<=1",
+      "name": "explode_cap_hit_penetrating"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "clause": "!>=1",
+            "kind": "infinite_explosion",
+            "sides": 6,
+            "span": {
+              "end": 6,
+              "start": 2
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "explosion condition '!>=1' is true for every face of a d6, so it would never stop",
+          "source": "d6!>=1"
+        }
+      },
+      "line": "d6!>=1",
+      "name": "explode_infinite"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "clause": "!<=6",
+            "kind": "infinite_explosion",
+            "sides": 6,
+            "span": {
+              "end": 6,
+              "start": 2
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "explosion condition '!<=6' is true for every face of a d6, so it would never stop",
+          "source": "d6!<=6"
+        }
+      },
+      "line": "d6!<=6",
+      "name": "explode_infinite_le"
+    }
+  ],
+  "format_version": 1
+}

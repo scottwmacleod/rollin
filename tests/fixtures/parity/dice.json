@@ -1,0 +1,769 @@
+{
+  "about": "Plain dice groups, d% and the v1 formulas.",
+  "area": "dice",
+  "cases": [
+    {
+      "draws": [
+        {
+          "face": 3,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "sides": 20,
+                "subtotal": 3,
+                "term": "d20",
+                "type": "dice"
+              },
+              "formula": "d20",
+              "total": 3
+            }
+          ]
+        }
+      },
+      "line": "d20",
+      "name": "d20"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 5
+                  }
+                ],
+                "sides": 20,
+                "subtotal": 5,
+                "term": "d20",
+                "type": "dice"
+              },
+              "formula": "d20",
+              "total": 5
+            }
+          ]
+        }
+      },
+      "line": "d20",
+      "name": "d20_seed_42"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  }
+                ],
+                "sides": 6,
+                "subtotal": 11,
+                "term": "2d6",
+                "type": "dice"
+              },
+              "formula": "2d6",
+              "total": 11
+            }
+          ]
+        }
+      },
+      "line": "2d6",
+      "name": "2d6"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 8
+        },
+        {
+          "face": 5,
+          "sides": 8
+        },
+        {
+          "face": 1,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 5
+                    },
+                    {
+                      "status": "kept",
+                      "value": 5
+                    },
+                    {
+                      "status": "kept",
+                      "value": 1
+                    }
+                  ],
+                  "sides": 8,
+                  "subtotal": 11,
+                  "term": "3d8",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 16,
+                "type": "chain"
+              },
+              "formula": "3d8+5",
+              "total": 16
+            }
+          ]
+        }
+      },
+      "line": "3d8+5",
+      "name": "3d8_plus"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 4
+                    },
+                    {
+                      "status": "kept",
+                      "value": 5
+                    }
+                  ],
+                  "sides": 6,
+                  "subtotal": 9,
+                  "term": "2d6",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "-"
+                  }
+                ],
+                "total": 7,
+                "type": "chain"
+              },
+              "formula": "2d6-2",
+              "total": 7
+            }
+          ]
+        }
+      },
+      "line": "2d6-2",
+      "name": "2d6_minus"
+    },
+    {
+      "draws": [
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  }
+                ],
+                "sides": 6,
+                "subtotal": 16,
+                "term": "4d6",
+                "type": "dice"
+              },
+              "formula": "4d6",
+              "total": 16
+            }
+          ]
+        }
+      },
+      "line": "4d6",
+      "name": "4d6"
+    },
+    {
+      "draws": [
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 6
+                    },
+                    {
+                      "status": "kept",
+                      "value": 4
+                    }
+                  ],
+                  "sides": 6,
+                  "subtotal": 10,
+                  "term": "2D6",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 1
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 11,
+                "type": "chain"
+              },
+              "formula": "2D6+1",
+              "total": 11
+            }
+          ]
+        }
+      },
+      "line": "2D6+1",
+      "name": "uppercase"
+    },
+    {
+      "draws": [
+        {
+          "face": 38,
+          "sides": 100
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 38
+                  }
+                ],
+                "sides": 100,
+                "subtotal": 38,
+                "term": "d100",
+                "type": "dice"
+              },
+              "formula": "d100",
+              "total": 38
+            }
+          ]
+        }
+      },
+      "line": "d100",
+      "name": "d100"
+    },
+    {
+      "draws": [
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 6,
+                "term": "3d2",
+                "type": "dice"
+              },
+              "formula": "3d2",
+              "total": 6
+            }
+          ]
+        }
+      },
+      "line": "3d2",
+      "name": "d2"
+    },
+    {
+      "draws": [
+        {
+          "face": 25,
+          "sides": 100
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 25
+                  }
+                ],
+                "sides": 100,
+                "special": "percentile",
+                "subtotal": 25,
+                "term": "d%",
+                "type": "dice"
+              },
+              "formula": "d%",
+              "total": 25
+            }
+          ]
+        }
+      },
+      "line": "d%",
+      "name": "percentile"
+    },
+    {
+      "draws": [
+        {
+          "face": 67,
+          "sides": 100
+        },
+        {
+          "face": 97,
+          "sides": 100
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 67
+                  },
+                  {
+                    "status": "kept",
+                    "value": 97
+                  }
+                ],
+                "sides": 100,
+                "special": "percentile",
+                "subtotal": 164,
+                "term": "2d%",
+                "type": "dice"
+              },
+              "formula": "2d%",
+              "total": 164
+            }
+          ]
+        }
+      },
+      "line": "2d%",
+      "name": "percentile_pair"
+    },
+    {
+      "draws": [
+        {
+          "face": 95,
+          "sides": 100
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 95
+                    }
+                  ],
+                  "sides": 100,
+                  "special": "percentile",
+                  "subtotal": 95,
+                  "term": "d%",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 100,
+                "type": "chain"
+              },
+              "formula": "d%+5",
+              "total": 100
+            }
+          ]
+        }
+      },
+      "line": "d%+5",
+      "name": "percentile_plus"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 4
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 1
+                    },
+                    {
+                      "status": "kept",
+                      "value": 2
+                    }
+                  ],
+                  "sides": 6,
+                  "subtotal": 3,
+                  "term": "2d6",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "dice": [
+                        {
+                          "status": "kept",
+                          "value": 3
+                        }
+                      ],
+                      "sides": 4,
+                      "subtotal": 3,
+                      "term": "1d4",
+                      "type": "dice"
+                    },
+                    "op": "+"
+                  },
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 9,
+                "type": "chain"
+              },
+              "formula": "2d6+1d4+3",
+              "total": 9
+            }
+          ]
+        }
+      },
+      "line": "2d6+1d4+3",
+      "name": "mixed_dice"
+    },
+    {
+      "draws": [
+        {
+          "face": 9,
+          "sides": 20
+        },
+        {
+          "face": 7,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 9
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 9,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 8
+                    },
+                    "op": "+"
+                  },
+                  {
+                    "node": {
+                      "dice": [
+                        {
+                          "status": "kept",
+                          "value": 7
+                        }
+                      ],
+                      "sides": 10,
+                      "subtotal": 7,
+                      "term": "d10",
+                      "type": "dice"
+                    },
+                    "op": "+"
+                  },
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 29,
+                "type": "chain"
+              },
+              "formula": "d20+8+d10+5",
+              "total": 29
+            }
+          ]
+        }
+      },
+      "line": "d20+8+d10+5",
+      "name": "chain"
+    },
+    {
+      "draws": [
+        {
+          "face": 2007,
+          "sides": 10000
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2007
+                  }
+                ],
+                "sides": 10000,
+                "subtotal": 2007,
+                "term": "d10000",
+                "type": "dice"
+              },
+              "formula": "d10000",
+              "total": 2007
+            }
+          ]
+        }
+      },
+      "line": "d10000",
+      "name": "big_sides"
+    }
+  ],
+  "format_version": 1
+}

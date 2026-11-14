@@ -1,0 +1,1004 @@
+{
+  "about": "Variables on the acting character.",
+  "area": "characters",
+  "cases": [
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "str": 3
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 15,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 15
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 15,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 18,
+                "type": "chain"
+              },
+              "formula": "d20+@str",
+              "total": 18
+            }
+          ]
+        }
+      },
+      "line": "d20+@str",
+      "name": "variable"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "str": 3
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 19,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 19
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 19,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 22,
+                "type": "chain"
+              },
+              "formula": "d20+@STR",
+              "total": 22
+            }
+          ]
+        }
+      },
+      "line": "d20+@STR",
+      "name": "variable_uppercase"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "prof": 2,
+            "str": 3
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 8,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 8
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 8,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  },
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 13,
+                "type": "chain"
+              },
+              "formula": "d20+@str+@prof",
+              "total": 13
+            }
+          ]
+        }
+      },
+      "line": "d20+@str+@prof",
+      "name": "two_variables"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "str": 3
+          }
+        }
+      },
+      "draws": [],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "type": "number",
+                "value": 3
+              },
+              "formula": "@str",
+              "total": 3
+            }
+          ]
+        }
+      },
+      "line": "@str",
+      "name": "variable_alone"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "pen": -2
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 9,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 9
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 9,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": -2
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 7,
+                "type": "chain"
+              },
+              "formula": "d20+@pen",
+              "total": 7
+            }
+          ]
+        }
+      },
+      "line": "d20+@pen",
+      "name": "negative_variable"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "n": 3
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 6,
+                "subtotal": 13,
+                "term": "@n d6",
+                "type": "dice"
+              },
+              "formula": "@n d6",
+              "total": 13
+            }
+          ]
+        }
+      },
+      "line": "@n d6",
+      "name": "variable_as_count"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "s": 8
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 6,
+          "sides": 8
+        },
+        {
+          "face": 7,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 7
+                  }
+                ],
+                "sides": 8,
+                "subtotal": 13,
+                "term": "2d@s",
+                "type": "dice"
+              },
+              "formula": "2d@s",
+              "total": 13
+            }
+          ]
+        }
+      },
+      "line": "2d@s",
+      "name": "variable_as_sides"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "k": 1
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl@k"
+                    },
+                    "status": "dropped",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  }
+                ],
+                "modifiers": [
+                  "dl@k"
+                ],
+                "sides": 6,
+                "subtotal": 15,
+                "term": "4d6dl@k",
+                "type": "dice"
+              },
+              "formula": "4d6dl@k",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "4d6dl@k",
+      "name": "variable_in_keep"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "k": 3
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "reason": {
+                      "clause": "kh@k"
+                    },
+                    "status": "dropped",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  }
+                ],
+                "modifiers": [
+                  "kh@k"
+                ],
+                "sides": 6,
+                "subtotal": 11,
+                "term": "4d6kh@k",
+                "type": "dice"
+              },
+              "formula": "4d6kh@k",
+              "total": 11
+            }
+          ]
+        }
+      },
+      "line": "4d6kh@k",
+      "name": "variable_in_keep_high"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "bonus": 4
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 5,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "inner": {
+                    "first": {
+                      "dice": [
+                        {
+                          "status": "kept",
+                          "value": 5
+                        }
+                      ],
+                      "sides": 6,
+                      "subtotal": 5,
+                      "term": "d6",
+                      "type": "dice"
+                    },
+                    "rest": [
+                      {
+                        "node": {
+                          "type": "number",
+                          "value": 4
+                        },
+                        "op": "+"
+                      }
+                    ],
+                    "total": 9,
+                    "type": "chain"
+                  },
+                  "total": 9,
+                  "type": "group"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "*"
+                  }
+                ],
+                "total": 18,
+                "type": "chain"
+              },
+              "formula": "(d6+@bonus)*2",
+              "total": 18
+            }
+          ]
+        }
+      },
+      "line": "(d6+@bonus)*2",
+      "name": "variable_in_group"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "str": 3
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 17,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 17
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 17,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 20,
+                "type": "chain"
+              },
+              "formula": "d20+@str",
+              "label": "attack",
+              "total": 20
+            }
+          ]
+        }
+      },
+      "line": "d20+@str # attack",
+      "name": "variable_with_label"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "str": 3
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 2,
+          "sides": 20
+        },
+        {
+          "face": 8,
+          "sides": 20
+        },
+        {
+          "face": 14,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 2
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 2,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 5,
+                "type": "chain"
+              },
+              "formula": "d20+@str",
+              "iteration": 1,
+              "total": 5
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 8
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 8,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 11,
+                "type": "chain"
+              },
+              "formula": "d20+@str",
+              "iteration": 2,
+              "total": 11
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 14
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 14,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 17,
+                "type": "chain"
+              },
+              "formula": "d20+@str",
+              "iteration": 3,
+              "total": 17
+            }
+          ]
+        }
+      },
+      "line": "3x d20+@str",
+      "name": "variable_in_repeat"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "mod": 0
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 2,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 2
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 2,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 0
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 2,
+                "type": "chain"
+              },
+              "formula": "d20+@mod",
+              "total": 2
+            }
+          ]
+        }
+      },
+      "line": "d20+@mod",
+      "name": "variable_zero"
+    },
+    {
+      "draws": [
+        {
+          "face": 12,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 12
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 12,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 1
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 13,
+                "type": "chain"
+              },
+              "formula": "d20+1",
+              "total": 13
+            }
+          ]
+        }
+      },
+      "line": "d20+1",
+      "name": "character_default_is_empty"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "vars": {
+            "dc": 8
+          }
+        }
+      },
+      "draws": [
+        {
+          "face": 3,
+          "sides": 10
+        },
+        {
+          "face": 7,
+          "sides": 10
+        },
+        {
+          "face": 1,
+          "sides": 10
+        },
+        {
+          "face": 5,
+          "sides": 10
+        },
+        {
+          "face": 3,
+          "sides": 10
+        },
+        {
+          "face": 10,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 7
+                  },
+                  {
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 10
+                  }
+                ],
+                "failures": 0,
+                "kind": "count",
+                "modifiers": [
+                  ">=@dc"
+                ],
+                "sides": 10,
+                "subtotal": 1,
+                "successes": 1,
+                "term": "6d10>=@dc",
+                "type": "dice"
+              },
+              "formula": "6d10>=@dc",
+              "kind": "count",
+              "total": 1
+            }
+          ]
+        }
+      },
+      "line": "6d10>=@dc",
+      "name": "variable_in_threshold"
+    }
+  ],
+  "format_version": 1
+}
