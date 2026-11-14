@@ -25,7 +25,15 @@ export type FormulaError =
   | { kind: "limit_exceeded"; cap: Cap; limit: number; term: string; span: Span }
   | { kind: "division_by_zero"; span: Span }
   | { kind: "count_in_arithmetic"; span: Span }
-  | { kind: "overflow"; span: Span };
+  | { kind: "overflow"; span: Span }
+  | {
+      kind: "repeat_without_dice";
+      /** The text after the `Nx`, trimmed. */
+      body: string;
+      /** The formula rewritten with `*` for `x`, when that is unambiguous. */
+      multiplication: string | null;
+      span: Span;
+    };
 
 /** A suggested next step, as data: the front end words it. */
 export type Hint =
@@ -78,6 +86,10 @@ export interface Roll {
   kind?: "count";
   total: number;
   expr: Node;
+  /** The `# text` note on this roll, if it had one. */
+  label?: string;
+  /** For a repeated formula (`Nx`), which repeat (from 1) this roll is in. */
+  iteration?: number;
 }
 
 export interface RollsReport {

@@ -98,6 +98,7 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
     ...(isCount(roll.expr) ? { kind: "count" as const } : {}),
     total: total(expr),
     expr,
+    ...(roll.label !== undefined ? { label: roll.label } : {}),
   };
 }
 
