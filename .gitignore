@@ -1,1 +1,8 @@
 /target/
+
+# Web app (apps/web) and workspace
+node_modules/
+dist/
+apps/web/src/generated/
+apps/web/playwright-report/
+apps/web/test-results/

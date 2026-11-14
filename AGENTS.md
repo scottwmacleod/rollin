@@ -4,7 +4,7 @@ Dice roller for tabletop RPGs: a Rust CLI, plus a Tauri desktop app in `apps/des
 
 ## Definition of done
 
-`just check` passes; it runs the same gates as CI. A change that touches `apps/desktop` also needs `just desktop-check`, which `check` leaves out so it stays buildable without Node.
+`just check` passes; it runs the same gates as CI. A change that touches `apps/desktop` also needs `just desktop-check`, which `check` leaves out so it stays buildable without Node. A change that touches `apps/web` or `packages/` (the TypeScript rebuild, #216) needs `just web-check`: typecheck, Biome, Vitest and Playwright with axe. Only `apps/web/src/ui` may import `@ui-sdk/*`.
 
 ## Agent skills
 
