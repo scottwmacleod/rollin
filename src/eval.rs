@@ -29,7 +29,10 @@ impl<R: Rng> Ctx<'_, R> {
                 span.clone(),
             ));
         }
-        Ok(i64::from(self.rng.random_range(1..=dice.sides as u32)))
+        let sides = dice.sides as u32;
+        let face = self.rng.random_range(1..=sides);
+        crate::record::note(sides, face);
+        Ok(i64::from(face))
     }
 }
 

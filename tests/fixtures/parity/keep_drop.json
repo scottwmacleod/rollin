@@ -1,0 +1,1031 @@
+{
+  "about": "Keep and drop clauses, advantage and disadvantage.",
+  "area": "keep_drop",
+  "cases": [
+    {
+      "draws": [
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl1"
+                    },
+                    "status": "dropped",
+                    "value": 1
+                  }
+                ],
+                "modifiers": [
+                  "dl1"
+                ],
+                "sides": 6,
+                "subtotal": 12,
+                "term": "4d6dl1",
+                "type": "dice"
+              },
+              "formula": "4d6dl1",
+              "total": 12
+            }
+          ]
+        }
+      },
+      "line": "4d6dl1",
+      "name": "drop_lowest"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "reason": {
+                      "clause": "dh1"
+                    },
+                    "status": "dropped",
+                    "value": 5
+                  }
+                ],
+                "modifiers": [
+                  "dh1"
+                ],
+                "sides": 6,
+                "subtotal": 11,
+                "term": "4d6dh1",
+                "type": "dice"
+              },
+              "formula": "4d6dh1",
+              "total": 11
+            }
+          ]
+        }
+      },
+      "line": "4d6dh1",
+      "name": "drop_highest"
+    },
+    {
+      "draws": [
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl2"
+                    },
+                    "status": "dropped",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl2"
+                    },
+                    "status": "dropped",
+                    "value": 4
+                  }
+                ],
+                "modifiers": [
+                  "dl2"
+                ],
+                "sides": 6,
+                "subtotal": 23,
+                "term": "6d6dl2",
+                "type": "dice"
+              },
+              "formula": "6d6dl2",
+              "total": 23
+            }
+          ]
+        }
+      },
+      "line": "6d6dl2",
+      "name": "drop_two_lowest"
+    },
+    {
+      "draws": [
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "reason": {
+                      "clause": "dh2"
+                    },
+                    "status": "dropped",
+                    "value": 5
+                  },
+                  {
+                    "reason": {
+                      "clause": "dh2"
+                    },
+                    "status": "dropped",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "dh2"
+                ],
+                "sides": 6,
+                "subtotal": 5,
+                "term": "4d6dh2",
+                "type": "dice"
+              },
+              "formula": "4d6dh2",
+              "total": 5
+            }
+          ]
+        }
+      },
+      "line": "4d6dh2",
+      "name": "drop_two_highest"
+    },
+    {
+      "draws": [
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "kh3"
+                    },
+                    "status": "dropped",
+                    "value": 1
+                  }
+                ],
+                "modifiers": [
+                  "kh3"
+                ],
+                "sides": 6,
+                "subtotal": 12,
+                "term": "4d6kh3",
+                "type": "dice"
+              },
+              "formula": "4d6kh3",
+              "total": 12
+            }
+          ]
+        }
+      },
+      "line": "4d6kh3",
+      "name": "keep_highest"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "reason": {
+                      "clause": "kl2"
+                    },
+                    "status": "dropped",
+                    "value": 5
+                  },
+                  {
+                    "reason": {
+                      "clause": "kl2"
+                    },
+                    "status": "dropped",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "modifiers": [
+                  "kl2"
+                ],
+                "sides": 6,
+                "subtotal": 3,
+                "term": "4d6kl2",
+                "type": "dice"
+              },
+              "formula": "4d6kl2",
+              "total": 3
+            }
+          ]
+        }
+      },
+      "line": "4d6kl2",
+      "name": "keep_lowest"
+    },
+    {
+      "draws": [
+        {
+          "face": 74,
+          "sides": 100
+        },
+        {
+          "face": 39,
+          "sides": 100
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 74
+                  },
+                  {
+                    "reason": {
+                      "clause": "kh1"
+                    },
+                    "status": "dropped",
+                    "value": 39
+                  }
+                ],
+                "modifiers": [
+                  "kh1"
+                ],
+                "sides": 100,
+                "subtotal": 74,
+                "term": "2d100kh1",
+                "type": "dice"
+              },
+              "formula": "2d100kh1",
+              "total": 74
+            }
+          ]
+        }
+      },
+      "line": "2d100kh1",
+      "name": "keep_one_of_hundreds"
+    },
+    {
+      "draws": [
+        {
+          "face": 98,
+          "sides": 100
+        },
+        {
+          "face": 24,
+          "sides": 100
+        },
+        {
+          "face": 95,
+          "sides": 100
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 98
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl1"
+                    },
+                    "status": "dropped",
+                    "value": 24
+                  },
+                  {
+                    "status": "kept",
+                    "value": 95
+                  }
+                ],
+                "modifiers": [
+                  "dl1"
+                ],
+                "sides": 100,
+                "subtotal": 193,
+                "term": "3d100dl1",
+                "type": "dice"
+              },
+              "formula": "3d100dl1",
+              "total": 193
+            }
+          ]
+        }
+      },
+      "line": "3d100dl1",
+      "name": "keep_all_but_one"
+    },
+    {
+      "draws": [
+        {
+          "face": 2,
+          "sides": 20
+        },
+        {
+          "face": 11,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "reason": {
+                        "clause": "kh1"
+                      },
+                      "status": "dropped",
+                      "value": 2
+                    },
+                    {
+                      "status": "kept",
+                      "value": 11
+                    }
+                  ],
+                  "modifiers": [
+                    "kh1"
+                  ],
+                  "sides": 20,
+                  "subtotal": 11,
+                  "term": "2d20kh1",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 8
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 19,
+                "type": "chain"
+              },
+              "formula": "2d20kh1+8",
+              "total": 19
+            }
+          ]
+        }
+      },
+      "line": "2d20kh1+8",
+      "name": "keep_plus_modifier"
+    },
+    {
+      "draws": [
+        {
+          "face": 16,
+          "sides": 20
+        },
+        {
+          "face": 12,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 16
+                  },
+                  {
+                    "reason": {
+                      "clause": "adv"
+                    },
+                    "status": "dropped",
+                    "value": 12
+                  }
+                ],
+                "modifiers": [
+                  "adv"
+                ],
+                "sides": 20,
+                "subtotal": 16,
+                "term": "d20adv",
+                "type": "dice"
+              },
+              "formula": "d20adv",
+              "total": 16
+            }
+          ]
+        }
+      },
+      "line": "d20adv",
+      "name": "advantage"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 20
+        },
+        {
+          "face": 2,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 5
+                    },
+                    {
+                      "reason": {
+                        "clause": "adv"
+                      },
+                      "status": "dropped",
+                      "value": 2
+                    }
+                  ],
+                  "modifiers": [
+                    "adv"
+                  ],
+                  "sides": 20,
+                  "subtotal": 5,
+                  "term": "d20adv",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 10,
+                "type": "chain"
+              },
+              "formula": "d20adv+5",
+              "total": 10
+            }
+          ]
+        }
+      },
+      "line": "d20adv+5",
+      "name": "advantage_modifier"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 20
+        },
+        {
+          "face": 6,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "reason": {
+                      "clause": "dis"
+                    },
+                    "status": "dropped",
+                    "value": 6
+                  }
+                ],
+                "modifiers": [
+                  "dis"
+                ],
+                "sides": 20,
+                "subtotal": 5,
+                "term": "d20dis",
+                "type": "dice"
+              },
+              "formula": "d20dis",
+              "total": 5
+            }
+          ]
+        }
+      },
+      "line": "d20dis",
+      "name": "disadvantage"
+    },
+    {
+      "draws": [
+        {
+          "face": 20,
+          "sides": 20
+        },
+        {
+          "face": 2,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "twenty",
+                      "status": "kept",
+                      "value": 20
+                    },
+                    {
+                      "reason": {
+                        "clause": "ADV"
+                      },
+                      "status": "dropped",
+                      "value": 2
+                    }
+                  ],
+                  "modifiers": [
+                    "ADV"
+                  ],
+                  "sides": 20,
+                  "subtotal": 20,
+                  "term": "1d20ADV",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "-"
+                  }
+                ],
+                "total": 18,
+                "type": "chain"
+              },
+              "formula": "1d20ADV - 2",
+              "total": 18
+            }
+          ]
+        }
+      },
+      "line": "1d20ADV - 2",
+      "name": "advantage_spaced"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "invalid_dice",
+            "message": "'adv' applies to exactly one die; write d20adv, or 2d20kh1 to keep the highest of two",
+            "span": {
+              "end": 7,
+              "start": 0
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "'adv' applies to exactly one die; write d20adv, or 2d20kh1 to keep the highest of two",
+          "source": "2d20adv"
+        }
+      },
+      "line": "2d20adv",
+      "name": "advantage_on_2d20"
+    },
+    {
+      "draws": [
+        {
+          "face": 6,
+          "sides": 8
+        },
+        {
+          "face": 3,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "adv"
+                    },
+                    "status": "dropped",
+                    "value": 3
+                  }
+                ],
+                "modifiers": [
+                  "adv"
+                ],
+                "sides": 8,
+                "subtotal": 6,
+                "term": "d8adv",
+                "type": "dice"
+              },
+              "formula": "d8adv",
+              "total": 6
+            }
+          ]
+        }
+      },
+      "line": "d8adv",
+      "name": "advantage_on_d8"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "invalid_dice",
+            "message": "'adv' already keeps one die, so it cannot be combined with dl, dh, kl or kh",
+            "span": {
+              "end": 10,
+              "start": 7
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "'adv' already keeps one die, so it cannot be combined with dl, dh, kl or kh",
+          "source": "3d20kh1adv"
+        }
+      },
+      "line": "3d20kh1adv",
+      "name": "advantage_with_keep"
+    },
+    {
+      "draws": [
+        {
+          "face": 8,
+          "sides": 20
+        },
+        {
+          "face": 15,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "reason": {
+                      "clause": "kh1"
+                    },
+                    "status": "dropped",
+                    "value": 8
+                  },
+                  {
+                    "status": "kept",
+                    "value": 15
+                  }
+                ],
+                "modifiers": [
+                  "kh1"
+                ],
+                "sides": 20,
+                "subtotal": 15,
+                "term": "2d20kh1",
+                "type": "dice"
+              },
+              "formula": "2d20kh1",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "2d20kh1",
+      "name": "explicit_adv_matches_keep"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "invalid_dice",
+            "message": "'dis' already keeps one die, so it cannot be combined with dl, dh, kl or kh",
+            "span": {
+              "end": 10,
+              "start": 7
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "'dis' already keeps one die, so it cannot be combined with dl, dh, kl or kh",
+          "source": "3d20dl2dis"
+        }
+      },
+      "line": "3d20dl2dis",
+      "name": "drop_then_advantage"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "invalid_dice",
+            "message": "cannot drop 9 dice from a pool of 2",
+            "span": {
+              "end": 6,
+              "start": 3
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "cannot drop 9 dice from a pool of 2",
+          "source": "2d6dl9"
+        }
+      },
+      "line": "2d6dl9",
+      "name": "drop_more_than_rolled"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "invalid_dice",
+            "message": "must keep between 1 and 3 dice from a pool of 4",
+            "span": {
+              "end": 6,
+              "start": 3
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "must keep between 1 and 3 dice from a pool of 4",
+          "source": "4d6kh0"
+        }
+      },
+      "line": "4d6kh0",
+      "name": "keep_zero"
+    }
+  ],
+  "format_version": 1
+}

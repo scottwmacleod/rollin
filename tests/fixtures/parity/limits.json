@@ -1,0 +1,802 @@
+{
+  "about": "Hard limits, as errors.",
+  "area": "limits",
+  "cases": [
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "dice_per_term",
+            "kind": "limit_exceeded",
+            "limit": 1000,
+            "span": {
+              "end": 4,
+              "start": 0
+            },
+            "term": "1001d6"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "dice per term cap (1000) exceeded by '1001d6'",
+          "source": "1001d6"
+        }
+      },
+      "line": "1001d6",
+      "name": "dice_per_term"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "dice_per_term",
+            "kind": "limit_exceeded",
+            "limit": 1000,
+            "span": {
+              "end": 4,
+              "start": 0
+            },
+            "term": "1001d6"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "dice per term cap (1000) exceeded by '1001d6'",
+          "source": "1001d6!"
+        }
+      },
+      "line": "1001d6!",
+      "name": "dice_per_term_exploding"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "dice_per_roll",
+            "kind": "limit_exceeded",
+            "limit": 10000,
+            "span": {
+              "end": 73,
+              "start": 70
+            },
+            "term": "1d6"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "dice per roll cap (10000) exceeded by '1d6'",
+          "source": "1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1d6"
+        }
+      },
+      "line": "1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1000d6+1d6",
+      "name": "dice_per_roll"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "repeat",
+            "kind": "limit_exceeded",
+            "limit": 100,
+            "span": {
+              "end": 4,
+              "start": 0
+            },
+            "term": "101x"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "repeat cap (100) exceeded by '101x'",
+          "source": "101x d6"
+        }
+      },
+      "line": "101x d6",
+      "name": "repeat_cap"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "nesting_depth",
+            "kind": "limit_exceeded",
+            "limit": 32,
+            "span": {
+              "end": 33,
+              "start": 32
+            },
+            "term": "(d6)))))))))))))…"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "nesting depth cap (32) exceeded by '(d6)))))))))))))…'",
+          "source": "(((((((((((((((((((((((((((((((((d6)))))))))))))))))))))))))))))))))"
+        }
+      },
+      "line": "(((((((((((((((((((((((((((((((((d6)))))))))))))))))))))))))))))))))",
+      "name": "nesting_depth"
+    },
+    {
+      "draws": [
+        {
+          "face": 2,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "inner": {
+                  "inner": {
+                    "inner": {
+                      "inner": {
+                        "inner": {
+                          "inner": {
+                            "inner": {
+                              "inner": {
+                                "inner": {
+                                  "inner": {
+                                    "inner": {
+                                      "inner": {
+                                        "inner": {
+                                          "inner": {
+                                            "inner": {
+                                              "inner": {
+                                                "inner": {
+                                                  "inner": {
+                                                    "inner": {
+                                                      "inner": {
+                                                        "inner": {
+                                                          "inner": {
+                                                            "inner": {
+                                                              "inner": {
+                                                                "inner": {
+                                                                  "inner": {
+                                                                    "inner": {
+                                                                      "inner": {
+                                                                        "inner": {
+                                                                          "inner": {
+                                                                            "inner": {
+                                                                              "inner": {
+                                                                                "dice": [
+                                                                                  {
+                                                                                    "status": "kept",
+                                                                                    "value": 2
+                                                                                  }
+                                                                                ],
+                                                                                "sides": 6,
+                                                                                "subtotal": 2,
+                                                                                "term": "d6",
+                                                                                "type": "dice"
+                                                                              },
+                                                                              "total": 2,
+                                                                              "type": "group"
+                                                                            },
+                                                                            "total": 2,
+                                                                            "type": "group"
+                                                                          },
+                                                                          "total": 2,
+                                                                          "type": "group"
+                                                                        },
+                                                                        "total": 2,
+                                                                        "type": "group"
+                                                                      },
+                                                                      "total": 2,
+                                                                      "type": "group"
+                                                                    },
+                                                                    "total": 2,
+                                                                    "type": "group"
+                                                                  },
+                                                                  "total": 2,
+                                                                  "type": "group"
+                                                                },
+                                                                "total": 2,
+                                                                "type": "group"
+                                                              },
+                                                              "total": 2,
+                                                              "type": "group"
+                                                            },
+                                                            "total": 2,
+                                                            "type": "group"
+                                                          },
+                                                          "total": 2,
+                                                          "type": "group"
+                                                        },
+                                                        "total": 2,
+                                                        "type": "group"
+                                                      },
+                                                      "total": 2,
+                                                      "type": "group"
+                                                    },
+                                                    "total": 2,
+                                                    "type": "group"
+                                                  },
+                                                  "total": 2,
+                                                  "type": "group"
+                                                },
+                                                "total": 2,
+                                                "type": "group"
+                                              },
+                                              "total": 2,
+                                              "type": "group"
+                                            },
+                                            "total": 2,
+                                            "type": "group"
+                                          },
+                                          "total": 2,
+                                          "type": "group"
+                                        },
+                                        "total": 2,
+                                        "type": "group"
+                                      },
+                                      "total": 2,
+                                      "type": "group"
+                                    },
+                                    "total": 2,
+                                    "type": "group"
+                                  },
+                                  "total": 2,
+                                  "type": "group"
+                                },
+                                "total": 2,
+                                "type": "group"
+                              },
+                              "total": 2,
+                              "type": "group"
+                            },
+                            "total": 2,
+                            "type": "group"
+                          },
+                          "total": 2,
+                          "type": "group"
+                        },
+                        "total": 2,
+                        "type": "group"
+                      },
+                      "total": 2,
+                      "type": "group"
+                    },
+                    "total": 2,
+                    "type": "group"
+                  },
+                  "total": 2,
+                  "type": "group"
+                },
+                "total": 2,
+                "type": "group"
+              },
+              "formula": "((((((((((((((((((((((((((((((((d6))))))))))))))))))))))))))))))))",
+              "total": 2
+            }
+          ]
+        }
+      },
+      "line": "((((((((((((((((((((((((((((((((d6))))))))))))))))))))))))))))))))",
+      "name": "nesting_depth_ok"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "invalid_dice",
+            "message": "sides must be between 2 and 10000",
+            "span": {
+              "end": 6,
+              "start": 1
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "sides must be between 2 and 10000",
+          "source": "d10001"
+        }
+      },
+      "line": "d10001",
+      "name": "too_many_sides"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "invalid_dice",
+            "message": "sides must be between 2 and 10000",
+            "span": {
+              "end": 2,
+              "start": 1
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "sides must be between 2 and 10000",
+          "source": "d0"
+        }
+      },
+      "line": "d0",
+      "name": "zero_sides"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "invalid_dice",
+            "message": "dice count must be at least 1",
+            "span": {
+              "end": 1,
+              "start": 0
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "dice count must be at least 1",
+          "source": "0d6"
+        }
+      },
+      "line": "0d6",
+      "name": "zero_dice"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "syntax",
+            "message": "number is too large",
+            "span": {
+              "end": 20,
+              "start": 0
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "number is too large",
+          "source": "99999999999999999999d6"
+        }
+      },
+      "line": "99999999999999999999d6",
+      "name": "huge_count"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "error": {
+          "error": {
+            "cap": "explosions_per_die",
+            "kind": "limit_exceeded",
+            "limit": 100,
+            "span": {
+              "end": 10,
+              "start": 4
+            },
+            "term": "d2!<=1"
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "explosions per die cap (100) exceeded by 'd2!<=1'",
+          "source": "d6, d2!<=1"
+        }
+      },
+      "line": "d6, d2!<=1",
+      "name": "explosion_cap_after_other_rolls"
+    }
+  ],
+  "format_version": 1
+}

@@ -1,0 +1,773 @@
+{
+  "about": "Flat numbers, operators, precedence, groups and negation.",
+  "area": "arithmetic",
+  "cases": [
+    {
+      "draws": [],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "type": "number",
+                "value": 15
+              },
+              "formula": "15",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "15",
+      "name": "number"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "type": "number",
+                  "value": 7
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "-"
+                  },
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 1
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 6,
+                "type": "chain"
+              },
+              "formula": "7-2+1",
+              "total": 6
+            }
+          ]
+        }
+      },
+      "line": "7-2+1",
+      "name": "add_sub"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "type": "number",
+                  "value": 2
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "first": {
+                        "type": "number",
+                        "value": 3
+                      },
+                      "rest": [
+                        {
+                          "node": {
+                            "type": "number",
+                            "value": 4
+                          },
+                          "op": "*"
+                        }
+                      ],
+                      "total": 12,
+                      "type": "chain"
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 14,
+                "type": "chain"
+              },
+              "formula": "2+3*4",
+              "total": 14
+            }
+          ]
+        }
+      },
+      "line": "2+3*4",
+      "name": "precedence"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "inner": {
+                    "first": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "rest": [
+                      {
+                        "node": {
+                          "type": "number",
+                          "value": 3
+                        },
+                        "op": "+"
+                      }
+                    ],
+                    "total": 5,
+                    "type": "chain"
+                  },
+                  "total": 5,
+                  "type": "group"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 4
+                    },
+                    "op": "*"
+                  }
+                ],
+                "total": 20,
+                "type": "chain"
+              },
+              "formula": "(2+3)*4",
+              "total": 20
+            }
+          ]
+        }
+      },
+      "line": "(2+3)*4",
+      "name": "groups"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "inner": {
+                    "first": {
+                      "inner": {
+                        "first": {
+                          "type": "number",
+                          "value": 1
+                        },
+                        "rest": [
+                          {
+                            "node": {
+                              "type": "number",
+                              "value": 2
+                            },
+                            "op": "+"
+                          }
+                        ],
+                        "total": 3,
+                        "type": "chain"
+                      },
+                      "total": 3,
+                      "type": "group"
+                    },
+                    "rest": [
+                      {
+                        "node": {
+                          "inner": {
+                            "first": {
+                              "type": "number",
+                              "value": 3
+                            },
+                            "rest": [
+                              {
+                                "node": {
+                                  "type": "number",
+                                  "value": 4
+                                },
+                                "op": "+"
+                              }
+                            ],
+                            "total": 7,
+                            "type": "chain"
+                          },
+                          "total": 7,
+                          "type": "group"
+                        },
+                        "op": "*"
+                      }
+                    ],
+                    "total": 21,
+                    "type": "chain"
+                  },
+                  "total": 21,
+                  "type": "group"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "-"
+                  }
+                ],
+                "total": 16,
+                "type": "chain"
+              },
+              "formula": "((1+2)*(3+4))-5",
+              "total": 16
+            }
+          ]
+        }
+      },
+      "line": "((1+2)*(3+4))-5",
+      "name": "nested_groups"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "type": "number",
+                  "value": 7
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "/"
+                  }
+                ],
+                "total": 3,
+                "type": "chain"
+              },
+              "formula": "7/2",
+              "total": 3
+            }
+          ]
+        }
+      },
+      "line": "7/2",
+      "name": "integer_division"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "operand": {
+                    "type": "number",
+                    "value": 7
+                  },
+                  "total": -7,
+                  "type": "neg"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "/"
+                  }
+                ],
+                "total": -3,
+                "type": "chain"
+              },
+              "formula": "-7/2",
+              "total": -3
+            }
+          ]
+        }
+      },
+      "line": "-7/2",
+      "name": "negative_division"
+    },
+    {
+      "draws": [
+        {
+          "face": 6,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "operand": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 6
+                    }
+                  ],
+                  "sides": 6,
+                  "subtotal": 6,
+                  "term": "d6",
+                  "type": "dice"
+                },
+                "total": -6,
+                "type": "neg"
+              },
+              "formula": "-d6",
+              "total": -6
+            }
+          ]
+        }
+      },
+      "line": "-d6",
+      "name": "negation"
+    },
+    {
+      "draws": [
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 4
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 2
+                    }
+                  ],
+                  "sides": 6,
+                  "subtotal": 2,
+                  "term": "d6",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "operand": {
+                        "dice": [
+                          {
+                            "status": "kept",
+                            "value": 1
+                          }
+                        ],
+                        "sides": 4,
+                        "subtotal": 1,
+                        "term": "d4",
+                        "type": "dice"
+                      },
+                      "total": -1,
+                      "type": "neg"
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 1,
+                "type": "chain"
+              },
+              "formula": "d6+-d4",
+              "total": 1
+            }
+          ]
+        }
+      },
+      "line": "d6+-d4",
+      "name": "negation_in_chain"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 4
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 1
+                    }
+                  ],
+                  "sides": 6,
+                  "subtotal": 1,
+                  "term": "d6",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "dice": [
+                        {
+                          "status": "kept",
+                          "value": 4
+                        }
+                      ],
+                      "sides": 4,
+                      "subtotal": 4,
+                      "term": "d4",
+                      "type": "dice"
+                    },
+                    "op": "*"
+                  }
+                ],
+                "total": 4,
+                "type": "chain"
+              },
+              "formula": "d6*d4",
+              "total": 4
+            }
+          ]
+        }
+      },
+      "line": "d6*d4",
+      "name": "dice_times_dice"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "inner": {
+                    "first": {
+                      "dice": [
+                        {
+                          "status": "kept",
+                          "value": 5
+                        },
+                        {
+                          "status": "kept",
+                          "value": 4
+                        }
+                      ],
+                      "sides": 6,
+                      "subtotal": 9,
+                      "term": "2d6",
+                      "type": "dice"
+                    },
+                    "rest": [
+                      {
+                        "node": {
+                          "type": "number",
+                          "value": 1
+                        },
+                        "op": "+"
+                      }
+                    ],
+                    "total": 10,
+                    "type": "chain"
+                  },
+                  "total": 10,
+                  "type": "group"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "*"
+                  }
+                ],
+                "total": 20,
+                "type": "chain"
+              },
+              "formula": "(2d6+1)*2",
+              "total": 20
+            }
+          ]
+        }
+      },
+      "line": "(2d6+1)*2",
+      "name": "dice_in_group"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 5
+                    },
+                    {
+                      "status": "kept",
+                      "value": 5
+                    }
+                  ],
+                  "sides": 6,
+                  "subtotal": 10,
+                  "term": "2d6",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  },
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 1
+                    },
+                    "op": "-"
+                  }
+                ],
+                "total": 12,
+                "type": "chain"
+              },
+              "formula": "2d6 + 3 - 1",
+              "total": 12
+            }
+          ]
+        }
+      },
+      "line": "2d6 + 3 - 1",
+      "name": "spaces"
+    },
+    {
+      "draws": [
+        {
+          "face": 3,
+          "sides": 4
+        },
+        {
+          "face": 1,
+          "sides": 4
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "type": "number",
+                  "value": 20
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "dice": [
+                        {
+                          "status": "kept",
+                          "value": 3
+                        }
+                      ],
+                      "sides": 4,
+                      "subtotal": 3,
+                      "term": "d4",
+                      "type": "dice"
+                    },
+                    "op": "-"
+                  },
+                  {
+                    "node": {
+                      "dice": [
+                        {
+                          "status": "kept",
+                          "value": 1
+                        }
+                      ],
+                      "sides": 4,
+                      "subtotal": 1,
+                      "term": "d4",
+                      "type": "dice"
+                    },
+                    "op": "-"
+                  },
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 1
+                    },
+                    "op": "-"
+                  }
+                ],
+                "total": 15,
+                "type": "chain"
+              },
+              "formula": "20-d4-d4-1",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "20-d4-d4-1",
+      "name": "left_to_right"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 4
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "type": "number",
+                  "value": 100
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "dice": [
+                        {
+                          "status": "kept",
+                          "value": 1
+                        }
+                      ],
+                      "sides": 4,
+                      "subtotal": 1,
+                      "term": "d4",
+                      "type": "dice"
+                    },
+                    "op": "/"
+                  },
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "/"
+                  }
+                ],
+                "total": 50,
+                "type": "chain"
+              },
+              "formula": "100/d4/2",
+              "total": 50
+            }
+          ]
+        }
+      },
+      "line": "100/d4/2",
+      "name": "division_chain"
+    }
+  ],
+  "format_version": 1
+}

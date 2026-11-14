@@ -1,0 +1,3370 @@
+{
+  "about": "Labels, comma lists and Nx repeats.",
+  "area": "labels_repeats",
+  "cases": [
+    {
+      "draws": [
+        {
+          "face": 15,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 15
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 15,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 8
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 23,
+                "type": "chain"
+              },
+              "formula": "d20+8",
+              "label": "attack",
+              "total": 23
+            }
+          ]
+        }
+      },
+      "line": "d20+8 # attack",
+      "name": "label"
+    },
+    {
+      "draws": [
+        {
+          "face": 15,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 15
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 15,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 8
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 23,
+                "type": "chain"
+              },
+              "formula": "d20+8",
+              "label": "attack",
+              "total": 23
+            }
+          ]
+        }
+      },
+      "line": "d20+8 #attack",
+      "name": "label_no_space"
+    },
+    {
+      "draws": [
+        {
+          "face": 19,
+          "sides": 20
+        },
+        {
+          "face": 5,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 19
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 19,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 8
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 27,
+                "type": "chain"
+              },
+              "formula": "d20+8",
+              "label": "attack",
+              "total": 27
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 5
+                    }
+                  ],
+                  "sides": 10,
+                  "subtotal": 5,
+                  "term": "d10",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 10,
+                "type": "chain"
+              },
+              "formula": "d10+5",
+              "label": "damage",
+              "total": 10
+            }
+          ]
+        }
+      },
+      "line": "d20+8 # attack, d10+5 # damage",
+      "name": "labels_on_list"
+    },
+    {
+      "draws": [
+        {
+          "face": 10,
+          "sides": 20
+        },
+        {
+          "face": 1,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 10
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 10,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 8
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 18,
+                "type": "chain"
+              },
+              "formula": "d20+8",
+              "label": "attack",
+              "total": 18
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 1
+                    }
+                  ],
+                  "sides": 10,
+                  "subtotal": 1,
+                  "term": "d10",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 6,
+                "type": "chain"
+              },
+              "formula": "d10+5",
+              "total": 6
+            }
+          ]
+        }
+      },
+      "line": "d20+8 # attack, d10+5",
+      "name": "label_on_one_only"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 18,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl1"
+                    },
+                    "status": "dropped",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "modifiers": [
+                  "dl1"
+                ],
+                "sides": 6,
+                "subtotal": 13,
+                "term": "4d6dl1",
+                "type": "dice"
+              },
+              "formula": "4d6dl1",
+              "total": 13
+            },
+            {
+              "expr": {
+                "first": {
+                  "inner": {
+                    "first": {
+                      "dice": [
+                        {
+                          "status": "kept",
+                          "value": 18
+                        }
+                      ],
+                      "sides": 20,
+                      "subtotal": 18,
+                      "term": "d20",
+                      "type": "dice"
+                    },
+                    "rest": [
+                      {
+                        "node": {
+                          "type": "number",
+                          "value": 5
+                        },
+                        "op": "+"
+                      }
+                    ],
+                    "total": 23,
+                    "type": "chain"
+                  },
+                  "total": 23,
+                  "type": "group"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "*"
+                  }
+                ],
+                "total": 46,
+                "type": "chain"
+              },
+              "formula": "(d20+5)*2",
+              "total": 46
+            },
+            {
+              "expr": {
+                "type": "number",
+                "value": 15
+              },
+              "formula": "15",
+              "total": 15
+            }
+          ]
+        }
+      },
+      "line": "4d6dl1, (d20+5)*2, 15",
+      "name": "list"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 9,
+          "sides": 20
+        },
+        {
+          "face": 9,
+          "sides": 20
+        },
+        {
+          "face": 5,
+          "sides": 10
+        },
+        {
+          "face": 10,
+          "sides": 10
+        },
+        {
+          "face": 2,
+          "sides": 10
+        },
+        {
+          "face": 5,
+          "sides": 10
+        },
+        {
+          "face": 8,
+          "sides": 10
+        },
+        {
+          "face": 9,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl1"
+                    },
+                    "status": "dropped",
+                    "value": 1
+                  }
+                ],
+                "modifiers": [
+                  "dl1"
+                ],
+                "sides": 6,
+                "subtotal": 12,
+                "term": "4d6dl1",
+                "type": "dice"
+              },
+              "formula": "4d6dl1",
+              "total": 12
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "reason": {
+                        "clause": "adv"
+                      },
+                      "status": "dropped",
+                      "value": 9
+                    },
+                    {
+                      "status": "kept",
+                      "value": 9
+                    }
+                  ],
+                  "modifiers": [
+                    "adv"
+                  ],
+                  "sides": 20,
+                  "subtotal": 9,
+                  "term": "d20adv",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 14,
+                "type": "chain"
+              },
+              "formula": "d20adv+5",
+              "total": 14
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 10
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 8
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 9
+                  }
+                ],
+                "failures": 0,
+                "kind": "count",
+                "modifiers": [
+                  ">=8f1"
+                ],
+                "sides": 10,
+                "subtotal": 3,
+                "successes": 3,
+                "term": "6d10>=8f1",
+                "type": "dice"
+              },
+              "formula": "6d10>=8f1",
+              "kind": "count",
+              "total": 3
+            }
+          ]
+        }
+      },
+      "line": "4d6dl1, d20adv+5, 6d10>=8f1",
+      "name": "list_mixed"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 8,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 5
+                  }
+                ],
+                "sides": 6,
+                "subtotal": 5,
+                "term": "d6",
+                "type": "dice"
+              },
+              "formula": "d6",
+              "total": 5
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 8
+                  }
+                ],
+                "sides": 8,
+                "subtotal": 8,
+                "term": "d8",
+                "type": "dice"
+              },
+              "formula": "d8",
+              "total": 8
+            }
+          ]
+        }
+      },
+      "line": "d6,, d8,",
+      "name": "list_empty_items"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "reason": {
+                      "clause": "dl1"
+                    },
+                    "status": "dropped",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  }
+                ],
+                "modifiers": [
+                  "dl1"
+                ],
+                "sides": 6,
+                "subtotal": 15,
+                "term": "4d6dl1",
+                "type": "dice"
+              },
+              "formula": "4d6dl1",
+              "iteration": 1,
+              "total": 15
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "reason": {
+                      "clause": "dl1"
+                    },
+                    "status": "dropped",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  }
+                ],
+                "modifiers": [
+                  "dl1"
+                ],
+                "sides": 6,
+                "subtotal": 11,
+                "term": "4d6dl1",
+                "type": "dice"
+              },
+              "formula": "4d6dl1",
+              "iteration": 2,
+              "total": 11
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "reason": {
+                      "clause": "dl1"
+                    },
+                    "status": "dropped",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "modifiers": [
+                  "dl1"
+                ],
+                "sides": 6,
+                "subtotal": 14,
+                "term": "4d6dl1",
+                "type": "dice"
+              },
+              "formula": "4d6dl1",
+              "iteration": 3,
+              "total": 14
+            }
+          ]
+        }
+      },
+      "line": "3x 4d6dl1",
+      "name": "repeat"
+    },
+    {
+      "draws": [
+        {
+          "face": 16,
+          "sides": 20
+        },
+        {
+          "face": 13,
+          "sides": 20
+        },
+        {
+          "face": 2,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 16
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 16,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 21,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "iteration": 1,
+              "label": "hit",
+              "total": 21
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 13
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 13,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 18,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "iteration": 2,
+              "label": "hit",
+              "total": 18
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 2
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 2,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 7,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "iteration": 3,
+              "label": "hit",
+              "total": 7
+            }
+          ]
+        }
+      },
+      "line": "3x d20+5 # hit",
+      "name": "repeat_labelled"
+    },
+    {
+      "draws": [
+        {
+          "face": 7,
+          "sides": 20
+        },
+        {
+          "face": 5,
+          "sides": 8
+        },
+        {
+          "face": 3,
+          "sides": 20
+        },
+        {
+          "face": 2,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 7
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 7,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 12,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "iteration": 1,
+              "total": 12
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 5
+                    }
+                  ],
+                  "sides": 8,
+                  "subtotal": 5,
+                  "term": "d8",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 8,
+                "type": "chain"
+              },
+              "formula": "d8+3",
+              "iteration": 1,
+              "total": 8
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 3
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 3,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 8,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "iteration": 2,
+              "total": 8
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 2
+                    }
+                  ],
+                  "sides": 8,
+                  "subtotal": 2,
+                  "term": "d8",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 5,
+                "type": "chain"
+              },
+              "formula": "d8+3",
+              "iteration": 2,
+              "total": 5
+            }
+          ]
+        }
+      },
+      "line": "2x d20+5, d8+3",
+      "name": "repeat_list"
+    },
+    {
+      "draws": [
+        {
+          "face": 3,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "sides": 6,
+                "subtotal": 3,
+                "term": "d6",
+                "type": "dice"
+              },
+              "formula": "d6",
+              "iteration": 1,
+              "total": 3
+            }
+          ]
+        }
+      },
+      "line": "1x d6",
+      "name": "repeat_one"
+    },
+    {
+      "draws": [
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 2,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        },
+        {
+          "face": 1,
+          "sides": 2
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 1,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 2,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 3,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 4,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 5,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 6,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 7,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 8,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 9,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 10,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 11,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 12,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 13,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 14,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 15,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 16,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 17,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 18,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 19,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 20,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 21,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 22,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 23,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 24,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 25,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 26,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 27,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 28,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 29,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 30,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 31,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 32,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 33,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 34,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 35,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 36,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 37,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 38,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 39,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 40,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 41,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 42,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 43,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 44,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 45,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 46,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 47,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 48,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 49,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 50,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 51,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 52,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 53,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 54,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 55,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 56,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 57,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 58,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 59,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 60,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 61,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 62,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 63,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 64,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 65,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 66,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 67,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 68,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 69,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 70,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 71,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 72,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 73,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 74,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 75,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 76,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 77,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 78,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 79,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 80,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 81,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 82,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 83,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 84,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 85,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 86,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 87,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 88,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 89,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 90,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 91,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 92,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 93,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 94,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 95,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 96,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 97,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 2
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 2,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 98,
+              "total": 2
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 99,
+              "total": 1
+            },
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  }
+                ],
+                "sides": 2,
+                "subtotal": 1,
+                "term": "d2",
+                "type": "dice"
+              },
+              "formula": "d2",
+              "iteration": 100,
+              "total": 1
+            }
+          ]
+        }
+      },
+      "line": "100x d2",
+      "name": "repeat_max"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "syntax",
+            "message": "a label '#' needs text after it, as in '# attack'",
+            "span": {
+              "end": 5,
+              "start": 4
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "a label '#' needs text after it, as in '# attack'",
+          "source": "d20 #"
+        }
+      },
+      "line": "d20 #  ",
+      "name": "label_empty"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "syntax",
+            "message": "a label needs a roll before it, as in 'd20 # attack'",
+            "span": {
+              "end": 3,
+              "start": 0
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "a label needs a roll before it, as in 'd20 # attack'",
+          "source": "# x"
+        }
+      },
+      "line": "# x",
+      "name": "label_alone"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "syntax",
+            "message": "a label needs a roll before it, as in 'd20 # attack'",
+            "span": {
+              "end": 8,
+              "start": 5
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "a label needs a roll before it, as in 'd20 # attack'",
+          "source": "d20, # x"
+        }
+      },
+      "line": "d20, # x",
+      "name": "label_alone_in_list"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "syntax",
+            "message": "repeat count must be at least 1",
+            "span": {
+              "end": 2,
+              "start": 0
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "repeat count must be at least 1",
+          "source": "0x d6"
+        }
+      },
+      "line": "0x d6",
+      "name": "repeat_zero"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "body": "3",
+            "kind": "repeat_without_dice",
+            "multiplication": "2*3",
+            "span": {
+              "end": 2,
+              "start": 0
+            }
+          },
+          "hints": [
+            {
+              "kind": "use_multiplication",
+              "suggestion": "2*3"
+            }
+          ],
+          "kind": "formula",
+          "message": "'x' means repeat, and '3' has no dice to repeat",
+          "source": "2x3"
+        }
+      },
+      "line": "2x3",
+      "name": "repeat_without_dice"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "body": "2+4",
+            "kind": "repeat_without_dice",
+            "multiplication": "3*2+4",
+            "span": {
+              "end": 2,
+              "start": 0
+            }
+          },
+          "hints": [
+            {
+              "kind": "use_multiplication",
+              "suggestion": "3*2+4"
+            }
+          ],
+          "kind": "formula",
+          "message": "'x' means repeat, and '2+4' has no dice to repeat",
+          "source": "3x 2+4"
+        }
+      },
+      "line": "3x 2+4",
+      "name": "repeat_without_dice_formula"
+    }
+  ],
+  "format_version": 1
+}

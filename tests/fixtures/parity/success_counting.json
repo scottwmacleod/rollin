@@ -1,0 +1,1140 @@
+{
+  "about": "Success and failure counting.",
+  "area": "success_counting",
+  "cases": [
+    {
+      "draws": [
+        {
+          "face": 3,
+          "sides": 10
+        },
+        {
+          "face": 2,
+          "sides": 10
+        },
+        {
+          "face": 8,
+          "sides": 10
+        },
+        {
+          "face": 2,
+          "sides": 10
+        },
+        {
+          "face": 3,
+          "sides": 10
+        },
+        {
+          "face": 3,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 8
+                  },
+                  {
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "failures": 0,
+                "kind": "count",
+                "modifiers": [
+                  ">=8"
+                ],
+                "sides": 10,
+                "subtotal": 1,
+                "successes": 1,
+                "term": "6d10>=8",
+                "type": "dice"
+              },
+              "formula": "6d10>=8",
+              "kind": "count",
+              "total": 1
+            }
+          ]
+        }
+      },
+      "line": "6d10>=8",
+      "name": "count_ge"
+    },
+    {
+      "draws": [
+        {
+          "face": 6,
+          "sides": 10
+        },
+        {
+          "face": 5,
+          "sides": 10
+        },
+        {
+          "face": 10,
+          "sides": 10
+        },
+        {
+          "face": 1,
+          "sides": 10
+        },
+        {
+          "face": 3,
+          "sides": 10
+        },
+        {
+          "face": 6,
+          "sides": 10
+        },
+        {
+          "face": 4,
+          "sides": 10
+        },
+        {
+          "face": 3,
+          "sides": 10
+        },
+        {
+          "face": 9,
+          "sides": 10
+        },
+        {
+          "face": 3,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 10
+                  },
+                  {
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 9
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "failures": 0,
+                "kind": "count",
+                "modifiers": [
+                  "=10"
+                ],
+                "sides": 10,
+                "subtotal": 1,
+                "successes": 1,
+                "term": "10d10=10",
+                "type": "dice"
+              },
+              "formula": "10d10=10",
+              "kind": "count",
+              "total": 1
+            }
+          ]
+        }
+      },
+      "line": "10d10=10",
+      "name": "count_eq"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 3,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  }
+                ],
+                "failures": 0,
+                "kind": "count",
+                "modifiers": [
+                  "<=2"
+                ],
+                "sides": 6,
+                "subtotal": 1,
+                "successes": 1,
+                "term": "6d6<=2",
+                "type": "dice"
+              },
+              "formula": "6d6<=2",
+              "kind": "count",
+              "total": 1
+            }
+          ]
+        }
+      },
+      "line": "6d6<=2",
+      "name": "count_le"
+    },
+    {
+      "draws": [
+        {
+          "face": 6,
+          "sides": 10
+        },
+        {
+          "face": 5,
+          "sides": 10
+        },
+        {
+          "face": 10,
+          "sides": 10
+        },
+        {
+          "face": 1,
+          "sides": 10
+        },
+        {
+          "face": 3,
+          "sides": 10
+        },
+        {
+          "face": 6,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 10
+                  },
+                  {
+                    "outcome": "failure",
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  }
+                ],
+                "failures": 1,
+                "kind": "count",
+                "modifiers": [
+                  ">=8f1"
+                ],
+                "sides": 10,
+                "subtotal": 0,
+                "successes": 1,
+                "term": "6d10>=8f1",
+                "type": "dice"
+              },
+              "formula": "6d10>=8f1",
+              "kind": "count",
+              "total": 0
+            }
+          ]
+        }
+      },
+      "line": "6d10>=8f1",
+      "name": "count_with_failures"
+    },
+    {
+      "draws": [
+        {
+          "face": 6,
+          "sides": 10
+        },
+        {
+          "face": 5,
+          "sides": 10
+        },
+        {
+          "face": 10,
+          "sides": 10
+        },
+        {
+          "face": 1,
+          "sides": 10
+        },
+        {
+          "face": 3,
+          "sides": 10
+        },
+        {
+          "face": 6,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 10
+                  },
+                  {
+                    "outcome": "failure",
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 6
+                  }
+                ],
+                "failures": 1,
+                "kind": "count",
+                "modifiers": [
+                  ">=8 f1"
+                ],
+                "sides": 10,
+                "subtotal": 0,
+                "successes": 1,
+                "term": "6d10>=8 f1",
+                "type": "dice"
+              },
+              "formula": "6d10>=8 f1",
+              "kind": "count",
+              "total": 0
+            }
+          ]
+        }
+      },
+      "line": "6d10>=8 f1",
+      "name": "count_failures_spaced"
+    },
+    {
+      "draws": [
+        {
+          "face": 2,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "outcome": "failure",
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 5
+                  }
+                ],
+                "failures": 1,
+                "kind": "count",
+                "modifiers": [
+                  ">=5f<=2"
+                ],
+                "sides": 6,
+                "subtotal": 1,
+                "successes": 2,
+                "term": "4d6>=5f<=2",
+                "type": "dice"
+              },
+              "formula": "4d6>=5f<=2",
+              "kind": "count",
+              "total": 1
+            }
+          ]
+        }
+      },
+      "line": "4d6>=5f<=2",
+      "name": "count_failure_condition"
+    },
+    {
+      "draws": [
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 5
+                  }
+                ],
+                "failures": 0,
+                "kind": "count",
+                "modifiers": [
+                  ">=5f>=3"
+                ],
+                "sides": 6,
+                "subtotal": 3,
+                "successes": 3,
+                "term": "4d6>=5f>=3",
+                "type": "dice"
+              },
+              "formula": "4d6>=5f>=3",
+              "kind": "count",
+              "total": 3
+            }
+          ]
+        }
+      },
+      "line": "4d6>=5f>=3",
+      "name": "count_overlapping_clauses"
+    },
+    {
+      "draws": [
+        {
+          "face": 2,
+          "sides": 10
+        },
+        {
+          "face": 7,
+          "sides": 10
+        },
+        {
+          "face": 7,
+          "sides": 10
+        },
+        {
+          "face": 1,
+          "sides": 10
+        },
+        {
+          "face": 10,
+          "sides": 10
+        },
+        {
+          "face": 4,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "outcome": "failure",
+                    "status": "kept",
+                    "value": 2
+                  },
+                  {
+                    "outcome": "failure",
+                    "status": "kept",
+                    "value": 7
+                  },
+                  {
+                    "outcome": "failure",
+                    "status": "kept",
+                    "value": 7
+                  },
+                  {
+                    "outcome": "failure",
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 10
+                  },
+                  {
+                    "outcome": "failure",
+                    "status": "kept",
+                    "value": 4
+                  }
+                ],
+                "failures": 5,
+                "kind": "count",
+                "modifiers": [
+                  ">=10f<=9"
+                ],
+                "sides": 10,
+                "subtotal": -4,
+                "successes": 1,
+                "term": "6d10>=10f<=9",
+                "type": "dice"
+              },
+              "formula": "6d10>=10f<=9",
+              "kind": "count",
+              "total": -4
+            }
+          ]
+        }
+      },
+      "line": "6d10>=10f<=9",
+      "name": "count_net_negative"
+    },
+    {
+      "draws": [
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        },
+        {
+          "face": 4,
+          "sides": 6
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "reason": {
+                      "clause": "dh1"
+                    },
+                    "status": "dropped",
+                    "value": 6
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  }
+                ],
+                "failures": 0,
+                "kind": "count",
+                "modifiers": [
+                  "dh1",
+                  ">=5"
+                ],
+                "sides": 6,
+                "subtotal": 0,
+                "successes": 0,
+                "term": "4d6dh1>=5",
+                "type": "dice"
+              },
+              "formula": "4d6dh1>=5",
+              "kind": "count",
+              "total": 0
+            }
+          ]
+        }
+      },
+      "line": "4d6dh1>=5",
+      "name": "count_after_drop"
+    },
+    {
+      "draws": [
+        {
+          "face": 8,
+          "sides": 10
+        },
+        {
+          "face": 8,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "reason": {
+                      "clause": "kh1"
+                    },
+                    "status": "dropped",
+                    "value": 8
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 8
+                  }
+                ],
+                "failures": 0,
+                "kind": "count",
+                "modifiers": [
+                  "kh1",
+                  ">=7"
+                ],
+                "sides": 10,
+                "subtotal": 1,
+                "successes": 1,
+                "term": "2d10kh1>=7",
+                "type": "dice"
+              },
+              "formula": "2d10kh1>=7",
+              "kind": "count",
+              "total": 1
+            }
+          ]
+        }
+      },
+      "line": "2d10kh1>=7",
+      "name": "count_after_keep"
+    },
+    {
+      "draws": [
+        {
+          "face": 50,
+          "sides": 100
+        },
+        {
+          "face": 100,
+          "sides": 100
+        },
+        {
+          "face": 99,
+          "sides": 100
+        },
+        {
+          "face": 24,
+          "sides": 100
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 50
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 100
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 99
+                  },
+                  {
+                    "status": "kept",
+                    "value": 24
+                  }
+                ],
+                "failures": 0,
+                "kind": "count",
+                "modifiers": [
+                  ">=90"
+                ],
+                "sides": 100,
+                "special": "percentile",
+                "subtotal": 2,
+                "successes": 2,
+                "term": "4d%>=90",
+                "type": "dice"
+              },
+              "formula": "4d%>=90",
+              "kind": "count",
+              "total": 2
+            }
+          ]
+        }
+      },
+      "line": "4d%>=90",
+      "name": "count_percentile"
+    },
+    {
+      "draws": [
+        {
+          "face": 8,
+          "sides": 10
+        },
+        {
+          "face": 8,
+          "sides": 10
+        },
+        {
+          "face": 4,
+          "sides": 10
+        },
+        {
+          "face": 1,
+          "sides": 10
+        },
+        {
+          "face": 9,
+          "sides": 10
+        },
+        {
+          "face": 6,
+          "sides": 10
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "inner": {
+                  "dice": [
+                    {
+                      "outcome": "success",
+                      "status": "kept",
+                      "value": 8
+                    },
+                    {
+                      "outcome": "success",
+                      "status": "kept",
+                      "value": 8
+                    },
+                    {
+                      "status": "kept",
+                      "value": 4
+                    },
+                    {
+                      "status": "kept",
+                      "value": 1
+                    },
+                    {
+                      "outcome": "success",
+                      "status": "kept",
+                      "value": 9
+                    },
+                    {
+                      "status": "kept",
+                      "value": 6
+                    }
+                  ],
+                  "failures": 0,
+                  "kind": "count",
+                  "modifiers": [
+                    ">=8"
+                  ],
+                  "sides": 10,
+                  "subtotal": 3,
+                  "successes": 3,
+                  "term": "6d10>=8",
+                  "type": "dice"
+                },
+                "total": 3,
+                "type": "group"
+              },
+              "formula": "(6d10>=8)",
+              "kind": "count",
+              "total": 3
+            }
+          ]
+        }
+      },
+      "line": "(6d10>=8)",
+      "name": "count_in_group"
+    },
+    {
+      "draws": [
+        {
+          "face": 1,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 5,
+          "sides": 6
+        },
+        {
+          "face": 6,
+          "sides": 6
+        },
+        {
+          "face": 15,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 1
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 5
+                  },
+                  {
+                    "outcome": "success",
+                    "status": "kept",
+                    "value": 6
+                  }
+                ],
+                "failures": 0,
+                "kind": "count",
+                "modifiers": [
+                  ">=5"
+                ],
+                "sides": 6,
+                "subtotal": 3,
+                "successes": 3,
+                "term": "4d6>=5",
+                "type": "dice"
+              },
+              "formula": "4d6>=5",
+              "kind": "count",
+              "total": 3
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "status": "kept",
+                      "value": 15
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 15,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 3
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 18,
+                "type": "chain"
+              },
+              "formula": "d20+3",
+              "total": 18
+            }
+          ]
+        }
+      },
+      "line": "4d6>=5, d20+3",
+      "name": "count_in_list"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "count_in_arithmetic",
+            "span": {
+              "end": 9,
+              "start": 4
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice",
+          "source": "2d6+d6>=3"
+        }
+      },
+      "line": "2d6+d6>=3",
+      "name": "count_in_arithmetic"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "count_in_arithmetic",
+            "span": {
+              "end": 7,
+              "start": 0
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice",
+          "source": "6d10>=8+2"
+        }
+      },
+      "line": "6d10>=8+2",
+      "name": "count_in_arithmetic_2"
+    },
+    {
+      "draws": [],
+      "expected": {
+        "error": {
+          "error": {
+            "kind": "count_in_arithmetic",
+            "span": {
+              "end": 8,
+              "start": 1
+            }
+          },
+          "hints": [],
+          "kind": "formula",
+          "message": "a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice",
+          "source": "-6d10>=8"
+        }
+      },
+      "line": "-6d10>=8",
+      "name": "count_negated"
+    }
+  ],
+  "format_version": 1
+}

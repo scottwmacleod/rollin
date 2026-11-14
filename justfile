@@ -43,3 +43,9 @@ desktop-check:
 desktop-dev:
     npm --prefix apps/desktop ci
     npm --prefix apps/desktop run tauri -- dev
+
+# Regenerate the parity fixtures the TypeScript port replays
+# (tests/fixtures/parity). `check` fails (via the `parity` test) while they are
+# out of date.
+parity:
+    PARITY_BLESS=1 cargo test --test parity
