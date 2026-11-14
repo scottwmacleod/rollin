@@ -1,18 +1,39 @@
 import { roll } from "@rollin/engine";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type KeyboardEvent, useRef, useState } from "react";
 import { dieSource } from "./dice";
-import { type Entry, Result } from "./Result";
+import { type Entry } from "./Result";
+import { RollLog } from "./RollLog";
 import { Button, Field, FieldLabel, Input } from "./ui";
 
 export function App() {
   const [formula, setFormula] = useState("");
-  const [entry, setEntry] = useState<Entry | null>(null);
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [announcement, setAnnouncement] = useState("");
+  const nextId = useRef(1);
+  const input = useRef<HTMLInputElement>(null);
+  const log = useRef<HTMLDivElement>(null);
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    const input = formula.trim();
-    if (input === "") return;
-    setEntry({ input, report: roll(input, dieSource()) });
+    const text = formula.trim();
+    if (text === "") return;
+    const report = roll(text, dieSource());
+    setEntries((all) => [...all, { id: nextId.current++, input: text, report }]);
+    setAnnouncement(
+      "ok" in report
+        ? `Rolled ${text}: ${report.ok.rolls.map((r) => `total ${r.total}`).join(", ")}`
+        : `Error: ${report.error.message}`,
+    );
+  }
+
+  /** Esc in the formula box moves to the newest log entry (the log is above it). */
+  function focusLog(event: KeyboardEvent) {
+    if (event.key !== "Escape" || event.nativeEvent.isComposing) return;
+    const items = log.current?.querySelectorAll<HTMLElement>('[role="treeitem"]');
+    if (!items || items.length === 0) return;
+    event.preventDefault();
+    const current = log.current?.querySelector<HTMLElement>('[role="treeitem"][tabindex="0"]');
+    (current ?? items[items.length - 1])?.focus();
   }
 
   return (
@@ -23,7 +44,16 @@ export function App() {
       </picture>
       <h1 className="sr-only">rollin</h1>
 
-      <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <RollLog entries={entries} treeRef={log} onEscape={() => input.current?.focus()} />
+
+      <div role="status" className="sr-only">
+        {announcement}
+      </div>
+
+      <form
+        onSubmit={submit}
+        className="sticky bottom-0 flex flex-col gap-3 bg-bg py-3 sm:flex-row sm:items-end"
+      >
         <Field name="formula" className="flex flex-1 flex-col gap-1">
           <FieldLabel className="text-sm text-text-2">Formula</FieldLabel>
           <Input
@@ -35,6 +65,8 @@ export function App() {
             autoCorrect="off"
             spellCheck={false}
             autoFocus
+            ref={input}
+            onKeyDown={focusLog}
             className="h-10 w-full rounded-md border border-line-strong bg-surface px-3 font-mono text-text placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
           />
         </Field>
@@ -45,11 +77,6 @@ export function App() {
           Roll
         </Button>
       </form>
-
-      {/* Always in the page, so a screen reader announces what lands in it. */}
-      <section aria-label="Result" aria-live="polite" aria-atomic="true">
-        {entry && <Result entry={entry} />}
-      </section>
     </main>
   );
 }
