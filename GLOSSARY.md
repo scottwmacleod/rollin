@@ -67,3 +67,7 @@ _Avoid_: Stat, attribute, modifier
 **Global preset**:
 A preset shared by all characters. A character's own preset of the same name shadows it.
 _Avoid_: Default preset
+
+**Roll log**:
+The rolls made in this browser, newest at the bottom. It survives a reload, keeps the last 500 rolls, and can be cleared.
+_Avoid_: History, session

@@ -7,3 +7,5 @@ This supersedes ADR-0003 in part: the workspace is no longer rejected, and the b
 The RNG stays injected and ChaCha8-pinned. The app holds one RNG in managed state, seeded once from the `seed` control, so the same seed and the same sequence of formulas give identical results in the GUI and in a REPL started with `--seed`. The per-line `--seed` form is not exposed in the GUI, and the UI shows when a session is seeded.
 
 Consequences: contributors without Node can still build, test and release the CLI; CI gains a job for the app; the GUI and CLI share the TOML files of ADR-0004, so both read the same config directory.
+
+*Amended by [ADR-0008](0008-all-typescript-web-first-rebuild.md): the desktop app stays a workspace member only until the desktop swap, after which it wraps the web app and the TypeScript engine.*

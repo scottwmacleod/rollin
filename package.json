@@ -1,0 +1,18 @@
+{
+  "name": "rollin-workspace",
+  "private": true,
+  "description": "npm workspace for the TypeScript rebuild (#216). The desktop app in apps/desktop is separate and keeps its own lockfile.",
+  "workspaces": ["packages/engine", "apps/web"],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "biome check .",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspace rollin-web",
+    "e2e": "npm run e2e --workspace rollin-web"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.7",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  }
+}

@@ -56,6 +56,8 @@ This runs the same gates as CI: formatting, Clippy with warnings as errors, a de
 just desktop-check
 ```
 
+If you touched `apps/web` or `packages/`, run `just web-check` (Node 22).
+
 If you changed a Rust type the desktop app shares, regenerate the TypeScript types with `just types`. If you changed `ui/tokens.json`, run `just tokens`.
 
 Add or update tests with your change. Fix the cause of a failure rather than skipping or loosening a test.

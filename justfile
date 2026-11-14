@@ -49,3 +49,18 @@ desktop-dev:
 # out of date.
 parity:
     PARITY_BLESS=1 cargo test --test parity
+
+# Web app and engine (#216): needs Node 22. Not part of `check`, which stays
+# buildable without Node; CI runs the same steps in .github/workflows/web.yml.
+web-check:
+    npm ci
+    npm run typecheck
+    npx biome check .
+    npm test
+    npx playwright install chromium
+    npm run e2e
+
+# Run the web app in dev mode.
+web-dev:
+    npm ci
+    npm --workspace rollin-web run dev
