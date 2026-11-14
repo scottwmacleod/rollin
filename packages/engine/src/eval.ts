@@ -143,7 +143,12 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
     }
   };
   const expr = walk(roll.expr);
-  return { formula: roll.source, total: total(expr), expr };
+  return {
+    formula: roll.source,
+    total: total(expr),
+    expr,
+    ...(roll.label !== undefined ? { label: roll.label } : {}),
+  };
 }
 
 /**

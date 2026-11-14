@@ -28,6 +28,13 @@ export const infiniteReroll = (clause: string, sides: number, span: Span): Formu
 export const divisionByZero = (span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "division_by_zero", span });
 
+export const repeatWithoutDice = (
+  body: string,
+  multiplication: string | null,
+  span: Span,
+): FormulaFailure =>
+  new FormulaFailure({ kind: "repeat_without_dice", body, multiplication, span });
+
 export const overflow = (span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "overflow", span });
 
@@ -56,10 +63,15 @@ export function messageOf(error: FormulaError): string {
       return "division by zero";
     case "overflow":
       return "arithmetic overflow";
+    case "repeat_without_dice":
+      return `'x' means repeat, and '${error.body}' has no dice to repeat`;
   }
 }
 
-/** Suggestions for fixing the error. None of this subset's errors has one yet. */
-export function hintsOf(_error: FormulaError): Hint[] {
+/** Suggestions for fixing the error, as data. */
+export function hintsOf(error: FormulaError): Hint[] {
+  if (error.kind === "repeat_without_dice") {
+    return [{ kind: "use_multiplication", suggestion: error.multiplication }];
+  }
   return [];
 }
