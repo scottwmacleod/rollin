@@ -268,6 +268,25 @@ test("the roll log survives a reload, and Clear empties it for good", async ({ p
   await page.getByRole("button", { name: "Yes, clear" }).click();
   await expect(page.getByText("Rolls will appear here.")).toBeVisible();
 
+  // The delete is saved in the background; wait for it before reloading, as a person would.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise<unknown>((resolve) => {
+            const open = indexedDB.open("rollin");
+            open.onsuccess = () => {
+              const get = open.result.transaction("kv").objectStore("kv").get("rollLog");
+              get.onsuccess = () => {
+                open.result.close();
+                resolve(get.result);
+              };
+            };
+          }),
+      ),
+    )
+    .toBeUndefined();
+
   await page.reload();
   await expect(page.getByText("Rolls will appear here.")).toBeVisible();
 });
