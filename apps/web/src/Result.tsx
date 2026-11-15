@@ -51,9 +51,12 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
           ) : (
             <span
               key={i}
-              className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 ${outcomeClass(cell.outcome)}`}
+              className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 ${
+                cell.dropped ? "text-muted line-through" : outcomeClass(cell.outcome)
+              }`}
             >
               {cell.face}
+              {cell.dropped && <span> dropped</span>}
               <Outcome outcome={cell.outcome} />
             </span>
           ),

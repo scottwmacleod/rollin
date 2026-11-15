@@ -3,7 +3,7 @@ import type { Node, Roll } from "@rollin/engine";
 /** One piece of a roll's breakdown: plain text, or a die with its face. */
 export type Cell =
   | { type: "text"; text: string }
-  | { type: "die"; face: number; outcome?: "success" | "failure" };
+  | { type: "die"; face: number; dropped: boolean; outcome?: "success" | "failure" };
 
 function walk(node: Node, out: Cell[]): void {
   const text = (t: string) => out.push({ type: "text", text: t });
@@ -18,6 +18,7 @@ function walk(node: Node, out: Cell[]): void {
         out.push({
           type: "die",
           face: die.value,
+          dropped: die.status === "dropped",
           ...(die.outcome ? { outcome: die.outcome } : {}),
         });
       });
