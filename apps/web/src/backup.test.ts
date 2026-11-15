@@ -1,16 +1,25 @@
 import { describe, expect, it } from "vitest";
 import {
+  addToSaved,
+  answerClash,
+  applyAdd,
   applyBackup,
   type BackupData,
   buildBackup,
   buildPartial,
+  type Choices,
   CURRENT_VERSION,
+  describeAdd,
   describePartialSummary,
   describeSummary,
   fingerprint,
+  firstUndecided,
+  incomingOf,
+  listClashes,
   parseBackup,
   REMIND_AFTER_MS,
   reminderDue,
+  type Saved,
   SNOOZE_MS,
   summarise,
   trackState,
@@ -260,5 +269,274 @@ describe("backup reminder", () => {
     expect(reminderDue(dismissed, 5 * day + SNOOZE_MS - 1)).toBe(false);
     expect(reminderDue(dismissed, 5 * day + SNOOZE_MS)).toBe(true);
     expect(reminderDue({}, 100 * day)).toBe(false);
+  });
+});
+
+describe("Add", () => {
+  const ch = (name: string, vars: Record<string, number> = {}, presets = {}) => ({
+    name,
+    vars,
+    presets,
+  });
+  const saved: Saved = {
+    roster: {
+      active: "grog",
+      characters: [ch("grog", { str: 5, dex: 2 }, { atk: "d20" }), ch("mira")],
+    },
+    globalPresets: { house: "d6", fire: "8d6" },
+  };
+  const none: Choices = { characters: {}, presets: {} };
+  const all = (character: Choices["characters"][string], preset = character): Choices => ({
+    characters: { grog: character },
+    presets: { house: preset },
+  });
+  const incoming = {
+    characters: [ch("grog", { str: 9 }), ch("borin", { str: 4 })],
+    globalPresets: { house: "d8", smite: "2d8" },
+  };
+
+  it("takes the characters and global presets from a full or a partial file", () => {
+    const full = parseBackup(
+      JSON.stringify({
+        format: "rollin-backup",
+        version: 2,
+        kind: "full",
+        data: { characters: { characters: [ch("a")] }, globalPresets: { x: "d4" } },
+      }),
+    );
+    const partial = parseBackup(
+      JSON.stringify({
+        format: "rollin-backup",
+        version: 2,
+        kind: "partial",
+        data: { globalPresets: { x: "d4" } },
+      }),
+    );
+    if (!full.ok || !partial.ok) return expect.fail("expected both to parse");
+    expect(incomingOf(full.backup)).toEqual({
+      characters: [ch("a")],
+      globalPresets: { x: "d4" },
+      skipped: 0,
+    });
+    expect(incomingOf(partial.backup)).toEqual({
+      characters: [],
+      globalPresets: { x: "d4" },
+      skipped: 0,
+    });
+  });
+
+  it("lists a clash only for the same name with different content", () => {
+    expect(listClashes(saved, incoming)).toEqual([
+      { kind: "character", name: "grog" },
+      { kind: "preset", name: "house" },
+    ]);
+  });
+
+  it("does not list identical items, whatever the order of their maps", () => {
+    const same = {
+      characters: [ch("grog", { dex: 2, str: 5 }, { atk: "d20" })],
+      globalPresets: { fire: "8d6" },
+    };
+    expect(listClashes(saved, same)).toEqual([]);
+    const result = addToSaved(saved, same, none);
+    expect(result.roster).toEqual(saved.roster);
+    expect(result.globalPresets).toEqual(saved.globalPresets);
+    expect(describeAdd(result.counts)).toBe(
+      "Nothing to add. You already have everything in that file.",
+    );
+  });
+
+  it("notices a different game system or crit range", () => {
+    const other = { characters: [{ ...ch("mira"), system: "dnd5e" as const }], globalPresets: {} };
+    expect(listClashes(saved, other)).toEqual([{ kind: "character", name: "mira" }]);
+  });
+
+  it("adds new names, leaves the active character alone, and keeps yours by default", () => {
+    const { roster, globalPresets, counts } = addToSaved(saved, incoming, none);
+    expect(roster.active).toBe("grog");
+    expect(roster.characters.map((c) => c.name)).toEqual(["grog", "mira", "borin"]);
+    expect(roster.characters[0]).toEqual(saved.roster.characters[0]);
+    expect(globalPresets).toEqual({ house: "d6", fire: "8d6", smite: "2d8" });
+    expect(describeAdd(counts)).toBe("Added 1 character and 1 global preset; kept 2 of yours.");
+  });
+
+  it("keep mine changes nothing for the clash", () => {
+    const { roster, globalPresets } = addToSaved(saved, incoming, all("keep-mine"));
+    expect(roster.characters[0]).toEqual(saved.roster.characters[0]);
+    expect(globalPresets.house).toBe("d6");
+  });
+
+  it("take the file's replaces in place, whole, without mixing variables", () => {
+    const { roster, globalPresets, counts } = addToSaved(saved, incoming, all("take-theirs"));
+    expect(roster.characters[0]).toEqual(ch("grog", { str: 9 }));
+    expect(roster.active).toBe("grog");
+    expect(globalPresets.house).toBe("d8");
+    expect(describeAdd(counts)).toBe(
+      "Added 1 character and 1 global preset; replaced 1 character and 1 global preset with the file's.",
+    );
+  });
+
+  it("keep both adds the file's copy under the first free name", () => {
+    const { roster, globalPresets, counts } = addToSaved(saved, incoming, all("keep-both"));
+    expect(roster.characters[0]).toEqual(saved.roster.characters[0]);
+    expect(roster.characters.find((c) => c.name === "grog-2")).toEqual(ch("grog-2", { str: 9 }));
+    expect(globalPresets).toMatchObject({ house: "d6", "house-2": "d8" });
+    expect(describeAdd(counts)).toBe(
+      "Added 2 characters and 2 global presets (2 under a new name).",
+    );
+  });
+
+  it("keep both skips taken names, including ones in the file", () => {
+    const crowded: Saved = {
+      roster: { active: "grog", characters: [ch("grog"), ch("grog-2"), ch("grog-3")] },
+      globalPresets: { house: "d6", "house-2": "d4" },
+    };
+    const file = {
+      characters: [ch("grog", { str: 1 }), ch("grog-4")],
+      globalPresets: { house: "d8" },
+    };
+    const { roster, globalPresets } = addToSaved(crowded, file, all("keep-both"));
+    expect(roster.characters.map((c) => c.name)).toEqual([
+      "grog",
+      "grog-2",
+      "grog-3",
+      "grog-5",
+      "grog-4",
+    ]);
+    expect(globalPresets["house-3"]).toBe("d8");
+  });
+
+  it("keep both finds a valid name when name-N would not pass the rules", () => {
+    const odd: Saved = {
+      roster: { active: "a", characters: [ch("a"), ch("Sir Bors")] },
+      globalPresets: {},
+    };
+    const file = { characters: [ch("Sir Bors", { str: 1 })], globalPresets: {} };
+    const { roster } = addToSaved(odd, file, {
+      characters: { "Sir Bors": "keep-both" },
+      presets: {},
+    });
+    expect(roster.characters.map((c) => c.name)).toEqual(["a", "Sir Bors", "sir-bors-2"]);
+    const long = "a".repeat(200);
+    const big = addToSaved(
+      { roster: { active: long, characters: [ch(long)] }, globalPresets: {} },
+      { characters: [ch(long, { str: 1 })], globalPresets: {} },
+      { characters: { [long]: "keep-both" }, presets: {} },
+    );
+    const added = big.roster.characters[1]?.name ?? "";
+    expect(added).toMatch(/-2$/);
+    expect(added).toBe(`${long}-2`);
+  });
+
+  it("treats characters and global presets separately", () => {
+    const { roster, globalPresets } = addToSaved(saved, incoming, {
+      characters: { grog: "take-theirs" },
+      presets: { house: "keep-mine" },
+    });
+    expect(roster.characters[0]?.vars).toEqual({ str: 9 });
+    expect(globalPresets.house).toBe("d6");
+  });
+
+  it("same for all leaves earlier answers alone", () => {
+    const clashes = [
+      { kind: "character" as const, name: "a" },
+      { kind: "character" as const, name: "b" },
+      { kind: "character" as const, name: "c" },
+      { kind: "preset" as const, name: "p" },
+    ];
+    let choices = answerClash(clashes, none, clashes[0] as never, "keep-mine", false);
+    choices = answerClash(clashes, choices, clashes[1] as never, "take-theirs", true);
+    expect(choices).toEqual({
+      characters: { a: "keep-mine", b: "take-theirs", c: "take-theirs" },
+      presets: {},
+    });
+    expect(firstUndecided(clashes, choices)).toBe(3);
+  });
+
+  it("a clash named like an object property still counts as undecided", () => {
+    const clashes = [
+      { kind: "character" as const, name: "constructor" },
+      { kind: "preset" as const, name: "valueof" },
+    ];
+    expect(firstUndecided(clashes, none)).toBe(0);
+    const choices = answerClash(clashes, none, clashes[0] as never, "keep-both", false);
+    expect(firstUndecided(clashes, choices)).toBe(1);
+    const file = { characters: [ch("constructor", { str: 1 })], globalPresets: {} };
+    const base: Saved = {
+      roster: { active: "constructor", characters: [ch("constructor")] },
+      globalPresets: {},
+    };
+    expect(addToSaved(base, file, none).counts.charactersKept).toBe(1);
+    expect(addToSaved(base, file, choices).roster.characters.map((c) => c.name)).toEqual([
+      "constructor",
+      "constructor-2",
+    ]);
+  });
+
+  it("uses the lowercase form of names, so Grog is grog, and skips names rollin can't use", () => {
+    const file = parseBackup(
+      JSON.stringify({
+        format: "rollin-backup",
+        version: 2,
+        kind: "partial",
+        data: {
+          characters: {
+            characters: [
+              { name: "Grog", vars: { str: 1 }, presets: {} },
+              { name: "grog", vars: { str: 2 }, presets: {} },
+              { name: "my char", vars: {}, presets: {} },
+              { name: "Borin", vars: {}, presets: {} },
+            ],
+          },
+          globalPresets: { House: "d8", "bad name": "d4", fire: "8d6" },
+        },
+      }),
+    );
+    if (!file.ok) return expect.fail("expected it to parse");
+    const incoming = incomingOf(file.backup);
+    expect(incoming.characters.map((c) => c.name)).toEqual(["grog", "borin"]);
+    expect(incoming.characters[0]?.vars).toEqual({ str: 1 });
+    expect(Object.keys(incoming.globalPresets)).toEqual(["house", "fire"]);
+    expect(listClashes(saved, incoming)).toEqual([
+      { kind: "character", name: "grog" },
+      { kind: "preset", name: "house" },
+    ]);
+    const { roster, counts } = addToSaved(saved, incoming, none);
+    expect(roster.characters.map((c) => c.name)).toEqual(["grog", "mira", "borin"]);
+    expect(describeAdd(counts)).toBe(
+      "Added 1 character; kept 2 of yours; skipped 2 with names rollin can't use.",
+    );
+  });
+
+  it("applyAdd writes characters and presets, reading what is saved first", async () => {
+    const storage = memoryStorage();
+    await storage.set("characters", saved.roster);
+    await storage.set("globalPresets", saved.globalPresets);
+    await storage.set("settings", { theme: "dark" });
+    const result = await applyAdd(storage, incoming, all("take-theirs"));
+    expect(await storage.get("characters")).toEqual(result.roster);
+    expect(await storage.get("globalPresets")).toEqual(result.globalPresets);
+    expect(await storage.get("settings")).toEqual({ theme: "dark" });
+    expect(await storage.get("rollLog")).toBeUndefined();
+  });
+
+  it("applyAdd leaves the roster alone when writing the presets fails", async () => {
+    const storage = memoryStorage();
+    await storage.set("characters", saved.roster);
+    const failing = {
+      ...storage,
+      set: async (key: string, value: unknown) => {
+        if (key === "globalPresets") throw new Error("full");
+        return storage.set(key, value);
+      },
+    };
+    await expect(applyAdd(failing as never, incoming, none)).rejects.toThrow();
+    expect(await storage.get("characters")).toEqual(saved.roster);
+  });
+
+  it("applyAdd writes nothing when nothing changes", async () => {
+    const storage = memoryStorage();
+    await applyAdd(storage, { characters: [], globalPresets: {} }, none);
+    expect(await storage.get("characters")).toBeUndefined();
   });
 });

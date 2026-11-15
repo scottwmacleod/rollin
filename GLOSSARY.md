@@ -76,6 +76,10 @@ _Avoid_: Export file, save file, dump
 A backup file that holds only some characters and global presets, with no active character, settings or roll log. It can't be used to replace your data.
 _Avoid_: Partial backup, character file, share file
 
+**Add**:
+Importing a backup or partial file so its characters and global presets join yours. New names come in; where a name is already saved with different content you choose, one at a time, to keep yours, take the file's, or keep both (the file's copy gets a new name such as `grog-2`). Settings, the roll log and the active character are never changed. Either kind of file can be added.
+_Avoid_: Merge, append, combine
+
 **Replace**:
 Importing a full backup so it swaps out your characters, global presets and settings (and the roll log, if the backup carries one). Only a full backup can replace.
 _Avoid_: Restore, overwrite, merge
