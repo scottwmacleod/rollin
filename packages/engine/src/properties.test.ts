@@ -487,7 +487,7 @@ test("flat chains follow standard precedence, truncating division toward zero", 
         }
         const want = terms.reduce((a, b) => a + b, 0);
         const [got] = ok(roll(text, fromSeeds([0])));
-        expect(got?.total + 0).toBe(want + 0);
+        expect((got?.total ?? Number.NaN) + 0).toBe(want + 0);
       },
     ),
   );
