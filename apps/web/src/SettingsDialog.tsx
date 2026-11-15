@@ -1,5 +1,5 @@
 import { BackupSection } from "./BackupSection";
-import type { Backup } from "./backup";
+import type { AddResult, Backup, Choices, Incoming } from "./backup";
 import { type Settings, THEMES, type Theme } from "./settings";
 import type { Storage } from "./storage";
 import {
@@ -25,6 +25,7 @@ export function SettingsDialog({
   storage,
   onExported,
   onImported,
+  onAdded,
   open,
   onOpenChange,
 }: {
@@ -33,6 +34,7 @@ export function SettingsDialog({
   storage: () => Storage | null;
   onExported: (backup: Backup) => void;
   onImported: (backup: Backup) => Promise<void>;
+  onAdded: (incoming: Incoming, choices: Choices) => Promise<AddResult>;
   /** Lets the command palette open the dialog; without them the dialog manages itself. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -69,7 +71,12 @@ export function SettingsDialog({
             </label>
           ))}
         </fieldset>
-        <BackupSection storage={storage} onExported={onExported} onImported={onImported} />
+        <BackupSection
+          storage={storage}
+          onExported={onExported}
+          onImported={onImported}
+          onAdded={onAdded}
+        />
         <div className="mt-5 flex justify-end">
           <DialogClose
             render={<Button type="button" />}

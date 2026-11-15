@@ -1,11 +1,13 @@
+import { validateCharacterName, validatePresetName } from "@rollin/engine";
 import {
   CHARACTERS_KEY,
   type Character,
   cleanCharacters,
   cleanRoster,
+  loadRoster,
   type Roster,
 } from "./characters";
-import { cleanPresets, PRESETS_KEY, type PresetMap } from "./presets";
+import { cleanPresets, loadPresets, PRESETS_KEY, type PresetMap } from "./presets";
 import type { Entry } from "./Result";
 import { capLog, ROLL_LOG_KEY } from "./rollLog";
 import { parseSettings, SETTINGS_KEY, type Settings } from "./settings";
@@ -220,6 +222,238 @@ export async function applyBackup(storage: Storage, backup: Backup): Promise<voi
   await storage.set(PRESETS_KEY, data.globalPresets);
   await storage.set(SETTINGS_KEY, data.settings);
   if (data.rollLog !== undefined) await storage.set(ROLL_LOG_KEY, data.rollLog);
+}
+
+// --- Add -------------------------------------------------------------------
+
+/** What Add brings in: characters and global presets, from a full or a partial file. */
+export interface Incoming {
+  characters: Character[];
+  globalPresets: PresetMap;
+}
+
+/** What Add compares the file against. */
+export interface Saved {
+  roster: Roster;
+  globalPresets: PresetMap;
+}
+
+/** What to do with an item whose name is already saved with different content. */
+export type Choice = "keep-mine" | "take-theirs" | "keep-both";
+
+/** A character or global preset in the file that has the same name as a saved one but different content. */
+export interface Clash {
+  kind: "character" | "preset";
+  name: string;
+}
+
+/** One choice per clash, by name. Characters and global presets are separate. */
+export interface Choices {
+  characters: Record<string, Choice>;
+  presets: Record<string, Choice>;
+}
+
+/** What Add did, for the summary. A "kept both" copy counts as added and as renamed. */
+export interface AddCounts {
+  charactersAdded: number;
+  presetsAdded: number;
+  charactersRenamed: number;
+  presetsRenamed: number;
+  charactersReplaced: number;
+  presetsReplaced: number;
+  charactersKept: number;
+  presetsKept: number;
+}
+
+export interface AddResult {
+  roster: Roster;
+  globalPresets: PresetMap;
+  counts: AddCounts;
+}
+
+/** The characters and global presets a file contributes to Add; settings, roll log and active character are left behind. */
+export function incomingOf(file: ParsedFile): Incoming {
+  return file.kind === "full"
+    ? { characters: file.data.characters.characters, globalPresets: file.data.globalPresets }
+    : { characters: file.data.characters ?? [], globalPresets: file.data.globalPresets ?? {} };
+}
+
+/** Deep equality for cleaned JSON values. Object key order doesn't matter; a missing key equals `undefined`. */
+function sameContent(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return (
+      Array.isArray(a) &&
+      Array.isArray(b) &&
+      a.length === b.length &&
+      a.every((item, i) => sameContent(item, b[i]))
+    );
+  }
+  if (isRecord(a) && isRecord(b)) {
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    return [...keys].every((key) => sameContent(a[key], b[key]));
+  }
+  return false;
+}
+
+/** The clashes Add has to ask about, characters first, in the file's order. Same name with the same content is skipped silently. */
+export function listClashes(saved: Saved, incoming: Incoming): Clash[] {
+  const clashes: Clash[] = [];
+  for (const character of incoming.characters) {
+    const mine = saved.roster.characters.find((c) => c.name === character.name);
+    if (mine && !sameContent(mine, character)) {
+      clashes.push({ kind: "character", name: character.name });
+    }
+  }
+  for (const [name, formula] of Object.entries(incoming.globalPresets)) {
+    if (Object.hasOwn(saved.globalPresets, name) && saved.globalPresets[name] !== formula) {
+      clashes.push({ kind: "preset", name });
+    }
+  }
+  return clashes;
+}
+
+const MAX_GENERATED_NAME = 64;
+
+/**
+ * The first free `name-2`, `name-3`, ... that passes the engine's name rules.
+ * A name that can't take a suffix as it is (spaces, a long name) is tidied
+ * first: lowercased, other characters turned into `-`, and cut short.
+ */
+export function freeName(
+  name: string,
+  taken: ReadonlySet<string>,
+  validate: (raw: string) => { name: string } | { error: unknown },
+): string {
+  const tidy = name
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^[^a-z]+/, "")
+    .replace(/-+$/, "");
+  for (const base of [name, tidy, "copy"]) {
+    for (let n = 2; n < 10_000; n += 1) {
+      const suffix = `-${n}`;
+      const candidate = `${base.slice(0, MAX_GENERATED_NAME - suffix.length)}${suffix}`;
+      const checked = validate(candidate);
+      if ("name" in checked && !taken.has(checked.name) && !taken.has(candidate)) {
+        return checked.name;
+      }
+    }
+  }
+  throw new Error("No free name found.");
+}
+
+/**
+ * Adds the file's characters and global presets to saved ones. New names come
+ * in; a clash follows its choice (a clash with no choice keeps yours); an
+ * identical item is skipped. The active character is never changed.
+ */
+export function mergeAdd(saved: Saved, incoming: Incoming, choices: Choices): AddResult {
+  const counts: AddCounts = {
+    charactersAdded: 0,
+    presetsAdded: 0,
+    charactersRenamed: 0,
+    presetsRenamed: 0,
+    charactersReplaced: 0,
+    presetsReplaced: 0,
+    charactersKept: 0,
+    presetsKept: 0,
+  };
+  const characters = [...saved.roster.characters];
+  const takenCharacters = new Set([
+    ...characters.map((c) => c.name),
+    ...incoming.characters.map((c) => c.name),
+  ]);
+  for (const character of incoming.characters) {
+    const index = characters.findIndex((c) => c.name === character.name);
+    const mine = characters[index];
+    if (mine === undefined) {
+      characters.push(character);
+      counts.charactersAdded += 1;
+    } else if (!sameContent(mine, character)) {
+      const choice = choices.characters[character.name] ?? "keep-mine";
+      if (choice === "take-theirs") {
+        characters[index] = character;
+        counts.charactersReplaced += 1;
+      } else if (choice === "keep-both") {
+        const name = freeName(character.name, takenCharacters, validateCharacterName);
+        takenCharacters.add(name);
+        characters.push({ ...character, name });
+        counts.charactersAdded += 1;
+        counts.charactersRenamed += 1;
+      } else counts.charactersKept += 1;
+    }
+  }
+  const globalPresets: PresetMap = { ...saved.globalPresets };
+  const takenPresets = new Set([
+    ...Object.keys(globalPresets),
+    ...Object.keys(incoming.globalPresets),
+  ]);
+  for (const [name, formula] of Object.entries(incoming.globalPresets)) {
+    if (!Object.hasOwn(globalPresets, name)) {
+      globalPresets[name] = formula;
+      counts.presetsAdded += 1;
+    } else if (globalPresets[name] !== formula) {
+      const choice = choices.presets[name] ?? "keep-mine";
+      if (choice === "take-theirs") {
+        globalPresets[name] = formula;
+        counts.presetsReplaced += 1;
+      } else if (choice === "keep-both") {
+        const free = freeName(name, takenPresets, validatePresetName);
+        takenPresets.add(free);
+        globalPresets[free] = formula;
+        counts.presetsAdded += 1;
+        counts.presetsRenamed += 1;
+      } else counts.presetsKept += 1;
+    }
+  }
+  return { roster: { active: saved.roster.active, characters }, globalPresets, counts };
+}
+
+/**
+ * Adds the file's items to what is saved. It reads what is saved just before
+ * writing, so a change another tab made a moment ago is kept. Returns what is
+ * now saved, with the counts.
+ */
+export async function applyAdd(
+  storage: Storage,
+  incoming: Incoming,
+  choices: Choices,
+): Promise<AddResult> {
+  const saved: Saved = {
+    roster: await loadRoster(storage),
+    globalPresets: await loadPresets(storage),
+  };
+  const result = mergeAdd(saved, incoming, choices);
+  const c = result.counts;
+  if (c.charactersAdded + c.charactersReplaced > 0)
+    await storage.set(CHARACTERS_KEY, result.roster);
+  if (c.presetsAdded + c.presetsReplaced > 0) await storage.set(PRESETS_KEY, result.globalPresets);
+  return result;
+}
+
+/** Counts a person can read after Add, e.g. "Added 2 characters and 1 global preset; kept 1 of yours." */
+export function describeAdd(c: AddCounts): string {
+  const list = (characters: number, presets: number) =>
+    [
+      characters > 0 ? plural(characters, "character") : "",
+      presets > 0 ? plural(presets, "global preset") : "",
+    ].filter(Boolean);
+  const parts: string[] = [];
+  const added = list(c.charactersAdded, c.presetsAdded);
+  if (added.length > 0) {
+    const renamed = c.charactersRenamed + c.presetsRenamed;
+    parts.push(
+      `Added ${added.join(" and ")}${renamed > 0 ? ` (${renamed} under a new name)` : ""}`,
+    );
+  }
+  const replaced = list(c.charactersReplaced, c.presetsReplaced);
+  if (replaced.length > 0) parts.push(`replaced ${replaced.join(" and ")} with the file's`);
+  const kept = c.charactersKept + c.presetsKept;
+  if (kept > 0) parts.push(`kept ${kept} of yours`);
+  if (parts.length === 0) return "Nothing to add. You already have everything in that file.";
+  const text = parts.join("; ");
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}.`;
 }
 
 export interface Summary {

@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, type TestInfo, test } from "@playwright/test";
 
 const sidebar = (page: Page) => page.getByRole("complementary", { name: "Presets" });
 const characters = (page: Page) => page.getByRole("complementary", { name: "Characters" });
@@ -158,6 +158,205 @@ test("a partial file shows its summary, offers no replace and says why", async (
 
   await dialog.getByRole("button", { name: "Done" }).click();
   await expect(sidebar(page)).toContainText("fireball");
+});
+
+/** Writes a partial file and picks it in the open settings dialog. */
+async function pickPartial(
+  page: Page,
+  testInfo: TestInfo,
+  data: { characters?: unknown[]; globalPresets?: Record<string, string> },
+) {
+  const file = testInfo.outputPath("add.json");
+  writeFileSync(
+    file,
+    JSON.stringify({
+      format: "rollin-backup",
+      version: 2,
+      kind: "partial",
+      data: {
+        ...(data.characters ? { characters: { characters: data.characters } } : {}),
+        ...(data.globalPresets ? { globalPresets: data.globalPresets } : {}),
+      },
+    }),
+  );
+  const dialog = await openSettings(page);
+  await dialog.getByLabel("Backup file").setInputFiles(file);
+  return dialog;
+}
+
+const clashing = {
+  characters: [{ name: "aria", vars: { str: 9 }, presets: {} }],
+  globalPresets: { fireball: "10d6" },
+};
+
+test("add: a partial file with new names comes in and nothing else changes", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/");
+  await seed(page);
+  const dialog = await pickPartial(page, testInfo, {
+    characters: [{ name: "borin", vars: { str: 4 }, presets: {} }],
+    globalPresets: { smite: "2d8" },
+  });
+  await dialog.getByRole("button", { name: "Add to my data" }).click();
+  await expect(dialog.getByRole("status")).toHaveText("Added 1 character and 1 global preset.");
+  await expect(dialog.getByRole("button", { name: "Import backup…" })).toBeFocused();
+  await dialog.getByRole("button", { name: "Done" }).click();
+
+  await expect(sidebar(page)).toContainText("smite");
+  await expect(sidebar(page)).toContainText("fireball");
+  await expect(characters(page).getByRole("button", { name: /^borin/ })).toBeVisible();
+  await expect(characters(page).getByRole("button", { name: /^aria/ })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.reload();
+  await expect(sidebar(page)).toContainText("smite");
+  await expect(characters(page).getByRole("button", { name: /^borin/ })).toBeVisible();
+});
+
+test("add: a full backup offers add and replace", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await seed(page);
+  const dialog = await openSettings(page);
+  const download = page.waitForEvent("download");
+  await dialog.getByRole("button", { name: "Export backup" }).click();
+  const file = testInfo.outputPath("full.json");
+  await (await download).saveAs(file);
+  await dialog.getByLabel("Backup file").setInputFiles(file);
+  await expect(dialog.getByRole("button", { name: "Add to my data" })).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Replace my data" })).toBeVisible();
+  // The same data is not a clash: nothing to ask, nothing to add.
+  await dialog.getByRole("button", { name: "Add to my data" }).click();
+  await expect(dialog.getByRole("status")).toContainText("Nothing to add");
+});
+
+for (const [choice, summary] of [
+  ["Keep mine", "Kept 2 of yours."],
+  ["Take the file's", "Replaced 1 character and 1 global preset with the file's."],
+  ["Keep both", "Added 1 character and 1 global preset (2 under a new name)."],
+] as const) {
+  test(`add: a clash with "${choice}"`, async ({ page }, testInfo) => {
+    await page.goto("/");
+    await seed(page);
+    const dialog = await pickPartial(page, testInfo, clashing);
+    await dialog.getByRole("button", { name: "Add to my data" }).click();
+
+    const first = dialog.getByRole("group", { name: "You already have a character called aria." });
+    await expect(first).toBeVisible();
+    await expect(first.getByRole("button", { name: "Keep mine" })).toBeFocused();
+    await first.getByRole("button", { name: choice, exact: true }).click();
+
+    const second = dialog.getByRole("group", {
+      name: "You already have a global preset called fireball.",
+    });
+    await expect(second).toBeVisible();
+    await expect(second.getByRole("button", { name: "Keep mine" })).toBeFocused();
+    await second.getByRole("button", { name: choice, exact: true }).click();
+
+    await expect(dialog.getByRole("status")).toHaveText(summary);
+    await expect(dialog.getByRole("button", { name: "Import backup…" })).toBeFocused();
+    await dialog.getByRole("button", { name: "Done" }).click();
+
+    const roster = characters(page);
+    const presets = sidebar(page);
+    if (choice === "Keep both") {
+      await expect(roster.getByRole("button", { name: /^aria-2/ })).toBeVisible();
+      await expect(presets).toContainText("fireball-2");
+      await expect(presets).toContainText("10d6");
+      await expect(presets).toContainText("8d6");
+    } else if (choice === "Take the file's") {
+      await expect(presets).toContainText("10d6");
+      await expect(presets).not.toContainText("8d6");
+      await expect(page.getByRole("complementary", { name: /^Variables/ })).toContainText("9");
+    } else {
+      await expect(presets).toContainText("8d6");
+      await expect(presets).not.toContainText("10d6");
+      await expect(page.getByRole("complementary", { name: /^Variables/ })).toContainText("3");
+    }
+    await page.reload();
+    await expect(characters(page).getByRole("button", { name: /^aria/ }).first()).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+}
+
+test("add: same for all applies to the rest of that kind only", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await seed(page);
+  const dialog = await pickPartial(page, testInfo, {
+    characters: [
+      { name: "aria", vars: { str: 9 }, presets: {} },
+      { name: "default", vars: { dex: 1 }, presets: {} },
+    ],
+    globalPresets: { fireball: "10d6" },
+  });
+  await dialog.getByRole("button", { name: "Add to my data" }).click();
+  const first = dialog.getByRole("group", { name: "You already have a character called aria." });
+  await first.getByLabel("Do the same for the other 1 character").check();
+  await first.getByRole("button", { name: "Keep both" }).click();
+  // The other character is settled, so the next question is about the preset.
+  const preset = dialog.getByRole("group", {
+    name: "You already have a global preset called fireball.",
+  });
+  await expect(preset).toBeVisible();
+  await expect(preset.getByLabel(/Do the same/)).toHaveCount(0);
+  await preset.getByRole("button", { name: "Keep mine" }).click();
+  await expect(dialog.getByRole("status")).toHaveText(
+    "Added 2 characters (2 under a new name); kept 1 of yours.",
+  );
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(characters(page).getByRole("button", { name: /^aria-2/ })).toBeVisible();
+  await expect(characters(page).getByRole("button", { name: /^default-2/ })).toBeVisible();
+});
+
+test("add: cancelling part way changes nothing", async ({ page }, testInfo) => {
+  await page.goto("/");
+  await seed(page);
+  const dialog = await pickPartial(page, testInfo, {
+    ...clashing,
+    characters: [...clashing.characters, { name: "borin", vars: {}, presets: {} }],
+  });
+  await dialog.getByRole("button", { name: "Add to my data" }).click();
+  await dialog.getByRole("button", { name: "Take the file's" }).click();
+  await expect(dialog.getByRole("group", { name: /global preset called fireball/ })).toBeVisible();
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog.getByRole("status")).toContainText("Nothing was changed");
+  await expect(dialog.getByRole("button", { name: "Import backup…" })).toBeFocused();
+  await dialog.getByRole("button", { name: "Done" }).click();
+
+  const check = async () => {
+    await expect(sidebar(page)).toContainText("8d6");
+    await expect(sidebar(page)).not.toContainText("10d6");
+    await expect(characters(page).getByRole("button", { name: /^borin/ })).toHaveCount(0);
+    await expect(page.getByRole("complementary", { name: /^Variables/ })).toContainText("3");
+  };
+  await check();
+  await page.reload();
+  await check();
+});
+
+test("add: the clash prompt passes axe and has touch-sized controls on a phone", async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 375, height: 700 });
+  await page.goto("/");
+  await seed(page);
+  const dialog = await pickPartial(page, testInfo, {
+    characters: [
+      { name: "aria", vars: { str: 9 }, presets: {} },
+      { name: "default", vars: { dex: 1 }, presets: {} },
+    ],
+  });
+  await dialog.getByRole("button", { name: "Add to my data" }).click();
+  const prompt = dialog.getByRole("group", { name: /You already have a character/ });
+  await expect(prompt).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  for (const name of ["Keep mine", "Take the file's", "Keep both", "Cancel"]) {
+    const box = await prompt.getByRole("button", { name, exact: true }).boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+  }
 });
 
 test("the backup reminder shows for old unsaved data and can be dismissed", async ({ page }) => {

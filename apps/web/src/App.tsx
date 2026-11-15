@@ -1,14 +1,17 @@
 import { roll } from "@rollin/engine";
 import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
+  applyAdd,
   applyBackup,
   BACKUP_STATE_KEY,
   type Backup,
   type BackupData,
   type BackupState,
   buildBackup,
+  type Choices,
   downloadBackup,
   fingerprint,
+  type Incoming,
   reminderDue,
   trackState,
 } from "./backup";
@@ -234,6 +237,15 @@ export function App() {
     applyTheme(backup.data.settings.theme);
     if (backup.data.rollLog !== undefined) setEntries(backup.data.rollLog);
     markBackedUp(backup);
+  }
+
+  /** Adds a file's characters and global presets to what is saved, then shows them. Settings, the roll log and the active character stay. Throws if it can't be saved. */
+  async function addToData(incoming: Incoming, choices: Choices) {
+    if (!storage.current) throw new Error("no storage");
+    const result = await applyAdd(storage.current, incoming, choices);
+    setRoster(result.roster);
+    setPresets(result.globalPresets);
+    return result;
   }
 
   /** Remembers what had focus, so closing the dialog can give it back. */
@@ -574,6 +586,7 @@ export function App() {
             storage={() => storage.current}
             onExported={markBackedUp}
             onImported={importBackup}
+            onAdded={addToData}
             open={settingsOpen}
             onOpenChange={setSettingsOpen}
           />
