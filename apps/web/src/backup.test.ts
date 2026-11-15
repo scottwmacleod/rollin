@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  addToSaved,
+  answerClash,
   applyAdd,
   applyBackup,
   type BackupData,
@@ -11,9 +13,9 @@ import {
   describePartialSummary,
   describeSummary,
   fingerprint,
+  firstUndecided,
   incomingOf,
   listClashes,
-  mergeAdd,
   parseBackup,
   REMIND_AFTER_MS,
   reminderDue,
@@ -311,8 +313,16 @@ describe("Add", () => {
       }),
     );
     if (!full.ok || !partial.ok) return expect.fail("expected both to parse");
-    expect(incomingOf(full.backup)).toEqual({ characters: [ch("a")], globalPresets: { x: "d4" } });
-    expect(incomingOf(partial.backup)).toEqual({ characters: [], globalPresets: { x: "d4" } });
+    expect(incomingOf(full.backup)).toEqual({
+      characters: [ch("a")],
+      globalPresets: { x: "d4" },
+      skipped: 0,
+    });
+    expect(incomingOf(partial.backup)).toEqual({
+      characters: [],
+      globalPresets: { x: "d4" },
+      skipped: 0,
+    });
   });
 
   it("lists a clash only for the same name with different content", () => {
@@ -328,7 +338,7 @@ describe("Add", () => {
       globalPresets: { fire: "8d6" },
     };
     expect(listClashes(saved, same)).toEqual([]);
-    const result = mergeAdd(saved, same, none);
+    const result = addToSaved(saved, same, none);
     expect(result.roster).toEqual(saved.roster);
     expect(result.globalPresets).toEqual(saved.globalPresets);
     expect(describeAdd(result.counts)).toBe(
@@ -342,7 +352,7 @@ describe("Add", () => {
   });
 
   it("adds new names, leaves the active character alone, and keeps yours by default", () => {
-    const { roster, globalPresets, counts } = mergeAdd(saved, incoming, none);
+    const { roster, globalPresets, counts } = addToSaved(saved, incoming, none);
     expect(roster.active).toBe("grog");
     expect(roster.characters.map((c) => c.name)).toEqual(["grog", "mira", "borin"]);
     expect(roster.characters[0]).toEqual(saved.roster.characters[0]);
@@ -351,13 +361,13 @@ describe("Add", () => {
   });
 
   it("keep mine changes nothing for the clash", () => {
-    const { roster, globalPresets } = mergeAdd(saved, incoming, all("keep-mine"));
+    const { roster, globalPresets } = addToSaved(saved, incoming, all("keep-mine"));
     expect(roster.characters[0]).toEqual(saved.roster.characters[0]);
     expect(globalPresets.house).toBe("d6");
   });
 
   it("take the file's replaces in place, whole, without mixing variables", () => {
-    const { roster, globalPresets, counts } = mergeAdd(saved, incoming, all("take-theirs"));
+    const { roster, globalPresets, counts } = addToSaved(saved, incoming, all("take-theirs"));
     expect(roster.characters[0]).toEqual(ch("grog", { str: 9 }));
     expect(roster.active).toBe("grog");
     expect(globalPresets.house).toBe("d8");
@@ -367,7 +377,7 @@ describe("Add", () => {
   });
 
   it("keep both adds the file's copy under the first free name", () => {
-    const { roster, globalPresets, counts } = mergeAdd(saved, incoming, all("keep-both"));
+    const { roster, globalPresets, counts } = addToSaved(saved, incoming, all("keep-both"));
     expect(roster.characters[0]).toEqual(saved.roster.characters[0]);
     expect(roster.characters.find((c) => c.name === "grog-2")).toEqual(ch("grog-2", { str: 9 }));
     expect(globalPresets).toMatchObject({ house: "d6", "house-2": "d8" });
@@ -385,7 +395,7 @@ describe("Add", () => {
       characters: [ch("grog", { str: 1 }), ch("grog-4")],
       globalPresets: { house: "d8" },
     };
-    const { roster, globalPresets } = mergeAdd(crowded, file, all("keep-both"));
+    const { roster, globalPresets } = addToSaved(crowded, file, all("keep-both"));
     expect(roster.characters.map((c) => c.name)).toEqual([
       "grog",
       "grog-2",
@@ -402,29 +412,100 @@ describe("Add", () => {
       globalPresets: {},
     };
     const file = { characters: [ch("Sir Bors", { str: 1 })], globalPresets: {} };
-    const { roster } = mergeAdd(odd, file, {
+    const { roster } = addToSaved(odd, file, {
       characters: { "Sir Bors": "keep-both" },
       presets: {},
     });
     expect(roster.characters.map((c) => c.name)).toEqual(["a", "Sir Bors", "sir-bors-2"]);
     const long = "a".repeat(200);
-    const big = mergeAdd(
+    const big = addToSaved(
       { roster: { active: long, characters: [ch(long)] }, globalPresets: {} },
       { characters: [ch(long, { str: 1 })], globalPresets: {} },
       { characters: { [long]: "keep-both" }, presets: {} },
     );
     const added = big.roster.characters[1]?.name ?? "";
     expect(added).toMatch(/-2$/);
-    expect(added.length).toBeLessThanOrEqual(64);
+    expect(added).toBe(`${long}-2`);
   });
 
   it("treats characters and global presets separately", () => {
-    const { roster, globalPresets } = mergeAdd(saved, incoming, {
+    const { roster, globalPresets } = addToSaved(saved, incoming, {
       characters: { grog: "take-theirs" },
       presets: { house: "keep-mine" },
     });
     expect(roster.characters[0]?.vars).toEqual({ str: 9 });
     expect(globalPresets.house).toBe("d6");
+  });
+
+  it("same for all leaves earlier answers alone", () => {
+    const clashes = [
+      { kind: "character" as const, name: "a" },
+      { kind: "character" as const, name: "b" },
+      { kind: "character" as const, name: "c" },
+      { kind: "preset" as const, name: "p" },
+    ];
+    let choices = answerClash(clashes, none, clashes[0] as never, "keep-mine", false);
+    choices = answerClash(clashes, choices, clashes[1] as never, "take-theirs", true);
+    expect(choices).toEqual({
+      characters: { a: "keep-mine", b: "take-theirs", c: "take-theirs" },
+      presets: {},
+    });
+    expect(firstUndecided(clashes, choices)).toBe(3);
+  });
+
+  it("a clash named like an object property still counts as undecided", () => {
+    const clashes = [
+      { kind: "character" as const, name: "constructor" },
+      { kind: "preset" as const, name: "valueof" },
+    ];
+    expect(firstUndecided(clashes, none)).toBe(0);
+    const choices = answerClash(clashes, none, clashes[0] as never, "keep-both", false);
+    expect(firstUndecided(clashes, choices)).toBe(1);
+    const file = { characters: [ch("constructor", { str: 1 })], globalPresets: {} };
+    const base: Saved = {
+      roster: { active: "constructor", characters: [ch("constructor")] },
+      globalPresets: {},
+    };
+    expect(addToSaved(base, file, none).counts.charactersKept).toBe(1);
+    expect(addToSaved(base, file, choices).roster.characters.map((c) => c.name)).toEqual([
+      "constructor",
+      "constructor-2",
+    ]);
+  });
+
+  it("uses the lowercase form of names, so Grog is grog, and skips names rollin can't use", () => {
+    const file = parseBackup(
+      JSON.stringify({
+        format: "rollin-backup",
+        version: 2,
+        kind: "partial",
+        data: {
+          characters: {
+            characters: [
+              { name: "Grog", vars: { str: 1 }, presets: {} },
+              { name: "grog", vars: { str: 2 }, presets: {} },
+              { name: "my char", vars: {}, presets: {} },
+              { name: "Borin", vars: {}, presets: {} },
+            ],
+          },
+          globalPresets: { House: "d8", "bad name": "d4", fire: "8d6" },
+        },
+      }),
+    );
+    if (!file.ok) return expect.fail("expected it to parse");
+    const incoming = incomingOf(file.backup);
+    expect(incoming.characters.map((c) => c.name)).toEqual(["grog", "borin"]);
+    expect(incoming.characters[0]?.vars).toEqual({ str: 1 });
+    expect(Object.keys(incoming.globalPresets)).toEqual(["house", "fire"]);
+    expect(listClashes(saved, incoming)).toEqual([
+      { kind: "character", name: "grog" },
+      { kind: "preset", name: "house" },
+    ]);
+    const { roster, counts } = addToSaved(saved, incoming, none);
+    expect(roster.characters.map((c) => c.name)).toEqual(["grog", "mira", "borin"]);
+    expect(describeAdd(counts)).toBe(
+      "Added 1 character; kept 2 of yours; skipped 2 with names rollin can't use.",
+    );
   });
 
   it("applyAdd writes characters and presets, reading what is saved first", async () => {
@@ -437,6 +518,20 @@ describe("Add", () => {
     expect(await storage.get("globalPresets")).toEqual(result.globalPresets);
     expect(await storage.get("settings")).toEqual({ theme: "dark" });
     expect(await storage.get("rollLog")).toBeUndefined();
+  });
+
+  it("applyAdd leaves the roster alone when writing the presets fails", async () => {
+    const storage = memoryStorage();
+    await storage.set("characters", saved.roster);
+    const failing = {
+      ...storage,
+      set: async (key: string, value: unknown) => {
+        if (key === "globalPresets") throw new Error("full");
+        return storage.set(key, value);
+      },
+    };
+    await expect(applyAdd(failing as never, incoming, none)).rejects.toThrow();
+    expect(await storage.get("characters")).toEqual(saved.roster);
   });
 
   it("applyAdd writes nothing when nothing changes", async () => {

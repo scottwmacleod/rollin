@@ -106,8 +106,9 @@ A **partial file** has `"kind": "partial"`. It holds only some characters and gl
 
 - A character or global preset whose name isn't saved yet comes in.
 - One with the same name and the same content (variables, presets, game system and crit range, in any order) is skipped without a question.
-- One with the same name but different content is a clash. The app asks about each clash in turn, characters first, then global presets: **Keep mine**, **Take the file's** or **Keep both**. "Do the same for the rest" answers the remaining clashes of that kind, so characters and global presets are asked about separately.
+- One with the same name but different content is a clash. The app asks about each clash in turn, characters first, then global presets: **Keep mine**, **Take the file's** or **Keep both**. "Do the same for the other characters" (or "global presets") answers the remaining clashes of that kind that have no answer yet, so earlier answers stay and characters and global presets are asked about separately.
 - **Keep both** saves the file's copy under the first free name of the form `grog-2`, `grog-3` that passes the app's name rules. A name that can't take a suffix as written, such as one with a space, is tidied first.
+- Names in the file go through the same rules as names typed into the app: they are lowercased (so `Grog` is `grog`), and an item whose name can't be made valid, such as one with a space, is skipped. The summary says how many were skipped.
 - A character is one unit. Its variables and presets are never mixed with those of the saved character with the same name.
 - Nothing is saved until every clash has an answer. Cancelling at any question changes nothing.
 

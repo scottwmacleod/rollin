@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   type AddResult,
+  answerClash,
   type Backup,
   buildBackup,
   type Choice,
@@ -10,11 +11,13 @@ import {
   describePartialSummary,
   describeSummary,
   downloadBackup,
+  firstUndecided,
   type Incoming,
   incomingOf,
   listClashes,
   type ParsedFile,
   parseBackup,
+  plural,
   type Saved,
   summarise,
 } from "./backup";
@@ -22,8 +25,6 @@ import { type Character, loadRoster } from "./characters";
 import { loadPresets, type PresetMap } from "./presets";
 import type { Storage } from "./storage";
 import { Button } from "./ui";
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";
@@ -38,9 +39,6 @@ interface Asking {
   choices: Choices;
   at: number;
 }
-
-const decided = (choices: Choices, clash: Clash) =>
-  (clash.kind === "character" ? choices.characters : choices.presets)[clash.name] !== undefined;
 
 /** How a clashing item reads in the prompt: a preset's formula, or a character's counts. */
 const describeContent = (clash: Clash, characters: Character[], globalPresets: PresetMap) => {
@@ -72,7 +70,23 @@ export function BackupSection({
   const [asking, setAsking] = useState<Asking | null>(null);
   const [sameForAll, setSameForAll] = useState(false);
   const prompt = useRef<HTMLDivElement>(null);
+  // A second tap while an add is being saved would run it twice.
+  const busyRef = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const hold = (value: boolean) => {
+    busyRef.current = value;
+    setBusy(value);
+  };
   const promptAt = asking?.at;
+
+  // Focus goes back to the import button once it is enabled again, which is after the render that closes the prompt.
+  const refocus = useRef(false);
+  useEffect(() => {
+    if (refocus.current && asking === null) {
+      refocus.current = false;
+      importButton.current?.focus();
+    }
+  });
 
   // Each new question puts focus on its first choice.
   useEffect(() => {
@@ -101,7 +115,7 @@ export function BackupSection({
       setPending(parsed.backup);
       setMessage(
         parsed.backup.kind === "partial"
-          ? "That's a partial file. Replace needs a full backup."
+          ? "That's a partial file. You can add it to your data."
           : "",
       );
     } else setMessage(parsed.error);
@@ -120,51 +134,48 @@ export function BackupSection({
   }
 
   async function finishAdd(incoming: Incoming, choices: Choices) {
+    hold(true);
     try {
       const result = await onAdded(incoming, choices);
       setMessage(describeAdd(result.counts));
     } catch {
-      setMessage("Couldn't save the added data. Nothing was changed.");
+      setMessage(
+        "Couldn't save all of that. Some of it may have been added, so check your characters and presets.",
+      );
     }
+    hold(false);
+    refocus.current = true;
     setAsking(null);
     setPending(null);
-    importButton.current?.focus();
   }
 
   async function startAdd() {
-    if (!pending) return;
+    if (!pending || busyRef.current) return;
     const current = storage();
     if (!current) return setMessage("Your browser is blocking storage, so nothing can be added.");
+    hold(true);
     const incoming = incomingOf(pending);
     let saved: Saved;
     try {
       saved = { roster: await loadRoster(current), globalPresets: await loadPresets(current) };
     } catch {
+      hold(false);
       return setMessage("Couldn't read your data to add to it. Nothing was changed.");
     }
     const clashes = listClashes(saved, incoming);
     const choices: Choices = { characters: {}, presets: {} };
     if (clashes.length === 0) return void finishAdd(incoming, choices);
+    hold(false);
     setSameForAll(false);
     setMessage("");
     setAsking({ incoming, saved, clashes, choices, at: 0 });
   }
 
   function answer(choice: Choice) {
-    if (!asking) return;
+    if (!asking || busyRef.current) return;
     const clash = asking.clashes[asking.at] as Clash;
-    const choices: Choices = {
-      characters: { ...asking.choices.characters },
-      presets: { ...asking.choices.presets },
-    };
-    const map = clash.kind === "character" ? choices.characters : choices.presets;
-    map[clash.name] = choice;
-    if (sameForAll) {
-      for (const other of asking.clashes) {
-        if (other.kind === clash.kind) map[other.name] = choice;
-      }
-    }
-    const next = asking.clashes.findIndex((other) => !decided(choices, other));
+    const choices = answerClash(asking.clashes, asking.choices, clash, choice, sameForAll);
+    const next = firstUndecided(asking.clashes, choices);
     setSameForAll(false);
     if (next === -1) return void finishAdd(asking.incoming, choices);
     setAsking({ ...asking, choices, at: next });
@@ -174,13 +185,20 @@ export function BackupSection({
     setAsking(null);
     setPending(null);
     setMessage("Cancelled. Nothing was changed.");
-    importButton.current?.focus();
+    refocus.current = true;
   }
 
   const clash = asking?.clashes[asking.at];
   const remaining =
     asking && clash
-      ? asking.clashes.filter((c) => c.kind === clash.kind && !decided(asking.choices, c)).length
+      ? asking.clashes.filter(
+          (c) =>
+            c.kind === clash.kind &&
+            !Object.hasOwn(
+              c.kind === "character" ? asking.choices.characters : asking.choices.presets,
+              c.name,
+            ),
+        ).length
       : 0;
 
   return (
@@ -207,7 +225,8 @@ export function BackupSection({
           ref={importButton}
           type="button"
           onClick={() => picker.current?.click()}
-          className={secondary}
+          disabled={asking !== null}
+          className={`${secondary} disabled:opacity-50`}
         >
           Import backup…
         </Button>
@@ -229,10 +248,20 @@ export function BackupSection({
             in only its characters and global presets.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={() => void startAdd()} className={primary}>
+            <Button
+              type="button"
+              onClick={() => void startAdd()}
+              disabled={busy}
+              className={primary}
+            >
               Add to my data
             </Button>
-            <Button type="button" onClick={() => void replace()} className={secondary}>
+            <Button
+              type="button"
+              onClick={() => void replace()}
+              disabled={busy}
+              className={secondary}
+            >
               Replace my data
             </Button>
             <Button type="button" onClick={() => setPending(null)} className={secondary}>
@@ -251,7 +280,12 @@ export function BackupSection({
             backup, because a partial file can't replace everything you have.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={() => void startAdd()} className={primary}>
+            <Button
+              type="button"
+              onClick={() => void startAdd()}
+              disabled={busy}
+              className={primary}
+            >
               Add to my data
             </Button>
             <Button
@@ -286,18 +320,33 @@ export function BackupSection({
             {describeContent(clash, asking.incoming.characters, asking.incoming.globalPresets)}.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={() => answer("keep-mine")} className={secondary}>
+            <Button
+              type="button"
+              onClick={() => answer("keep-mine")}
+              disabled={busy}
+              className={secondary}
+            >
               Keep mine
             </Button>
-            <Button type="button" onClick={() => answer("take-theirs")} className={secondary}>
+            <Button
+              type="button"
+              onClick={() => answer("take-theirs")}
+              disabled={busy}
+              className={secondary}
+            >
               Take the file's
             </Button>
-            <Button type="button" onClick={() => answer("keep-both")} className={secondary}>
+            <Button
+              type="button"
+              onClick={() => answer("keep-both")}
+              disabled={busy}
+              className={secondary}
+            >
               Keep both
             </Button>
           </div>
           {remaining > 1 && (
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 max-md:min-h-11">
               <input
                 type="checkbox"
                 checked={sameForAll}

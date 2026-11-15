@@ -137,7 +137,7 @@ test("a partial file shows its summary, offers no replace and says why", async (
   const info = dialog.getByRole("group", { name: "Partial file" });
   await expect(info).toContainText("1 character, 1 variable, 0 character presets, 1 global preset");
   await expect(info).toContainText("Replace needs a full backup");
-  await expect(dialog.getByRole("status")).toContainText("That's a partial file");
+  await expect(dialog.getByRole("status")).toContainText("You can add it to your data");
   await expect(dialog.getByRole("button", { name: "Replace my data" })).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
@@ -353,6 +353,9 @@ test("add: the clash prompt passes axe and has touch-sized controls on a phone",
   const prompt = dialog.getByRole("group", { name: /You already have a character/ });
   await expect(prompt).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await expect(dialog.getByRole("button", { name: "Import backup…" })).toBeDisabled();
+  const label = await prompt.getByText(/Do the same for the other/).boundingBox();
+  expect(label?.height).toBeGreaterThanOrEqual(44);
   for (const name of ["Keep mine", "Take the file's", "Keep both", "Cancel"]) {
     const box = await prompt.getByRole("button", { name, exact: true }).boundingBox();
     expect(box?.height).toBeGreaterThanOrEqual(44);

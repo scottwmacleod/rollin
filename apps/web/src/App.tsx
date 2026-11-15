@@ -242,10 +242,18 @@ export function App() {
   /** Adds a file's characters and global presets to what is saved, then shows them. Settings, the roll log and the active character stay. Throws if it can't be saved. */
   async function addToData(incoming: Incoming, choices: Choices) {
     if (!storage.current) throw new Error("no storage");
-    const result = await applyAdd(storage.current, incoming, choices);
-    setRoster(result.roster);
-    setPresets(result.globalPresets);
-    return result;
+    try {
+      const result = await applyAdd(storage.current, incoming, choices);
+      setRoster(result.roster);
+      setPresets(result.globalPresets);
+      return result;
+    } catch (failure) {
+      // It may have saved one of the two, so show what is really saved.
+      const current = storage.current;
+      setRoster(await loadRoster(current).catch(() => cleanRoster(undefined)));
+      setPresets(await loadPresets(current).catch(() => ({})));
+      throw failure;
+    }
   }
 
   /** Remembers what had focus, so closing the dialog can give it back. */
