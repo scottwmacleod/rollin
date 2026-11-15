@@ -1,7 +1,7 @@
 /**
  * Completion for the formula box: preset names for the first word of a line and
- * `@variable` names anywhere, as the CLI's Tab completion offers them
- * (`src/completion.rs`). Pure, so it is tested without a browser.
+ * `@variable` names anywhere, as the former CLI's Tab completion offered
+ * them. Pure, so it is tested without a browser.
  */
 
 /** The names completion can offer. */

@@ -20,4 +20,4 @@ Geist is licensed under the SIL Open Font License 1.1. The SVGs contain only out
 
 ## Raster icons
 
-`apps/desktop/src-tauri/icons` is rendered from these SVGs: the 32px PNG and the 16/24/32 frames of `icon.ico` use the small variant, everything else uses the standard icon. The `.ico` frames are cropped to the squircle body; the `.png` and `.icns` files keep the margin.
+`apps/web/public/icons` is rendered from these SVGs.

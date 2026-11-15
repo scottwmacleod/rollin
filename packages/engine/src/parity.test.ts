@@ -1,14 +1,8 @@
 /**
- * Replays the Rust engine's fixtures (tests/fixtures/parity) through the
- * TypeScript engine. Each case scripts the dice the Rust engine drew, rolls the
- * line, and expects the same result, the same dice asked for in the same order,
- * and every draw used.
- *
- * This covers dice terms, integer arithmetic with their limits and errors,
- * presets (global, and a character's own, which shadow them), `@variables`, d20 checks and
- * D&D 5e crits. Whatever syntax
- * a later loop of #216 adds moves out of `DEFERRED`
- * and into the run, so the list shrinks until it is empty.
+ * Replays the fixtures in packages/engine/fixtures/parity (recorded from the
+ * former Rust engine, frozen since the Rust was deleted) through the engine.
+ * Each case scripts the recorded dice, rolls the line, and expects the same
+ * result, the same dice asked for in the same order, and every draw used.
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -41,20 +35,12 @@ interface Area {
   cases: Case[];
 }
 
-const FIXTURES = join(__dirname, "../../../tests/fixtures/parity");
+const FIXTURES = join(__dirname, "../fixtures/parity");
 
 const areas: Area[] = readdirSync(FIXTURES)
   .filter((file) => file.endsWith(".json"))
   .sort()
   .map((file) => JSON.parse(readFileSync(join(FIXTURES, file), "utf8")) as Area);
-
-/** Areas whose syntax a later loop brings: every case in them waits. */
-const DEFERRED_AREAS: Record<string, string> = {};
-
-/** Single cases in covered areas that use syntax a later loop brings. */
-const DEFERRED_CASES: Record<string, string> = {
-  "errors/session_word_one_shot": "a command-line-only message, gone with the CLI (#239)",
-};
 
 /**
  * Cases where the answer differs on purpose. The Rust engine does its sums in
@@ -85,37 +71,24 @@ const DIVERGENT: Record<string, unknown> = {
 
 const json = (value: unknown): unknown => JSON.parse(JSON.stringify(value));
 
-describe("deferred lists stay honest", () => {
-  test("every deferred area and case still exists in the fixtures", () => {
+describe("the fixtures stay whole", () => {
+  test("every divergent case still exists in the fixtures", () => {
     const names = new Set(areas.flatMap((a) => a.cases.map((c) => `${a.area}/${c.name}`)));
-    for (const key of [...Object.keys(DEFERRED_CASES), ...Object.keys(DIVERGENT)]) {
-      expect(names.has(key), key).toBe(true);
-    }
-    for (const area of Object.keys(DEFERRED_AREAS)) {
-      expect(
-        areas.some((a) => a.area === area),
-        area,
-      ).toBe(true);
-    }
+    for (const key of Object.keys(DIVERGENT)) expect(names.has(key), key).toBe(true);
   });
 
-  test("the loop covers a real share of the fixtures", () => {
-    const covered = areas
-      .filter((a) => !(a.area in DEFERRED_AREAS))
-      .flatMap((a) => a.cases.filter((c) => !(`${a.area}/${c.name}` in DEFERRED_CASES)));
-    expect(covered.length).toBeGreaterThan(50);
+  test("the fixtures hold a real number of cases", () => {
+    expect(areas.flatMap((a) => a.cases).length).toBeGreaterThan(50);
   });
 });
 
 for (const area of areas) {
-  if (area.area in DEFERRED_AREAS) continue;
   describe(`parity: ${area.area}`, () => {
     test("fixture format is the one this harness reads", () => {
       expect(area.format_version).toBe(1);
     });
     for (const fixture of area.cases) {
       const key = `${area.area}/${fixture.name}`;
-      if (key in DEFERRED_CASES) continue;
       test(fixture.name, () => {
         const dice = scriptedDice(fixture.draws);
         const character = fixture.context?.character;
@@ -131,7 +104,7 @@ for (const area of areas) {
           defaultSystem: fixture.context?.default_system,
         });
         expect(json(result)).toEqual(key in DIVERGENT ? DIVERGENT[key] : fixture.expected);
-        // A roll that finishes (or fails) has used exactly the dice the Rust engine drew.
+        // A roll that finishes (or fails) has used exactly the dice that were recorded.
         if (!(key in DIVERGENT)) expect(dice.remaining()).toBe(0);
       });
     }

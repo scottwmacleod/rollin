@@ -14,8 +14,8 @@ rollin moves from a Rust library plus a Tauri bridge plus a hand-built DOM front
 
 **Build loops.** The work ships in ten loops, each ending with a production deploy: foundations; first roll; roll log; the full dice language; presets and export/import; characters and 5e; palette and polish; phone-ready web; the desktop swap; phone apps.
 
-**Desktop swap.** The Tauri desktop app keeps shipping, fixes only, until the web app matches it. Then it loads the web app and the TypeScript engine, imports existing TOML data once on first launch, and auto-update carries existing users across. The Rust engine and the CLI are deleted at that point.
+**Desktop swap.** *Changed on 2026-11-15 by [ADR-0009](0009-retire-the-desktop-app-and-delete-the-rust.md): the desktop app is retired, not wrapped, and the phone-app loop is dropped.* The original plan was for the Tauri app to load the web app and the TypeScript engine, import existing TOML data once, and carry users across by auto-update.
 
-**Effect on earlier decisions.** [ADR-0001](0001-rewrite-in-rust-in-place.md) (rewrite in Rust) and [ADR-0004](0004-toml-data-in-config-dir.md) (TOML in the config dir) will be superseded when the desktop swap lands; until then they describe the code that ships. [ADR-0007](0007-tauri-desktop-app-as-workspace-member.md) is amended: the Tauri app stays a workspace member only until the swap, and afterwards it wraps the web app.
+**Effect on earlier decisions.** [ADR-0001](0001-rewrite-in-rust-in-place.md) (rewrite in Rust), [ADR-0004](0004-toml-data-in-config-dir.md) (TOML in the config dir) and [ADR-0007](0007-tauri-desktop-app-as-workspace-member.md) (Tauri workspace member) are superseded by [ADR-0009](0009-retire-the-desktop-app-and-delete-the-rust.md).
 
 **Out of scope for this decision.** Accounts and sync, any app server, seeded rolls for players, game systems other than D&D 5e, and code signing.

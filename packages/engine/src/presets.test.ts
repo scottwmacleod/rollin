@@ -91,7 +91,7 @@ describe("checkFormula", () => {
   });
 });
 
-describe("preset name properties (from the Rust tests/properties.rs)", () => {
+describe("preset name properties (from the former Rust property tests)", () => {
   test("an accepted name is lowercase and rolls back by name, in any letter case", () => {
     fc.assert(
       fc.property(fc.string({ maxLength: 12 }), (raw) => {
