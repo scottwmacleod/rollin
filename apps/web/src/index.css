@@ -34,3 +34,23 @@ body {
   font-family: var(--font-sans);
   margin: 0;
 }
+
+/* The wordmark has a light and a dark artwork; show the one that matches the
+   theme in force (data-theme, else the OS). */
+.wordmark-light {
+  display: none;
+}
+:root[data-theme="light"] .wordmark-light {
+  display: block;
+}
+:root[data-theme="light"] .wordmark-dark {
+  display: none;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .wordmark-light {
+    display: block;
+  }
+  :root:not([data-theme="dark"]) .wordmark-dark {
+    display: none;
+  }
+}

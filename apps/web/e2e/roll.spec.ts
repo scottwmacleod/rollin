@@ -321,3 +321,52 @@ test("with storage blocked the app still rolls and says the log won't be kept", 
   await rollOnce(page, "d20");
   await expect(page.getByRole("tree", { name: "Roll log" })).toContainText("d20");
 });
+
+test.describe("settings", () => {
+  const bgOf = (page: import("@playwright/test").Page) =>
+    page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+  test("opens from the button and by keyboard, and has no accessibility violations", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /Settings/ }).click();
+    await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations).toEqual([]);
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+
+    await page.getByLabel("Formula").focus();
+    await page.keyboard.press("ControlOrMeta+,");
+    await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
+  });
+
+  test("a chosen theme survives reload, with no flash, and reaches a second tab", async ({
+    page,
+    context,
+  }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.goto("/");
+    const second = await context.newPage();
+    await second.emulateMedia({ colorScheme: "dark" });
+    await second.goto("/");
+    const dark = await bgOf(page);
+
+    await page.getByRole("button", { name: /Settings/ }).click();
+    await page.getByRole("radio", { name: /Light/ }).check();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    expect(await bgOf(page)).not.toBe(dark);
+    await expect(second.locator("html")).toHaveAttribute("data-theme", "light");
+
+    // The saved theme is applied by the inline script before the app loads.
+    await page.reload({ waitUntil: "commit" });
+    await page.waitForFunction(() => document.documentElement.dataset.theme === "light");
+    await page.getByRole("button", { name: /Settings/ }).click();
+    await expect(page.getByRole("radio", { name: /Light/ })).toBeChecked();
+
+    await page.getByRole("radio", { name: /System/ }).check();
+    await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
+    expect(await bgOf(page)).toBe(dark);
+  });
+});
