@@ -28,6 +28,10 @@ export type FormulaError =
   | { kind: "division_by_zero"; span: Span }
   | { kind: "count_in_arithmetic"; span: Span }
   | { kind: "overflow"; span: Span }
+  /** A formula used `@name` and the character has no such variable. `span` is the `@name`. */
+  | { kind: "undefined_variable"; name: string; span: Span }
+  /** An error whose offending text includes variables: `inner`, plus the values they resolved to. */
+  | { kind: "with_variables"; inner: FormulaError; bindings: [name: string, value: number][] }
   | {
       kind: "repeat_without_dice";
       /** The text after the `Nx`, trimmed. */
@@ -122,6 +126,23 @@ export type ErrorReport =
       kind: "formula";
       error: FormulaError;
       /** The neutral one-line text. */
+      message: string;
+      hints: Hint[];
+      /** The formula the spans point into. */
+      source: string;
+    }
+  /** A formula used `@name` and the active character has no such variable. */
+  | {
+      kind: "undefined_variable";
+      error: FormulaError;
+      name: string;
+      character: string;
+      /** The character's variable names, sorted. */
+      defined: string[];
+      /** A defined name within edit distance 2 of the missing one. */
+      suggestion: string | null;
+      /** Whether the character was chosen by name rather than being the active one. */
+      explicit: boolean;
       message: string;
       hints: Hint[];
       /** The formula the spans point into. */

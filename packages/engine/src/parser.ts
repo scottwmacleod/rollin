@@ -20,12 +20,15 @@ import {
 } from "./ast";
 import {
   countInArithmetic,
+  FormulaFailure,
   infiniteExplosion,
   infiniteReroll,
   invalidDice,
   limitExceeded,
   repeatWithoutDice,
+  spanOf,
   syntax,
+  undefinedVariable,
 } from "./errors";
 import { type Spanned, type Token, tokenize } from "./lexer";
 import { MAX_DEPTH, MAX_DICE_PER_ROLL, MAX_DICE_PER_TERM, MAX_REPEAT, MAX_SIDES } from "./limits";
@@ -42,8 +45,37 @@ const SELECT_WORDS = new Map<string, SelectKind>([
   ["kh", "keep_highest"],
 ]);
 
-export function parse(source: Source): FormulaAst {
-  return new Parser(source, tokenize(source)).parseRolls();
+/** A variable lookup: lowercase name to value, or `undefined` when there is none. */
+export type Lookup = (name: string) => number | undefined;
+
+/**
+ * Parses a formula. `@name` variables are resolved through `vars` first: each
+ * becomes a number token that keeps the span of the `@name`, so an error still
+ * points at it. An error that touches variables comes back wrapped with the
+ * values they had, so the message can mention them.
+ */
+export function parse(source: Source, vars: Lookup = () => undefined): FormulaAst {
+  const tokens = tokenize(source);
+  const bound: { name: string; value: number; span: Span }[] = [];
+  const resolved = tokens.map((spanned): Spanned => {
+    if (spanned.token.kind !== "var") return spanned;
+    const { name } = spanned.token;
+    const value = vars(name);
+    if (value === undefined) throw undefinedVariable(name, spanned.span);
+    bound.push({ name, value, span: spanned.span });
+    return { token: { kind: "number", value }, span: spanned.span };
+  });
+  try {
+    return new Parser(source, resolved).parseRolls();
+  } catch (failure) {
+    if (!(failure instanceof FormulaFailure)) throw failure;
+    const span = spanOf(failure.error);
+    const bindings = bound
+      .filter((b) => b.span.start < span.end && span.start < b.span.end)
+      .map((b): [string, number] => [b.name, b.value]);
+    if (bindings.length === 0) throw failure;
+    throw new FormulaFailure({ kind: "with_variables", inner: failure.error, bindings });
+  }
 }
 
 function describe(token: Token): string {
@@ -229,7 +261,10 @@ class Parser {
       const end = this.src.length;
       return syntax(`expected ${expected}, found end of input`, { start: end, end });
     }
-    return syntax(`expected ${expected}, found ${describe(t.token)}`, t.span);
+    // A variable already resolved to a number is still a variable to the person who typed it.
+    const written = this.src.slice(t.span.start, t.span.end);
+    const found = written.startsWith("@") ? `variable ${written}` : describe(t.token);
+    return syntax(`expected ${expected}, found ${found}`, t.span);
   }
 
   private number(what: string): number {

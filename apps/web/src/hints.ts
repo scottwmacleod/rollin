@@ -10,9 +10,9 @@ export function hintText(hint: Hint): string {
     case "list_presets":
       return "hint: your saved presets are in the sidebar";
     case "create_character":
-      return `hint: create it with: char new ${hint.name}`;
+      return `hint: create '${hint.name}' with New character`;
     case "set_variable":
-      return `set it with: set ${hint.name} <value>${hint.explicit ? ` (on '${hint.character}')` : ""}`;
+      return `hint: add @${hint.name} to ${hint.character} with New variable`;
     case "delete_global_preset":
       return `hint: it is a global preset; delete it with: delete ${hint.name} --global`;
     case "use_help_flag":
@@ -26,8 +26,8 @@ export function hintText(hint: Hint): string {
         ? "hint: for multiplication use *"
         : `hint: for multiplication use *; did you mean ${hint.suggestion}?`;
     case "add_preset":
-      return "Add one with: save <name> <formula>";
+      return "Add one with New preset";
     case "add_variable":
-      return "Add one with: set <name> <integer>";
+      return "Add one with New variable";
   }
 }

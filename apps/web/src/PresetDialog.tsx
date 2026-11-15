@@ -1,7 +1,9 @@
-import { checkFormula, validatePresetName } from "@rollin/engine";
+import { checkFormula, spanOf, validatePresetName } from "@rollin/engine";
 import { type FormEvent, useState } from "react";
 import { caretLines } from "./caret";
-import type { PresetMap } from "./presets";
+import type { Character } from "./characters";
+import { CONFIRM_NO, CONFIRM_YES, FIELD, OVERLAY, PRIMARY, SECONDARY } from "./dialogStyles";
+import type { PresetMap, PresetScope } from "./presets";
 import {
   Button,
   Dialog,
@@ -17,37 +19,55 @@ import {
 } from "./ui";
 
 /** What the dialog is doing: making a preset (maybe from a typed formula) or editing a saved one. */
-export type PresetDialogMode = { kind: "new"; formula: string } | { kind: "edit"; name: string };
+export type PresetDialogMode =
+  | { kind: "new"; formula: string }
+  | { kind: "edit"; name: string; scope: PresetScope };
 
-const FIELD =
-  "h-10 w-full rounded-md border border-line-strong bg-surface px-3 font-mono text-text placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text aria-invalid:border-danger";
-const SECONDARY =
-  "h-10 rounded-md border border-line-strong px-4 text-sm text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";
+/** A preset's place in the saved data: its name and where it lives. */
+export interface PresetRef {
+  name: string;
+  scope: PresetScope;
+}
 
 /**
  * The edit-preset dialog (#86, option A): name, formula with a live check,
- * Delete, Cancel and Save. The same dialog makes a new preset. The button says
- * Replace when the name is already taken by another preset. A rename saves the
- * new name and removes the old one.
+ * scope (this character or every character), Delete, Cancel and Save. The same
+ * dialog makes a new preset. The button says Replace when the name is already
+ * taken in that scope. A rename or a change of scope saves the new preset and
+ * removes the old one.
  */
 export function PresetDialog({
   mode,
   presets,
+  character,
   onSave,
   onDelete,
   onClose,
 }: {
   mode: PresetDialogMode;
+  /** The global presets. */
   presets: PresetMap;
-  /** `from` is the name being edited, if any. Resolves when the save has been stored. */
-  onSave: (name: string, formula: string, from: string | null) => Promise<void>;
-  onDelete: (name: string) => Promise<void>;
+  /** The active character, whose own presets shadow the global ones. */
+  character: Character;
+  /** `from` is the preset being edited, if any. Resolves when the save has been stored. */
+  onSave: (
+    name: string,
+    formula: string,
+    scope: PresetScope,
+    from: PresetRef | null,
+  ) => Promise<void>;
+  onDelete: (ref: PresetRef) => Promise<void>;
   onClose: () => void;
 }) {
-  const editing = mode.kind === "edit" ? mode.name : null;
+  const from: PresetRef | null =
+    mode.kind === "edit" ? { name: mode.name, scope: mode.scope } : null;
+  const editing = from?.name ?? null;
   const [name, setName] = useState(editing ?? "");
+  const [scope, setScope] = useState<PresetScope>(from?.scope ?? "character");
   const [formula, setFormula] = useState(
-    mode.kind === "edit" ? (presets[mode.name] ?? "") : mode.formula,
+    mode.kind === "edit"
+      ? ((mode.scope === "character" ? character.presets : presets)[mode.name] ?? "")
+      : mode.formula,
   );
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -56,10 +76,14 @@ export function PresetDialog({
   const nameError = name.trim() === "" ? null : "error" in named ? named.error.reason : null;
   const formulaProblem = formula.trim() === "" ? null : checkFormula(formula.trim());
   const caret = formulaProblem
-    ? caretLines(formulaProblem.source, formulaProblem.error.span)
+    ? caretLines(formulaProblem.source, spanOf(formulaProblem.error))
     : null;
   const stored = "name" in named ? named.name : null;
-  const replaces = stored !== null && stored !== editing && stored in presets;
+  const target = scope === "character" ? character.presets : presets;
+  const sameSlot = from !== null && from.scope === scope && from.name === stored;
+  const replaces = stored !== null && !sameSlot && Object.hasOwn(target, stored);
+  const shadows =
+    stored !== null && scope === "character" && !replaces && Object.hasOwn(presets, stored);
   const ready = stored !== null && formula.trim() !== "" && formulaProblem === null;
 
   async function save(event: FormEvent) {
@@ -67,7 +91,7 @@ export function PresetDialog({
     if (!ready || saving) return;
     setSaving(true);
     try {
-      await onSave(stored, formula.trim(), editing);
+      await onSave(stored, formula.trim(), scope, from);
       onClose();
     } finally {
       setSaving(false);
@@ -75,10 +99,10 @@ export function PresetDialog({
   }
 
   async function remove() {
-    if (editing === null) return;
+    if (from === null) return;
     setSaving(true);
     try {
-      await onDelete(editing);
+      await onDelete(from);
       onClose();
     } finally {
       setSaving(false);
@@ -88,14 +112,14 @@ export function PresetDialog({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogBackdrop className="fixed inset-0 bg-black/50" />
-      <DialogContent className="fixed top-1/2 left-1/2 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-line bg-surface p-5 text-text shadow-lg">
+      <DialogContent className={OVERLAY}>
         <form onSubmit={save} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <DialogTitle className="m-0 text-lg font-semibold">
               {editing === null ? "New preset" : `Edit ${editing}`}
             </DialogTitle>
             <DialogDescription className="m-0 text-sm text-muted">
-              A global preset: it rolls the same formula every time you click it.
+              Rolls the same formula every time you click it. Variables are read when it rolls.
             </DialogDescription>
           </div>
 
@@ -123,10 +147,39 @@ export function PresetDialog({
             )}
             {replaces && (
               <span className="text-sm text-muted">
-                A preset named '{stored}' already exists. Saving replaces it.
+                A preset named '{stored}' already exists here. Saving replaces it.
+              </span>
+            )}
+            {shadows && (
+              <span className="text-sm text-muted">
+                This character's '{stored}' will be rolled instead of the global one.
               </span>
             )}
           </Field>
+
+          <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+            <legend className="mb-1 p-0 text-sm text-text-2">Scope</legend>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="scope"
+                value="character"
+                checked={scope === "character"}
+                onChange={() => setScope("character")}
+              />
+              Only {character.name}
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="scope"
+                value="global"
+                checked={scope === "global"}
+                onChange={() => setScope("global")}
+              />
+              Every character
+            </label>
+          </fieldset>
 
           <Field
             name="formula"
@@ -169,19 +222,10 @@ export function PresetDialog({
               className="flex items-center gap-3 text-sm"
             >
               <span>Delete {editing}?</span>
-              <Button
-                type="button"
-                onClick={remove}
-                disabled={saving}
-                className="h-8 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
-              >
+              <Button type="button" onClick={remove} disabled={saving} className={CONFIRM_YES}>
                 Yes, delete
               </Button>
-              <Button
-                type="button"
-                onClick={() => setConfirming(false)}
-                className="h-8 rounded-md border border-line-strong px-3 text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
-              >
+              <Button type="button" onClick={() => setConfirming(false)} className={CONFIRM_NO}>
                 Keep it
               </Button>
             </div>
@@ -194,11 +238,7 @@ export function PresetDialog({
               )}
               <span className="flex-1" />
               <DialogClose className={SECONDARY}>Cancel</DialogClose>
-              <Button
-                type="submit"
-                disabled={!ready || saving}
-                className="inline-flex h-10 items-center justify-center rounded-md bg-signal px-5 text-sm font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text disabled:opacity-50"
-              >
+              <Button type="submit" disabled={!ready || saving} className={PRIMARY}>
                 {replaces ? "Replace" : "Save"}
               </Button>
             </div>

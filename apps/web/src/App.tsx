@@ -1,9 +1,35 @@
 import { roll } from "@rollin/engine";
 import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { CharacterDialog, type CharacterDialogMode } from "./CharacterDialog";
+import { CharacterPanel } from "./CharacterPanel";
+import {
+  activeCharacter,
+  addCharacter,
+  CHARACTERS_KEY,
+  cleanRoster,
+  loadRoster,
+  type Roster,
+  removeCharacter,
+  removeCharacterPreset,
+  removeVariable,
+  renameCharacter,
+  setCharacterPreset,
+  setVariable,
+  switchCharacter,
+  updateRoster,
+} from "./characters";
 import { dieSource } from "./dice";
-import { PresetDialog, type PresetDialogMode } from "./PresetDialog";
+import { PresetDialog, type PresetDialogMode, type PresetRef } from "./PresetDialog";
 import { PresetSidebar } from "./PresetSidebar";
-import { cleanPresets, loadPresets, PRESETS_KEY, type PresetMap, updatePresets } from "./presets";
+import {
+  cleanPresets,
+  effectivePresets,
+  loadPresets,
+  PRESETS_KEY,
+  type PresetMap,
+  type PresetScope,
+  updatePresets,
+} from "./presets";
 import { useUpdate } from "./pwa";
 import { type Entry } from "./Result";
 import { RollLog } from "./RollLog";
@@ -20,6 +46,7 @@ import {
 } from "./settings";
 import { openStorage, type Storage } from "./storage";
 import { Button, Field, FieldLabel, Input } from "./ui";
+import { VariableDialog, type VariableDialogMode } from "./VariableDialog";
 
 export function App() {
   const [formula, setFormula] = useState("");
@@ -29,12 +56,17 @@ export function App() {
   const [confirming, setConfirming] = useState(false);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [presets, setPresets] = useState<PresetMap | null>(null);
+  const [roster, setRoster] = useState<Roster | null>(null);
   const [dialog, setDialog] = useState<PresetDialogMode | null>(null);
+  const [characterDialog, setCharacterDialog] = useState<CharacterDialogMode | null>(null);
+  const [variableDialog, setVariableDialog] = useState<VariableDialogMode | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const storage = useRef<Storage | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const update = useUpdate();
+  /** The character formulas roll for; `null` until storage has been read. */
+  const acting = roster === null ? null : activeCharacter(roster);
 
   // Open storage, load the saved log, and follow other tabs. Rolls made before
   // the load finishes are kept after the saved ones.
@@ -44,6 +76,7 @@ export function App() {
     void openStorage().then(async ({ storage: opened, kept: ok }) => {
       const saved = await loadLog(opened).catch(() => []);
       const savedPresets = await loadPresets(opened).catch(() => ({}));
+      const savedRoster = await loadRoster(opened).catch(() => cleanRoster(undefined));
       const savedSettings = await loadSettings(opened).catch(() => null);
       if (cancelled) return;
       storage.current = opened;
@@ -53,6 +86,7 @@ export function App() {
       }
       setKept(ok);
       setPresets((current) => ({ ...savedPresets, ...current }));
+      setRoster((current) => current ?? savedRoster);
       setEntries((current) => {
         const first = nextEntryId(saved);
         const merged = capLog([...saved, ...current.map((e, i) => ({ ...e, id: first + i }))]);
@@ -70,7 +104,11 @@ export function App() {
       const stopPresets = opened.subscribe<PresetMap>(PRESETS_KEY, (value) =>
         setPresets(cleanPresets(value)),
       );
+      const stopRoster = opened.subscribe<unknown>(CHARACTERS_KEY, (value) =>
+        setRoster(cleanRoster(value)),
+      );
       unsubscribe = () => {
+        stopRoster();
         stopLog();
         stopSettings();
         stopPresets();
@@ -88,20 +126,35 @@ export function App() {
     if (storage.current) void saveSettings(storage.current, next).catch(() => setKept(false));
   }
 
-  function openDialog(mode: PresetDialogMode) {
+  /** Remembers what had focus, so closing the dialog can give it back. */
+  function remember() {
     opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }
+
+  function openDialog(mode: PresetDialogMode) {
+    remember();
     setDialog(mode);
   }
 
-  // When the dialog closes, focus goes back to what opened it, or to the formula box
+  function openCharacterDialog(mode: CharacterDialogMode) {
+    remember();
+    setCharacterDialog(mode);
+  }
+
+  function openVariableDialog(mode: VariableDialogMode) {
+    remember();
+    setVariableDialog(mode);
+  }
+
+  // When a dialog closes, focus goes back to what opened it, or to the formula box
   // if that is gone (a renamed or deleted preset's Edit button).
   useEffect(() => {
-    if (dialog !== null) return;
+    if (dialog !== null || characterDialog !== null || variableDialog !== null) return;
     const back = opener.current;
     opener.current = null;
     if (back === null) return;
     (back.isConnected ? back : input.current)?.focus();
-  }, [dialog]);
+  }, [dialog, characterDialog, variableDialog]);
 
   function clearLog() {
     setConfirming(false);
@@ -112,7 +165,10 @@ export function App() {
 
   /** Rolls what was typed, or a preset's name, and puts the result in the log. */
   function rollLine(text: string) {
-    const report = roll(text, dieSource(), { globalPresets: presets ?? {} });
+    const report = roll(text, dieSource(), {
+      globalPresets: presets ?? {},
+      character: acting ?? undefined,
+    });
     const next = capLog([...entries, { id: nextEntryId(entries), input: text, report }]);
     setEntries(next);
     if (storage.current) void saveLog(storage.current, next).catch(() => setKept(false));
@@ -131,21 +187,55 @@ export function App() {
     if (text !== "") rollLine(text);
   }
 
-  /** Saves `name`, dropping `from` when the preset was renamed. Waits for the write. */
-  async function savePreset(name: string, text: string, from: string | null) {
-    await changePresets((current) => {
-      const next = { ...current, [name]: text };
-      if (from !== null && from !== name) delete next[from];
-      return next;
-    });
+  /**
+   * Saves a preset in `scope`, dropping the one it replaces when it was renamed
+   * or moved. Waits for the write.
+   */
+  async function savePreset(
+    name: string,
+    text: string,
+    scope: PresetScope,
+    from: PresetRef | null,
+  ) {
+    if (scope === "global") {
+      await changePresets((presets) => ({ ...presets, [name]: text }));
+    } else if (acting) {
+      await changeRoster((r) =>
+        setCharacterPreset(
+          r,
+          acting.name,
+          name,
+          text,
+          from?.scope === "character" ? from.name : null,
+        ),
+      );
+    }
+    if (from !== null && !(from.scope === scope && from.name === name)) await removePreset(from);
   }
 
-  async function removePreset(name: string) {
-    await changePresets((current) => {
-      const next = { ...current };
-      delete next[name];
-      return next;
-    });
+  async function removePreset({ name, scope }: PresetRef) {
+    if (scope === "global") {
+      await changePresets((presets) => {
+        const next = { ...presets };
+        delete next[name];
+        return next;
+      });
+    } else if (acting) {
+      await changeRoster((r) => removeCharacterPreset(r, acting.name, name));
+    }
+  }
+
+  /** Changes the roster, reading what is saved just before writing, so another tab's edit is kept. */
+  async function changeRoster(apply: (roster: Roster) => Roster) {
+    if (storage.current) {
+      try {
+        setRoster(await updateRoster(storage.current, apply));
+        return;
+      } catch {
+        setKept(false);
+      }
+    }
+    setRoster((r) => cleanRoster(apply(r ?? cleanRoster(undefined))));
   }
 
   async function changePresets(apply: (current: PresetMap) => PresetMap) {
@@ -210,12 +300,25 @@ export function App() {
       )}
 
       <div className="flex flex-1 flex-col gap-6 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <PresetSidebar
-          presets={presets}
-          onRoll={rollLine}
-          onNew={() => openDialog({ kind: "new", formula: formula.trim() })}
-          onEdit={(name) => openDialog({ kind: "edit", name })}
-        />
+        <div className="flex flex-col gap-6">
+          <CharacterPanel
+            roster={roster}
+            active={acting}
+            onSwitch={(name) => void changeRoster((r) => switchCharacter(r, name))}
+            onNew={() => openCharacterDialog({ kind: "new" })}
+            onEdit={(name) => openCharacterDialog({ kind: "edit", name })}
+            onNewVariable={() => openVariableDialog({ kind: "new" })}
+            onEditVariable={(name) => openVariableDialog({ kind: "edit", name })}
+          />
+          <PresetSidebar
+            presets={
+              presets === null || acting === null ? null : effectivePresets(presets, acting.presets)
+            }
+            onRoll={rollLine}
+            onNew={() => openDialog({ kind: "new", formula: formula.trim() })}
+            onEdit={(name, scope) => openDialog({ kind: "edit", name, scope })}
+          />
+        </div>
         <div className="flex min-w-0 flex-col gap-6">
           <RollLog entries={entries} treeRef={log} onEscape={() => input.current?.focus()} />
 
@@ -295,7 +398,7 @@ export function App() {
         </Button>
         <Button
           type="button"
-          disabled={presets === null}
+          disabled={presets === null || acting === null}
           onClick={() => openDialog({ kind: "new", formula: formula.trim() })}
           className="inline-flex h-10 items-center justify-center rounded-md border border-line-strong px-4 text-sm text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text disabled:opacity-50"
         >
@@ -303,10 +406,37 @@ export function App() {
         </Button>
       </form>
 
-      {dialog !== null && presets !== null && (
+      {characterDialog !== null && roster !== null && (
+        <CharacterDialog
+          mode={characterDialog}
+          roster={roster}
+          onSave={async (name, from) =>
+            changeRoster((r) =>
+              from === null ? addCharacter(r, name) : renameCharacter(r, from, name),
+            )
+          }
+          onDelete={async (name) => changeRoster((r) => removeCharacter(r, name))}
+          onClose={() => setCharacterDialog(null)}
+        />
+      )}
+
+      {variableDialog !== null && acting !== null && (
+        <VariableDialog
+          mode={variableDialog}
+          character={acting}
+          onSave={async (name, value, from) =>
+            changeRoster((r) => setVariable(r, acting.name, name, value, from))
+          }
+          onDelete={async (name) => changeRoster((r) => removeVariable(r, acting.name, name))}
+          onClose={() => setVariableDialog(null)}
+        />
+      )}
+
+      {dialog !== null && presets !== null && acting !== null && (
         <PresetDialog
           mode={dialog}
           presets={presets}
+          character={acting}
           onSave={savePreset}
           onDelete={removePreset}
           onClose={() => setDialog(null)}

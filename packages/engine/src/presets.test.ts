@@ -49,7 +49,7 @@ describe("rolling a saved preset", () => {
   test("a character's own preset shadows a global one", () => {
     const report = roll("attack", dice(), {
       globalPresets: { attack: "d20+5" },
-      characterPresets: { attack: "d20+7" },
+      character: { name: "hero", presets: { attack: "d20+7" } },
     });
     expect("ok" in report && report.ok.preset).toEqual(["attack", "d20+7"]);
   });

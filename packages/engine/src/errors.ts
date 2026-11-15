@@ -38,6 +38,14 @@ export const repeatWithoutDice = (
 ): FormulaFailure =>
   new FormulaFailure({ kind: "repeat_without_dice", body, multiplication, span });
 
+export const undefinedVariable = (name: string, span: Span): FormulaFailure =>
+  new FormulaFailure({ kind: "undefined_variable", name, span });
+
+/** The byte range of the text an error is about. */
+export function spanOf(error: FormulaError): Span {
+  return error.kind === "with_variables" ? spanOf(error.inner) : error.span;
+}
+
 export const overflow = (span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "overflow", span });
 
@@ -70,11 +78,23 @@ export function messageOf(error: FormulaError): string {
       return "arithmetic overflow";
     case "repeat_without_dice":
       return `'x' means repeat, and '${error.body}' has no dice to repeat`;
+    case "undefined_variable":
+      return `undefined variable @${error.name}`;
+    case "with_variables": {
+      const values = error.bindings.map(([name, value]) => `@${name} is ${value}`).join(", ");
+      const { inner } = error;
+      // `@s is 1 but sides must be between 2 and 10000`
+      if (inner.kind === "invalid_dice" && error.bindings.length === 1) {
+        return `${values} but ${inner.message}`;
+      }
+      return `${messageOf(inner)} (${values})`;
+    }
   }
 }
 
 /** Suggestions for fixing the error, as data. */
 export function hintsOf(error: FormulaError): Hint[] {
+  if (error.kind === "with_variables") return hintsOf(error.inner);
   if (error.kind === "repeat_without_dice") {
     return [{ kind: "use_multiplication", suggestion: error.multiplication }];
   }

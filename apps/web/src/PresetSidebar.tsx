@@ -1,4 +1,4 @@
-import { type PresetMap, sortedPresets } from "./presets";
+import { type PresetEntry, type PresetScope } from "./presets";
 import { Button } from "./ui";
 
 const BUTTON =
@@ -14,12 +14,12 @@ export function PresetSidebar({
   onNew,
   onEdit,
 }: {
-  presets: PresetMap | null;
+  presets: PresetEntry[] | null;
   onRoll: (name: string) => void;
   onNew: () => void;
-  onEdit: (name: string) => void;
+  onEdit: (name: string, scope: PresetScope) => void;
 }) {
-  const list = presets === null ? [] : sortedPresets(presets);
+  const list = presets ?? [];
   return (
     <aside aria-labelledby="presets-heading" className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
@@ -37,7 +37,7 @@ export function PresetSidebar({
       )}
       {list.length > 0 && (
         <ul className="m-0 flex max-h-56 list-none flex-col gap-1 overflow-y-auto p-0 lg:max-h-none">
-          {list.map(([name, formula]) => (
+          {list.map(({ name, formula, scope }) => (
             <li key={name} className="flex gap-1">
               <Button
                 type="button"
@@ -46,11 +46,12 @@ export function PresetSidebar({
               >
                 <span className="font-mono text-sm text-text">{name}</span>
                 <span className="max-w-full truncate font-mono text-xs text-muted">{formula}</span>
+                {scope === "global" && <span className="text-xs text-muted">global</span>}
               </Button>
               <Button
                 type="button"
                 aria-label={`Edit ${name}`}
-                onClick={() => onEdit(name)}
+                onClick={() => onEdit(name, scope)}
                 className={`w-14 ${BUTTON}`}
               >
                 Edit

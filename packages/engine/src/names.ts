@@ -105,15 +105,46 @@ export function validatePresetName(raw: string): { name: string } | { error: Nam
   }
 }
 
-/** Whether `text` is a formula that could be saved as a preset; if not, the error, its one-line message and the text it points into. */
+/**
+ * Checks a character name: a preset name that is also not `new` or `rename`,
+ * which the command line reads as subcommands. Returns the stored (lowercase)
+ * form, or the rule it broke.
+ */
+export function validateCharacterName(raw: string): { name: string } | { error: NameError } {
+  const lower = raw.toLowerCase();
+  if (lower === "new" || lower === "rename") {
+    return { error: { name: raw, rule: "command_word", reason: reasonFor("command_word", raw) } };
+  }
+  return validatePresetName(raw);
+}
+
+/** Checks a variable name: `[a-z][a-z0-9_]*` after lowercasing. Returns the stored form, or `null`. */
+export function validateVariableName(raw: string): string | null {
+  const name = raw.toLowerCase();
+  return /^[a-z][a-z0-9_]*$/.test(name) ? name : null;
+}
+
+/**
+ * Whether `text` is a formula that could be saved as a preset; if not, the
+ * error, its one-line message and the text it points into. Variables are not
+ * known until the preset is rolled, so each `@name` stands in as 2, and any
+ * non-syntax error that touches a variable is ignored (it may only be the
+ * stand-in's fault).
+ */
 export function checkFormula(
   text: string,
 ): { error: FormulaError; message: string; source: string } | null {
   try {
-    parse(new Source(text));
+    parse(new Source(text), () => 2);
     return null;
   } catch (failure) {
     if (!(failure instanceof FormulaFailure)) throw failure;
-    return { error: failure.error, message: messageOf(failure.error), source: text };
+    let { error } = failure;
+    if (error.kind === "with_variables") {
+      // Without the stand-in value, which the person never typed.
+      if (error.inner.kind !== "syntax") return null;
+      error = error.inner;
+    }
+    return { error, message: messageOf(error), source: text };
   }
 }

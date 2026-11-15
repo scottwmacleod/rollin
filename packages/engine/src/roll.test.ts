@@ -301,3 +301,46 @@ describe("special dice", () => {
     }
   });
 });
+
+describe("variables", () => {
+  const hero = { name: "hero", vars: { str: 3, dex: 2 } };
+  const d20 = (face: number) => scriptedDice([{ sides: 20, face }]);
+
+  test("@name resolves from the character, in any case", () => {
+    const report = roll("d20+@STR", d20(10), { character: hero });
+    expect("ok" in report && report.ok.rolls[0]?.total).toBe(13);
+  });
+
+  test("an unknown variable names the character, what is defined and a suggestion", () => {
+    const report = roll("d20+@stre", d20(10), { character: hero });
+    expect("error" in report && report.error).toMatchObject({
+      kind: "undefined_variable",
+      message: "undefined variable @stre on character 'hero'",
+      character: "hero",
+      defined: ["dex", "str"],
+      suggestion: "str",
+    });
+  });
+
+  test("with no character the variables are those of 'default'", () => {
+    const report = roll("@str", d20(10));
+    expect("error" in report && report.error.message).toBe(
+      "undefined variable @str on character 'default'",
+    );
+  });
+
+  test("an error that touches a variable says what the variable was", () => {
+    const report = roll("@n d6", scriptedDice([]), {
+      character: { name: "hero", vars: { n: 2000 } },
+    });
+    expect("error" in report && report.error.message).toBe(
+      "dice per term cap (1000) exceeded by '@n d6' (@n is 2000)",
+    );
+  });
+
+  test("a preset's variables resolve when it is rolled", () => {
+    const character = { name: "hero", vars: { str: 4 }, presets: { attack: "d20+@str" } };
+    const report = roll("attack", d20(9), { character });
+    expect("ok" in report && report.ok.rolls[0]?.total).toBe(13);
+  });
+});
