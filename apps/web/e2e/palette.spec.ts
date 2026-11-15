@@ -87,6 +87,20 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
 
+  // Export downloads a file; import opens Settings, where the file is chosen.
+  await page.keyboard.press("Control+k");
+  await search.fill("export");
+  const download = page.waitForEvent("download");
+  await page.keyboard.press("Enter");
+  expect((await download).suggestedFilename()).toMatch(/rollin.*\.json$/);
+
+  await page.keyboard.press("Control+k");
+  await search.fill("import");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeHidden();
+
   await page.keyboard.press("Control+k");
   await search.fill("clear roll");
   await page.keyboard.press("Enter");

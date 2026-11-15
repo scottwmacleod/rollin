@@ -1,5 +1,17 @@
 import { roll } from "@rollin/engine";
 import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  applyBackup,
+  BACKUP_STATE_KEY,
+  type Backup,
+  type BackupData,
+  type BackupState,
+  buildBackup,
+  downloadBackup,
+  fingerprint,
+  reminderDue,
+  trackState,
+} from "./backup";
 import { CharacterDialog, type CharacterDialogMode } from "./CharacterDialog";
 import { CharacterPanel } from "./CharacterPanel";
 import { CommandPalette } from "./CommandPalette";
@@ -62,6 +74,7 @@ export function App() {
   const [kept, setKept] = useState(true);
   const [confirming, setConfirming] = useState(false);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [backupState, setBackupState] = useState<BackupState>({});
   const [presets, setPresets] = useState<PresetMap | null>(null);
   const [roster, setRoster] = useState<Roster | null>(null);
   const [dialog, setDialog] = useState<PresetDialogMode | null>(null);
@@ -126,8 +139,22 @@ export function App() {
       const savedPresets = await loadPresets(opened).catch(() => ({}));
       const savedRoster = await loadRoster(opened).catch(() => cleanRoster(undefined));
       const savedSettings = await loadSettings(opened).catch(() => null);
+      const savedBackupState = await opened
+        .get<BackupState>(BACKUP_STATE_KEY)
+        .catch(() => undefined);
       if (cancelled) return;
       storage.current = opened;
+      {
+        const before = savedBackupState ?? {};
+        const data: BackupData = {
+          characters: savedRoster,
+          globalPresets: savedPresets,
+          settings: savedSettings ?? DEFAULT_SETTINGS,
+        };
+        const tracked = trackState(before, data, Date.now());
+        setBackupState(tracked);
+        if (tracked !== before) void opened.set(BACKUP_STATE_KEY, tracked).catch(() => {});
+      }
       if (savedSettings) {
         setSettings(savedSettings);
         applyTheme(savedSettings.theme);
@@ -172,6 +199,39 @@ export function App() {
     setSettings(next);
     applyTheme(next.theme);
     if (storage.current) void saveSettings(storage.current, next).catch(() => setKept(false));
+  }
+
+  function changeBackupState(next: BackupState) {
+    setBackupState(next);
+    if (storage.current) void storage.current.set(BACKUP_STATE_KEY, next).catch(() => {});
+  }
+
+  /** A file now holds this data, so the reminder has nothing to nag about. */
+  function markBackedUp(backup: Backup) {
+    changeBackupState({ exported: fingerprint(backup.data) });
+  }
+
+  async function exportNow() {
+    if (!storage.current) return;
+    try {
+      const backup = await buildBackup(storage.current, { rollLog: false });
+      downloadBackup(backup);
+      markBackedUp(backup);
+    } catch {
+      setKept(false);
+    }
+  }
+
+  /** Replaces what is saved with the backup's, then shows it. Throws if it can't be saved, leaving the page as it was. */
+  async function importBackup(backup: Backup) {
+    if (!storage.current) throw new Error("no storage");
+    await applyBackup(storage.current, backup);
+    setRoster(backup.data.characters);
+    setPresets(backup.data.globalPresets);
+    setSettings(backup.data.settings);
+    applyTheme(backup.data.settings.theme);
+    if (backup.data.rollLog !== undefined) setEntries(backup.data.rollLog);
+    markBackedUp(backup);
   }
 
   /** Remembers what had focus, so closing the dialog can give it back. */
@@ -298,7 +358,12 @@ export function App() {
           case "new-variable":
             handOff(() => setVariableDialog({ kind: "new" }));
             return;
+          case "export":
+            void exportNow();
+            return;
           case "settings":
+          case "import":
+            // Choosing a file and confirming the replace happen in Settings.
             handoff.current = true;
             setSettingsOpen(true);
             return;
@@ -480,6 +545,9 @@ export function App() {
           <SettingsDialog
             settings={settings}
             onChange={changeSettings}
+            storage={() => storage.current}
+            onExported={markBackedUp}
+            onImported={importBackup}
             open={settingsOpen}
             onOpenChange={setSettingsOpen}
           />
@@ -498,6 +566,29 @@ export function App() {
             className="h-8 max-md:h-11 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
           >
             Reload to update
+          </Button>
+        </div>
+      )}
+
+      {reminderDue(backupState, Date.now()) && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-3 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
+        >
+          <span>Your characters and presets live only in this browser. Save a backup file?</span>
+          <Button
+            type="button"
+            onClick={() => void exportNow()}
+            className="h-8 max-md:h-11 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+          >
+            Export backup
+          </Button>
+          <Button
+            type="button"
+            onClick={() => changeBackupState({ ...backupState, dismissedAt: Date.now() })}
+            className="h-8 max-md:h-11 rounded-md border border-line-strong px-3 text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+          >
+            Not now
           </Button>
         </div>
       )}

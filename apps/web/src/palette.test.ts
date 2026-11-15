@@ -20,6 +20,8 @@ test("nothing typed lists presets, then the always-visible commands", () => {
     "New preset…",
     "New character…",
     "New variable…",
+    "Export backup",
+    "Import backup…",
     "Settings",
     "Clear roll log",
   ]);

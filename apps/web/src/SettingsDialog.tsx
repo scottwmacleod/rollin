@@ -1,4 +1,7 @@
+import { BackupSection } from "./BackupSection";
+import type { Backup } from "./backup";
 import { type Settings, THEMES, type Theme } from "./settings";
+import type { Storage } from "./storage";
 import {
   Button,
   Dialog,
@@ -19,11 +22,17 @@ const focusRing =
 export function SettingsDialog({
   settings,
   onChange,
+  storage,
+  onExported,
+  onImported,
   open,
   onOpenChange,
 }: {
   settings: Settings;
   onChange: (next: Settings) => void;
+  storage: () => Storage | null;
+  onExported: (backup: Backup) => void;
+  onImported: (backup: Backup) => Promise<void>;
   /** Lets the command palette open the dialog; without them the dialog manages itself. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -60,6 +69,7 @@ export function SettingsDialog({
             </label>
           ))}
         </fieldset>
+        <BackupSection storage={storage} onExported={onExported} onImported={onImported} />
         <div className="mt-5 flex justify-end">
           <DialogClose
             render={<Button type="button" />}

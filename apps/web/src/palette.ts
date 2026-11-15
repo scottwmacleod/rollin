@@ -11,6 +11,8 @@ export type PaletteCommand =
   | "new-character"
   | "new-variable"
   | "settings"
+  | "export"
+  | "import"
   | "clear-log";
 
 /** What choosing a row does. */
@@ -50,6 +52,8 @@ export function paletteRows(data: PaletteData): PaletteRow[] {
     { id: "new-preset", label: "New preset…" },
     { id: "new-character", label: "New character…" },
     { id: "new-variable", label: "New variable…" },
+    { id: "export", label: "Export backup" },
+    { id: "import", label: "Import backup…" },
     { id: "settings", label: "Settings" },
     { id: "clear-log", label: "Clear roll log", disabled: !data.hasLog },
   ].map(({ id, label, disabled }) => ({
