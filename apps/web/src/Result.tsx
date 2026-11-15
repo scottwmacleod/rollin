@@ -4,27 +4,45 @@ import { caretLines } from "./caret";
 import { hintText } from "./hints";
 
 export interface Entry {
+  /** Unique within the session; the roll log's identity for the entry. */
+  id: number;
   /** What the player typed. */
   input: string;
   report: RollReport;
 }
 
-function RollRow({ roll }: { roll: Roll }) {
+/** A success or failure mark, in visible text so the accessible name matches what is seen. */
+export function Outcome({ outcome }: { outcome?: "success" | "failure" }) {
+  if (outcome === "success") return <span> ✓ success</span>;
+  if (outcome === "failure") return <span> ✗ failure</span>;
+  return null;
+}
+
+export function outcomeClass(outcome?: "success" | "failure"): string {
+  return outcome === "success" ? "text-signal-ink" : outcome === "failure" ? "text-danger" : "";
+}
+
+/** One roll in one line: its formula, the dice it landed on, and the total. */
+export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boolean }) {
   const cells = breakdown(roll);
   return (
-    <li className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-line py-3 first:border-t-0">
-      <span className="font-mono text-sm text-text-2">
-        {roll.iteration !== undefined && (
-          <span className="mr-2 text-muted">
-            <span className="sr-only">repeat </span>
-            {roll.iteration}
-          </span>
-        )}
-        {roll.iteration !== undefined && " "}
-        {roll.formula}
-        {roll.label !== undefined && " "}
-        {roll.label !== undefined && <span className="ml-2 text-muted"># {roll.label}</span>}
-      </span>
+    <span className="flex flex-1 flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+      {showFormula && (
+        <span className="font-mono text-sm text-text-2">
+          {roll.iteration !== undefined && (
+            <>
+              <span className="mr-2 text-muted">repeat {roll.iteration}</span>{" "}
+            </>
+          )}
+          {roll.formula}
+          {roll.label !== undefined && (
+            <>
+              {" "}
+              <span className="ml-2 text-muted"># {roll.label}</span>
+            </>
+          )}
+        </span>
+      )}
       <span className="font-mono text-sm text-text">
         {cells.map((cell, i) =>
           cell.type === "text" ? (
@@ -34,79 +52,43 @@ function RollRow({ roll }: { roll: Roll }) {
             <span
               key={i}
               className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 ${
-                cell.dropped
-                  ? "text-muted line-through"
-                  : cell.outcome === "success"
-                    ? "text-signal-ink"
-                    : cell.outcome === "failure"
-                      ? "text-danger"
-                      : ""
+                cell.dropped ? "text-muted line-through" : outcomeClass(cell.outcome)
               }`}
             >
               {cell.face}
-              {cell.dropped && <span className="sr-only"> dropped</span>}
-              {cell.outcome === "success" && (
-                <>
-                  <span aria-hidden="true"> ✓</span>
-                  <span className="sr-only"> success</span>
-                </>
-              )}
-              {cell.outcome === "failure" && (
-                <>
-                  <span aria-hidden="true"> ✗</span>
-                  <span className="sr-only"> failure</span>
-                </>
-              )}
+              {cell.dropped && <span> dropped</span>}
+              <Outcome outcome={cell.outcome} />
             </span>
           ),
         )}
       </span>
       <span className="ml-auto font-mono text-3xl font-semibold text-text">
-        <span className="sr-only">total </span>
-        {roll.total}
+        <span className="mr-2 font-sans text-xs font-normal text-muted">total</span> {roll.total}
       </span>
-    </li>
+    </span>
   );
 }
 
-export function Result({ entry }: { entry: Entry }) {
-  const { report } = entry;
-  return (
-    <article className="rounded-md border border-line bg-surface px-4 py-3">
-      <p className="font-mono text-sm text-muted">
-        <span aria-hidden="true">› </span>
-        {entry.input}
-      </p>
-      {"ok" in report ? (
-        <ul className="mt-2 list-none p-0">
-          {report.ok.rolls.map((roll, i) => (
-            <RollRow key={i} roll={roll} />
-          ))}
-        </ul>
-      ) : (
-        <ErrorBody error={report.error} />
-      )}
-    </article>
-  );
-}
-
-function ErrorBody({ error }: { error: Extract<RollReport, { error: unknown }>["error"] }) {
+export function ErrorBody({ error }: { error: Extract<RollReport, { error: unknown }>["error"] }) {
   const caret = error.kind === "formula" ? caretLines(error.source, error.error.span) : null;
   return (
-    <div className="mt-2 space-y-2">
-      <p className="font-mono text-sm text-danger">error: {error.message}</p>
+    <span className="mt-2 block space-y-2">
+      <span className="block font-mono text-sm text-danger">error: {error.message}</span>
       {caret && (
-        <pre className="m-0 overflow-x-auto font-mono text-sm text-text-2">
+        <span
+          data-caret
+          className="block overflow-x-auto whitespace-pre font-mono text-sm text-text-2"
+        >
           {caret[0]}
           {"\n"}
           <span className="text-danger">{caret[1]}</span>
-        </pre>
+        </span>
       )}
       {error.hints.map((hint) => (
-        <p key={hintText(hint)} className="font-mono text-sm text-text-2">
+        <span key={hintText(hint)} className="block font-mono text-sm text-text-2">
           {hintText(hint)}
-        </p>
+        </span>
       ))}
-    </div>
+    </span>
   );
 }
