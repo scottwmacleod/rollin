@@ -2,8 +2,10 @@ import { useRef, useState } from "react";
 import {
   type Backup,
   buildBackup,
+  describePartialSummary,
   describeSummary,
   downloadBackup,
+  type ParsedFile,
   parseBackup,
   summarise,
 } from "./backup";
@@ -26,9 +28,10 @@ export function BackupSection({
   onImported: (backup: Backup) => Promise<void>;
 }) {
   const [includeLog, setIncludeLog] = useState(false);
-  const [pending, setPending] = useState<Backup | null>(null);
+  const [pending, setPending] = useState<ParsedFile | null>(null);
   const [message, setMessage] = useState("");
   const picker = useRef<HTMLInputElement>(null);
+  const importButton = useRef<HTMLButtonElement>(null);
 
   async function exportFile() {
     const current = storage();
@@ -50,13 +53,17 @@ export function BackupSection({
     const parsed = parseBackup(await file.text());
     if (parsed.ok) {
       setPending(parsed.backup);
-      setMessage("");
+      setMessage(
+        parsed.backup.kind === "partial"
+          ? "That's a partial file. Replace needs a full backup."
+          : "",
+      );
     } else setMessage(parsed.error);
     if (picker.current) picker.current.value = "";
   }
 
   async function replace() {
-    if (!pending) return;
+    if (pending?.kind !== "full") return;
     try {
       await onImported(pending);
       setMessage("Imported. Your data now matches the backup.");
@@ -86,7 +93,12 @@ export function BackupSection({
         <Button type="button" onClick={() => void exportFile()} className={secondary}>
           Export backup
         </Button>
-        <Button type="button" onClick={() => picker.current?.click()} className={secondary}>
+        <Button
+          ref={importButton}
+          type="button"
+          onClick={() => picker.current?.click()}
+          className={secondary}
+        >
           Import backup…
         </Button>
         <input
@@ -98,11 +110,11 @@ export function BackupSection({
           onChange={(e) => void choose(e.target.files?.[0])}
         />
       </div>
-      {pending && (
+      {pending?.kind === "full" && (
         <div role="group" aria-label="Confirm import" className="flex flex-col gap-2 text-sm">
           <p className="m-0">
-            This backup holds {describeSummary(summarise(pending.data))}. Importing replaces your
-            characters, presets and settings
+            This backup holds {describeSummary(summarise(pending.data))}. Replace my data swaps out
+            your characters, presets and settings
             {pending.data.rollLog !== undefined ? " and your roll log" : ""}.
           </p>
           <div className="flex gap-2">
@@ -111,6 +123,30 @@ export function BackupSection({
             </Button>
             <Button type="button" onClick={() => setPending(null)} className={secondary}>
               Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+      {pending?.kind === "partial" && (
+        <div role="group" aria-label="Partial file" className="flex flex-col gap-2 text-sm">
+          <p className="m-0">
+            This is a partial file. It holds {describePartialSummary(pending.data)}.
+          </p>
+          <p className="m-0 text-muted">
+            Replace needs a full backup, because a partial file can't replace everything you have.
+            Nothing was changed.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                setPending(null);
+                setMessage("");
+                importButton.current?.focus();
+              }}
+              className={secondary}
+            >
+              Close
             </Button>
           </div>
         </div>

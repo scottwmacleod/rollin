@@ -3,7 +3,9 @@ import {
   applyBackup,
   type BackupData,
   buildBackup,
+  buildPartial,
   CURRENT_VERSION,
+  describePartialSummary,
   describeSummary,
   fingerprint,
   parseBackup,
@@ -30,6 +32,7 @@ describe("parseBackup", () => {
     await applyBackup(source, {
       format: "rollin-backup",
       version: CURRENT_VERSION,
+      kind: "full",
       exportedAt: "",
       data: sample,
     });
@@ -38,7 +41,7 @@ describe("parseBackup", () => {
     const parsed = parseBackup(JSON.stringify(withoutLog));
     expect(parsed.ok && parsed.backup.data).toEqual(sample);
     const target = memoryStorage();
-    if (parsed.ok) await applyBackup(target, parsed.backup);
+    if (parsed.ok && parsed.backup.kind === "full") await applyBackup(target, parsed.backup);
     expect(await buildBackup(target, { rollLog: false })).toMatchObject({ data: sample });
   });
 
@@ -47,7 +50,8 @@ describe("parseBackup", () => {
     await storage.set("rollLog", [{ id: 1, input: "d6", report: {} }]);
     const backup = await buildBackup(storage, { rollLog: true });
     const parsed = parseBackup(JSON.stringify(backup));
-    expect(parsed.ok && parsed.backup.data.rollLog).toHaveLength(1);
+    if (!parsed.ok || parsed.backup.kind !== "full") return expect.fail("expected a full backup");
+    expect(parsed.backup.data.rollLog).toHaveLength(1);
   });
 
   it("walks the upgrade steps from an older version, using a made-up format", () => {
@@ -62,12 +66,13 @@ describe("parseBackup", () => {
       1: (file: Record<string, unknown>) => ({
         ...file,
         version: 2,
+        kind: "full",
         data: { characters: { characters: file.characters }, globalPresets: file.presets },
       }),
     };
     const parsed = parseBackup(old, 2, upgrades);
     expect(parsed.ok).toBe(true);
-    if (!parsed.ok) return;
+    if (!parsed.ok || parsed.backup.kind !== "full") return expect.fail("expected a full backup");
     expect(parsed.backup.version).toBe(2);
     expect(parsed.backup.data.globalPresets).toEqual({ fireball: "8d6" });
     expect(parsed.backup.data.characters.active).toBe("Mira");
@@ -76,6 +81,123 @@ describe("parseBackup", () => {
       presets: 1,
       rollLog: null,
     });
+  });
+
+  it("writes a version 2 full backup", async () => {
+    const backup = await buildBackup(memoryStorage(), { rollLog: false });
+    expect(backup).toMatchObject({ format: "rollin-backup", version: 2, kind: "full" });
+    const parsed = parseBackup(JSON.stringify(backup));
+    expect(parsed.ok && parsed.backup.kind).toBe("full");
+  });
+
+  it("upgrades a version 1 backup to a version 2 full backup, data unchanged", () => {
+    const v1 = JSON.stringify({
+      format: "rollin-backup",
+      version: 1,
+      exportedAt: "2026-01-02T00:00:00.000Z",
+      data: { ...sample, rollLog: [{ id: 1, input: "d6", report: {} }] },
+    });
+    const parsed = parseBackup(v1);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok || parsed.backup.kind !== "full") return expect.fail("expected a full backup");
+    expect(parsed.backup).toMatchObject({ version: 2, exportedAt: "2026-01-02T00:00:00.000Z" });
+    expect(parsed.backup.data).toMatchObject(sample);
+    expect(parsed.backup.data.rollLog).toHaveLength(1);
+  });
+
+  it("reads a partial file: characters and global presets, no active character", () => {
+    const text = JSON.stringify({
+      format: "rollin-backup",
+      version: 2,
+      kind: "partial",
+      data: {
+        characters: {
+          active: "Mira",
+          characters: [
+            { name: "Mira", vars: { str: 3, bad: "x" }, presets: { attack: "1d20" } },
+            { name: "Mira", vars: {}, presets: {} },
+            { nope: true },
+          ],
+        },
+        globalPresets: { fireball: "8d6", broken: 4 },
+        settings: { theme: "dark" },
+        rollLog: [{ id: 1, input: "d6", report: {} }],
+      },
+    });
+    const parsed = parseBackup(text);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok || parsed.backup.kind !== "partial") return expect.fail("expected partial");
+    expect(parsed.backup.data).toEqual({
+      characters: [{ name: "Mira", vars: { str: 3 }, presets: { attack: "1d20" } }],
+      globalPresets: { fireball: "8d6" },
+    });
+    expect(describePartialSummary(parsed.backup.data)).toBe(
+      "1 character, 1 variable, 1 character preset, 1 global preset",
+    );
+  });
+
+  it("writes a partial file that parses back unchanged", () => {
+    const data = {
+      characters: [{ name: "Mira", vars: { str: 3 }, presets: { attack: "1d20" } }],
+      globalPresets: { fireball: "8d6" },
+    };
+    const file = buildPartial(data, new Date("2026-11-15T08:00:00.000Z"));
+    expect(file).toMatchObject({
+      version: 2,
+      kind: "partial",
+      exportedAt: "2026-11-15T08:00:00.000Z",
+    });
+    expect(file.data.characters).toEqual({ characters: data.characters });
+    const parsed = parseBackup(JSON.stringify(file));
+    expect(parsed.ok && parsed.backup.kind).toBe("partial");
+    expect(parsed.ok && parsed.backup.data).toEqual(data);
+    expect(() => buildPartial({})).toThrow();
+  });
+
+  it("reads a partial file with only global presets", () => {
+    const parsed = parseBackup(
+      JSON.stringify({
+        format: "rollin-backup",
+        version: 2,
+        kind: "partial",
+        data: { globalPresets: { fireball: "8d6" } },
+      }),
+    );
+    expect(parsed.ok && parsed.backup.kind).toBe("partial");
+    expect(parsed.ok && parsed.backup.data).toEqual({ globalPresets: { fireball: "8d6" } });
+  });
+
+  it.each([
+    ["no data", {}],
+    ["empty sections", { characters: { characters: [] }, globalPresets: {} }],
+    [
+      "only invalid entries",
+      { characters: { characters: [{ nope: 1 }] }, globalPresets: { a: 1 } },
+    ],
+  ])("refuses an empty partial file: %s", (_name, data) => {
+    const parsed = parseBackup(
+      JSON.stringify({ format: "rollin-backup", version: 2, kind: "partial", data }),
+    );
+    expect(parsed.ok).toBe(false);
+    expect(!parsed.ok && parsed.error).toContain("nothing");
+  });
+
+  it("refuses a version 2 file with no usable kind", () => {
+    expect(
+      parseBackup(JSON.stringify({ format: "rollin-backup", version: 2, data: sample })).ok,
+    ).toBe(false);
+    expect(
+      parseBackup(
+        JSON.stringify({ format: "rollin-backup", version: 2, kind: "half", data: sample }),
+      ).ok,
+    ).toBe(false);
+  });
+
+  it("refuses a full backup with no characters", () => {
+    expect(
+      parseBackup(JSON.stringify({ format: "rollin-backup", version: 2, kind: "full", data: {} }))
+        .ok,
+    ).toBe(false);
   });
 
   it("refuses an older version with no upgrade step", () => {
@@ -89,10 +211,6 @@ describe("parseBackup", () => {
     ["not a backup", JSON.stringify({ hello: 1 })],
     ["no version", JSON.stringify({ format: "rollin-backup" })],
     ["version 0", JSON.stringify({ format: "rollin-backup", version: 0 })],
-    [
-      "no characters",
-      JSON.stringify({ format: "rollin-backup", version: CURRENT_VERSION, data: {} }),
-    ],
   ])("refuses %s", (_name, text) => {
     expect(parseBackup(text).ok).toBe(false);
   });
