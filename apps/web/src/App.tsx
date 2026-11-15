@@ -1,6 +1,7 @@
 import { roll } from "@rollin/engine";
 import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { dieSource } from "./dice";
+import { useUpdate } from "./pwa";
 import { type Entry } from "./Result";
 import { RollLog } from "./RollLog";
 import { capLog, loadLog, nextEntryId, ROLL_LOG_KEY, saveLog } from "./rollLog";
@@ -27,6 +28,7 @@ export function App() {
   const storage = useRef<Storage | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
+  const update = useUpdate();
 
   // Open storage, load the saved log, and follow other tabs. Rolls made before
   // the load finishes are kept after the saved ones.
@@ -128,6 +130,22 @@ export function App() {
         <h1 className="sr-only">rollin</h1>
         <SettingsDialog settings={settings} onChange={changeSettings} />
       </header>
+
+      {update.available && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-3 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
+        >
+          <span>A new version of rollin is ready.</span>
+          <Button
+            type="button"
+            onClick={update.reload}
+            className="h-8 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+          >
+            Reload to update
+          </Button>
+        </div>
+      )}
 
       <RollLog entries={entries} treeRef={log} onEscape={() => input.current?.focus()} />
 
