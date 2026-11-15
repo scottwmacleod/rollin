@@ -51,9 +51,15 @@ export type Hint =
 
 export type BinOp = "+" | "-" | "*" | "/";
 
+/** The clause that made a die what it is, such as the `dl1` that dropped it. */
+export interface Reason {
+  clause: string;
+}
+
 export interface Die {
   value: number;
-  status: "kept";
+  status: "kept" | "dropped";
+  reason?: Reason;
   /** Set on a counting die that was a success or a failure. */
   outcome?: "success" | "failure";
 }

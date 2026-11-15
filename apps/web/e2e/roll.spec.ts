@@ -30,6 +30,26 @@ for (const scheme of ["light", "dark"] as const) {
   });
 }
 
+test("a dropped die is marked in the breakdown, accessibly", async ({ page }) => {
+  await page.addInitScript(() =>
+    Object.assign(window, {
+      __rollinDice: [3, 4, 5, 1].map((face) => ({ sides: 6, face })),
+    }),
+  );
+  await page.goto("/");
+  await page.getByLabel("Formula").fill("4d6dl1");
+  await page.getByLabel("Formula").press("Enter");
+
+  const result = page.getByRole("region", { name: "Result" });
+  await expect(result).toContainText("total 12");
+  const dropped = result.locator(".line-through");
+  await expect(dropped).toHaveCount(1);
+  await expect(dropped).toHaveText("1 dropped");
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
 test("an invalid formula shows the error and where it went wrong, accessibly", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("Formula").fill("2d6+");
