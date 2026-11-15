@@ -4,12 +4,6 @@
   },
   "permissions": {
     "allow": [
-      "Bash(cargo fmt *)",
-      "Bash(cargo clippy *)",
-      "Bash(cargo test *)",
-      "Bash(cargo build *)",
-      "Bash(cargo check *)",
-      "Bash(rustc --version)",
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git log *)",
@@ -42,12 +36,6 @@
       "Bash(gh run list *)",
       "Bash(gh run rerun *)",
       "Bash(just *)",
-      "Bash(cargo deny *)",
-      "Bash(cargo +* test *)",
-      "Bash(cargo +* build *)",
-      "Bash(cargo +* check *)",
-      "Bash(rustup toolchain *)",
-      "Bash(rustup show *)",
       "Bash(git rm *)",
       "Bash(git mv *)",
       "Bash(git restore *)"
@@ -72,8 +60,6 @@
       "Bash(gh api *secrets*)",
       "Bash(gh api *-X *)",
       "Bash(gh api *--method*)",
-      "Bash(cargo publish *)",
-      "Bash(cargo login *)",
       "Bash(rm -rf *)"
     ]
   }
