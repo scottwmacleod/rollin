@@ -4,6 +4,9 @@ import {
   MAX_CRIT_RANGE,
   MAX_INT,
   MIN_CRIT_RANGE,
+  validateCharacterName,
+  validatePresetName,
+  validateVariableName,
 } from "@rollin/engine";
 import type { Storage } from "./storage";
 
@@ -50,19 +53,39 @@ export const DEFAULT_ROSTER: Roster = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-function cleanCharacter(value: unknown): Character | null {
+/** Counts the names a clean dropped because the app couldn't have created them. */
+export interface Tally {
+  skipped: number;
+}
+
+function cleanCharacter(value: unknown, tally?: Tally): Character | null {
   if (!isRecord(value) || typeof value.name !== "string" || value.name === "") return null;
+  const checked = validateCharacterName(value.name);
+  if (!("name" in checked)) {
+    if (tally) tally.skipped += 1;
+    return null;
+  }
+  // Names go through the same rules as names typed into the app: lowercased,
+  // and one the app couldn't create is dropped and counted. After lowercasing,
+  // the first of two names that collide wins.
   const vars: Record<string, number> = {};
   if (isRecord(value.vars)) {
     for (const [name, n] of Object.entries(value.vars)) {
-      if (typeof n === "number" && Number.isSafeInteger(n) && Math.abs(n) <= MAX_INT)
-        vars[name] = n;
+      if (typeof n !== "number" || !Number.isSafeInteger(n) || Math.abs(n) > MAX_INT) continue;
+      const stored = validateVariableName(name);
+      if (stored === null) {
+        if (tally) tally.skipped += 1;
+      } else if (!Object.hasOwn(vars, stored)) vars[stored] = n;
     }
   }
   const presets: Record<string, string> = {};
   if (isRecord(value.presets)) {
     for (const [name, formula] of Object.entries(value.presets)) {
-      if (typeof formula === "string") presets[name] = formula;
+      if (typeof formula !== "string") continue;
+      const stored = validatePresetName(name);
+      if (!("name" in stored)) {
+        if (tally) tally.skipped += 1;
+      } else if (!Object.hasOwn(presets, stored.name)) presets[stored.name] = formula;
     }
   }
   const system = GAME_SYSTEMS.find((g) => g.id === value.system)?.id;
@@ -71,7 +94,7 @@ function cleanCharacter(value: unknown): Character | null {
       ? value.critRange
       : undefined;
   return {
-    name: value.name,
+    name: checked.name,
     vars,
     presets,
     ...(system ? { system } : {}),
@@ -80,12 +103,12 @@ function cleanCharacter(value: unknown): Character | null {
 }
 
 /** Cleans a list of characters: drops anything malformed and any repeated name. Not a list gives none. */
-export function cleanCharacters(list: unknown): Character[] {
+export function cleanCharacters(list: unknown, tally?: Tally): Character[] {
   if (!Array.isArray(list)) return [];
   const seen = new Set<string>();
   const characters: Character[] = [];
   for (const raw of list) {
-    const character = cleanCharacter(raw);
+    const character = cleanCharacter(raw, tally);
     if (character === null || seen.has(character.name)) continue;
     seen.add(character.name);
     characters.push(character);
@@ -97,14 +120,14 @@ export function cleanCharacters(list: unknown): Character[] {
  * Reads a saved roster, dropping anything malformed. Whatever is saved, the
  * result has at least one character and an active one that exists.
  */
-export function cleanRoster(value: unknown): Roster {
+export function cleanRoster(value: unknown, tally?: Tally): Roster {
   if (!isRecord(value)) return DEFAULT_ROSTER;
-  const characters = cleanCharacters(value.characters);
+  const characters = cleanCharacters(value.characters, tally);
   if (characters.length === 0) return DEFAULT_ROSTER;
-  const active =
-    typeof value.active === "string" && characters.some((c) => c.name === value.active)
-      ? value.active
-      : (characters[0] as Character).name;
+  const wanted = typeof value.active === "string" ? value.active.toLowerCase() : "";
+  const active = characters.some((c) => c.name === wanted)
+    ? wanted
+    : (characters[0] as Character).name;
   return { active, characters };
 }
 

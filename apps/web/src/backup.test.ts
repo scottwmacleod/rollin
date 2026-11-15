@@ -12,6 +12,7 @@ import {
   characterFilename,
   describeAdd,
   describePartialSummary,
+  describeSkipped,
   describeSummary,
   fingerprint,
   firstUndecided,
@@ -29,8 +30,8 @@ import { memoryStorage } from "./storage";
 
 const sample: BackupData = {
   characters: {
-    active: "Mira",
-    characters: [{ name: "Mira", vars: { str: 3 }, presets: { attack: "1d20+str" } }],
+    active: "mira",
+    characters: [{ name: "mira", vars: { str: 3 }, presets: { attack: "1d20+str" } }],
   },
   globalPresets: { fireball: "8d6" },
   settings: { theme: "light", keypad: "auto" },
@@ -69,7 +70,7 @@ describe("parseBackup", () => {
     const old = JSON.stringify({
       format: "rollin-backup",
       version: 1,
-      characters: [{ name: "Mira", vars: { str: 3 }, presets: { attack: "1d20" } }],
+      characters: [{ name: "mira", vars: { str: 3 }, presets: { attack: "1d20" } }],
       presets: { fireball: "8d6" },
     });
     const upgrades = {
@@ -85,7 +86,7 @@ describe("parseBackup", () => {
     if (!parsed.ok || parsed.backup.kind !== "full") return expect.fail("expected a full backup");
     expect(parsed.backup.version).toBe(2);
     expect(parsed.backup.data.globalPresets).toEqual({ fireball: "8d6" });
-    expect(parsed.backup.data.characters.active).toBe("Mira");
+    expect(parsed.backup.data.characters.active).toBe("mira");
     expect(summarise(parsed.backup.data)).toMatchObject({
       variables: 1,
       presets: 1,
@@ -134,10 +135,10 @@ describe("parseBackup", () => {
       kind: "partial",
       data: {
         characters: {
-          active: "Mira",
+          active: "mira",
           characters: [
-            { name: "Mira", vars: { str: 3, bad: "x" }, presets: { attack: "1d20" } },
-            { name: "Mira", vars: {}, presets: {} },
+            { name: "mira", vars: { str: 3, bad: "x" }, presets: { attack: "1d20" } },
+            { name: "mira", vars: {}, presets: {} },
             { nope: true },
           ],
         },
@@ -150,7 +151,7 @@ describe("parseBackup", () => {
     expect(parsed.ok).toBe(true);
     if (!parsed.ok || parsed.backup.kind !== "partial") return expect.fail("expected partial");
     expect(parsed.backup.data).toEqual({
-      characters: [{ name: "Mira", vars: { str: 3 }, presets: { attack: "1d20" } }],
+      characters: [{ name: "mira", vars: { str: 3 }, presets: { attack: "1d20" } }],
       globalPresets: { fireball: "8d6" },
     });
     expect(describePartialSummary(parsed.backup.data)).toBe(
@@ -160,7 +161,7 @@ describe("parseBackup", () => {
 
   it("writes a partial file that parses back unchanged", () => {
     const data = {
-      characters: [{ name: "Mira", vars: { str: 3 }, presets: { attack: "1d20" } }],
+      characters: [{ name: "mira", vars: { str: 3 }, presets: { attack: "1d20" } }],
       globalPresets: { fireball: "8d6" },
     };
     const file = buildPartial(data, new Date("2026-11-15T08:00:00.000Z"));
@@ -213,6 +214,70 @@ describe("parseBackup", () => {
         JSON.stringify({ format: "rollin-backup", version: 2, kind: "half", data: sample }),
       ).ok,
     ).toBe(false);
+  });
+
+  it("lowercases names and drops ones the app can't create, counting them", () => {
+    const file = {
+      format: "rollin-backup",
+      version: 2,
+      kind: "full",
+      data: {
+        characters: {
+          active: "Grog",
+          characters: [
+            {
+              name: "Grog",
+              vars: { STR: 3, "bad name": 1 },
+              presets: { Smash: "1d8", "my preset": "1d4" },
+            },
+            { name: "grog", vars: {}, presets: {} },
+            { name: "my char", vars: {}, presets: {} },
+            { name: "Zed", vars: {}, presets: {} },
+          ],
+        },
+        globalPresets: { Fireball: "8d6", "bad one": "1d4", fireball: "9d6" },
+      },
+    };
+    const parsed = parseBackup(JSON.stringify(file));
+    if (!parsed.ok || parsed.backup.kind !== "full") throw new Error("expected a full backup");
+    const { data, skipped } = parsed.backup;
+    expect(data.characters.characters.map((c) => c.name)).toEqual(["grog", "zed"]);
+    expect(data.characters.active).toBe("grog");
+    expect(data.characters.characters[0]).toMatchObject({
+      vars: { str: 3 },
+      presets: { smash: "1d8" },
+    });
+    expect(data.globalPresets).toEqual({ fireball: "8d6" });
+    expect(skipped).toBe(4);
+    expect(describeSkipped(4)).toBe(" 4 names rollin can't use were skipped.");
+    expect(describeSkipped(0)).toBe("");
+  });
+
+  it("falls back to the default character when every name is dropped", () => {
+    const parsed = parseBackup(
+      JSON.stringify({
+        format: "rollin-backup",
+        version: 2,
+        kind: "full",
+        data: {
+          characters: { active: "x y", characters: [{ name: "x y", vars: {}, presets: {} }] },
+        },
+      }),
+    );
+    if (!parsed.ok || parsed.backup.kind !== "full") throw new Error("expected a full backup");
+    expect(parsed.backup.data.characters.characters).toHaveLength(1);
+    expect(parsed.backup.skipped).toBe(1);
+  });
+
+  it("loads saved capitalised names in lowercase so Add finds no clash-free duplicate", async () => {
+    const storage = memoryStorage();
+    await storage.set("characters", {
+      active: "Grog",
+      characters: [{ name: "Grog", vars: {}, presets: {} }],
+    });
+    const saved = await buildBackup(storage, { rollLog: false });
+    expect(saved.data.characters.characters.map((c) => c.name)).toEqual(["grog"]);
+    expect(saved.data.characters.active).toBe("grog");
   });
 
   it("refuses a full backup with no characters", () => {

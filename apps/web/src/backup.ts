@@ -6,6 +6,7 @@ import {
   cleanRoster,
   loadRoster,
   type Roster,
+  type Tally,
 } from "./characters";
 import { cleanPresets, loadPresets, PRESETS_KEY, type PresetMap } from "./presets";
 import type { Entry } from "./Result";
@@ -40,6 +41,8 @@ export interface Backup {
   kind: "full";
   exportedAt: string;
   data: BackupData;
+  /** Names dropped while reading the file because the app couldn't have created them. */
+  skipped?: number;
 }
 
 /** A partial file: only some characters and global presets. */
@@ -49,6 +52,8 @@ export interface PartialFile {
   kind: "partial";
   exportedAt: string;
   data: PartialData;
+  /** Names dropped while reading the file because the app couldn't have created them. */
+  skipped?: number;
 }
 
 /** A partial file as written to disk, where the characters sit in a list inside `characters`, as in a full backup. */
@@ -121,9 +126,10 @@ export function parseBackup(
     if (!isRecord(data) || !isRecord(data.characters)) {
       return fail("That backup is missing its characters, so it can't be read.");
     }
+    const tally: Tally = { skipped: 0 };
     const clean: BackupData = {
-      characters: cleanRoster(data.characters),
-      globalPresets: cleanPresets(data.globalPresets),
+      characters: cleanRoster(data.characters, tally),
+      globalPresets: cleanPresets(data.globalPresets, tally),
       settings: parseSettings(data.settings),
     };
     if (Array.isArray(data.rollLog)) {
@@ -135,12 +141,20 @@ export function parseBackup(
     }
     return {
       ok: true,
-      backup: { format: BACKUP_FORMAT, version: current, kind: "full", exportedAt, data: clean },
+      backup: {
+        format: BACKUP_FORMAT,
+        version: current,
+        kind: "full",
+        exportedAt,
+        data: clean,
+        skipped: tally.skipped,
+      },
     };
   }
   if (upgraded.kind === "partial") {
     // Settings, the roll log and the active character only mean something in a full backup.
-    const partial = cleanPartial(data);
+    const tally: Tally = { skipped: 0 };
+    const partial = cleanPartial(data, tally);
     if (partial === null) {
       return fail(
         "That partial file holds no characters or global presets, so there is nothing to read.",
@@ -154,6 +168,7 @@ export function parseBackup(
         kind: "partial",
         exportedAt,
         data: partial,
+        skipped: tally.skipped,
       },
     };
   }
@@ -161,14 +176,15 @@ export function parseBackup(
 }
 
 /** Cleans a partial file's data; null when it holds no characters and no global presets. */
-function cleanPartial(data: unknown): PartialData | null {
+function cleanPartial(data: unknown, tally: Tally): PartialData | null {
   if (!isRecord(data)) return null;
   const partial: PartialData = {};
   const characters = cleanCharacters(
     isRecord(data.characters) ? data.characters.characters : undefined,
+    tally,
   );
   if (characters.length > 0) partial.characters = characters;
-  const globalPresets = cleanPresets(data.globalPresets);
+  const globalPresets = cleanPresets(data.globalPresets, tally);
   if (Object.keys(globalPresets).length > 0) partial.globalPresets = globalPresets;
   return partial.characters || partial.globalPresets ? partial : null;
 }
@@ -286,7 +302,7 @@ export function incomingOf(file: ParsedFile): Incoming {
     file.kind === "full"
       ? { characters: file.data.characters.characters, globalPresets: file.data.globalPresets }
       : { characters: file.data.characters ?? [], globalPresets: file.data.globalPresets ?? {} };
-  let skipped = 0;
+  let skipped = file.skipped ?? 0;
   const characters: Character[] = [];
   const seenCharacters = new Set<string>();
   for (const character of raw.characters) {
@@ -522,6 +538,11 @@ export function describeAdd(c: AddCounts): string {
   if (parts.length === 0) return "Nothing to add. You already have everything in that file.";
   const text = parts.join("; ");
   return `${text.charAt(0).toUpperCase()}${text.slice(1)}.`;
+}
+
+/** The note for names a file held that rollin can't use; empty when none were dropped. */
+export function describeSkipped(n: number): string {
+  return n > 0 ? ` ${plural(n, "name")} rollin can't use ${n === 1 ? "was" : "were"} skipped.` : "";
 }
 
 export interface Summary {
