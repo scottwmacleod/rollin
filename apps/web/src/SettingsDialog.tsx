@@ -27,7 +27,7 @@ export function SettingsDialog({
     <Dialog>
       <DialogTrigger
         shortcut="mod+,"
-        className={`inline-flex h-8 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 ${focusRing}`}
       >
         Settings
         <DialogShortcut className="text-muted" />
@@ -58,7 +58,7 @@ export function SettingsDialog({
         <div className="mt-5 flex justify-end">
           <DialogClose
             render={<Button type="button" />}
-            className={`h-8 rounded-md bg-signal px-4 text-sm font-medium text-on-signal hover:opacity-90 ${focusRing}`}
+            className={`h-8 max-md:h-11 rounded-md bg-signal px-4 text-sm font-medium text-on-signal hover:opacity-90 ${focusRing}`}
           >
             Done
           </DialogClose>
