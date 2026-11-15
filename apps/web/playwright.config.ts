@@ -16,7 +16,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      testIgnore: ["phone.spec.ts", "narrow.spec.ts"],
+      testIgnore: ["phone.spec.ts", "narrow.spec.ts", "tiny.spec.ts"],
       use: { ...devices["Desktop Chrome"], launchOptions },
     },
     // A narrow desktop window: under 768px wide, with a mouse, so the keypad stays off under Auto.
@@ -24,6 +24,12 @@ export default defineConfig({
       name: "narrow",
       testMatch: "narrow.spec.ts",
       use: { ...devices["Desktop Chrome"], viewport: { width: 700, height: 800 }, launchOptions },
+    },
+    // A very narrow desktop window (about 400px): phone arrangement, mouse, no touch.
+    {
+      name: "tiny",
+      testMatch: "tiny.spec.ts",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 400, height: 800 }, launchOptions },
     },
     // Phones run on Chromium with each phone's screen, touch and user agent, so CI
     // needs no WebKit download. The iPhone's own browser engine is not covered.
