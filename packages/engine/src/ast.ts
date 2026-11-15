@@ -24,6 +24,10 @@ export interface DiceTerm {
   explode?: Explode;
   /** The source text of each clause, for reporting why a die is what it is. */
   clauses: { reroll?: string; explode?: string };
+  /** The success clause, when the group counts successes instead of summing. */
+  success?: Success;
+  /** The modifier clauses as written, in order, such as `>=8f1`. */
+  modifiers: string[];
 }
 
 export type Cmp = "gt" | "ge" | "lt" | "le" | "eq";
@@ -42,8 +46,15 @@ export interface Explode {
   value: number;
 }
 
+/** A success clause such as `>=8`, with the optional failure clause `f1`. */
+export interface Success {
+  cmp: Cmp;
+  value: number;
+  failure?: { cmp: Cmp; value: number };
+}
+
 /** Whether `face <cmp> value` holds. */
-export function test(cmp: Cmp, face: number, value: number): boolean {
+export const test = (cmp: Cmp, face: number, value: number): boolean => {
   switch (cmp) {
     case "gt":
       return face > value;
@@ -56,6 +67,20 @@ export function test(cmp: Cmp, face: number, value: number): boolean {
     case "eq":
       return face === value;
   }
+};
+
+/** Whether a counting die showing `face` is a success. */
+export const succeeds = (s: Success, face: number): boolean => test(s.cmp, face, s.value);
+
+/** Whether a counting die is a failure. A success is never also a failure. */
+export const fails = (s: Success, face: number): boolean =>
+  !succeeds(s, face) && s.failure !== undefined && test(s.failure.cmp, face, s.failure.value);
+
+/** Whether an expression is a success count, possibly in parentheses. */
+export function isCount(expr: Arith): boolean {
+  const kind = expr.kind;
+  if (kind.type === "dice") return kind.dice.success !== undefined;
+  return kind.type === "group" && isCount(kind.inner);
 }
 
 /** One comma-separated roll of a formula, before it is evaluated. */

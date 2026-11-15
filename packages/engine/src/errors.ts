@@ -28,6 +28,9 @@ export const infiniteReroll = (clause: string, sides: number, span: Span): Formu
 export const divisionByZero = (span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "division_by_zero", span });
 
+export const countInArithmetic = (span: Span): FormulaFailure =>
+  new FormulaFailure({ kind: "count_in_arithmetic", span });
+
 export const repeatWithoutDice = (
   body: string,
   multiplication: string | null,
@@ -59,6 +62,8 @@ export function messageOf(error: FormulaError): string {
       return `explosion condition '${error.clause}' is true for every face of a d${error.sides}, so it would never stop`;
     case "infinite_reroll":
       return `reroll condition '${error.clause}' is true for every face of a d${error.sides}, so it would never stop`;
+    case "count_in_arithmetic":
+      return "a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice";
     case "division_by_zero":
       return "division by zero";
     case "overflow":

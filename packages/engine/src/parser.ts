@@ -9,12 +9,15 @@ import {
   type Explode,
   type FormulaAst,
   hasDice,
+  isCount,
   precedence,
   type Reroll,
   type RollAst,
+  type Success,
   test,
 } from "./ast";
 import {
+  countInArithmetic,
   infiniteExplosion,
   infiniteReroll,
   invalidDice,
@@ -80,6 +83,19 @@ const BINOPS: Partial<Record<Token["kind"], BinOp>> = {
   minus: "-",
   star: "*",
   slash: "/",
+};
+
+/** A success count is its own kind of result and cannot be an operand. */
+function rejectCount(operand: Arith): void {
+  if (isCount(operand)) throw countInArithmetic(operand.span);
+}
+
+const COMPARISONS: Partial<Record<Token["kind"], Cmp>> = {
+  gt: "gt",
+  ge: "ge",
+  lt: "lt",
+  le: "le",
+  eq: "eq",
 };
 
 /** Joins `lhs op rhs`, extending a flat chain when the operator's level matches. */
@@ -223,6 +239,8 @@ class Parser {
       if (op === undefined || precedence(op) < minPrec) break;
       this.pos += 1;
       const rhs = this.parseExpr(precedence(op) + 1);
+      rejectCount(lhs);
+      rejectCount(rhs);
       lhs = link(lhs, op, rhs);
     }
     return lhs;
@@ -236,6 +254,7 @@ class Parser {
       this.enter(start);
       this.pos += 1;
       const operand = this.parseUnary();
+      rejectCount(operand);
       this.depth -= 1;
       return { kind: { type: "neg", operand }, span: { start, end: operand.span.end } };
     }
@@ -277,6 +296,44 @@ class Parser {
       );
     }
     throw this.unexpected("')'");
+  }
+
+  private atComparison(): boolean {
+    const kind = this.peek()?.kind;
+    return kind !== undefined && kind in COMPARISONS;
+  }
+
+  /** A condition on a face: a comparison then a number, or a bare number meaning equals. */
+  private parseCondition(what: string): { cmp: Cmp; value: number } {
+    const kind = this.peek()?.kind;
+    const cmp = (kind !== undefined && COMPARISONS[kind]) || "eq";
+    if (this.atComparison()) this.pos += 1;
+    return { cmp, value: this.number(what) };
+  }
+
+  /** Optional success clause such as `>=8`, with an optional failure clause `f1`. */
+  private parseCount(): Success | undefined {
+    const isF = (): boolean => {
+      const token = this.peek();
+      return token?.kind === "word" && token.word === "f";
+    };
+    if (!this.atComparison()) {
+      if (isF()) {
+        throw syntax(
+          "a failure clause 'f' must follow a success clause, as in 6d10>=8f1",
+          this.tokens[this.pos]?.span as Span,
+        );
+      }
+      return undefined;
+    }
+    const { cmp, value } = this.parseCondition("a number after the success condition");
+    if (!isF()) return { cmp, value };
+    this.pos += 1;
+    if (!this.atComparison() && this.peek()?.kind !== "number") {
+      throw this.unexpected("a failure condition (a number, or a comparison such as <=2, >9, =1)");
+    }
+    const failure = this.parseCondition("a number after the failure condition");
+    return { cmp, value, failure };
   }
 
   /** A parenthesised group, a number or a dice group. */
@@ -340,6 +397,10 @@ class Parser {
     const explodeStart = this.nextStart();
     const explode = this.parseExplode(sides);
     const explodeText = this.clauseText(explodeStart, explode !== undefined);
+    const successStart = this.here();
+    const success = this.parseCount();
+    const successText = this.clauseText(successStart, success !== undefined);
+    const modifiers = [rerollText, explodeText, successText].filter((c) => c !== undefined);
     const span = { start: countSpan.start, end: this.prevEnd() };
     this.itemDice += count;
     if (this.itemDice > MAX_DICE_PER_ROLL) {
@@ -359,6 +420,8 @@ class Parser {
             ...(rerollText === undefined ? {} : { reroll: rerollText }),
             ...(explodeText === undefined ? {} : { explode: explodeText }),
           },
+          ...(success ? { success } : {}),
+          modifiers,
         },
       },
       span,
@@ -372,19 +435,6 @@ class Parser {
   /** The source of the clause parsed since `start`, if there was one. */
   private clauseText(start: number, present: boolean): string | undefined {
     return present ? this.src.slice(start, this.prevEnd()) : undefined;
-  }
-
-  private atComparison(): boolean {
-    const kind = this.peek()?.kind;
-    return kind === "gt" || kind === "ge" || kind === "lt" || kind === "le" || kind === "eq";
-  }
-
-  /** A condition on a face: a comparison operator then a number, or a bare number meaning equals. */
-  private parseCondition(what: string): { cmp: Cmp; value: number } {
-    const kind = this.peek()?.kind;
-    const cmp: Cmp = this.atComparison() ? (kind as Cmp) : "eq";
-    if (this.atComparison()) this.pos += 1;
-    return { cmp, value: this.number(what) };
   }
 
   /** Optional `r` or `rr` reroll clause with a condition. */
