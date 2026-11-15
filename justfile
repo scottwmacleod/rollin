@@ -54,6 +54,7 @@ parity:
 # buildable without Node; CI runs the same steps in .github/workflows/web.yml.
 web-check:
     npm ci
+    npm run tokens:check
     npm run typecheck
     npx biome check .
     npm test

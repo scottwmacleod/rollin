@@ -4,6 +4,8 @@
   "description": "npm workspace for the TypeScript rebuild (#216). The desktop app in apps/desktop is separate and keeps its own lockfile.",
   "workspaces": ["packages/engine", "apps/web"],
   "scripts": {
+    "tokens": "node ui/generate-tokens.mjs",
+    "tokens:check": "node ui/generate-tokens.mjs --check",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "biome check .",
     "test": "npm run test --workspaces --if-present",
