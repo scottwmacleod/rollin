@@ -9,7 +9,7 @@ import {
 } from "./characters";
 import { cleanPresets, loadPresets, PRESETS_KEY, type PresetMap } from "./presets";
 import type { Entry } from "./Result";
-import { capLog, ROLL_LOG_KEY } from "./rollLog";
+import { cleanLog, loadLog, ROLL_LOG_KEY } from "./rollLog";
 import { parseSettings, SETTINGS_KEY, type Settings } from "./settings";
 import type { Storage } from "./storage";
 
@@ -127,11 +127,7 @@ export function parseBackup(
       settings: parseSettings(data.settings),
     };
     if (Array.isArray(data.rollLog)) {
-      clean.rollLog = capLog(
-        data.rollLog.filter(
-          (e): e is Entry => isRecord(e) && typeof e.id === "number" && typeof e.input === "string",
-        ),
-      );
+      clean.rollLog = cleanLog(data.rollLog);
     }
     return {
       ok: true,
@@ -183,10 +179,7 @@ export async function buildBackup(
     globalPresets: cleanPresets(await storage.get(PRESETS_KEY)),
     settings: parseSettings(await storage.get(SETTINGS_KEY)),
   };
-  if (options.rollLog) {
-    const log = await storage.get<Entry[]>(ROLL_LOG_KEY);
-    data.rollLog = Array.isArray(log) ? capLog(log) : [];
-  }
+  if (options.rollLog) data.rollLog = await loadLog(storage);
   return {
     format: BACKUP_FORMAT,
     version: CURRENT_VERSION,
