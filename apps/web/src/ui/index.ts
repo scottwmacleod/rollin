@@ -4,6 +4,16 @@
  * Everything else in the app imports from "./ui".
  */
 
+export {
+  Dialog,
+  DialogBackdrop,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogShortcut,
+  DialogTitle,
+  DialogTrigger,
+} from "@ui-sdk/react/dialog";
 export { Tree, TreeGroup, TreeItem, TreeItemIndicator, TreeItemLabel } from "@ui-sdk/react/tree";
 export { Button } from "./button";
 export { Field, FieldLabel, Input } from "./input";
