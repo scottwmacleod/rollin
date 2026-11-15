@@ -13,6 +13,8 @@ import {
   precedence,
   type Reroll,
   type RollAst,
+  type Select,
+  type SelectKind,
   type Success,
   test,
 } from "./ast";
@@ -32,6 +34,13 @@ import type { BinOp, Span } from "./types";
 
 /** `d%` is a d100. */
 const PERCENTILE_SIDES = 100;
+
+const SELECT_WORDS = new Map<string, SelectKind>([
+  ["dl", "drop_lowest"],
+  ["dh", "drop_highest"],
+  ["kl", "keep_lowest"],
+  ["kh", "keep_highest"],
+]);
 
 export function parse(source: Source): FormulaAst {
   return new Parser(source, tokenize(source)).parseRolls();
@@ -397,11 +406,22 @@ class Parser {
     const explodeStart = this.nextStart();
     const explode = this.parseExplode(sides);
     const explodeText = this.clauseText(explodeStart, explode !== undefined);
+    const selectStart = this.here();
+    const advantage = this.parseAdvantage(count, sides, countSpan.start);
+    const select: Select | undefined = advantage
+      ? { kind: advantage, n: 1 }
+      : this.parseSelect(count);
+    const selectText = this.clauseText(selectStart, select !== undefined);
+    this.rejectSelectWithAdvantage(advantage, select);
     const successStart = this.here();
     const success = this.parseCount();
     const successText = this.clauseText(successStart, success !== undefined);
-    const modifiers = [rerollText, explodeText, successText].filter((c) => c !== undefined);
+    const modifiers = [rerollText, explodeText, selectText, successText].filter(
+      (c) => c !== undefined,
+    );
     const span = { start: countSpan.start, end: this.prevEnd() };
+    // `adv` and `dis` roll two dice.
+    if (advantage) count = 2;
     this.itemDice += count;
     if (this.itemDice > MAX_DICE_PER_ROLL) {
       throw limitExceeded("dice_per_roll", this.src.slice(span.start, span.end), span);
@@ -416,9 +436,11 @@ class Parser {
           ...(special ? { special } : {}),
           ...(reroll ? { reroll } : {}),
           ...(explode ? { explode } : {}),
+          ...(select ? { select } : {}),
           clauses: {
             ...(rerollText === undefined ? {} : { reroll: rerollText }),
             ...(explodeText === undefined ? {} : { explode: explodeText }),
+            ...(selectText === undefined ? {} : { select: selectText }),
           },
           ...(success ? { success } : {}),
           modifiers,
@@ -483,6 +505,66 @@ class Parser {
       throw infiniteExplosion(this.src.slice(span.start, span.end), sides, span);
     }
     return explode;
+  }
+
+  /** Optional `adv`/`dis` suffix: sugar for rolling two dice and keeping the highest or lowest. */
+  private parseAdvantage(count: number, sides: number, termStart: number): SelectKind | undefined {
+    const token = this.peek();
+    if (token?.kind !== "word" || (token.word !== "adv" && token.word !== "dis")) return undefined;
+    const adv = token.word === "adv";
+    this.pos += 1;
+    if (count !== 1) {
+      throw invalidDice(
+        `'${token.word}' applies to exactly one die; write d${sides}${token.word}, or 2d${sides}${adv ? "kh" : "kl"}1 to keep the ${adv ? "highest" : "lowest"} of two`,
+        { start: termStart, end: this.prevEnd() },
+      );
+    }
+    return adv ? "keep_highest" : "keep_lowest";
+  }
+
+  /** `adv`/`dis` already keep one die, so a keep/drop clause on either side of it is an error. */
+  private rejectSelectWithAdvantage(
+    advantage: SelectKind | undefined,
+    select: Select | undefined,
+  ): void {
+    const token = this.peek();
+    if (token?.kind !== "word") return;
+    let word: string;
+    if (advantage && SELECT_WORDS.has(token.word)) {
+      word = advantage === "keep_highest" ? "adv" : "dis";
+    } else if (!advantage && select && (token.word === "adv" || token.word === "dis")) {
+      word = token.word;
+    } else {
+      return;
+    }
+    throw invalidDice(
+      `'${word}' already keeps one die, so it cannot be combined with dl, dh, kl or kh`,
+      this.tokens[this.pos]?.span as Span,
+    );
+  }
+
+  /** Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1). */
+  private parseSelect(count: number): Select | undefined {
+    const token = this.peek();
+    const kind = token?.kind === "word" ? SELECT_WORDS.get(token.word) : undefined;
+    if (kind === undefined) return undefined;
+    const wordSpan = this.tokens[this.pos]?.span as Span;
+    this.pos += 1;
+    const next = this.peek();
+    let n = 1;
+    if (next?.kind === "number") {
+      n = next.value;
+      this.pos += 1;
+    }
+    const span = { start: wordSpan.start, end: this.prevEnd() };
+    const keeps = kind === "keep_lowest" || kind === "keep_highest";
+    if (keeps && !(n >= 1 && n < count)) {
+      throw invalidDice(`must keep between 1 and ${count - 1} dice from a pool of ${count}`, span);
+    }
+    if (!keeps && n >= count) {
+      throw invalidDice(`cannot drop ${n} dice from a pool of ${count}`, span);
+    }
+    return { kind, n };
   }
 }
 

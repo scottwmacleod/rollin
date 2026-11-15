@@ -1,5 +1,5 @@
 /** Evaluator: walks the syntax tree, drawing dice from the injected source. */
-import { type Arith, fails, isCount, type RollAst, succeeds, test } from "./ast";
+import { type Arith, fails, isCount, type RollAst, type Select, succeeds, test } from "./ast";
 import type { DieSource } from "./dice";
 import { divisionByZero, limitExceeded, overflow } from "./errors";
 import { MAX_DICE_PER_ROLL, MAX_EXPLOSIONS_PER_DIE, MAX_INT, MAX_REROLLS_PER_DIE } from "./limits";
@@ -105,14 +105,15 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
             });
           }
         }
-        // Dice a reroll replaced never count toward the total or the tally.
-        const counting = faces.filter((d) => d.status !== "rerolled");
+        if (term.select) applyDrops(faces, term.select, term.clauses.select ?? "");
+        // Dice a reroll replaced or a keep/drop clause removed never count.
+        const kept = faces.filter((die) => die.status === "kept" || die.status === "exploded");
         const modifiers = term.modifiers.length > 0 ? { modifiers: term.modifiers } : {};
         const success = term.success;
         if (success) {
           let successes = 0;
           let failures = 0;
-          for (const die of counting) {
+          for (const die of kept) {
             if (succeeds(success, die.value)) {
               die.outcome = "success";
               successes += 1;
@@ -141,7 +142,7 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
           ...modifiers,
           ...(term.special ? { special: term.special } : {}),
           dice: faces,
-          subtotal: counting.reduce((sum, die) => sum + die.value, 0),
+          subtotal: kept.reduce((sum, die) => sum + die.value, 0),
         };
       }
       case "neg": {
@@ -203,4 +204,31 @@ function apply(op: BinOp, lhs: number, rhs: number, span: Span, rhsSpan: Span): 
   if (Math.abs(result) > MAX_INT) throw overflow(span);
   // Normalise -0 (`0 * -5`) to 0.
   return result === 0 ? 0 : result;
+}
+
+/**
+ * Marks the dice a keep/drop clause removes. Keeping `n` of a pool drops the
+ * rest from the other end; ties fall by roll order, as in the Rust engine.
+ */
+function applyDrops(dice: Die[], { kind, n }: Select, clause: string): void {
+  // A die a reroll replaced is out of the pool before anything is dropped.
+  const live = dice.flatMap((die, i) => (die.status === "rerolled" ? [] : [i]));
+  const pool = live.length;
+  const [lowest, highest] =
+    kind === "drop_lowest"
+      ? [n, 0]
+      : kind === "drop_highest"
+        ? [0, n]
+        : kind === "keep_highest"
+          ? [pool - n, 0]
+          : [0, pool - n];
+  // Array.prototype.sort is stable, so equal faces keep their roll order.
+  const order = live.sort((a, b) => (dice[a]?.value ?? 0) - (dice[b]?.value ?? 0));
+  for (const i of [...order.slice(0, lowest), ...order.slice(pool - highest)]) {
+    const die = dice[i];
+    if (die) {
+      die.status = "dropped";
+      die.reason = { clause };
+    }
+  }
 }

@@ -23,11 +23,20 @@ export interface DiceTerm {
   reroll?: Reroll;
   explode?: Explode;
   /** The source text of each clause, for reporting why a die is what it is. */
-  clauses: { reroll?: string; explode?: string };
+  clauses: { reroll?: string; explode?: string; select?: string };
   /** The success clause, when the group counts successes instead of summing. */
   success?: Success;
-  /** The modifier clauses as written, in order, such as `>=8f1`. */
+  /** The keep/drop clause, or the keep that `adv` and `dis` stand for. */
+  select?: Select;
+  /** The modifier clauses as written, in the order they apply, such as `dl1` or `>=8f1`. */
   modifiers: string[];
+}
+
+export type SelectKind = "drop_lowest" | "drop_highest" | "keep_lowest" | "keep_highest";
+
+export interface Select {
+  kind: SelectKind;
+  n: number;
 }
 
 export type Cmp = "gt" | "ge" | "lt" | "le" | "eq";

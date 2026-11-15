@@ -55,7 +55,7 @@ export type BinOp = "+" | "-" | "*" | "/";
 
 /** Why a die is in the pool: the clause as written, and the die that caused it. */
 export interface Reason {
-  /** The clause as written in the term, such as `r1` or `!`. */
+  /** The clause as written in the term, such as `r1`, `!` or the `dl1` that dropped it. */
   clause: string;
   /** The index in the group's `dice` of the die that caused this one. */
   from?: number;
@@ -66,7 +66,7 @@ export interface Reason {
 export interface Die {
   value: number;
   /** `exploded` is an extra die an earlier die set off. `rerolled` is a die a reroll replaced: it never counts. */
-  status: "kept" | "exploded" | "rerolled";
+  status: "kept" | "dropped" | "exploded" | "rerolled";
   /** For a compounded exploding die (`!!`): the rolls added into `value`, in order. */
   parts?: number[];
   /** Set on a counting die that was a success or a failure. */

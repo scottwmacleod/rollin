@@ -215,3 +215,53 @@ test("exploding dice and rerolls never pass either cap, and the totals add up", 
     ),
   );
 });
+
+const mode = fc.constantFrom("kh", "kl", "dh", "dl");
+
+test("keep and drop always leave the right number of dice, and the total is the kept sum", () => {
+  fc.assert(
+    fc.property(
+      fc.integer({ min: 2, max: 30 }),
+      fc.integer({ min: 2, max: 100 }),
+      mode,
+      fc.integer({ min: 1, max: 29 }),
+      seeds,
+      (count, sides, kind, rawN, s) => {
+        const n = 1 + ((rawN - 1) % (count - 1));
+        const [result] = ok(roll(`${count}d${sides}${kind}${n}`, fromSeeds(s)));
+        const node = result?.expr as Extract<Node, { type: "dice" }>;
+        const kept = node.dice.filter((d) => d.status === "kept");
+        expect(kept).toHaveLength(kind.startsWith("k") ? n : count - n);
+        expect(node.dice.filter((d) => d.status === "dropped")).toHaveLength(count - kept.length);
+        expect(result?.total).toBe(kept.reduce((a, d) => a + d.value, 0));
+        // Every kept die is at least as good as every dropped one.
+        const high = kind === "kh" || kind === "dl";
+        const dropped = node.dice.filter((d) => d.status === "dropped");
+        for (const k of kept) {
+          for (const d of dropped) {
+            expect(high ? k.value >= d.value : k.value <= d.value).toBe(true);
+          }
+        }
+      },
+    ),
+  );
+});
+
+test("adv and dis match 2d20kh1 and 2d20kl1 die for die", () => {
+  fc.assert(
+    fc.property(
+      fc.constantFrom("adv", "dis"),
+      fc.integer({ min: 2, max: 100 }),
+      seeds,
+      (word, sides, s) => {
+        const keep = word === "adv" ? "kh" : "kl";
+        const [a] = ok(roll(`d${sides}${word}`, fromSeeds(s)));
+        const [b] = ok(roll(`2d${sides}${keep}1`, fromSeeds(s)));
+        expect(a?.total).toBe(b?.total);
+        const dice = (r: typeof a) =>
+          (r?.expr as Extract<Node, { type: "dice" }>).dice.map((d) => [d.value, d.status]);
+        expect(dice(a)).toEqual(dice(b));
+      },
+    ),
+  );
+});
