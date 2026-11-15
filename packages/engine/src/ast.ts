@@ -99,6 +99,85 @@ export interface RollAst {
   expr: Arith;
   /** The `# text` note after the roll. */
   label?: string;
+  /** The `atk` / `dmg` suffix marker. Only a game system reads it. */
+  role?: Role;
+  /** The `crit` suffix: this roll's dice are doubled by hand, with or without a game system. */
+  crit?: boolean;
+}
+
+/** What a roll is in a game system's attack-and-damage pairing. */
+export type Role = "attack" | "damage";
+
+/** How many d20 groups the expression holds, of any kind. */
+export function d20Terms(expr: Arith): number {
+  const kind = expr.kind;
+  switch (kind.type) {
+    case "number":
+      return 0;
+    case "dice":
+      return kind.dice.sides === 20 ? 1 : 0;
+    case "neg":
+      return d20Terms(kind.operand);
+    case "group":
+      return d20Terms(kind.inner);
+    case "chain":
+      return d20Terms(kind.first) + kind.rest.reduce((n, r) => n + d20Terms(r.operand), 0);
+  }
+}
+
+/**
+ * Whether a dice group can be a d20 check's die: a lone d20, or two d20 with
+ * exactly one kept (`adv`, `dis`, `kh1`, `kl1`, `dl1`, `dh1`). A success clause
+ * or an explode clause rules it out; rerolls are fine.
+ */
+export function isCheckDie(term: DiceTerm): boolean {
+  const oneKept = term.select?.n === 1;
+  return (
+    term.sides === 20 &&
+    term.success === undefined &&
+    term.explode === undefined &&
+    (term.count === 1 || (term.count === 2 && oneKept))
+  );
+}
+
+/** The first d20 group found in the expression. */
+function firstD20(expr: Arith): DiceTerm | undefined {
+  const kind = expr.kind;
+  switch (kind.type) {
+    case "dice":
+      return kind.dice.sides === 20 ? kind.dice : undefined;
+    case "neg":
+      return firstD20(kind.operand);
+    case "group":
+      return firstD20(kind.inner);
+    case "chain":
+      for (const part of [kind.first, ...kind.rest.map((r) => r.operand)]) {
+        const found = firstD20(part);
+        if (found) return found;
+      }
+      return undefined;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Whether the expression is a d20 check: exactly one d20 group, and that group
+ * is a check die. Other terms, such as the `+5` in `d20+5`, do not matter. The
+ * one definition behind a roll's attack role and its natural 20 / 1 verdict.
+ */
+export function isD20Check(expr: Arith): boolean {
+  if (d20Terms(expr) !== 1) return false;
+  const term = firstD20(expr);
+  return term !== undefined && isCheckDie(term);
+}
+
+/** The role a game system gives a roll: its marker, else attack for a d20 check and damage for dice with no d20. */
+export function roleOf(roll: RollAst): Role | undefined {
+  if (roll.role) return roll.role;
+  if (isD20Check(roll.expr)) return "attack";
+  if (d20Terms(roll.expr) === 0 && hasDice(roll.expr)) return "damage";
+  return undefined;
 }
 
 /** A parsed formula: an optional repeat count and the rolls it applies to. */

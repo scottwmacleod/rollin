@@ -1,6 +1,6 @@
-import { validateCharacterName } from "@rollin/engine";
+import { type GameSystem, validateCharacterName } from "@rollin/engine";
 import { type FormEvent, useState } from "react";
-import type { Roster } from "./characters";
+import { GAME_SYSTEMS, isCritRange, type Roster, type Rules } from "./characters";
 import { CONFIRM_NO, CONFIRM_YES, FIELD, OVERLAY, PRIMARY, SECONDARY } from "./dialogStyles";
 import {
   Button,
@@ -34,12 +34,15 @@ export function CharacterDialog({
   mode: CharacterDialogMode;
   roster: Roster;
   /** `from` is the name being renamed, if any. Resolves when the change has been stored. */
-  onSave: (name: string, from: string | null) => Promise<void>;
+  onSave: (name: string, from: string | null, rules: Rules) => Promise<void>;
   onDelete: (name: string) => Promise<void>;
   onClose: () => void;
 }) {
   const editing = mode.kind === "edit" ? mode.name : null;
   const [name, setName] = useState(editing ?? "");
+  const existing = editing === null ? undefined : roster.characters.find((c) => c.name === editing);
+  const [system, setSystem] = useState<GameSystem | "">(existing?.system ?? "");
+  const [critText, setCritText] = useState(existing?.critRange ? String(existing.critRange) : "");
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -55,7 +58,16 @@ export function CharacterDialog({
         : taken
           ? `there is already a character named '${stored}'`
           : null;
-  const ready = stored !== null && !taken && stored !== editing;
+  const crit = critText.trim() === "" ? 20 : Number(critText);
+  const critProblem =
+    system !== "" && !isCritRange(crit) ? "crit range is a whole number from 2 to 20" : null;
+  const rules: Rules = {
+    ...(system === "" ? {} : { system }),
+    ...(system !== "" && crit < 20 ? { critRange: crit } : {}),
+  };
+  const rulesChanged = rules.system !== existing?.system || rules.critRange !== existing?.critRange;
+  const nameOk = stored !== null && !taken;
+  const ready = nameOk && critProblem === null && (stored !== editing || rulesChanged);
   const canDelete = editing !== null && roster.characters.length > 1;
 
   async function save(event: FormEvent) {
@@ -63,7 +75,7 @@ export function CharacterDialog({
     if (!ready || saving) return;
     setSaving(true);
     try {
-      await onSave(stored, editing);
+      await onSave(stored, editing, rules);
       onClose();
     } finally {
       setSaving(false);
@@ -120,6 +132,55 @@ export function CharacterDialog({
               </FieldError>
             )}
           </Field>
+
+          <div className="flex flex-col gap-1">
+            <label htmlFor="game-system" className="text-sm text-text-2">
+              Game system
+            </label>
+            <select
+              id="game-system"
+              value={system}
+              onChange={(e) => setSystem(e.target.value as GameSystem | "")}
+              className={FIELD}
+            >
+              <option value="">None</option>
+              {GAME_SYSTEMS.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.label}
+                </option>
+              ))}
+            </select>
+            <span className="text-sm text-muted">
+              Under D&amp;D 5e a natural 20 on an attack is a critical hit and doubles the damage
+              dice that follow.
+            </span>
+          </div>
+
+          {system !== "" && (
+            <Field
+              name="critRange"
+              invalid={critProblem === null ? undefined : true}
+              className="flex flex-col gap-1"
+            >
+              <FieldLabel className="text-sm text-text-2">Crit range</FieldLabel>
+              <Input
+                value={critText}
+                onValueChange={setCritText}
+                placeholder="20"
+                inputMode="numeric"
+                autoComplete="off"
+                className={FIELD}
+              />
+              <span className="text-sm text-muted">
+                The lowest d20 that is a critical hit; 19 means 19 to 20. Leave empty for 20.
+              </span>
+              {critProblem !== null && (
+                <FieldError match className="text-sm text-danger">
+                  {critProblem}
+                </FieldError>
+              )}
+            </Field>
+          )}
 
           {confirming && editing !== null ? (
             <div

@@ -14,6 +14,7 @@ import {
   removeVariable,
   renameCharacter,
   setCharacterPreset,
+  setCharacterRules,
   setVariable,
   switchCharacter,
   updateRoster,
@@ -32,7 +33,7 @@ import {
   updatePresets,
 } from "./presets";
 import { useUpdate } from "./pwa";
-import { type Entry } from "./Result";
+import { type Entry, spoken } from "./Result";
 import { RollLog } from "./RollLog";
 import { capLog, loadLog, nextEntryId, ROLL_LOG_KEY, saveLog } from "./rollLog";
 import { SettingsDialog } from "./SettingsDialog";
@@ -177,7 +178,7 @@ export function App() {
     const what = preset === null ? text : `${preset[0]} (${preset[1]})`;
     setAnnouncement(
       "ok" in report
-        ? `Rolled ${what}: ${report.ok.rolls.map((r) => `total ${r.total}`).join(", ")}`
+        ? `Rolled ${what}: ${report.ok.rolls.map(spoken).join(", ")}`
         : `Error: ${report.error.message}`,
     );
   }
@@ -412,9 +413,13 @@ export function App() {
         <CharacterDialog
           mode={characterDialog}
           roster={roster}
-          onSave={async (name, from) =>
+          onSave={async (name, from, rules) =>
             changeRoster((r) =>
-              from === null ? addCharacter(r, name) : renameCharacter(r, from, name),
+              setCharacterRules(
+                from === null ? addCharacter(r, name) : renameCharacter(r, from, name),
+                name,
+                rules,
+              ),
             )
           }
           onDelete={async (name) => changeRoster((r) => removeCharacter(r, name))}
