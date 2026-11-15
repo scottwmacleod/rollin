@@ -86,7 +86,7 @@ import {
   MenuItem,
   MenuTrigger,
 } from "./ui";
-import { TOUCH, useMedia, WIDE } from "./useMedia";
+import { SMALL, TOUCH, useMedia, WIDE } from "./useMedia";
 import { VariableDialog, type VariableDialogMode } from "./VariableDialog";
 
 export function App() {
@@ -129,6 +129,7 @@ export function App() {
   const update = useUpdate();
   const wide = useMedia(WIDE);
   const touch = useMedia(TOUCH);
+  const small = useMedia(SMALL);
   /** Auto shows the keypad on touch screens, whatever their width. */
   const keypadOn = settings.keypad === "on" || (settings.keypad === "auto" && touch);
   /** The character formulas roll for; `null` until storage has been read. */
@@ -619,7 +620,7 @@ export function App() {
     </>
   );
   // Save as preset gets its own button except where the keypad leaves no room for one.
-  const saveInMenu = !wide && (keypadOn || touch);
+  const saveInMenu = !wide && (keypadOn || touch || small);
   const saveDisabled = presets === null || acting === null;
   const barButton =
     "inline-flex h-10 max-md:h-11 items-center justify-center rounded-md border border-line-strong px-3 text-sm text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";

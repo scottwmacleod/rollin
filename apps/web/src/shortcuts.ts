@@ -1,4 +1,4 @@
-import { TOUCH, useMedia } from "./useMedia";
+import { ROOMY, TOUCH, useMedia } from "./useMedia";
 
 /** Whether this device's modifier key is ⌘. */
 export function isApple(): boolean {
@@ -12,8 +12,9 @@ export function shortcutText(key: string, apple: boolean): string {
   return apple ? `⌘${key.toUpperCase()}` : `Ctrl+${key.toUpperCase()}`;
 }
 
-/** The hint to show beside a shortcut's button, or `null` on a touch screen, where there is no keyboard to hint at. */
+/** The hint to show beside a shortcut's button, or `null` on a touch screen (no keyboard to hint at) or a window too narrow to fit it. */
 export function useShortcutHint(key: string): string | null {
   const touch = useMedia(TOUCH);
-  return touch ? null : shortcutText(key, isApple());
+  const roomy = useMedia(ROOMY);
+  return touch || !roomy ? null : shortcutText(key, isApple());
 }
