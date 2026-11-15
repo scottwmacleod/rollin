@@ -9,6 +9,7 @@ import {
   buildPartial,
   type Choices,
   CURRENT_VERSION,
+  characterFilename,
   describeAdd,
   describePartialSummary,
   describeSummary,
@@ -538,5 +539,54 @@ describe("Add", () => {
     const storage = memoryStorage();
     await applyAdd(storage, { characters: [], globalPresets: {} }, none);
     expect(await storage.get("characters")).toBeUndefined();
+  });
+});
+
+describe("single-character export", () => {
+  const grog = {
+    name: "grog",
+    vars: { str: 5, dex: 2 },
+    presets: { atk: "d20+@str", sneak: "d20+5, 2d6" },
+    system: "dnd5e" as const,
+    critRange: 19,
+  };
+
+  it("writes a partial file holding just that character, with no global presets or active character", () => {
+    const file = buildPartial({ characters: [grog] }, new Date("2026-11-15T08:00:00.000Z"));
+    expect(file.kind).toBe("partial");
+    expect(file.data).toEqual({ characters: { characters: [grog] } });
+    const parsed = parseBackup(JSON.stringify(file));
+    expect(parsed.ok && parsed.backup.kind).toBe("partial");
+    expect(parsed.ok && parsed.backup.data).toEqual({ characters: [grog] });
+  });
+
+  it("adds into another roster unchanged", () => {
+    const parsed = parseBackup(JSON.stringify(buildPartial({ characters: [grog] })));
+    if (!parsed.ok) throw new Error(parsed.error);
+    const saved: Saved = {
+      roster: {
+        active: "default",
+        characters: [{ name: "default", vars: {}, presets: {} }],
+      },
+      globalPresets: { fireball: "8d6" },
+    };
+    const result = addToSaved(saved, incomingOf(parsed.backup), {
+      characters: {},
+      presets: {},
+    });
+    expect(result.roster.characters.find((c) => c.name === "grog")).toEqual(grog);
+    expect(result.roster.active).toBe("default");
+    expect(result.globalPresets).toEqual({ fireball: "8d6" });
+    expect(describeAdd(result.counts)).toBe("Added 1 character.");
+  });
+
+  it("names the file after the character and the date, safe for file systems", () => {
+    const now = new Date("2026-11-15T08:00:00.000Z");
+    expect(characterFilename("grog", now)).toBe("rollin-character-grog-2026-11-15.json");
+    expect(characterFilename("Grog the/Brave: 2?", now)).toBe(
+      "rollin-character-grog-the-brave-2-2026-11-15.json",
+    );
+    expect(characterFilename("backup", now)).toBe("rollin-character-backup-2026-11-15.json");
+    expect(characterFilename("///", now)).toBe("rollin-character-unnamed-2026-11-15.json");
   });
 });

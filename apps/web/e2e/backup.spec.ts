@@ -405,3 +405,87 @@ test("settings credits its maker with a link", async ({ page }) => {
   await expect(link).toHaveAttribute("href", "https://scottmacleod.co");
   await expect(page.getByRole("dialog")).toContainText("Built by");
 });
+
+test("export one character, clear storage, add the file: it rolls the same", async ({
+  page,
+}, testInfo) => {
+  await page.addInitScript(() =>
+    Object.assign(window, {
+      __rollinDice: [
+        { sides: 20, face: 19 },
+        { sides: 8, face: 2 },
+        { sides: 8, face: 5 },
+      ],
+    }),
+  );
+  await page.goto("/");
+  await page.getByRole("button", { name: "New character" }).click();
+  let dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("button", { name: "Export" })).toHaveCount(0);
+  await dialog.getByLabel("Name").fill("Grog");
+  await dialog.getByLabel("Game system").selectOption("dnd5e");
+  await dialog.getByLabel("Crit range").fill("19");
+  await dialog.getByRole("button", { name: "Create" }).click();
+  await expect(dialog).toBeHidden();
+  await page.getByRole("button", { name: "New variable" }).click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name").fill("str");
+  await dialog.getByLabel("Value").fill("5");
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await page.getByRole("button", { name: "New preset" }).click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name").fill("atk");
+  await dialog.getByLabel("Formula").fill("d20+@str, 1d8+3");
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(dialog).toBeHidden();
+
+  await page.getByRole("button", { name: "Edit grog" }).click();
+  dialog = page.getByRole("dialog");
+  // The export is of the saved character, not of what is typed here.
+  await dialog.getByLabel("Name").fill("unsaved");
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  const download = page.waitForEvent("download");
+  await dialog.getByRole("button", { name: "Export" }).click();
+  const got = await download;
+  expect(got.suggestedFilename()).toMatch(/^rollin-character-grog-\d{4}-\d{2}-\d{2}\.json$/);
+  await expect(dialog.getByRole("status")).toHaveText("Exported grog.");
+  await expect(dialog.getByRole("button", { name: "Export" })).toBeFocused();
+  const file = testInfo.outputPath("grog.json");
+  await got.saveAs(file);
+  const saved = JSON.parse(readFileSync(file, "utf8"));
+  expect(saved).toMatchObject({ format: "rollin-backup", version: 2, kind: "partial" });
+  expect(saved.data.globalPresets).toBeUndefined();
+  expect(saved.data.characters.active).toBeUndefined();
+  expect(saved.data.characters.characters).toEqual([
+    {
+      name: "grog",
+      vars: { str: 5 },
+      presets: { atk: "d20+@str, 1d8+3" },
+      system: "dnd5e",
+      critRange: 19,
+    },
+  ]);
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+
+  await clearStorage(page);
+  await page.reload();
+  await expect(sidebar(page)).toContainText("No presets yet");
+
+  const settings = await openSettings(page);
+  await settings.getByLabel("Backup file").setInputFiles(file);
+  await expect(settings.getByRole("button", { name: "Replace my data" })).toHaveCount(0);
+  await settings.getByRole("button", { name: "Add to my data" }).click();
+  await expect(settings.getByRole("status")).toHaveText("Added 1 character.");
+  await settings.getByRole("button", { name: "Done" }).click();
+
+  await characters(page).getByRole("button", { name: /^grog/ }).click();
+  await expect(sidebar(page)).toContainText("atk");
+  await page.getByLabel("Formula").fill("d20+@str, 1d8+3");
+  await page.getByLabel("Formula").press("Enter");
+  await expect(page.getByRole("tree", { name: "Roll log" })).toContainText("Critical hit");
+  await page.getByRole("button", { name: "Edit grog" }).click();
+  dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Game system")).toHaveValue("dnd5e");
+  await expect(dialog.getByLabel("Crit range")).toHaveValue("19");
+});

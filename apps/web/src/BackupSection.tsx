@@ -182,6 +182,7 @@ export function BackupSection({
   }
 
   function cancelAdd() {
+    if (busyRef.current) return;
     setAsking(null);
     setPending(null);
     setMessage("Cancelled. Nothing was changed.");
@@ -364,7 +365,7 @@ export function BackupSection({
             </label>
           )}
           <div className="flex gap-2">
-            <Button type="button" onClick={cancelAdd} className={secondary}>
+            <Button type="button" onClick={cancelAdd} disabled={busy} className={secondary}>
               Cancel
             </Button>
           </div>

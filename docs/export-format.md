@@ -96,6 +96,7 @@ A **partial file** has `"kind": "partial"`. It holds only some characters and gl
 ```
 
 - `data.characters.characters` and `data.globalPresets` follow the same rules as in a full backup.
+- The character dialog's **Export** writes a partial file holding just that character (variables, presets, game system and crit range), named like `rollin-character-grog-2026-11-15.json`. It has no global presets. Add it on another device with **Add to my data**.
 - A partial file has no active character. Any `active` in it is ignored.
 - `data.settings` and `data.rollLog` only mean something in a full backup. They are ignored in a partial file.
 - A partial file can be added to your data, but it can't replace your data. Replace needs a full backup.

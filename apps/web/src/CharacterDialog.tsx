@@ -1,5 +1,6 @@
 import { type GameSystem, validateCharacterName } from "@rollin/engine";
 import { type FormEvent, useState } from "react";
+import { buildPartial, characterFilename, downloadBackup } from "./backup";
 import { GAME_SYSTEMS, isCritRange, type Roster, type Rules } from "./characters";
 import { CONFIRM_NO, CONFIRM_YES, FIELD, OVERLAY, PRIMARY, SECONDARY } from "./dialogStyles";
 import {
@@ -45,6 +46,7 @@ export function CharacterDialog({
   const [critText, setCritText] = useState(existing?.critRange ? String(existing.critRange) : "");
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [exported, setExported] = useState<string | null>(null);
 
   const checked = validateCharacterName(name.trim());
   const stored = "name" in checked ? checked.name : null;
@@ -82,6 +84,13 @@ export function CharacterDialog({
     }
   }
 
+  /** Downloads the saved character as a partial file; unsaved edits in the dialog are not in it. */
+  function exportCharacter() {
+    if (existing === undefined) return;
+    downloadBackup(buildPartial({ characters: [existing] }), characterFilename(existing.name));
+    setExported(`Exported ${existing.name}.`);
+  }
+
   async function remove() {
     if (editing === null) return;
     setSaving(true);
@@ -105,7 +114,7 @@ export function CharacterDialog({
             <DialogDescription className="m-0 text-sm text-muted">
               {editing === null
                 ? "A character keeps its own variables and presets. Creating one switches to it."
-                : "Rename this character, or delete it with its variables and presets."}
+                : "Rename this character, export it to a file, or delete it with its variables and presets."}
             </DialogDescription>
           </div>
 
@@ -117,7 +126,10 @@ export function CharacterDialog({
             <FieldLabel className="text-sm text-text-2">Name</FieldLabel>
             <Input
               value={name}
-              onValueChange={setName}
+              onValueChange={(v) => {
+                setName(v);
+                setExported(null);
+              }}
               placeholder="aria"
               autoComplete="off"
               autoCapitalize="off"
@@ -140,7 +152,10 @@ export function CharacterDialog({
             <select
               id="game-system"
               value={system}
-              onChange={(e) => setSystem(e.target.value as GameSystem | "")}
+              onChange={(e) => {
+                setSystem(e.target.value as GameSystem | "");
+                setExported(null);
+              }}
               className={FIELD}
             >
               <option value="">None</option>
@@ -165,7 +180,10 @@ export function CharacterDialog({
               <FieldLabel className="text-sm text-text-2">Crit range</FieldLabel>
               <Input
                 value={critText}
-                onValueChange={setCritText}
+                onValueChange={(v) => {
+                  setCritText(v);
+                  setExported(null);
+                }}
                 placeholder="20"
                 inputMode="numeric"
                 autoComplete="off"
@@ -203,11 +221,33 @@ export function CharacterDialog({
                   Delete
                 </Button>
               )}
+              {existing !== undefined && (
+                <Button
+                  type="button"
+                  onClick={exportCharacter}
+                  disabled={saving}
+                  className={`${SECONDARY} max-md:h-11`}
+                >
+                  Export
+                </Button>
+              )}
               <span className="flex-1" />
               <DialogClose className={SECONDARY}>Cancel</DialogClose>
               <Button type="submit" disabled={!ready || saving} className={PRIMARY}>
                 {editing === null ? "Create" : "Save"}
               </Button>
+            </div>
+          )}
+
+          {existing !== undefined && !confirming && (
+            <div className="flex flex-col gap-1 text-sm text-muted">
+              <span>
+                Export downloads this character as saved, without any unsaved changes here. Add the
+                file from Settings on another device.
+              </span>
+              <span role="status" className="min-h-5 text-text-2">
+                {exported}
+              </span>
             </div>
           )}
         </form>
