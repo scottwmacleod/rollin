@@ -1,6 +1,7 @@
 import { roll } from "@rollin/engine";
 import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { dieSource } from "./dice";
+import { Keypad } from "./Keypad";
 import { PresetDialog, type PresetDialogMode } from "./PresetDialog";
 import { PresetSidebar } from "./PresetSidebar";
 import { cleanPresets, loadPresets, PRESETS_KEY, type PresetMap, updatePresets } from "./presets";
@@ -125,8 +126,8 @@ export function App() {
     );
   }
 
-  function submit(event: FormEvent) {
-    event.preventDefault();
+  function submit(event?: FormEvent) {
+    event?.preventDefault();
     const text = formula.trim();
     if (text !== "") rollLine(text);
   }
@@ -171,7 +172,7 @@ export function App() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-4 py-10">
+    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-4 py-4 md:py-10">
       <header className="flex items-center justify-between gap-4">
         <span className="wordmark">
           <img
@@ -202,7 +203,7 @@ export function App() {
           <Button
             type="button"
             onClick={update.reload}
-            className="h-8 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+            className="h-8 max-md:h-11 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
           >
             Reload to update
           </Button>
@@ -237,14 +238,14 @@ export function App() {
                 <Button
                   type="button"
                   onClick={clearLog}
-                  className="h-8 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+                  className="h-8 max-md:h-11 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
                 >
                   Yes, clear
                 </Button>
                 <Button
                   type="button"
                   onClick={() => setConfirming(false)}
-                  className="h-8 rounded-md border border-line-strong px-3 text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+                  className="h-8 max-md:h-11 rounded-md border border-line-strong px-3 text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
                 >
                   Cancel
                 </Button>
@@ -254,7 +255,7 @@ export function App() {
                 <Button
                   type="button"
                   onClick={() => setConfirming(true)}
-                  className="h-8 rounded-md border border-line-strong px-3 text-sm text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+                  className="h-8 max-md:h-11 rounded-md border border-line-strong px-3 text-sm text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
                 >
                   Clear
                 </Button>
@@ -284,12 +285,12 @@ export function App() {
             autoFocus
             ref={input}
             onKeyDown={focusLog}
-            className="h-10 w-full rounded-md border border-line-strong bg-surface px-3 font-mono text-text placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+            className="h-10 max-md:h-11 w-full rounded-md border border-line-strong bg-surface px-3 font-mono text-text placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
           />
         </Field>
         <Button
           type="submit"
-          className="inline-flex h-10 items-center justify-center rounded-md bg-signal px-5 text-sm font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+          className="max-md:hidden inline-flex h-10 max-md:h-11 items-center justify-center rounded-md bg-signal px-5 text-sm font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
         >
           Roll
         </Button>
@@ -297,10 +298,11 @@ export function App() {
           type="button"
           disabled={presets === null}
           onClick={() => openDialog({ kind: "new", formula: formula.trim() })}
-          className="inline-flex h-10 items-center justify-center rounded-md border border-line-strong px-4 text-sm text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text disabled:opacity-50"
+          className="inline-flex h-10 max-md:h-11 items-center justify-center rounded-md border border-line-strong px-4 text-sm text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text disabled:opacity-50"
         >
           Save as preset
         </Button>
+        <Keypad formula={formula} onChange={setFormula} onRoll={() => submit()} />
       </form>
 
       {dialog !== null && presets !== null && (
