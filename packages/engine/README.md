@@ -24,9 +24,11 @@ const report = roll("4d6dl1 # strength", dieSource);
 | `keep_drop`, `exploding`, `rerolls`, `success_counting` | 73    | covered                                   |
 | `labels_repeats`                                        | 18    | covered                                   |
 | `errors`                                                | 35    | covered, except the cases listed below    |
-| `presets`                                               | 15    | waits for presets (#229)                  |
+| `presets`                                               | 15    | covered, except the cases listed below    |
 | `characters`                                            | 15    | waits for characters and variables (#232) |
 | `d20_checks`, `dnd5e`                                   | 95    | wait for the 5e game system (#234)        |
+
+Three `presets` cases wait: two on variables (#232, `preset_variables_resolve_when_rolled`, `preset_undefined_variable`), `preset_dnd5e_crit` on the 5e game system, and `preset_repeat` on the d20 check rule (its fixture rolls a natural 20), both #234.
 
 Two `errors` cases differ on purpose (`overflow_add`, `overflow_mul`): this engine keeps every number inside JavaScript's safe integers, so it reports "number is too large" where the Rust engine's 64-bit sums overflowed. `DIVERGENT` in the parity test records what it says instead.
 
@@ -34,4 +36,4 @@ Two `errors` cases differ on purpose (`overflow_add`, `overflow_mul`): this engi
 
 ## Property tests
 
-Each Rust property test has a fast-check equivalent, except the ones that wait on a later ticket: preset names and the command parser (#229) and variables (#232).
+Each Rust property test has a fast-check equivalent, except the ones that wait on a later ticket: the command parser (the web app has no command line) and variables (#232). Preset names and rolling a preset by name are ported in `presets.test.ts`.

@@ -4,8 +4,9 @@
  * line, and expects the same result, the same dice asked for in the same order,
  * and every draw used.
  *
- * This loop covers dice terms and integer arithmetic with their limits and
- * errors. Whatever syntax a later loop of #216 adds moves out of `DEFERRED`
+ * This covers dice terms, integer arithmetic with their limits and errors, and
+ * presets (global, and a character's own, which shadow them). Whatever syntax
+ * a later loop of #216 adds moves out of `DEFERRED`
  * and into the run, so the list shrinks until it is empty.
  */
 import { readdirSync, readFileSync } from "node:fs";
@@ -13,10 +14,15 @@ import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { type Draw, roll, scriptedDice } from "./index";
 
+interface Context {
+  character?: { name: string; presets?: Record<string, string> };
+  global_presets?: Record<string, string>;
+}
+
 interface Case {
   name: string;
   line: string;
-  context?: unknown;
+  context?: Context;
   draws: Draw[];
   expected: unknown;
 }
@@ -39,7 +45,6 @@ const DEFERRED_AREAS: Record<string, string> = {
   characters: "characters and variables (loop 5)",
   d20_checks: "the d20 check rule (loop 5)",
   dnd5e: "game systems (loop 5)",
-  presets: "presets (loop 4)",
 };
 
 /** Single cases in covered areas that use syntax a later loop brings. */
@@ -51,10 +56,10 @@ const DEFERRED_CASES: Record<string, string> = {
   "errors/undefined_variable_other_character": "variables (loop 5)",
   "errors/variable_in_division_error": "variables (loop 5)",
   "errors/variable_in_limit_error": "variables (loop 5)",
-  "errors/unknown_preset": "presets (loop 4)",
-  "errors/unknown_preset_suggestion": "presets (loop 4)",
-  "errors/unknown_preset_global_suggestion": "presets (loop 4)",
-  "errors/roll_keyword_unknown": "presets (loop 4)",
+  "presets/preset_variables_resolve_when_rolled": "variables (loop 5)",
+  "presets/preset_undefined_variable": "variables (loop 5)",
+  "presets/preset_repeat": "the d20 check rule marks a natural 20 (loop 5)",
+  "presets/preset_dnd5e_crit": "game systems (loop 5)",
   "errors/session_word_one_shot": "a command-line-only message, gone with the CLI (#239)",
 };
 
@@ -120,7 +125,10 @@ for (const area of areas) {
       if (key in DEFERRED_CASES) continue;
       test(fixture.name, () => {
         const dice = scriptedDice(fixture.draws);
-        const result = roll(fixture.line, dice);
+        const result = roll(fixture.line, dice, {
+          globalPresets: fixture.context?.global_presets,
+          characterPresets: fixture.context?.character?.presets,
+        });
         expect(json(result)).toEqual(key in DIVERGENT ? DIVERGENT[key] : fixture.expected);
         // A roll that finishes (or fails) has used exactly the dice the Rust engine drew.
         if (!(key in DIVERGENT)) expect(dice.remaining()).toBe(0);

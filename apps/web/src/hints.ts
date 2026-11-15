@@ -8,7 +8,7 @@ export function hintText(hint: Hint): string {
     case "did_you_mean_variable":
       return `did you mean @${hint.name}?`;
     case "list_presets":
-      return "hint: run `presets` to list saved presets";
+      return "hint: your saved presets are in the sidebar";
     case "create_character":
       return `hint: create it with: char new ${hint.name}`;
     case "set_variable":

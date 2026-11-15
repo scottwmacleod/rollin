@@ -370,3 +370,154 @@ test.describe("settings", () => {
     expect(await bgOf(page)).toBe(dark);
   });
 });
+
+test.describe("global presets", () => {
+  const log = (page: import("@playwright/test").Page) =>
+    page.getByRole("tree", { name: "Roll log" });
+
+  async function savePreset(page: import("@playwright/test").Page, name: string, formula: string) {
+    await page.getByRole("button", { name: "New preset" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Name").fill(name);
+    await dialog.getByLabel("Formula").fill(formula);
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(dialog).toBeHidden();
+  }
+
+  test("save, roll, edit, delete and reload", async ({ page }) => {
+    await page.addInitScript(() =>
+      Object.assign(window, {
+        __rollinDice: [
+          { sides: 20, face: 7 },
+          { sides: 20, face: 12 },
+        ],
+      }),
+    );
+    await page.goto("/");
+    const sidebar = page.getByRole("complementary", { name: "Presets" });
+    await expect(sidebar).toContainText("No presets yet");
+
+    // Save the current formula as a preset.
+    await page.getByLabel("Formula").fill("d20+5");
+    await page.getByRole("button", { name: "Save as preset" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByLabel("Formula")).toHaveValue("d20+5");
+    await dialog.getByLabel("Name").fill("Attack");
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations).toEqual([]);
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(dialog).toBeHidden();
+    await expect(sidebar.getByRole("button", { name: "attack d20+5" })).toBeVisible();
+
+    // Roll it with one click: the log carries the preset's name.
+    await sidebar.getByRole("button", { name: "attack d20+5" }).click();
+    await expect(log(page)).toContainText("attack · d20+5");
+    await expect(log(page)).toContainText("total 12");
+    await expect(page.getByRole("status")).toHaveText("Rolled attack (d20+5): total 12");
+
+    // Typing the name rolls it too.
+    await page.getByLabel("Formula").fill("ATTACK");
+    await page.getByLabel("Formula").press("Enter");
+    await expect(log(page)).toContainText("total 17");
+
+    // Survives a reload.
+    await page.reload();
+    await expect(sidebar.getByRole("button", { name: "attack d20+5" })).toBeVisible();
+
+    // Edit: rename and change the formula.
+    await sidebar.getByRole("button", { name: "Edit attack" }).click();
+    await dialog.getByLabel("Name").fill("strike");
+    await dialog.getByLabel("Formula").fill("d20+7");
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(sidebar.getByRole("button", { name: "strike d20+7" })).toBeVisible();
+    await expect(sidebar.getByRole("button", { name: "attack d20+5" })).toHaveCount(0);
+    // The renamed preset's old Edit button is gone, so focus lands in the formula box.
+    await expect(page.getByLabel("Formula")).toBeFocused();
+
+    // Delete, after a confirmation.
+    await sidebar.getByRole("button", { name: "Edit strike" }).click();
+    await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+    await dialog.getByRole("button", { name: "Keep it" }).click();
+    await dialog.getByRole("button", { name: "Delete", exact: true }).click();
+    await dialog.getByRole("button", { name: "Yes, delete" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(sidebar).toContainText("No presets yet");
+    await expect(page.getByLabel("Formula")).toBeFocused();
+    await page.reload();
+    await expect(sidebar).toContainText("No presets yet");
+  });
+
+  test("names and formulas are checked as the Rust engine checks them", async ({ page }) => {
+    await page.goto("/");
+    await savePreset(page, "atk", "d20+5");
+
+    await page.getByRole("button", { name: "New preset" }).click();
+    const dialog = page.getByRole("dialog");
+    const save = dialog.getByRole("button", { name: "Save", exact: true });
+
+    await dialog.getByLabel("Name").fill("save");
+    await expect(dialog).toContainText("it is a command word");
+    await expect(save).toBeDisabled();
+    await dialog.getByLabel("Name").fill("d6");
+    await expect(dialog).toContainText("it would parse as the dice formula d6");
+    await dialog.getByLabel("Name").fill("9lives");
+    await expect(dialog).toContainText("names must start with a letter");
+
+    await dialog.getByLabel("Name").fill("bad");
+    await dialog.getByLabel("Formula").fill("d20+");
+    await expect(dialog).toContainText(
+      "error: expected a number, a dice group or '(', found end of input",
+    );
+    await expect(save).toBeDisabled();
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations).toEqual([]);
+
+    // A name that is taken says so and the button says Replace.
+    await dialog.getByLabel("Name").fill("ATK");
+    await dialog.getByLabel("Formula").fill("d20+9");
+    await expect(dialog).toContainText("already exists");
+    await dialog.getByRole("button", { name: "Replace" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole("button", { name: "atk d20+9" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^atk d20/ })).toHaveCount(1);
+  });
+
+  test("Escape and Cancel close the dialog without saving", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "New preset" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Name").fill("nope");
+    await dialog.getByLabel("Formula").fill("d4");
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole("button", { name: "New preset" })).toBeFocused();
+    await expect(page.getByRole("complementary", { name: "Presets" })).toContainText(
+      "No presets yet",
+    );
+  });
+
+  test("an unknown name suggests a saved one", async ({ page }) => {
+    await page.goto("/");
+    await savePreset(page, "fireball", "8d6");
+    await page.getByLabel("Formula").fill("firebal");
+    await page.getByLabel("Formula").press("Enter");
+    await expect(log(page)).toContainText("'firebal' is not a valid formula or a known preset");
+    await expect(log(page)).toContainText("hint: did you mean 'fireball'?");
+  });
+
+  test("a preset saved in one tab appears in another, and a delete follows", async ({
+    context,
+  }) => {
+    const a = await context.newPage();
+    const b = await context.newPage();
+    await a.goto("/");
+    await b.goto("/");
+    await savePreset(a, "smite", "2d8+3");
+    await expect(b.getByRole("button", { name: "smite 2d8+3" })).toBeVisible();
+
+    await b.getByRole("button", { name: "Edit smite" }).click();
+    await b.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
+    await b.getByRole("button", { name: "Yes, delete" }).click();
+    await expect(a.getByRole("button", { name: "smite 2d8+3" })).toHaveCount(0);
+  });
+});

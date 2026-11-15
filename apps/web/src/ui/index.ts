@@ -16,4 +16,4 @@ export {
 } from "@ui-sdk/react/dialog";
 export { Tree, TreeGroup, TreeItem, TreeItemIndicator, TreeItemLabel } from "@ui-sdk/react/tree";
 export { Button } from "./button";
-export { Field, FieldLabel, Input } from "./input";
+export { Field, FieldError, FieldLabel, Input } from "./input";
