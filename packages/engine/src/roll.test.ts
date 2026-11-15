@@ -147,6 +147,62 @@ describe("the die source", () => {
   });
 });
 
+describe("success counting", () => {
+  const sixes = (...values: number[]) => scriptedDice(values.map((face) => ({ sides: 6, face })));
+
+  test("a failure subtracts, so the total can be negative", () => {
+    const [result] = ok(roll("3d6>=5f<=2", sixes(1, 2, 6))).rolls;
+    expect(result).toMatchObject({ kind: "count", total: -1 });
+    expect(result?.expr).toMatchObject({
+      kind: "count",
+      successes: 1,
+      failures: 2,
+      dice: [{ outcome: "failure" }, { outcome: "failure" }, { outcome: "success" }],
+    });
+  });
+
+  test("a die that is neither carries no outcome", () => {
+    const [result] = ok(roll("d6>=5", sixes(3))).rolls;
+    expect(result?.expr).toMatchObject({ dice: [{ value: 3 }], subtotal: 0 });
+    expect(result?.expr).not.toHaveProperty("dice.0.outcome");
+  });
+
+  test("a count cannot be an operand, with or without parentheses", () => {
+    for (const line of ["d6>=3+1", "1+d6>=3", "-d6>=3", "(d6>=3)*2"]) {
+      expect(failure(roll(line, always(6))).error.kind, line).toBe("count_in_arithmetic");
+    }
+  });
+
+  test("a failure clause alone is a syntax error", () => {
+    expect(failure(roll("4d6f1", always(6))).message).toBe(
+      "a failure clause 'f' must follow a success clause, as in 6d10>=8f1",
+    );
+  });
+});
+
+describe("labels and repeats", () => {
+  const d = (faces: number[]): DieSource => {
+    let i = 0;
+    return () => faces[i++] ?? 1;
+  };
+  test("a label trails its roll and a repeat numbers each pass", () => {
+    const report = roll("2x d6 # hit, d4", d([3, 2, 5, 4]));
+    if (!("ok" in report)) throw new Error("expected rolls");
+    expect(report.ok.rolls.map((r) => [r.iteration, r.label, r.total])).toEqual([
+      [1, "hit", 3],
+      [1, undefined, 2],
+      [2, "hit", 5],
+      [2, undefined, 4],
+    ]);
+  });
+  test("a label with no roll, or a mid-formula repeat, is a syntax error", () => {
+    for (const line of ["# x", "d20, # x", "d6 + 2x d6"]) {
+      const report = roll(line, d([]));
+      expect("error" in report, line).toBe(true);
+    }
+  });
+});
+
 describe("special dice", () => {
   test("d% is a d100 marked percentile, and the term is kept as typed", () => {
     const dice = scriptedDice([

@@ -41,17 +41,17 @@ const DEFERRED_AREAS: Record<string, string> = {
   dnd5e: "game systems (loop 5)",
   exploding: "exploding dice (loop 3)",
   keep_drop: "keep and drop (loop 3)",
-  labels_repeats: "labels and repeats (loop 3)",
   presets: "presets (loop 4)",
   rerolls: "rerolls (loop 3)",
-  success_counting: "success counting (loop 3)",
 };
 
 /** Single cases in covered areas that use syntax a later loop brings. */
 const DEFERRED_CASES: Record<string, string> = {
   "limits/dice_per_term_exploding": "exploding dice (loop 3)",
-  "limits/repeat_cap": "repeats (loop 3)",
   "limits/explosion_cap_after_other_rolls": "exploding dice (loop 3)",
+  "labels_repeats/list": "keep and drop (loop 3)",
+  "labels_repeats/list_mixed": "keep and drop, advantage, success counting (loop 3)",
+  "labels_repeats/repeat": "keep and drop (loop 3)",
   "errors/syntax_bare_reroll": "rerolls (loop 3)",
   "errors/undefined_variable": "variables (loop 5)",
   "errors/undefined_variable_suggestion": "variables (loop 5)",
@@ -59,6 +59,8 @@ const DEFERRED_CASES: Record<string, string> = {
   "errors/undefined_variable_other_character": "variables (loop 5)",
   "errors/variable_in_division_error": "variables (loop 5)",
   "errors/variable_in_limit_error": "variables (loop 5)",
+  "success_counting/count_after_drop": "keep and drop (loop 3)",
+  "success_counting/count_after_keep": "keep and drop (loop 3)",
   "errors/unknown_preset": "presets (loop 4)",
   "errors/unknown_preset_suggestion": "presets (loop 4)",
   "errors/unknown_preset_global_suggestion": "presets (loop 4)",

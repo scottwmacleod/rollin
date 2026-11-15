@@ -22,6 +22,16 @@ export const limitExceeded = (cap: Cap, term: string, span: Span): FormulaFailur
 export const divisionByZero = (span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "division_by_zero", span });
 
+export const countInArithmetic = (span: Span): FormulaFailure =>
+  new FormulaFailure({ kind: "count_in_arithmetic", span });
+
+export const repeatWithoutDice = (
+  body: string,
+  multiplication: string | null,
+  span: Span,
+): FormulaFailure =>
+  new FormulaFailure({ kind: "repeat_without_dice", body, multiplication, span });
+
 export const overflow = (span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "overflow", span });
 
@@ -42,14 +52,21 @@ export function messageOf(error: FormulaError): string {
       return error.message;
     case "limit_exceeded":
       return `${CAP_NAMES[error.cap]} cap (${error.limit}) exceeded by '${error.term}'`;
+    case "count_in_arithmetic":
+      return "a success count cannot be used in arithmetic; use it as a whole roll, or drop the success clause to sum the dice";
     case "division_by_zero":
       return "division by zero";
     case "overflow":
       return "arithmetic overflow";
+    case "repeat_without_dice":
+      return `'x' means repeat, and '${error.body}' has no dice to repeat`;
   }
 }
 
-/** Suggestions for fixing the error. None of this subset's errors has one yet. */
-export function hintsOf(_error: FormulaError): Hint[] {
+/** Suggestions for fixing the error, as data. */
+export function hintsOf(error: FormulaError): Hint[] {
+  if (error.kind === "repeat_without_dice") {
+    return [{ kind: "use_multiplication", suggestion: error.multiplication }];
+  }
   return [];
 }
