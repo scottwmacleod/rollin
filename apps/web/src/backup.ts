@@ -573,6 +573,16 @@ export function backupFilename(now: Date = new Date()): string {
   return `rollin-backup-${now.toISOString().slice(0, 10)}.json`;
 }
 
+/** The file name for one exported character: `rollin-grog-2026-11-15.json`. Anything a file system may refuse becomes a hyphen. */
+export function characterFilename(name: string, now: Date = new Date()): string {
+  const safe =
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "character";
+  return `rollin-${safe}-${now.toISOString().slice(0, 10)}.json`;
+}
+
 // --- Backup reminder -------------------------------------------------------
 
 export const BACKUP_STATE_KEY = "backupState";
@@ -615,14 +625,17 @@ export function reminderDue(state: BackupState, now: number): boolean {
   return state.dismissedAt === undefined || now - state.dismissedAt >= SNOOZE_MS;
 }
 
-/** Hands the browser a JSON file to save. */
-export function downloadBackup(backup: Backup): void {
+/** Hands the browser a JSON file to save, named `filename` or, by default, for a full backup. */
+export function downloadBackup(
+  backup: Backup | PartialFileJson,
+  filename: string = backupFilename(),
+): void {
   const url = URL.createObjectURL(
     new Blob([`${JSON.stringify(backup, null, 2)}\n`], { type: "application/json" }),
   );
   const link = document.createElement("a");
   link.href = url;
-  link.download = backupFilename();
+  link.download = filename;
   document.body.append(link);
   link.click();
   link.remove();

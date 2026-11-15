@@ -1,5 +1,6 @@
 import { type GameSystem, validateCharacterName } from "@rollin/engine";
 import { type FormEvent, useState } from "react";
+import { buildPartial, characterFilename, downloadBackup } from "./backup";
 import { GAME_SYSTEMS, isCritRange, type Roster, type Rules } from "./characters";
 import { CONFIRM_NO, CONFIRM_YES, FIELD, OVERLAY, PRIMARY, SECONDARY } from "./dialogStyles";
 import {
@@ -45,6 +46,7 @@ export function CharacterDialog({
   const [critText, setCritText] = useState(existing?.critRange ? String(existing.critRange) : "");
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [exported, setExported] = useState<string | null>(null);
 
   const checked = validateCharacterName(name.trim());
   const stored = "name" in checked ? checked.name : null;
@@ -80,6 +82,13 @@ export function CharacterDialog({
     } finally {
       setSaving(false);
     }
+  }
+
+  /** Downloads the saved character as a partial file; unsaved edits in the dialog are not in it. */
+  function exportCharacter() {
+    if (existing === undefined) return;
+    downloadBackup(buildPartial({ characters: [existing] }), characterFilename(existing.name));
+    setExported(`Exported ${existing.name}.`);
   }
 
   async function remove() {
@@ -203,11 +212,32 @@ export function CharacterDialog({
                   Delete
                 </Button>
               )}
+              {existing !== undefined && (
+                <Button
+                  type="button"
+                  onClick={exportCharacter}
+                  className={`${SECONDARY} max-md:h-11`}
+                >
+                  Export
+                </Button>
+              )}
               <span className="flex-1" />
               <DialogClose className={SECONDARY}>Cancel</DialogClose>
               <Button type="submit" disabled={!ready || saving} className={PRIMARY}>
                 {editing === null ? "Create" : "Save"}
               </Button>
+            </div>
+          )}
+
+          {existing !== undefined && (
+            <div className="flex flex-col gap-1 text-sm text-muted">
+              <span>
+                Export downloads this character as saved, without any unsaved changes here. Add the
+                file from Settings on another device.
+              </span>
+              <span role="status" className="min-h-5 text-text-2">
+                {exported}
+              </span>
             </div>
           )}
         </form>

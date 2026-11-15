@@ -364,7 +364,7 @@ export function BackupSection({
             </label>
           )}
           <div className="flex gap-2">
-            <Button type="button" onClick={cancelAdd} className={secondary}>
+            <Button type="button" onClick={cancelAdd} disabled={busy} className={secondary}>
               Cancel
             </Button>
           </div>
