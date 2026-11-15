@@ -75,6 +75,8 @@ export interface Die {
   parts?: number[];
   /** Set on a counting die that was a success or a failure. */
   outcome?: "success" | "failure";
+  /** Set on the kept die of a d20 check that rolled a natural 20 or a natural 1. */
+  natural?: "twenty" | "one";
   reason?: Reason;
 }
 
@@ -110,6 +112,10 @@ export interface Roll {
   label?: string;
   /** For a repeated formula (`Nx`), which repeat (from 1) this roll is in. */
   iteration?: number;
+  /** Under a game system: whether this attack was a critical hit or miss. */
+  crit?: "hit" | "miss";
+  /** Whether this roll's dice were doubled: by a `crit` suffix, or because its attack was a critical hit. */
+  doubled?: boolean;
 }
 
 export interface RollsReport {

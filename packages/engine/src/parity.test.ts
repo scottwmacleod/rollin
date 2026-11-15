@@ -5,7 +5,8 @@
  * and every draw used.
  *
  * This covers dice terms, integer arithmetic with their limits and errors,
- * presets (global, and a character's own, which shadow them) and `@variables`. Whatever syntax
+ * presets (global, and a character's own, which shadow them), `@variables`, d20 checks and
+ * D&D 5e crits. Whatever syntax
  * a later loop of #216 adds moves out of `DEFERRED`
  * and into the run, so the list shrinks until it is empty.
  */
@@ -15,8 +16,15 @@ import { describe, expect, test } from "vitest";
 import { type Draw, roll, scriptedDice } from "./index";
 
 interface Context {
-  character?: { name: string; presets?: Record<string, string>; vars?: Record<string, number> };
+  character?: {
+    name: string;
+    presets?: Record<string, string>;
+    vars?: Record<string, number>;
+    system?: "dnd5e";
+    crit_range?: number;
+  };
   global_presets?: Record<string, string>;
+  default_system?: "dnd5e";
 }
 
 interface Case {
@@ -41,16 +49,10 @@ const areas: Area[] = readdirSync(FIXTURES)
   .map((file) => JSON.parse(readFileSync(join(FIXTURES, file), "utf8")) as Area);
 
 /** Areas whose syntax a later loop brings: every case in them waits. */
-const DEFERRED_AREAS: Record<string, string> = {
-  d20_checks: "the d20 check rule (loop 5)",
-  dnd5e: "game systems (loop 5)",
-};
+const DEFERRED_AREAS: Record<string, string> = {};
 
 /** Single cases in covered areas that use syntax a later loop brings. */
 const DEFERRED_CASES: Record<string, string> = {
-  "keep_drop/advantage_spaced": "the d20 check rule marks a natural 20 (loop 5)",
-  "presets/preset_repeat": "the d20 check rule marks a natural 20 (loop 5)",
-  "presets/preset_dnd5e_crit": "game systems (loop 5)",
   "errors/session_word_one_shot": "a command-line-only message, gone with the CLI (#239)",
 };
 
@@ -116,9 +118,17 @@ for (const area of areas) {
       if (key in DEFERRED_CASES) continue;
       test(fixture.name, () => {
         const dice = scriptedDice(fixture.draws);
+        const character = fixture.context?.character;
         const result = roll(fixture.line, dice, {
           globalPresets: fixture.context?.global_presets,
-          character: fixture.context?.character,
+          character: character && {
+            name: character.name,
+            presets: character.presets,
+            vars: character.vars,
+            system: character.system,
+            critRange: character.crit_range,
+          },
+          defaultSystem: fixture.context?.default_system,
         });
         expect(json(result)).toEqual(key in DIVERGENT ? DIVERGENT[key] : fixture.expected);
         // A roll that finishes (or fails) has used exactly the dice the Rust engine drew.

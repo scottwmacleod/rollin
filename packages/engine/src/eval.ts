@@ -1,5 +1,14 @@
 /** Evaluator: walks the syntax tree, drawing dice from the injected source. */
-import { type Arith, fails, isCount, type RollAst, type Select, succeeds, test } from "./ast";
+import {
+  type Arith,
+  fails,
+  isCount,
+  isD20Check,
+  type RollAst,
+  type Select,
+  succeeds,
+  test,
+} from "./ast";
 import type { DieSource } from "./dice";
 import { divisionByZero, limitExceeded, overflow } from "./errors";
 import { MAX_DICE_PER_ROLL, MAX_EXPLOSIONS_PER_DIE, MAX_INT, MAX_REROLLS_PER_DIE } from "./limits";
@@ -16,9 +25,13 @@ function nodeTotal(node: Exclude<Node, { type: "number" }>): number {
   return node.type === "dice" ? node.subtotal : node.total;
 }
 
-/** Evaluates one roll. */
-export function evaluate(roll: RollAst, dice: DieSource): Roll {
+/**
+ * Evaluates one roll. With `double`, every dice group rolls twice as many dice
+ * (flat numbers are untouched), as a critical hit's damage does.
+ */
+export function evaluate(roll: RollAst, dice: DieSource, double = false): Roll {
   let rolled = 0;
+  let doubled = 0;
   const walk = (expr: Arith): Node => {
     const kind = expr.kind;
     switch (kind.type) {
@@ -39,7 +52,9 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
         };
         const { reroll, explode, clauses } = term;
         const faces: Die[] = [];
-        for (let i = 0; i < term.count; i += 1) {
+        const count = double ? term.count * 2 : term.count;
+        if (double) doubled += 1;
+        for (let i = 0; i < count; i += 1) {
           let raw = draw();
           // The index of the last die this one's reroll replaced.
           let replaced: number | undefined;
@@ -169,7 +184,15 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
     }
   };
   const expr = walk(roll.expr);
+  if (isD20Check(roll.expr)) {
+    const die = checkDie(expr);
+    if (die) {
+      if (die.value === 20) die.natural = "twenty";
+      else if (die.value === 1) die.natural = "one";
+    }
+  }
   return {
+    ...(doubled > 0 ? { doubled: true } : {}),
     formula: roll.source,
     ...(isCount(roll.expr) ? { kind: "count" as const } : {}),
     total: total(expr),
@@ -231,4 +254,40 @@ function applyDrops(dice: Die[], { kind, n }: Select, clause: string): void {
       die.reason = { clause };
     }
   }
+}
+
+/**
+ * The kept die of a d20 check's evaluated tree: its single d20 group and the
+ * one die left standing in it. Rerolled and dropped dice are out, so `d20adv`
+ * and `2d20kh1` read the kept die. A compounded explosion is a sum, not a face.
+ */
+export function checkDie(root: Node): Die | undefined {
+  const groups: Extract<Node, { type: "dice" }>[] = [];
+  const collect = (node: Node): void => {
+    switch (node.type) {
+      case "dice":
+        if (node.sides === 20) groups.push(node);
+        break;
+      case "neg":
+        collect(node.operand);
+        break;
+      case "group":
+        collect(node.inner);
+        break;
+      case "chain":
+        collect(node.first);
+        for (const link of node.rest) collect(link.node);
+        break;
+      case "number":
+        break;
+    }
+  };
+  collect(root);
+  const [group] = groups;
+  if (groups.length !== 1 || !group || group.kind === "count") return undefined;
+  const standing = group.dice.filter((d) => d.status === "kept" || d.status === "exploded");
+  const [die] = standing;
+  if (standing.length !== 1 || !die) return undefined;
+  if (die.parts && die.parts.length > 1) return undefined;
+  return die;
 }

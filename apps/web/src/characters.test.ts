@@ -10,6 +10,7 @@ import {
   removeVariable,
   renameCharacter,
   setCharacterPreset,
+  setCharacterRules,
   setVariable,
   switchCharacter,
   updateRoster,
@@ -78,4 +79,32 @@ test("updateRoster builds on what is saved, so another tab's character survives"
   const saved = await updateRoster(storage, (r) => addCharacter(r, "bo"));
   expect(saved.characters.map((c) => c.name)).toEqual(["default", "aria", "bo"]);
   expect(await loadRoster(storage)).toEqual(saved);
+});
+
+test("a character's game system and crit range are kept, cleaned and cleared", () => {
+  let roster = addCharacter(DEFAULT_ROSTER, "aria");
+  roster = setCharacterRules(roster, "aria", { system: "dnd5e", critRange: 19 });
+  expect(activeCharacter(roster)).toMatchObject({ system: "dnd5e", critRange: 19 });
+  // They survive a rename and a save and load.
+  roster = renameCharacter(roster, "aria", "bryn");
+  expect(cleanRoster(JSON.parse(JSON.stringify(roster)))).toEqual(roster);
+  // The default range (20) is left out, and bad saved values are dropped.
+  expect(
+    setCharacterRules(roster, "bryn", { system: "dnd5e", critRange: 20 }).characters[1],
+  ).toEqual({ name: "bryn", vars: {}, presets: {}, system: "dnd5e" });
+  const messy = cleanRoster({
+    characters: [
+      { name: "x", system: "pf2e", critRange: 1 },
+      { name: "y", critRange: 2.5 },
+    ],
+  });
+  expect(messy.characters).toEqual([
+    { name: "x", vars: {}, presets: {} },
+    { name: "y", vars: {}, presets: {} },
+  ]);
+  expect(setCharacterRules(roster, "bryn", {}).characters[1]).toEqual({
+    name: "bryn",
+    vars: {},
+    presets: {},
+  });
 });
