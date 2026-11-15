@@ -12,6 +12,7 @@ import {
   isCount,
   precedence,
   type Reroll,
+  type Role,
   type RollAst,
   type Select,
   type SelectKind,
@@ -183,6 +184,19 @@ class Parser {
       this.itemDice = 0;
       const expr = this.parseExpr(1);
       const stop = this.prevEnd();
+      // `atk` / `dmg` and `crit` may each appear once, in either order.
+      let role: Role | undefined;
+      let crit = false;
+      for (;;) {
+        const word = this.peek();
+        if (word?.kind !== "word") break;
+        if (role === undefined && (word.word === "atk" || word.word === "dmg")) {
+          role = word.word === "atk" ? "attack" : "damage";
+        } else if (!crit && word.word === "crit") {
+          crit = true;
+        } else break;
+        this.pos += 1;
+      }
       const tail = this.peek();
       let label: string | undefined;
       if (tail?.kind === "label") {
@@ -193,6 +207,8 @@ class Parser {
         source: this.src.slice(start, stop).trim(),
         expr,
         ...(label !== undefined ? { label } : {}),
+        ...(role !== undefined ? { role } : {}),
+        ...(crit ? { crit } : {}),
       });
       if (!this.atEnd() && this.peek()?.kind !== "comma") {
         throw this.unexpected("',' or the end of the formula");

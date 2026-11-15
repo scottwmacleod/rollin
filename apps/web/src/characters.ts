@@ -1,4 +1,10 @@
-import { DEFAULT_CHARACTER, MAX_INT } from "@rollin/engine";
+import {
+  DEFAULT_CHARACTER,
+  type GameSystem,
+  MAX_CRIT_RANGE,
+  MAX_INT,
+  MIN_CRIT_RANGE,
+} from "@rollin/engine";
 import type { Storage } from "./storage";
 
 export const CHARACTERS_KEY = "characters";
@@ -10,7 +16,25 @@ export interface Character {
   vars: Record<string, number>;
   /** Stored (lowercase) preset name to formula. */
   presets: Record<string, string>;
+  /** The game system this character plays under. Without one, no roll is ever a crit. */
+  system?: GameSystem;
+  /** The lowest kept d20 that is a critical hit (2 to 20). Left out for the default, 20. */
+  critRange?: number;
 }
+
+/** A character's game rules: what the character dialog edits. */
+export interface Rules {
+  system?: GameSystem;
+  critRange?: number;
+}
+
+export const GAME_SYSTEMS: readonly { id: GameSystem; label: string }[] = [
+  { id: "dnd5e", label: "D&D 5e" },
+];
+
+/** Whether `text` is a crit range a character can have: a whole number from 2 to 20. */
+export const isCritRange = (n: number): boolean =>
+  Number.isInteger(n) && n >= MIN_CRIT_RANGE && n <= MAX_CRIT_RANGE;
 
 /** Every character, and which one is active. Exactly one always is. */
 export interface Roster {
@@ -41,7 +65,18 @@ function cleanCharacter(value: unknown): Character | null {
       if (typeof formula === "string") presets[name] = formula;
     }
   }
-  return { name: value.name, vars, presets };
+  const system = GAME_SYSTEMS.find((g) => g.id === value.system)?.id;
+  const critRange =
+    typeof value.critRange === "number" && isCritRange(value.critRange) && value.critRange < 20
+      ? value.critRange
+      : undefined;
+  return {
+    name: value.name,
+    vars,
+    presets,
+    ...(system ? { system } : {}),
+    ...(critRange ? { critRange } : {}),
+  };
 }
 
 /**
@@ -98,6 +133,17 @@ export function addCharacter(roster: Roster, name: string): Roster {
     active: name,
     characters: [...roster.characters, { name, vars: {}, presets: {} }],
   };
+}
+
+/** Sets a character's game system and crit range; `undefined` clears them. */
+export function setCharacterRules(roster: Roster, name: string, rules: Rules): Roster {
+  return mapCharacter(roster, name, ({ system: _s, critRange: _c, ...rest }) => ({
+    ...rest,
+    ...(rules.system ? { system: rules.system } : {}),
+    ...(rules.critRange !== undefined && rules.critRange < MAX_CRIT_RANGE
+      ? { critRange: rules.critRange }
+      : {}),
+  }));
 }
 
 /** Renames a character, keeping the active one active. A taken or unknown name changes nothing. */
