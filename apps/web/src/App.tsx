@@ -1,5 +1,5 @@
 import { roll } from "@rollin/engine";
-import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   applyBackup,
   BACKUP_STATE_KEY,
@@ -14,6 +14,7 @@ import {
 } from "./backup";
 import { CharacterDialog, type CharacterDialogMode } from "./CharacterDialog";
 import { CharacterPanel } from "./CharacterPanel";
+import { CommandPalette } from "./CommandPalette";
 import {
   activeCharacter,
   addCharacter,
@@ -28,13 +29,17 @@ import {
   setCharacterPreset,
   setCharacterRules,
   setVariable,
+  sortedCharacters,
   switchCharacter,
   updateRoster,
 } from "./characters";
+import { accept, complete } from "./completion";
 import { dieSource } from "./dice";
+import { CompletionList } from "./FormulaCompletion";
 import { Keypad } from "./Keypad";
 import { PresetDialog, type PresetDialogMode, type PresetRef } from "./PresetDialog";
 import { PresetSidebar } from "./PresetSidebar";
+import { type PaletteRow, paletteRows } from "./palette";
 import {
   cleanPresets,
   effectivePresets,
@@ -75,13 +80,54 @@ export function App() {
   const [dialog, setDialog] = useState<PresetDialogMode | null>(null);
   const [characterDialog, setCharacterDialog] = useState<CharacterDialogMode | null>(null);
   const [variableDialog, setVariableDialog] = useState<VariableDialogMode | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [caret, setCaret] = useState<number | null>(null);
+  const [focused, setFocused] = useState(false);
+  const [highlighted, setHighlighted] = useState(0);
+  // Whether an arrow key has chosen a completion; only then does Enter accept it.
+  const [armed, setArmed] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const opener = useRef<HTMLElement | null>(null);
+  /** What had focus when the palette opened, which it gives back when it closes. */
+  const paletteFrom = useRef<HTMLElement | null>(null);
+  /** Set when a palette command opens something that takes focus itself. */
+  const handoff = useRef(false);
+  const confirmYes = useRef<HTMLButtonElement>(null);
+  const confirmFocus = useRef(false);
+  const pendingCaret = useRef<number | null>(null);
   const storage = useRef<Storage | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const update = useUpdate();
   /** The character formulas roll for; `null` until storage has been read. */
   const acting = roster === null ? null : activeCharacter(roster);
+  const available = useMemo(
+    () => (presets === null || acting === null ? null : effectivePresets(presets, acting.presets)),
+    [presets, acting],
+  );
+  const rows = useMemo(
+    () =>
+      available === null || acting === null || roster === null
+        ? []
+        : paletteRows({
+            presets: available,
+            characters: sortedCharacters(roster).map((c) => c.name),
+            active: acting,
+            hasLog: entries.length > 0,
+          }),
+    [available, acting, roster, entries.length],
+  );
+  const completion = useMemo(
+    () =>
+      complete(formula, caret ?? formula.length, {
+        presets: available?.map((p) => p.name) ?? [],
+        variables: acting === null ? [] : Object.keys(acting.vars),
+      }),
+    [formula, caret, available, acting],
+  );
+  const suggesting = focused && !dismissed && completion.candidates.length > 0;
+  const current = Math.min(highlighted, Math.max(completion.candidates.length - 1, 0));
 
   // Open storage, load the saved log, and follow other tabs. Rolls made before
   // the load finishes are kept after the saved ones.
@@ -218,6 +264,118 @@ export function App() {
     (back.isConnected ? back : input.current)?.focus();
   }, [dialog, characterDialog, variableDialog]);
 
+  // After a completion is accepted, the caret goes to the end of what was inserted.
+  useEffect(() => {
+    const at = pendingCaret.current;
+    pendingCaret.current = null;
+    if (at !== null) input.current?.setSelectionRange(at, at);
+  }, [formula]);
+
+  // The caret moves with the arrow keys and the pointer as well as with typing.
+  useEffect(() => {
+    if (!focused) return;
+    const follow = () => {
+      if (document.activeElement === input.current) setCaret(input.current?.selectionStart ?? null);
+    };
+    document.addEventListener("selectionchange", follow);
+    return () => document.removeEventListener("selectionchange", follow);
+  }, [focused]);
+
+  // "Clear roll log" in the palette asks inline, so focus moves to the answer.
+  useEffect(() => {
+    if (confirming && confirmFocus.current) {
+      confirmFocus.current = false;
+      confirmYes.current?.focus();
+    }
+  }, [confirming]);
+
+  function changeFormula(next: string) {
+    setFormula(next);
+    setHighlighted(0);
+    setArmed(false);
+    setDismissed(false);
+  }
+
+  function pick(candidate: string) {
+    const done = accept(formula, caret ?? formula.length, completion, candidate);
+    pendingCaret.current = done.caret;
+    setCaret(done.caret);
+    changeFormula(done.line);
+    input.current?.focus();
+  }
+
+  function openPalette(next: boolean) {
+    if (next) {
+      const from = document.activeElement;
+      paletteFrom.current = from instanceof HTMLElement && from !== document.body ? from : null;
+      handoff.current = false;
+    }
+    setPaletteOpen(next);
+  }
+
+  /** Where focus goes when the palette closes: where it was, or the formula box. */
+  function paletteFocus(): HTMLElement | null {
+    if (handoff.current && document.activeElement instanceof HTMLElement) {
+      return document.activeElement;
+    }
+    const back = paletteFrom.current;
+    return back?.isConnected ? back : input.current;
+  }
+
+  /** Runs what a palette row says. Anything that opens a dialog gives focus back to where the palette began. */
+  function runPalette(row: PaletteRow) {
+    const action = row.action;
+    setPaletteOpen(false);
+    const handOff = (open: () => void) => {
+      opener.current = paletteFrom.current;
+      handoff.current = true;
+      open();
+    };
+    switch (action.type) {
+      case "roll":
+        rollLine(action.name);
+        return;
+      case "switch":
+        void changeRoster((r) => switchCharacter(r, action.name));
+        return;
+      case "edit-preset":
+        handOff(() => setDialog({ kind: "edit", name: action.name, scope: action.scope }));
+        return;
+      case "edit-character":
+        handOff(() => setCharacterDialog({ kind: "edit", name: action.name }));
+        return;
+      case "edit-variable":
+        handOff(() => setVariableDialog({ kind: "edit", name: action.name }));
+        return;
+      case "command":
+        switch (action.id) {
+          case "new-preset":
+            handOff(() => setDialog({ kind: "new", formula: formula.trim() }));
+            return;
+          case "new-character":
+            handOff(() => setCharacterDialog({ kind: "new" }));
+            return;
+          case "new-variable":
+            handOff(() => setVariableDialog({ kind: "new" }));
+            return;
+          case "export":
+            void exportNow();
+            return;
+          case "settings":
+          case "import":
+            // Choosing a file and confirming the replace happen in Settings.
+            handoff.current = true;
+            setSettingsOpen(true);
+            return;
+          case "clear-log":
+            handoff.current = true;
+            confirmFocus.current = true;
+            setConfirming(true);
+            return;
+        }
+    }
+  }
+
   function clearLog() {
     setConfirming(false);
     setEntries([]);
@@ -312,9 +470,43 @@ export function App() {
     setPresets((current) => apply(current ?? {}));
   }
 
+  /**
+   * Keys in the formula box. With suggestions open, the arrows move through
+   * them, Tab accepts the highlighted one, Enter accepts it only after an arrow
+   * chose it (otherwise Enter rolls), and Esc closes them. Otherwise Esc moves to
+   * the newest log entry (the log is above the box).
+   */
+  function formulaKeys(event: KeyboardEvent) {
+    if (event.nativeEvent.isComposing) return;
+    if (suggesting) {
+      const count = completion.candidates.length;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        setArmed(true);
+        setHighlighted((current + (event.key === "ArrowDown" ? 1 : count - 1)) % count);
+        return;
+      }
+      const chosen = completion.candidates[current];
+      if (
+        chosen !== undefined &&
+        ((event.key === "Tab" && !event.shiftKey) || (event.key === "Enter" && armed))
+      ) {
+        event.preventDefault();
+        pick(chosen);
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setDismissed(true);
+        return;
+      }
+    }
+    focusLog(event);
+  }
+
   /** Esc in the formula box moves to the newest log entry (the log is above it). */
   function focusLog(event: KeyboardEvent) {
-    if (event.key !== "Escape" || event.nativeEvent.isComposing) return;
+    if (event.key !== "Escape") return;
     const items = log.current?.querySelectorAll<HTMLElement>('[role="treeitem"]');
     if (!items || items.length === 0) return;
     event.preventDefault();
@@ -342,13 +534,24 @@ export function App() {
           />
         </span>
         <h1 className="sr-only">rollin</h1>
-        <SettingsDialog
-          settings={settings}
-          onChange={changeSettings}
-          storage={() => storage.current}
-          onExported={markBackedUp}
-          onImported={importBackup}
-        />
+        <div className="flex items-center gap-2">
+          <CommandPalette
+            rows={rows}
+            open={paletteOpen}
+            onOpenChange={openPalette}
+            onRun={runPalette}
+            finalFocus={paletteFocus}
+          />
+          <SettingsDialog
+            settings={settings}
+            onChange={changeSettings}
+            storage={() => storage.current}
+            onExported={markBackedUp}
+            onImported={importBackup}
+            open={settingsOpen}
+            onOpenChange={setSettingsOpen}
+          />
+        </div>
       </header>
 
       {update.available && (
@@ -402,9 +605,7 @@ export function App() {
             onEditVariable={(name) => openVariableDialog({ kind: "edit", name })}
           />
           <PresetSidebar
-            presets={
-              presets === null || acting === null ? null : effectivePresets(presets, acting.presets)
-            }
+            presets={available}
             onRoll={rollLine}
             onNew={() => openDialog({ kind: "new", formula: formula.trim() })}
             onEdit={(name, scope) => openDialog({ kind: "edit", name, scope })}
@@ -430,6 +631,7 @@ export function App() {
                 <span>Clear the whole roll log?</span>
                 <Button
                   type="button"
+                  ref={confirmYes}
                   onClick={clearLog}
                   className="h-8 max-md:h-11 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
                 >
@@ -465,11 +667,11 @@ export function App() {
         onSubmit={submit}
         className="sticky bottom-0 flex flex-col gap-3 bg-bg py-3 sm:flex-row sm:items-end"
       >
-        <Field name="formula" className="flex flex-1 flex-col gap-1">
+        <Field name="formula" className="relative flex flex-1 flex-col gap-1">
           <FieldLabel className="text-sm text-text-2">Formula</FieldLabel>
           <Input
             value={formula}
-            onValueChange={setFormula}
+            onValueChange={changeFormula}
             placeholder="2d6+3"
             autoComplete="off"
             autoCapitalize="off"
@@ -477,9 +679,27 @@ export function App() {
             spellCheck={false}
             autoFocus
             ref={input}
-            onKeyDown={focusLog}
+            onKeyDown={formulaKeys}
+            onFocus={(event) => {
+              setFocused(true);
+              setCaret(event.currentTarget.selectionStart);
+            }}
+            onBlur={() => setFocused(false)}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={suggesting}
+            aria-controls={suggesting ? "formula-completions" : undefined}
+            aria-activedescendant={suggesting ? `formula-completions-${current}` : undefined}
             className="h-10 max-md:h-11 w-full rounded-md border border-line-strong bg-surface px-3 font-mono text-text placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
           />
+          {suggesting && (
+            <CompletionList
+              id="formula-completions"
+              candidates={completion.candidates}
+              active={current}
+              onPick={pick}
+            />
+          )}
         </Field>
         <Button
           type="submit"
