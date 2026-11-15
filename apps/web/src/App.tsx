@@ -57,7 +57,7 @@ import {
 import { useUpdate } from "./pwa";
 import { type Entry, spoken } from "./Result";
 import { RollLog } from "./RollLog";
-import { capLog, loadLog, nextEntryId, ROLL_LOG_KEY, saveLog } from "./rollLog";
+import { capLog, cleanLog, loadLog, nextEntryId, ROLL_LOG_KEY, saveLog } from "./rollLog";
 import { SettingsDialog } from "./SettingsDialog";
 import {
   applyTheme,
@@ -201,7 +201,7 @@ export function App() {
         return merged;
       });
       const stopLog = opened.subscribe<Entry[]>(ROLL_LOG_KEY, (value) =>
-        setEntries(Array.isArray(value) ? capLog(value) : []),
+        setEntries(cleanLog(value)),
       );
       const stopSettings = opened.subscribe<unknown>(SETTINGS_KEY, (value) => {
         const next = parseSettings(value);

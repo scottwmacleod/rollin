@@ -55,9 +55,24 @@ describe("parseBackup", () => {
     expect(await buildBackup(target, { rollLog: false })).toMatchObject({ data: sample });
   });
 
+  it("drops roll log entries with no report on import", () => {
+    const good = { id: 2, input: "d6", report: { error: { message: "x" } } };
+    const parsed = parseBackup(
+      JSON.stringify({
+        format: "rollin-backup",
+        version: CURRENT_VERSION,
+        kind: "full",
+        exportedAt: "",
+        data: { ...sample, rollLog: [{ id: 1, input: "d20" }, good] },
+      }),
+    );
+    if (!parsed.ok || parsed.backup.kind !== "full") return expect.fail("expected a full backup");
+    expect(parsed.backup.data.rollLog).toEqual([good]);
+  });
+
   it("carries the roll log when asked", async () => {
     const storage = memoryStorage();
-    await storage.set("rollLog", [{ id: 1, input: "d6", report: {} }]);
+    await storage.set("rollLog", [{ id: 1, input: "d6", report: { error: { message: "x" } } }]);
     const backup = await buildBackup(storage, { rollLog: true });
     const parsed = parseBackup(JSON.stringify(backup));
     if (!parsed.ok || parsed.backup.kind !== "full") return expect.fail("expected a full backup");
@@ -105,7 +120,7 @@ describe("parseBackup", () => {
       format: "rollin-backup",
       version: 1,
       exportedAt: "2026-01-02T00:00:00.000Z",
-      data: { ...sample, rollLog: [{ id: 1, input: "d6", report: {} }] },
+      data: { ...sample, rollLog: [{ id: 1, input: "d6", report: { error: { message: "x" } } }] },
     });
     const parsed = parseBackup(v1);
     expect(parsed.ok).toBe(true);
@@ -143,7 +158,7 @@ describe("parseBackup", () => {
         },
         globalPresets: { fireball: "8d6", broken: 4 },
         settings: { theme: "dark" },
-        rollLog: [{ id: 1, input: "d6", report: {} }],
+        rollLog: [{ id: 1, input: "d6", report: { error: { message: "x" } } }],
       },
     });
     const parsed = parseBackup(text);
