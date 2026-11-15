@@ -57,7 +57,7 @@ import {
 import { useUpdate } from "./pwa";
 import { type Entry, spoken } from "./Result";
 import { RollLog } from "./RollLog";
-import { capLog, cleanLog, loadLog, nextEntryId, ROLL_LOG_KEY, saveLog } from "./rollLog";
+import { addEntry, cleanLog, loadLog, mergeLoaded, ROLL_LOG_KEY, saveLog } from "./rollLog";
 import { SettingsDialog } from "./SettingsDialog";
 import {
   applyTheme,
@@ -93,6 +93,8 @@ export function App() {
   const [formula, setFormula] = useState("");
   const [historyNav, setHistoryNav] = useState<HistoryNav>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
+  /** Set when the log changed here and still needs saving; the effect below saves what is on screen. */
+  const saveLogSoon = useRef(false);
   const [announcement, setAnnouncement] = useState("");
   const [kept, setKept] = useState(true);
   const [confirming, setConfirming] = useState(false);
@@ -161,6 +163,14 @@ export function App() {
   const suggesting = focused && !dismissed && completion.candidates.length > 0;
   const current = Math.min(highlighted, Math.max(completion.candidates.length - 1, 0));
 
+  // Save the log after a roll or the first load, from the state that was committed, so rolls
+  // handled in one batch are all saved. Waits for storage to open if a roll came first.
+  useEffect(() => {
+    if (!saveLogSoon.current || !storage.current) return;
+    saveLogSoon.current = false;
+    void saveLog(storage.current, entries).catch(() => setKept(false));
+  }, [entries]);
+
   // Open storage, load the saved log, and follow other tabs. Rolls made before
   // the load finishes are kept after the saved ones.
   useEffect(() => {
@@ -195,10 +205,9 @@ export function App() {
       setPresets((current) => ({ ...savedPresets, ...current }));
       setRoster((current) => current ?? savedRoster);
       setEntries((current) => {
-        const first = nextEntryId(saved);
-        const merged = capLog([...saved, ...current.map((e, i) => ({ ...e, id: first + i }))]);
-        if (current.length > 0) void saveLog(opened, merged).catch(() => setKept(false));
-        return merged;
+        // Only sets a flag, so running twice is harmless; the save happens once, after the commit.
+        if (current.length > 0) saveLogSoon.current = true;
+        return mergeLoaded(saved, current);
       });
       const stopLog = opened.subscribe<Entry[]>(ROLL_LOG_KEY, (value) =>
         setEntries(cleanLog(value)),
@@ -448,10 +457,9 @@ export function App() {
       globalPresets: presets ?? {},
       character: acting ?? undefined,
     });
-    const next = capLog([...entries, { id: nextEntryId(entries), input: text, report }]);
-    setEntries(next);
+    saveLogSoon.current = true;
+    setEntries((current) => addEntry(current, text, report));
     setRollCount((n) => n + 1);
-    if (storage.current) void saveLog(storage.current, next).catch(() => setKept(false));
     const preset = "ok" in report ? report.ok.preset : null;
     const what = preset === null ? text : `${preset[0]} (${preset[1]})`;
     setAnnouncement(

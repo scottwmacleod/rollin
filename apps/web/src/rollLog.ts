@@ -34,6 +34,17 @@ export function nextEntryId(entries: Entry[]): number {
   return entries.reduce((max, e) => Math.max(max, e.id), 0) + 1;
 }
 
+/** The log with one more roll on the end, its id taken from the log it is added to. */
+export function addEntry(entries: Entry[], input: string, report: Entry["report"]): Entry[] {
+  return capLog([...entries, { id: nextEntryId(entries), input, report }]);
+}
+
+/** The saved log followed by rolls made before it loaded, renumbered to follow the saved ones. */
+export function mergeLoaded(saved: Entry[], early: Entry[]): Entry[] {
+  const first = nextEntryId(saved);
+  return capLog([...saved, ...early.map((e, i) => ({ ...e, id: first + i }))]);
+}
+
 export async function loadLog(storage: Storage): Promise<Entry[]> {
   return cleanLog(await storage.get<unknown>(ROLL_LOG_KEY));
 }

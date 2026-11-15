@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { Entry } from "./Result";
-import { cleanLog, isEntry, loadLog, MAX_ENTRIES, nextEntryId, saveLog } from "./rollLog";
+import {
+  addEntry,
+  cleanLog,
+  isEntry,
+  loadLog,
+  MAX_ENTRIES,
+  mergeLoaded,
+  nextEntryId,
+  saveLog,
+} from "./rollLog";
 import { memoryStorage } from "./storage";
 
 const entry = (id: number): Entry => ({
@@ -69,5 +78,25 @@ describe("roll log entry check", () => {
     const storage = memoryStorage();
     await storage.set("rollLog", [{ id: 1, input: "d20" }, ok, "junk"]);
     expect(await loadLog(storage)).toEqual([ok]);
+  });
+});
+
+describe("adding rolls to the log", () => {
+  const report = entry(0).report;
+
+  it("gives every roll in one batch its own id, none lost", () => {
+    // React applies queued updaters in order, each to the result of the last.
+    const updaters = [
+      (log: Entry[]) => addEntry(log, "d20", report),
+      (log: Entry[]) => addEntry(log, "d6", report),
+    ];
+    const log = updaters.reduce((current, update) => update(current), [entry(1)]);
+    expect(log.map((e) => e.id)).toEqual([1, 2, 3]);
+    expect(log.map((e) => e.input)).toEqual(["d6", "d20", "d6"]);
+  });
+
+  it("puts rolls made before the load after the saved ones", () => {
+    const merged = mergeLoaded([entry(4), entry(5)], [entry(1), entry(2)]);
+    expect(merged.map((e) => e.id)).toEqual([4, 5, 6, 7]);
   });
 });
