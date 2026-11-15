@@ -125,3 +125,35 @@ test("a repeat over the limit is refused with a hint when it has no dice", async
     "hint: for multiplication use *; did you mean 2*3?",
   );
 });
+
+test("a success count marks each die and reports successes minus failures", async ({ page }) => {
+  await page.addInitScript(() =>
+    Object.assign(window, {
+      __rollinDice: [
+        { sides: 10, face: 9 },
+        { sides: 10, face: 5 },
+        { sides: 10, face: 1 },
+      ],
+    }),
+  );
+  await page.goto("/");
+  await page.getByLabel("Formula").fill("3d10>=8f1");
+  await page.getByLabel("Formula").press("Enter");
+
+  const result = page.getByRole("region", { name: "Result" });
+  await expect(result).toContainText("9 ✓");
+  await expect(result).toContainText("1 ✗");
+  await expect(result).toContainText("total 0");
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test("a success count in arithmetic is refused with the reason", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Formula").fill("6d10>=8+2");
+  await page.getByLabel("Formula").press("Enter");
+  await expect(page.getByRole("region", { name: "Result" })).toContainText(
+    "a success count cannot be used in arithmetic",
+  );
+});

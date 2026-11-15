@@ -20,10 +20,12 @@ export interface DiceTerm {
   count: number;
   sides: number;
   special?: "percentile";
+  /** The success clause, when the group counts successes instead of summing. */
+  success?: Success;
   /** The keep/drop clause, or the keep that `adv` and `dis` stand for. */
   select?: Select;
-  /** The keep/drop or `adv`/`dis` text as written, such as `dl1` or `ADV`. */
-  selectText?: string;
+  /** The modifier clauses as written, in the order they apply, such as `dl1` or `>=8f1`. */
+  modifiers: string[];
 }
 
 export type SelectKind = "drop_lowest" | "drop_highest" | "keep_lowest" | "keep_highest";
@@ -31,6 +33,44 @@ export type SelectKind = "drop_lowest" | "drop_highest" | "keep_lowest" | "keep_
 export interface Select {
   kind: SelectKind;
   n: number;
+}
+
+export type Cmp = "gt" | "ge" | "lt" | "le" | "eq";
+
+/** A success clause such as `>=8`, with the optional failure clause `f1`. */
+export interface Success {
+  cmp: Cmp;
+  value: number;
+  failure?: { cmp: Cmp; value: number };
+}
+
+const test = (cmp: Cmp, face: number, value: number): boolean => {
+  switch (cmp) {
+    case "gt":
+      return face > value;
+    case "ge":
+      return face >= value;
+    case "lt":
+      return face < value;
+    case "le":
+      return face <= value;
+    case "eq":
+      return face === value;
+  }
+};
+
+/** Whether a counting die showing `face` is a success. */
+export const succeeds = (s: Success, face: number): boolean => test(s.cmp, face, s.value);
+
+/** Whether a counting die is a failure. A success is never also a failure. */
+export const fails = (s: Success, face: number): boolean =>
+  !succeeds(s, face) && s.failure !== undefined && test(s.failure.cmp, face, s.failure.value);
+
+/** Whether an expression is a success count, possibly in parentheses. */
+export function isCount(expr: Arith): boolean {
+  const kind = expr.kind;
+  if (kind.type === "dice") return kind.dice.success !== undefined;
+  return kind.type === "group" && isCount(kind.inner);
 }
 
 /** One comma-separated roll of a formula, before it is evaluated. */

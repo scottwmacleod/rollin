@@ -1,5 +1,5 @@
 /** Evaluator: walks the syntax tree, drawing dice from the injected source. */
-import type { Arith, RollAst, Select } from "./ast";
+import { type Arith, fails, isCount, type RollAst, type Select, succeeds } from "./ast";
 import type { DieSource } from "./dice";
 import { divisionByZero, limitExceeded, overflow } from "./errors";
 import { MAX_DICE_PER_ROLL, MAX_INT } from "./limits";
@@ -32,19 +32,43 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
           }
           faces.push({ value, status: "kept" });
         }
-        if (term.select) applyDrops(faces, term.select, term.selectText ?? "");
-        const subtotal = faces.reduce(
-          (sum, die) => (die.status === "kept" ? sum + die.value : sum),
-          0,
-        );
+        if (term.select) applyDrops(faces, term.select, term.modifiers[0] ?? "");
+        const kept = faces.filter((die) => die.status === "kept");
+        const modifiers = term.modifiers.length > 0 ? { modifiers: term.modifiers } : {};
+        const success = term.success;
+        if (success) {
+          let successes = 0;
+          let failures = 0;
+          for (const die of kept) {
+            if (succeeds(success, die.value)) {
+              die.outcome = "success";
+              successes += 1;
+            } else if (fails(success, die.value)) {
+              die.outcome = "failure";
+              failures += 1;
+            }
+          }
+          return {
+            type: "dice",
+            term: term.text,
+            sides: term.sides,
+            ...modifiers,
+            ...(term.special ? { special: term.special } : {}),
+            dice: faces,
+            subtotal: successes - failures,
+            kind: "count",
+            successes,
+            failures,
+          };
+        }
         return {
           type: "dice",
           term: term.text,
           sides: term.sides,
-          ...(term.selectText === undefined ? {} : { modifiers: [term.selectText] }),
+          ...modifiers,
           ...(term.special ? { special: term.special } : {}),
           dice: faces,
-          subtotal,
+          subtotal: kept.reduce((sum, die) => sum + die.value, 0),
         };
       }
       case "neg": {
@@ -73,6 +97,7 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
   const expr = walk(roll.expr);
   return {
     formula: roll.source,
+    ...(isCount(roll.expr) ? { kind: "count" as const } : {}),
     total: total(expr),
     expr,
     ...(roll.label !== undefined ? { label: roll.label } : {}),

@@ -34,11 +34,29 @@ function RollRow({ roll }: { roll: Roll }) {
             <span
               key={i}
               className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 ${
-                cell.dropped ? "text-muted line-through" : ""
+                cell.dropped
+                  ? "text-muted line-through"
+                  : cell.outcome === "success"
+                    ? "text-signal-ink"
+                    : cell.outcome === "failure"
+                      ? "text-danger"
+                      : ""
               }`}
             >
               {cell.face}
               {cell.dropped && <span className="sr-only"> dropped</span>}
+              {cell.outcome === "success" && (
+                <>
+                  <span aria-hidden="true"> ✓</span>
+                  <span className="sr-only"> success</span>
+                </>
+              )}
+              {cell.outcome === "failure" && (
+                <>
+                  <span aria-hidden="true"> ✗</span>
+                  <span className="sr-only"> failure</span>
+                </>
+              )}
             </span>
           ),
         )}
