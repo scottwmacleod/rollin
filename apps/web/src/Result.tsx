@@ -1,4 +1,4 @@
-import type { Roll, RollReport } from "@rollin/engine";
+import { type Roll, type RollReport, spanOf } from "@rollin/engine";
 import { breakdown } from "./breakdown";
 import { caretLines } from "./caret";
 import { hintText } from "./hints";
@@ -70,7 +70,10 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
 }
 
 export function ErrorBody({ error }: { error: Extract<RollReport, { error: unknown }>["error"] }) {
-  const caret = error.kind === "formula" ? caretLines(error.source, error.error.span) : null;
+  const caret =
+    error.kind === "formula" || error.kind === "undefined_variable"
+      ? caretLines(error.source, spanOf(error.error))
+      : null;
   return (
     <span className="mt-2 block space-y-2">
       <span className="block font-mono text-sm text-danger">error: {error.message}</span>

@@ -521,3 +521,153 @@ test.describe("global presets", () => {
     await expect(a.getByRole("button", { name: "smite 2d8+3" })).toHaveCount(0);
   });
 });
+
+test.describe("characters and variables", () => {
+  type Page = import("@playwright/test").Page;
+  const log = (page: Page) => page.getByRole("tree", { name: "Roll log" });
+
+  async function newCharacter(page: Page, name: string) {
+    await page.getByRole("button", { name: "New character" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Name").fill(name);
+    await dialog.getByRole("button", { name: "Create" }).click();
+    await expect(dialog).toBeHidden();
+  }
+
+  async function setVariable(page: Page, name: string, value: string) {
+    await page.getByRole("button", { name: "New variable" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Name").fill(name);
+    await dialog.getByLabel("Value").fill(value);
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(dialog).toBeHidden();
+  }
+
+  test("create a character, set @str, roll d20+@str and switch", async ({ page }) => {
+    await page.addInitScript(() =>
+      Object.assign(window, {
+        __rollinDice: [
+          { sides: 20, face: 10 },
+          { sides: 20, face: 10 },
+        ],
+      }),
+    );
+    await page.goto("/");
+    const characters = page.getByRole("complementary", { name: "Characters" });
+    await expect(characters.getByRole("button", { name: /^default/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // The new-character dialog checks the name as it is typed.
+    await page.getByRole("button", { name: "New character" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Name").fill("roll");
+    await expect(dialog).toContainText("it is a command word");
+    await expect(dialog.getByRole("button", { name: "Create" })).toBeDisabled();
+    await dialog.getByLabel("Name").fill("Aria");
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await dialog.getByRole("button", { name: "Create" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(characters.getByRole("button", { name: /^aria/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    await setVariable(page, "@STR", "3");
+    const variables = page.getByRole("complementary", { name: /^Variables/ });
+    await expect(variables).toContainText("@str");
+
+    await page.getByLabel("Formula").fill("d20+@str");
+    await page.getByLabel("Formula").press("Enter");
+    await expect(log(page)).toContainText("total 13");
+
+    // Switching changes which variables apply, straight away.
+    await characters.getByRole("button", { name: /^default/ }).click();
+    await expect(variables).toContainText("No variables yet");
+    await page.getByLabel("Formula").fill("d20+@str");
+    await page.getByLabel("Formula").press("Enter");
+    await expect(log(page)).toContainText("undefined variable @str on character 'default'");
+
+    await characters.getByRole("button", { name: /^aria/ }).click();
+    await expect(variables).toContainText("@str");
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  });
+
+  test("an unknown variable gets the defined names and a suggestion", async ({ page }) => {
+    await page.goto("/");
+    await setVariable(page, "str", "3");
+    await page.getByLabel("Formula").fill("d20+@stre");
+    await page.getByLabel("Formula").press("Enter");
+    await expect(log(page)).toContainText("error: undefined variable @stre on character 'default'");
+    await expect(log(page)).toContainText("defined: str");
+    await expect(log(page)).toContainText("did you mean @str?");
+    await expect(log(page).locator("[data-caret]")).toHaveText("d20+@stre\n    ^^^^^");
+  });
+
+  test("a character's preset shadows a global one, and everything survives a reload", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const presets = page.getByRole("complementary", { name: "Presets" });
+
+    async function savePreset(name: string, formula: string, scope: string) {
+      await page.getByRole("button", { name: "New preset" }).click();
+      const dialog = page.getByRole("dialog");
+      await dialog.getByLabel("Name").fill(name);
+      await dialog.getByLabel("Formula").fill(formula);
+      await dialog.getByLabel(scope).check();
+      await dialog.getByRole("button", { name: "Save", exact: true }).click();
+      await expect(dialog).toBeHidden();
+    }
+
+    await savePreset("attack", "d20+1", "Every character");
+    await expect(presets.getByRole("button", { name: "attack d20+1 global" })).toBeVisible();
+
+    await newCharacter(page, "aria");
+    await savePreset("attack", "d20+7", "Only aria");
+    await expect(presets.getByRole("button", { name: /^attack/ })).toHaveCount(1);
+    await expect(presets.getByRole("button", { name: "attack d20+7" })).toBeVisible();
+
+    await page.reload();
+    await expect(presets.getByRole("button", { name: "attack d20+7" })).toBeVisible();
+
+    // The other character still sees the global one.
+    await page
+      .getByRole("complementary", { name: "Characters" })
+      .getByRole("button", { name: /^default/ })
+      .click();
+    await expect(presets.getByRole("button", { name: "attack d20+1 global" })).toBeVisible();
+  });
+
+  test("characters and variables sync to a second tab", async ({ context }) => {
+    const a = await context.newPage();
+    const b = await context.newPage();
+    await a.goto("/");
+    await b.goto("/");
+    await newCharacter(a, "aria");
+    await setVariable(a, "str", "3");
+    const characters = b.getByRole("complementary", { name: "Characters" });
+    await expect(characters.getByRole("button", { name: /^aria/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(b.getByRole("complementary", { name: /^Variables/ })).toContainText("@str");
+
+    // Rename and delete from the second tab.
+    await b.getByRole("button", { name: "Edit aria" }).click();
+    const dialog = b.getByRole("dialog");
+    await dialog.getByLabel("Name").fill("bo");
+    await dialog.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(a.getByRole("complementary", { name: "Characters" })).toContainText("bo");
+    await b.getByRole("button", { name: "Edit bo" }).click();
+    await b.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
+    await b.getByRole("button", { name: "Yes, delete" }).click();
+    await expect(a.getByRole("complementary", { name: "Characters" })).not.toContainText("bo");
+    await expect(
+      a
+        .getByRole("complementary", { name: "Characters" })
+        .getByRole("button", { name: /^default/ }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+});

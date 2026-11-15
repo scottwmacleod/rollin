@@ -20,6 +20,31 @@ export function sortedPresets(presets: PresetMap): [name: string, formula: strin
   return Object.entries(presets).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
+/** Where a preset lives: on the active character, or shared by every character. */
+export type PresetScope = "character" | "global";
+
+export interface PresetEntry {
+  name: string;
+  formula: string;
+  scope: PresetScope;
+}
+
+/**
+ * The presets the active character can roll, by name order. A character's own
+ * preset shadows a global one of the same name, so the global one is left out.
+ */
+export function effectivePresets(global: PresetMap, own: PresetMap): PresetEntry[] {
+  const entries: PresetEntry[] = [
+    ...sortedPresets(own).map(
+      ([name, formula]): PresetEntry => ({ name, formula, scope: "character" }),
+    ),
+    ...sortedPresets(global)
+      .filter(([name]) => !Object.hasOwn(own, name))
+      .map(([name, formula]): PresetEntry => ({ name, formula, scope: "global" })),
+  ];
+  return entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+}
+
 export async function loadPresets(storage: Storage): Promise<PresetMap> {
   return cleanPresets(await storage.get<PresetMap>(PRESETS_KEY));
 }

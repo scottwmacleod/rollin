@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { expect, test } from "vitest";
-import { type DieSource, type Node, type RollReport, roll } from "./index";
+import { type DieSource, type Node, type RollReport, roll, spanOf } from "./index";
 
 /** A die source driven by a list of random numbers: each is mapped onto the die's faces. */
 function fromSeeds(seeds: readonly number[]): DieSource {
@@ -106,7 +106,7 @@ test("any typed text gives a roll or a located error, never a throw or an unsafe
           }
         } else if (report.error.kind === "formula") {
           const bytes = new TextEncoder().encode(report.error.source).length;
-          const { span } = report.error.error;
+          const span = spanOf(report.error.error);
           expect(span.start).toBeGreaterThanOrEqual(0);
           expect(span.start).toBeLessThanOrEqual(span.end);
           expect(span.end).toBeLessThanOrEqual(bytes);
@@ -294,7 +294,7 @@ function condText(cmp: number, v: number): string {
 function expectSpanInside(text: string, report: RollReport): void {
   if (!("error" in report) || report.error.kind !== "formula") return;
   const bytes = new TextEncoder().encode(text);
-  const { span } = report.error.error;
+  const span = spanOf(report.error.error);
   expect(span.start).toBeLessThanOrEqual(span.end);
   expect(span.end).toBeLessThanOrEqual(bytes.length);
   // A byte offset is on a boundary unless it lands on a UTF-8 continuation byte.
