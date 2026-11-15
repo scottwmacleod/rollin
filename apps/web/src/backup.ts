@@ -1,4 +1,10 @@
-import { CHARACTERS_KEY, cleanRoster, type Roster } from "./characters";
+import {
+  CHARACTERS_KEY,
+  type Character,
+  cleanCharacter,
+  cleanRoster,
+  type Roster,
+} from "./characters";
 import { cleanPresets, PRESETS_KEY, type PresetMap } from "./presets";
 import type { Entry } from "./Result";
 import { capLog, ROLL_LOG_KEY } from "./rollLog";
@@ -8,7 +14,7 @@ import type { Storage } from "./storage";
 /** Marks a file as a rollin backup, so a stray JSON file is refused with a clear reason. */
 export const BACKUP_FORMAT = "rollin-backup";
 /** The newest format this build writes and reads. Bump it with an entry in `UPGRADES`. */
-export const CURRENT_VERSION = 1;
+export const CURRENT_VERSION = 2;
 
 /** Everything a backup holds. The roll log is optional. */
 export interface BackupData {
@@ -18,12 +24,33 @@ export interface BackupData {
   rollLog?: Entry[];
 }
 
+/** What a partial file holds. Every section is optional, but one must have something in it. */
+export interface PartialData {
+  /** Characters only: a partial file has no active character. */
+  characters?: Character[];
+  globalPresets?: PresetMap;
+}
+
+/** A full backup: everything, with an active character. Replace works only with this kind. */
 export interface Backup {
   format: typeof BACKUP_FORMAT;
   version: number;
+  kind: "full";
   exportedAt: string;
   data: BackupData;
 }
+
+/** A partial file: only some characters and global presets. */
+export interface PartialBackup {
+  format: typeof BACKUP_FORMAT;
+  version: number;
+  kind: "partial";
+  exportedAt: string;
+  data: PartialData;
+}
+
+/** What `parseBackup` returns; `kind` tells the two apart. */
+export type ParsedBackup = Backup | PartialBackup;
 
 type Json = Record<string, unknown>;
 
@@ -35,12 +62,14 @@ export type Upgrades = Record<number, (file: Json) => Json>;
 /**
  * One step per past version: `UPGRADES[n]` turns a version `n` file into a
  * version `n + 1` file. Importing walks the steps from the file's version to
- * the current one, so a file from any past version still opens. Empty while
- * version 1 is the only one.
+ * the current one, so a file from any past version still opens.
  */
-const UPGRADES: Upgrades = {};
+const UPGRADES: Upgrades = {
+  // Version 1 files were always full backups, so only the kind marker is new.
+  1: (file) => ({ ...file, version: 2, kind: "full" }),
+};
 
-export type ParseResult = { ok: true; backup: Backup } | { ok: false; error: string };
+export type ParseResult = { ok: true; backup: ParsedBackup } | { ok: false; error: string };
 
 const fail = (error: string): ParseResult => ({ ok: false, error });
 
@@ -75,27 +104,70 @@ export function parseBackup(
     upgraded = step(upgraded);
     version += 1;
   }
-  const data = upgraded.data;
-  if (!isRecord(data) || !isRecord(data.characters)) {
-    return fail("That backup is missing its characters, so it can't be read.");
-  }
-  const clean: BackupData = {
-    characters: cleanRoster(data.characters),
-    globalPresets: cleanPresets(data.globalPresets),
-    settings: parseSettings(data.settings),
-  };
-  if (Array.isArray(data.rollLog)) {
-    clean.rollLog = capLog(
-      data.rollLog.filter(
-        (e): e is Entry => isRecord(e) && typeof e.id === "number" && typeof e.input === "string",
-      ),
-    );
-  }
   const exportedAt = typeof upgraded.exportedAt === "string" ? upgraded.exportedAt : "";
-  return {
-    ok: true,
-    backup: { format: BACKUP_FORMAT, version: current, exportedAt, data: clean },
-  };
+  const data = upgraded.data;
+  if (upgraded.kind === "full") {
+    if (!isRecord(data) || !isRecord(data.characters)) {
+      return fail("That backup is missing its characters, so it can't be read.");
+    }
+    const clean: BackupData = {
+      characters: cleanRoster(data.characters),
+      globalPresets: cleanPresets(data.globalPresets),
+      settings: parseSettings(data.settings),
+    };
+    if (Array.isArray(data.rollLog)) {
+      clean.rollLog = capLog(
+        data.rollLog.filter(
+          (e): e is Entry => isRecord(e) && typeof e.id === "number" && typeof e.input === "string",
+        ),
+      );
+    }
+    return {
+      ok: true,
+      backup: { format: BACKUP_FORMAT, version: current, kind: "full", exportedAt, data: clean },
+    };
+  }
+  if (upgraded.kind === "partial") {
+    // Settings, the roll log and the active character only mean something in a full backup.
+    const partial = cleanPartial(data);
+    if (partial === null) {
+      return fail(
+        "That partial file holds no characters or global presets, so there is nothing to read.",
+      );
+    }
+    return {
+      ok: true,
+      backup: {
+        format: BACKUP_FORMAT,
+        version: current,
+        kind: "partial",
+        exportedAt,
+        data: partial,
+      },
+    };
+  }
+  return fail('That backup\'s kind must be "full" or "partial".');
+}
+
+/** Cleans a partial file's data; null when it holds no characters and no global presets. */
+function cleanPartial(data: unknown): PartialData | null {
+  if (!isRecord(data)) return null;
+  const partial: PartialData = {};
+  const list = isRecord(data.characters) ? data.characters.characters : undefined;
+  if (Array.isArray(list)) {
+    const seen = new Set<string>();
+    const characters: Character[] = [];
+    for (const raw of list) {
+      const character = cleanCharacter(raw);
+      if (character === null || seen.has(character.name)) continue;
+      seen.add(character.name);
+      characters.push(character);
+    }
+    if (characters.length > 0) partial.characters = characters;
+  }
+  const globalPresets = cleanPresets(data.globalPresets);
+  if (Object.keys(globalPresets).length > 0) partial.globalPresets = globalPresets;
+  return partial.characters || partial.globalPresets ? partial : null;
 }
 
 /** Reads everything saved into a backup. The roll log goes in only when asked for. */
@@ -115,6 +187,7 @@ export async function buildBackup(
   return {
     format: BACKUP_FORMAT,
     version: CURRENT_VERSION,
+    kind: "full",
     exportedAt: (options.now ?? new Date()).toISOString(),
     data,
   };
@@ -150,6 +223,18 @@ export function summarise(data: BackupData): Summary {
 }
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/** Counts for a partial file; a section it leaves out counts as none. */
+export function describePartialSummary(data: PartialData): string {
+  const characters = data.characters ?? [];
+  return describeSummary({
+    characters: characters.length,
+    variables: characters.reduce((n, c) => n + Object.keys(c.vars).length, 0),
+    presets: characters.reduce((n, c) => n + Object.keys(c.presets).length, 0),
+    globalPresets: Object.keys(data.globalPresets ?? {}).length,
+    rollLog: null,
+  });
+}
 
 export function describeSummary(s: Summary): string {
   const parts = [

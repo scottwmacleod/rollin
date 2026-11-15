@@ -50,7 +50,7 @@ export const DEFAULT_ROSTER: Roster = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-function cleanCharacter(value: unknown): Character | null {
+export function cleanCharacter(value: unknown): Character | null {
   if (!isRecord(value) || typeof value.name !== "string" || value.name === "") return null;
   const vars: Record<string, number> = {};
   if (isRecord(value.vars)) {

@@ -2,8 +2,10 @@ import { useRef, useState } from "react";
 import {
   type Backup,
   buildBackup,
+  describePartialSummary,
   describeSummary,
   downloadBackup,
+  type ParsedBackup,
   parseBackup,
   summarise,
 } from "./backup";
@@ -26,7 +28,7 @@ export function BackupSection({
   onImported: (backup: Backup) => Promise<void>;
 }) {
   const [includeLog, setIncludeLog] = useState(false);
-  const [pending, setPending] = useState<Backup | null>(null);
+  const [pending, setPending] = useState<ParsedBackup | null>(null);
   const [message, setMessage] = useState("");
   const picker = useRef<HTMLInputElement>(null);
 
@@ -56,7 +58,7 @@ export function BackupSection({
   }
 
   async function replace() {
-    if (!pending) return;
+    if (pending?.kind !== "full") return;
     try {
       await onImported(pending);
       setMessage("Imported. Your data now matches the backup.");
@@ -98,11 +100,11 @@ export function BackupSection({
           onChange={(e) => void choose(e.target.files?.[0])}
         />
       </div>
-      {pending && (
+      {pending?.kind === "full" && (
         <div role="group" aria-label="Confirm import" className="flex flex-col gap-2 text-sm">
           <p className="m-0">
-            This backup holds {describeSummary(summarise(pending.data))}. Importing replaces your
-            characters, presets and settings
+            This backup holds {describeSummary(summarise(pending.data))}. Replace my data swaps out
+            your characters, presets and settings
             {pending.data.rollLog !== undefined ? " and your roll log" : ""}.
           </p>
           <div className="flex gap-2">
@@ -111,6 +113,22 @@ export function BackupSection({
             </Button>
             <Button type="button" onClick={() => setPending(null)} className={secondary}>
               Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+      {pending?.kind === "partial" && (
+        <div role="group" aria-label="Partial file" className="flex flex-col gap-2 text-sm">
+          <p className="m-0">
+            This is a partial file. It holds {describePartialSummary(pending.data)}.
+          </p>
+          <p className="m-0 text-muted">
+            Replace needs a full backup, because a partial file can't replace everything you have.
+            Nothing was changed.
+          </p>
+          <div className="flex gap-2">
+            <Button type="button" onClick={() => setPending(null)} className={secondary}>
+              Close
             </Button>
           </div>
         </div>

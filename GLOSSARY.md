@@ -68,6 +68,18 @@ _Avoid_: Stat, attribute, modifier
 A preset shared by all characters. A character's own preset of the same name shadows it.
 _Avoid_: Default preset
 
+**Backup**:
+One JSON file holding your saved data, made by Export and read by Import. A full backup holds everything: characters (with the active one), global presets and settings, and optionally the roll log. The file's format is in `docs/export-format.md`.
+_Avoid_: Export file, save file, dump
+
+**Partial file**:
+A backup file that holds only some characters and global presets, with no active character, settings or roll log. It can't be used to replace your data.
+_Avoid_: Partial backup, character file, share file
+
+**Replace**:
+Importing a full backup so it swaps out your characters, global presets and settings (and the roll log, if the backup carries one). Only a full backup can replace.
+_Avoid_: Restore, overwrite, merge
+
 **Roll log**:
 The rolls made in this browser, newest at the bottom. It survives a reload, keeps the last 500 rolls, and can be cleared.
 _Avoid_: History, session
