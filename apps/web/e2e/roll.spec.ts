@@ -237,10 +237,10 @@ test("a percentile roll shows the term as typed with its d100 faces", async ({ p
   await page.getByLabel("Formula").fill("2D%");
   await page.getByLabel("Formula").press("Enter");
 
-  const result = page.getByRole("region", { name: "Result" });
-  await expect(result).toContainText("› 2D%");
-  await expect(result).toContainText("[37, 92]");
-  await expect(result).toContainText("total 129");
+  const log = page.getByRole("tree", { name: "Roll log" });
+  await expect(log).toContainText("2D%");
+  await expect(log).toContainText("[37, 92]");
+  await expect(log).toContainText("total 129");
 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
