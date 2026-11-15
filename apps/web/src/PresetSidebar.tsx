@@ -26,7 +26,7 @@ export function PresetSidebar({
         <h2 id="presets-heading" className="m-0 text-sm font-medium text-text-2">
           Presets
         </h2>
-        <Button type="button" onClick={onNew} className={`h-8 ${BUTTON}`}>
+        <Button type="button" onClick={onNew} className={`h-8 max-md:h-11 ${BUTTON}`}>
           New preset
         </Button>
       </div>
@@ -36,13 +36,13 @@ export function PresetSidebar({
         </p>
       )}
       {list.length > 0 && (
-        <ul className="m-0 flex max-h-56 list-none flex-col gap-1 overflow-y-auto p-0 lg:max-h-none">
+        <ul className="m-0 flex max-h-44 list-none flex-col gap-1 overflow-y-auto p-0 lg:max-h-none">
           {list.map(({ name, formula, scope }) => (
             <li key={name} className="flex gap-1">
               <Button
                 type="button"
                 onClick={() => onRoll(name)}
-                className="flex min-h-10 min-w-0 flex-1 flex-col items-start justify-center rounded-md border border-line bg-surface px-3 py-1 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+                className="flex min-h-11 min-w-0 flex-1 flex-col items-start justify-center rounded-md border border-line bg-surface px-3 py-1 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
               >
                 <span className="font-mono text-sm text-text">{name}</span>
                 <span className="max-w-full truncate font-mono text-xs text-muted">{formula}</span>
@@ -52,7 +52,7 @@ export function PresetSidebar({
                 type="button"
                 aria-label={`Edit ${name}`}
                 onClick={() => onEdit(name, scope)}
-                className={`w-14 ${BUTTON}`}
+                className={`min-h-11 w-14 ${BUTTON}`}
               >
                 Edit
               </Button>

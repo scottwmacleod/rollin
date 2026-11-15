@@ -1,5 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const launchOptions = process.env.PW_CHROMIUM_PATH
+  ? { executablePath: process.env.PW_CHROMIUM_PATH, args: ["--no-sandbox"] }
+  : {};
+
 // Tests run against a test build (`--mode e2e`, which lets a test script the dice),
 // served by `vite preview`.
 export default defineConfig({
@@ -12,12 +16,20 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: {
-        ...devices["Desktop Chrome"],
-        launchOptions: process.env.PW_CHROMIUM_PATH
-          ? { executablePath: process.env.PW_CHROMIUM_PATH, args: ["--no-sandbox"] }
-          : {},
-      },
+      testIgnore: "phone.spec.ts",
+      use: { ...devices["Desktop Chrome"], launchOptions },
+    },
+    // Phones run on Chromium with each phone's screen, touch and user agent, so CI
+    // needs no WebKit download. The iPhone's own browser engine is not covered.
+    {
+      name: "iphone",
+      testMatch: "phone.spec.ts",
+      use: { ...devices["iPhone 13"], defaultBrowserType: "chromium", launchOptions },
+    },
+    {
+      name: "android",
+      testMatch: "phone.spec.ts",
+      use: { ...devices["Pixel 7"], launchOptions },
     },
   ],
   webServer: {
