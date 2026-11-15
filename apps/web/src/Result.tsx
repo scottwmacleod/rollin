@@ -11,6 +11,39 @@ export interface Entry {
   report: RollReport;
 }
 
+/** What a roll says out loud for the live region: its total, and any crit or doubling. */
+export function spoken(roll: Roll): string {
+  const parts = [`total ${roll.total}`];
+  if (roll.crit === "hit") parts.push("critical hit");
+  if (roll.crit === "miss") parts.push("critical miss");
+  if (roll.doubled) parts.push("damage dice doubled");
+  return parts.join(", ");
+}
+
+/** A critical hit or miss, and doubled damage dice, in visible text so colour is never the only cue. */
+export function CritMarks({ roll }: { roll: Roll }) {
+  if (roll.crit === undefined && !roll.doubled) return null;
+  return (
+    <span className="flex flex-wrap items-center gap-2 text-xs font-medium">
+      {roll.crit === "hit" && (
+        <span className="rounded-sm border border-signal-ink px-1.5 py-0.5 text-signal-ink">
+          Critical hit
+        </span>
+      )}
+      {roll.crit === "miss" && (
+        <span className="rounded-sm border border-danger px-1.5 py-0.5 text-danger">
+          Critical miss
+        </span>
+      )}
+      {roll.doubled && (
+        <span className="rounded-sm border border-line-strong px-1.5 py-0.5 text-text-2">
+          Dice doubled
+        </span>
+      )}
+    </span>
+  );
+}
+
 /** A success or failure mark, in visible text so the accessible name matches what is seen. */
 export function Outcome({ outcome }: { outcome?: "success" | "failure" }) {
   if (outcome === "success") return <span> ✓ success</span>;
@@ -62,6 +95,7 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
           ),
         )}
       </span>
+      <CritMarks roll={roll} />
       <span className="ml-auto font-mono text-3xl font-semibold text-text">
         <span className="mr-2 font-sans text-xs font-normal text-muted">total</span> {roll.total}
       </span>

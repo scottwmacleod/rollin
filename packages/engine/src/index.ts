@@ -3,13 +3,14 @@
  * the browser; randomness comes in through a `DieSource` (ADR-0003).
  */
 
+import { type Role, type RollAst, roleOf } from "./ast";
 import type { DieSource } from "./dice";
 import { FormulaFailure, hintsOf, messageOf, spanOf } from "./errors";
-import { evaluate } from "./eval";
+import { checkDie, evaluate } from "./eval";
 import { editDistance, isNameShaped } from "./names";
 import { parse } from "./parser";
 import { Source } from "./source";
-import type { Roll, RollReport } from "./types";
+import type { Node, Roll, RollReport } from "./types";
 
 export const ENGINE_NAME = "rollin-engine";
 
@@ -38,12 +39,24 @@ const USAGE = "roll <formula or preset name>";
 /** The name a roll runs under when no character is given. */
 export const DEFAULT_CHARACTER = "default";
 
+/** A game system a character (or the global default) can play under. */
+export type GameSystem = "dnd5e";
+
+/** The lowest crit range a character can have: a natural 1 is always the critical miss. */
+export const MIN_CRIT_RANGE = 2;
+/** The default crit range, and the highest: a natural 20 always crits. */
+export const MAX_CRIT_RANGE = 20;
+
 /** The character a line rolls for: its name, its variables and its own presets. */
 export interface CharacterContext {
   name: string;
   /** Lowercase name to integer value. */
   vars?: Readonly<Record<string, number>>;
   presets?: Readonly<Record<string, string>>;
+  /** The game system this character plays under; without one the global default applies. */
+  system?: GameSystem;
+  /** The lowest kept d20 that is a critical hit (2 to 20, default 20). */
+  critRange?: number;
 }
 
 /**
@@ -53,6 +66,48 @@ export interface CharacterContext {
 export interface RollContext {
   globalPresets?: Readonly<Record<string, string>>;
   character?: CharacterContext;
+  /** The game system for a character that names none. */
+  defaultSystem?: GameSystem;
+}
+
+/**
+ * Pairs attacks with the damage that follows them. Start a new one for each
+ * `Nx` repeat. With no game system every roll stands alone.
+ */
+function pairing(system: GameSystem | undefined, critRange: number) {
+  let attack: "hit" | "miss" | undefined;
+  const role = (spec: RollAst): Role | undefined => (system ? roleOf(spec) : undefined);
+  return {
+    /** Whether `spec`'s dice double: by its `crit` suffix, or as damage after a critical hit. */
+    doubles: (spec: RollAst): boolean =>
+      spec.crit === true || (role(spec) === "damage" && attack === "hit"),
+    /** Records the verdict on an evaluated attack. */
+    judge(spec: RollAst, rolled: Roll): void {
+      if (role(spec) !== "attack") return;
+      const die = checkDie(rolled.expr);
+      let verdict: "hit" | "miss" | undefined;
+      if (findNatural(rolled.expr) === "one") verdict = "miss";
+      else if (die && die.value >= critRange) verdict = "hit";
+      if (verdict) rolled.crit = verdict;
+      attack = verdict;
+    },
+  };
+}
+
+/** The first natural 20 or 1 marked on any die of the tree. */
+function findNatural(node: Node): "twenty" | "one" | undefined {
+  switch (node.type) {
+    case "dice":
+      return node.dice.find((d) => d.natural)?.natural;
+    case "neg":
+      return findNatural(node.operand);
+    case "group":
+      return findNatural(node.inner);
+    case "chain":
+      return findNatural(node.first) ?? node.rest.map((l) => findNatural(l.node)).find(Boolean);
+    case "number":
+      return undefined;
+  }
 }
 
 /** The text of a roll as it goes to the parser; errors are reported against it. */
@@ -61,6 +116,7 @@ function rollText(
   dice: DieSource,
   preset: [string, string] | null,
   character: CharacterContext,
+  defaultSystem?: GameSystem,
 ): RollReport {
   const vars = character.vars ?? {};
   try {
@@ -69,8 +125,13 @@ function rollText(
     );
     const rolls: Roll[] = [];
     for (let iteration = 1; iteration <= (formula.repeat ?? 1); iteration += 1) {
+      const rules = pairing(
+        character.system ?? defaultSystem,
+        character.critRange ?? MAX_CRIT_RANGE,
+      );
       for (const ast of formula.rolls) {
-        const rolled = evaluate(ast, dice);
+        const rolled = evaluate(ast, dice, rules.doubles(ast));
+        rules.judge(ast, rolled);
         rolls.push(formula.repeat === undefined ? rolled : { ...rolled, iteration });
       }
     }
@@ -138,7 +199,8 @@ export function roll(line: string, dice: DieSource, context: RollContext = {}): 
     const own = character.presets ?? {};
     const global = context.globalPresets ?? {};
     const formula = lookup(own, name) ?? lookup(global, name);
-    if (formula !== undefined) return rollText(formula, dice, [name, formula], character);
+    if (formula !== undefined)
+      return rollText(formula, dice, [name, formula], character, context.defaultSystem);
     const names = [...new Set([...Object.keys(own), ...Object.keys(global)])].sort();
     const suggestion = names.find((n) => editDistance(n, name) <= 2) ?? null;
     return {
@@ -154,7 +216,7 @@ export function roll(line: string, dice: DieSource, context: RollContext = {}): 
       },
     };
   }
-  return rollText(rest.join(" "), dice, null, character);
+  return rollText(rest.join(" "), dice, null, character, context.defaultSystem);
 }
 
 function lookup(presets: Readonly<Record<string, string>>, name: string): string | undefined {
