@@ -20,7 +20,7 @@ Press ⌘K (Ctrl+K on Windows and Linux) for the command palette.
 
 ## Your data and backups
 
-Characters, variables, presets, settings and the roll log live in your browser's storage. Clearing site data erases them, so use **Export** to save a backup file, and **Import** to restore it on another device or browser. The file format is documented in [docs/export-format.md](docs/export-format.md); old backups keep importing into newer versions.
+Characters, variables, presets, settings and the roll log live in your browser's storage. Clearing site data erases them, so use **Export** to save a backup file, and **Import** to replace the data on another device or browser with it. The file format is documented in [docs/export-format.md](docs/export-format.md); old backups keep importing into newer versions.
 
 ## Development
 

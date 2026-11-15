@@ -1,7 +1,7 @@
 import {
   CHARACTERS_KEY,
   type Character,
-  cleanCharacter,
+  cleanCharacters,
   cleanRoster,
   type Roster,
 } from "./characters";
@@ -41,7 +41,7 @@ export interface Backup {
 }
 
 /** A partial file: only some characters and global presets. */
-export interface PartialBackup {
+export interface PartialFile {
   format: typeof BACKUP_FORMAT;
   version: number;
   kind: "partial";
@@ -49,8 +49,17 @@ export interface PartialBackup {
   data: PartialData;
 }
 
+/** A partial file as written to disk, where the characters sit in a list inside `characters`, as in a full backup. */
+export interface PartialFileJson {
+  format: typeof BACKUP_FORMAT;
+  version: number;
+  kind: "partial";
+  exportedAt: string;
+  data: { characters?: { characters: Character[] }; globalPresets?: PresetMap };
+}
+
 /** What `parseBackup` returns; `kind` tells the two apart. */
-export type ParsedBackup = Backup | PartialBackup;
+export type ParsedFile = Backup | PartialFile;
 
 type Json = Record<string, unknown>;
 
@@ -69,7 +78,7 @@ const UPGRADES: Upgrades = {
   1: (file) => ({ ...file, version: 2, kind: "full" }),
 };
 
-export type ParseResult = { ok: true; backup: ParsedBackup } | { ok: false; error: string };
+export type ParseResult = { ok: true; backup: ParsedFile } | { ok: false; error: string };
 
 const fail = (error: string): ParseResult => ({ ok: false, error });
 
@@ -153,18 +162,10 @@ export function parseBackup(
 function cleanPartial(data: unknown): PartialData | null {
   if (!isRecord(data)) return null;
   const partial: PartialData = {};
-  const list = isRecord(data.characters) ? data.characters.characters : undefined;
-  if (Array.isArray(list)) {
-    const seen = new Set<string>();
-    const characters: Character[] = [];
-    for (const raw of list) {
-      const character = cleanCharacter(raw);
-      if (character === null || seen.has(character.name)) continue;
-      seen.add(character.name);
-      characters.push(character);
-    }
-    if (characters.length > 0) partial.characters = characters;
-  }
+  const characters = cleanCharacters(
+    isRecord(data.characters) ? data.characters.characters : undefined,
+  );
+  if (characters.length > 0) partial.characters = characters;
   const globalPresets = cleanPresets(data.globalPresets);
   if (Object.keys(globalPresets).length > 0) partial.globalPresets = globalPresets;
   return partial.characters || partial.globalPresets ? partial : null;
@@ -193,6 +194,25 @@ export async function buildBackup(
   };
 }
 
+/** Writes a version 2 partial file from what the caller picked. An empty pick has nothing to write, so it is a mistake. */
+export function buildPartial(data: PartialData, now: Date = new Date()): PartialFileJson {
+  const characters = data.characters ?? [];
+  const globalPresets = data.globalPresets ?? {};
+  if (characters.length === 0 && Object.keys(globalPresets).length === 0) {
+    throw new Error("A partial file needs at least one character or global preset.");
+  }
+  return {
+    format: BACKUP_FORMAT,
+    version: CURRENT_VERSION,
+    kind: "partial",
+    exportedAt: now.toISOString(),
+    data: {
+      ...(characters.length > 0 ? { characters: { characters } } : {}),
+      ...(Object.keys(globalPresets).length > 0 ? { globalPresets } : {}),
+    },
+  };
+}
+
 /** Replaces saved data with the backup's. A roll log the file doesn't carry is left as it is. */
 export async function applyBackup(storage: Storage, backup: Backup): Promise<void> {
   const { data } = backup;
@@ -210,30 +230,30 @@ export interface Summary {
   rollLog: number | null;
 }
 
-/** Counts, for the "this will replace your data" prompt. */
-export function summarise(data: BackupData): Summary {
-  const { characters } = data.characters;
+function count(characters: Character[], globalPresets: PresetMap, rollLog: number | null): Summary {
   return {
     characters: characters.length,
     variables: characters.reduce((n, c) => n + Object.keys(c.vars).length, 0),
     presets: characters.reduce((n, c) => n + Object.keys(c.presets).length, 0),
-    globalPresets: Object.keys(data.globalPresets).length,
-    rollLog: data.rollLog === undefined ? null : data.rollLog.length,
+    globalPresets: Object.keys(globalPresets).length,
+    rollLog,
   };
+}
+
+/** Counts, for the "this will replace your data" prompt. */
+export function summarise(data: BackupData): Summary {
+  return count(
+    data.characters.characters,
+    data.globalPresets,
+    data.rollLog === undefined ? null : data.rollLog.length,
+  );
 }
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** Counts for a partial file; a section it leaves out counts as none. */
 export function describePartialSummary(data: PartialData): string {
-  const characters = data.characters ?? [];
-  return describeSummary({
-    characters: characters.length,
-    variables: characters.reduce((n, c) => n + Object.keys(c.vars).length, 0),
-    presets: characters.reduce((n, c) => n + Object.keys(c.presets).length, 0),
-    globalPresets: Object.keys(data.globalPresets ?? {}).length,
-    rollLog: null,
-  });
+  return describeSummary(count(data.characters ?? [], data.globalPresets ?? {}, null));
 }
 
 export function describeSummary(s: Summary): string {

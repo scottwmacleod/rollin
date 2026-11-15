@@ -3,6 +3,7 @@ import {
   applyBackup,
   type BackupData,
   buildBackup,
+  buildPartial,
   CURRENT_VERSION,
   describePartialSummary,
   describeSummary,
@@ -133,6 +134,24 @@ describe("parseBackup", () => {
     expect(describePartialSummary(parsed.backup.data)).toBe(
       "1 character, 1 variable, 1 character preset, 1 global preset",
     );
+  });
+
+  it("writes a partial file that parses back unchanged", () => {
+    const data = {
+      characters: [{ name: "Mira", vars: { str: 3 }, presets: { attack: "1d20" } }],
+      globalPresets: { fireball: "8d6" },
+    };
+    const file = buildPartial(data, new Date("2026-11-15T08:00:00.000Z"));
+    expect(file).toMatchObject({
+      version: 2,
+      kind: "partial",
+      exportedAt: "2026-11-15T08:00:00.000Z",
+    });
+    expect(file.data.characters).toEqual({ characters: data.characters });
+    const parsed = parseBackup(JSON.stringify(file));
+    expect(parsed.ok && parsed.backup.kind).toBe("partial");
+    expect(parsed.ok && parsed.backup.data).toEqual(data);
+    expect(() => buildPartial({})).toThrow();
   });
 
   it("reads a partial file with only global presets", () => {

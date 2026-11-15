@@ -50,7 +50,7 @@ export const DEFAULT_ROSTER: Roster = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-export function cleanCharacter(value: unknown): Character | null {
+function cleanCharacter(value: unknown): Character | null {
   if (!isRecord(value) || typeof value.name !== "string" || value.name === "") return null;
   const vars: Record<string, number> = {};
   if (isRecord(value.vars)) {
@@ -79,23 +79,30 @@ export function cleanCharacter(value: unknown): Character | null {
   };
 }
 
-/**
- * Reads a saved roster, dropping anything malformed. Whatever is saved, the
- * result has at least one character and an active one that exists.
- */
-export function cleanRoster(value: unknown): Roster {
-  if (!isRecord(value) || !Array.isArray(value.characters)) return DEFAULT_ROSTER;
+/** Cleans a list of characters: drops anything malformed and any repeated name. Not a list gives none. */
+export function cleanCharacters(list: unknown): Character[] {
+  if (!Array.isArray(list)) return [];
   const seen = new Set<string>();
   const characters: Character[] = [];
-  for (const raw of value.characters) {
+  for (const raw of list) {
     const character = cleanCharacter(raw);
     if (character === null || seen.has(character.name)) continue;
     seen.add(character.name);
     characters.push(character);
   }
+  return characters;
+}
+
+/**
+ * Reads a saved roster, dropping anything malformed. Whatever is saved, the
+ * result has at least one character and an active one that exists.
+ */
+export function cleanRoster(value: unknown): Roster {
+  if (!isRecord(value)) return DEFAULT_ROSTER;
+  const characters = cleanCharacters(value.characters);
   if (characters.length === 0) return DEFAULT_ROSTER;
   const active =
-    typeof value.active === "string" && seen.has(value.active)
+    typeof value.active === "string" && characters.some((c) => c.name === value.active)
       ? value.active
       : (characters[0] as Character).name;
   return { active, characters };

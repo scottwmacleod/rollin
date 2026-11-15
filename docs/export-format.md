@@ -1,4 +1,4 @@
-# Export file format
+# Backup file format
 
 The web app's **Export** produces one JSON file, and **Import** reads it back. This page describes version 2, so a person, or an AI, can write one by hand. The code is `apps/web/src/backup.ts`. Terms are in `GLOSSARY.md`.
 

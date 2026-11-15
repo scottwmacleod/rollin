@@ -137,8 +137,15 @@ test("a partial file shows its summary, offers no replace and says why", async (
   const info = dialog.getByRole("group", { name: "Partial file" });
   await expect(info).toContainText("1 character, 1 variable, 0 character presets, 1 global preset");
   await expect(info).toContainText("Replace needs a full backup");
+  await expect(dialog.getByRole("status")).toContainText("That's a partial file");
   await expect(dialog.getByRole("button", { name: "Replace my data" })).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+
+  await info.getByRole("button", { name: "Close" }).click();
+  await expect(info).toHaveCount(0);
+  await expect(dialog.getByRole("button", { name: "Import backup…" })).toBeFocused();
+  await dialog.getByLabel("Backup file").setInputFiles(partial);
+  await expect(info).toBeVisible();
 
   const empty = testInfo.outputPath("empty.json");
   writeFileSync(

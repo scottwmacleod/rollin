@@ -5,7 +5,7 @@ import {
   describePartialSummary,
   describeSummary,
   downloadBackup,
-  type ParsedBackup,
+  type ParsedFile,
   parseBackup,
   summarise,
 } from "./backup";
@@ -28,9 +28,10 @@ export function BackupSection({
   onImported: (backup: Backup) => Promise<void>;
 }) {
   const [includeLog, setIncludeLog] = useState(false);
-  const [pending, setPending] = useState<ParsedBackup | null>(null);
+  const [pending, setPending] = useState<ParsedFile | null>(null);
   const [message, setMessage] = useState("");
   const picker = useRef<HTMLInputElement>(null);
+  const importButton = useRef<HTMLButtonElement>(null);
 
   async function exportFile() {
     const current = storage();
@@ -52,7 +53,11 @@ export function BackupSection({
     const parsed = parseBackup(await file.text());
     if (parsed.ok) {
       setPending(parsed.backup);
-      setMessage("");
+      setMessage(
+        parsed.backup.kind === "partial"
+          ? "That's a partial file. Replace needs a full backup."
+          : "",
+      );
     } else setMessage(parsed.error);
     if (picker.current) picker.current.value = "";
   }
@@ -88,7 +93,12 @@ export function BackupSection({
         <Button type="button" onClick={() => void exportFile()} className={secondary}>
           Export backup
         </Button>
-        <Button type="button" onClick={() => picker.current?.click()} className={secondary}>
+        <Button
+          ref={importButton}
+          type="button"
+          onClick={() => picker.current?.click()}
+          className={secondary}
+        >
           Import backup…
         </Button>
         <input
@@ -127,7 +137,15 @@ export function BackupSection({
             Nothing was changed.
           </p>
           <div className="flex gap-2">
-            <Button type="button" onClick={() => setPending(null)} className={secondary}>
+            <Button
+              type="button"
+              onClick={() => {
+                setPending(null);
+                setMessage("");
+                importButton.current?.focus();
+              }}
+              className={secondary}
+            >
               Close
             </Button>
           </div>
