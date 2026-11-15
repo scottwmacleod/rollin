@@ -1,24 +1,63 @@
 import { roll } from "@rollin/engine";
-import { type FormEvent, type KeyboardEvent, useRef, useState } from "react";
+import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { dieSource } from "./dice";
 import { type Entry } from "./Result";
 import { RollLog } from "./RollLog";
+import { capLog, loadLog, nextEntryId, ROLL_LOG_KEY, saveLog } from "./rollLog";
+import { openStorage, type Storage } from "./storage";
 import { Button, Field, FieldLabel, Input } from "./ui";
 
 export function App() {
   const [formula, setFormula] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [announcement, setAnnouncement] = useState("");
-  const nextId = useRef(1);
+  const [kept, setKept] = useState(true);
+  const [confirming, setConfirming] = useState(false);
+  const storage = useRef<Storage | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
+
+  // Open storage, load the saved log, and follow other tabs. Rolls made before
+  // the load finishes are kept after the saved ones.
+  useEffect(() => {
+    let cancelled = false;
+    let unsubscribe = () => {};
+    void openStorage().then(async ({ storage: opened, kept: ok }) => {
+      const saved = await loadLog(opened).catch(() => []);
+      if (cancelled) return;
+      storage.current = opened;
+      setKept(ok);
+      setEntries((current) => {
+        const first = nextEntryId(saved);
+        const merged = capLog([...saved, ...current.map((e, i) => ({ ...e, id: first + i }))]);
+        if (current.length > 0) void saveLog(opened, merged).catch(() => setKept(false));
+        return merged;
+      });
+      unsubscribe = opened.subscribe<Entry[]>(ROLL_LOG_KEY, (value) =>
+        setEntries(Array.isArray(value) ? capLog(value) : []),
+      );
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
+
+  function clearLog() {
+    setConfirming(false);
+    setEntries([]);
+    void storage.current?.delete(ROLL_LOG_KEY).catch(() => setKept(false));
+    input.current?.focus();
+  }
 
   function submit(event: FormEvent) {
     event.preventDefault();
     const text = formula.trim();
     if (text === "") return;
     const report = roll(text, dieSource());
-    setEntries((all) => [...all, { id: nextId.current++, input: text, report }]);
+    const next = capLog([...entries, { id: nextEntryId(entries), input: text, report }]);
+    setEntries(next);
+    if (storage.current) void saveLog(storage.current, next).catch(() => setKept(false));
     setAnnouncement(
       "ok" in report
         ? `Rolled ${text}: ${report.ok.rolls.map((r) => `total ${r.total}`).join(", ")}`
@@ -45,6 +84,44 @@ export function App() {
       <h1 className="sr-only">rollin</h1>
 
       <RollLog entries={entries} treeRef={log} onEscape={() => input.current?.focus()} />
+
+      {!kept && (
+        <p className="m-0 text-sm text-muted">
+          Your browser is blocking storage, so the roll log won't be kept when you close or reload
+          this page.
+        </p>
+      )}
+
+      {entries.length > 0 &&
+        (confirming ? (
+          <div role="group" aria-label="Confirm clear" className="flex items-center gap-3 text-sm">
+            <span>Clear the whole roll log?</span>
+            <Button
+              type="button"
+              onClick={clearLog}
+              className="h-8 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+            >
+              Yes, clear
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="h-8 rounded-md border border-line-strong px-3 text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+            >
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <Button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="h-8 rounded-md border border-line-strong px-3 text-sm text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+            >
+              Clear
+            </Button>
+          </div>
+        ))}
 
       <div role="status" className="sr-only">
         {announcement}
