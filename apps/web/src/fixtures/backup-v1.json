@@ -1,0 +1,11 @@
+{
+  "format": "rollin-backup",
+  "version": 1,
+  "exportedAt": "2026-10-01T09:30:00.000Z",
+  "characters": [
+    { "name": "Mira", "vars": { "str": 3, "prof": 2 }, "presets": { "attack": "1d20+str+prof" } },
+    { "name": "Tarn", "vars": {}, "presets": {} }
+  ],
+  "presets": { "fireball": "8d6" },
+  "settings": { "theme": "dark" }
+}
