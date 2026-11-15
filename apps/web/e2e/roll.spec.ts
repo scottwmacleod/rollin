@@ -45,7 +45,12 @@ test("a dropped die is marked in the breakdown, accessibly", async ({ page }) =>
   await expect(result).toContainText("total 12");
   const dropped = result.locator(".line-through");
   await expect(dropped).toHaveCount(1);
-  await expect(dropped).toHaveText("1 dropped");
+  // Quiet to the eye (faded and struck through, no word), still announced as dropped.
+  await expect(dropped).toHaveText("1");
+  await expect(dropped).toHaveCSS("opacity", "0.6");
+  await expect(page.getByText("dropped", { exact: false })).toHaveCount(0);
+  // The accessible name of the roll still says which die was dropped.
+  await expect(result.getByRole("treeitem", { name: /1 dropped/ }).first()).toBeAttached();
 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
@@ -246,6 +251,12 @@ test("a percentile roll shows the term as typed with its d100 faces", async ({ p
   expect(results.violations).toEqual([]);
 });
 
+/** Clears the roll log from its menu, as a person does. */
+async function openClear(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: "Roll log menu" }).click();
+  await page.getByRole("menuitem", { name: "Clear roll log" }).click();
+}
+
 async function rollOnce(page: import("@playwright/test").Page, formula: string) {
   await page.getByLabel("Formula").fill(formula);
   await page.getByLabel("Formula").press("Enter");
@@ -260,11 +271,12 @@ test("the roll log survives a reload, and Clear empties it for good", async ({ p
   await page.reload();
   await expect(page.getByRole("tree", { name: "Roll log" })).toContainText("d6+1");
 
-  await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Clear", exact: true })).toHaveCount(0);
+  await openClear(page);
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("tree", { name: "Roll log" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await openClear(page);
   await page.getByRole("button", { name: "Yes, clear" }).click();
   await expect(page.getByText("Rolls will appear here.")).toBeVisible();
 
@@ -305,7 +317,7 @@ test("a roll in one tab appears in another, and Clear follows", async ({ context
   await expect(a.getByRole("tree", { name: "Roll log" })).toContainText("d8");
   await expect(a.getByRole("tree", { name: "Roll log" })).toContainText("2d4");
 
-  await a.getByRole("button", { name: "Clear", exact: true }).click();
+  await openClear(a);
   await a.getByRole("button", { name: "Yes, clear" }).click();
   await expect(b.getByText("Rolls will appear here.")).toBeVisible();
 });

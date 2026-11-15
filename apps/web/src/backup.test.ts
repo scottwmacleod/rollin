@@ -33,7 +33,7 @@ const sample: BackupData = {
     characters: [{ name: "Mira", vars: { str: 3 }, presets: { attack: "1d20+str" } }],
   },
   globalPresets: { fireball: "8d6" },
-  settings: { theme: "light" },
+  settings: { theme: "light", keypad: "auto" },
 };
 
 describe("parseBackup", () => {
@@ -113,6 +113,18 @@ describe("parseBackup", () => {
     expect(parsed.backup).toMatchObject({ version: 2, exportedAt: "2026-01-02T00:00:00.000Z" });
     expect(parsed.backup.data).toMatchObject(sample);
     expect(parsed.backup.data.rollLog).toHaveLength(1);
+  });
+
+  it("imports a version 1 backup with no keypad setting as Auto", () => {
+    const v1 = JSON.stringify({
+      format: "rollin-backup",
+      version: 1,
+      exportedAt: "2026-01-02T00:00:00.000Z",
+      data: { ...sample, settings: { theme: "dark" } },
+    });
+    const parsed = parseBackup(v1);
+    if (!parsed.ok || parsed.backup.kind !== "full") return expect.fail("expected a full backup");
+    expect(parsed.backup.data.settings).toEqual({ theme: "dark", keypad: "auto" });
   });
 
   it("reads a partial file: characters and global presets, no active character", () => {
@@ -257,7 +269,7 @@ describe("backup reminder", () => {
     const empty: BackupData = {
       characters: { active: "You", characters: [{ name: "You", vars: {}, presets: {} }] },
       globalPresets: {},
-      settings: { theme: "system" },
+      settings: { theme: "system", keypad: "auto" },
     };
     expect(trackState({}, empty, 1000)).toEqual({});
   });

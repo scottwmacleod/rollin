@@ -24,7 +24,7 @@ export function Keypad({
     </Button>
   );
   return (
-    <div role="group" aria-label="Dice keypad" className="flex flex-col gap-1 md:hidden">
+    <div role="group" aria-label="Dice keypad" className="flex w-full flex-col gap-1 md:max-w-md">
       <div className="grid grid-cols-7 gap-1">
         {KEYPAD_DICE.map((sides) => (
           <Button
@@ -38,7 +38,7 @@ export function Keypad({
           </Button>
         ))}
       </div>
-      <div className="grid grid-cols-4 gap-1">
+      <div className="grid grid-cols-5 gap-1">
         {["1", "2", "3"].map(digit)}
         <Button
           type="button"
@@ -47,6 +47,14 @@ export function Keypad({
           onClick={() => tap({ kind: "op", op: "+" })}
         >
           +
+        </Button>
+        <Button
+          type="button"
+          aria-label="backspace"
+          className={KEY}
+          onClick={() => tap({ kind: "back" })}
+        >
+          ⌫
         </Button>
         {["4", "5", "6"].map(digit)}
         <Button
@@ -57,15 +65,6 @@ export function Keypad({
         >
           −
         </Button>
-        {["7", "8", "9"].map(digit)}
-        <Button
-          type="button"
-          aria-label="backspace"
-          className={KEY}
-          onClick={() => tap({ kind: "back" })}
-        >
-          ⌫
-        </Button>
         <Button
           type="button"
           aria-label="all clear"
@@ -74,11 +73,11 @@ export function Keypad({
         >
           C
         </Button>
-        {digit("0")}
+        {["7", "8", "9", "0"].map(digit)}
         <Button
           type="button"
           onClick={onRoll}
-          className="col-span-2 inline-flex min-h-11 items-center justify-center rounded-md bg-signal text-base font-medium text-on-signal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+          className="inline-flex min-h-11 items-center justify-center rounded-md bg-signal text-base font-medium text-on-signal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
         >
           Roll
         </Button>

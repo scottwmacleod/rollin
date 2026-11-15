@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { type PaletteGroup, type PaletteRow, paletteView } from "./palette";
+import { useShortcutHint } from "./shortcuts";
 import {
   Command,
   CommandEmpty,
@@ -11,7 +12,6 @@ import {
   Dialog,
   DialogBackdrop,
   DialogContent,
-  DialogShortcut,
   DialogTitle,
   DialogTrigger,
 } from "./ui";
@@ -40,6 +40,7 @@ export function CommandPalette({
   finalFocus: () => HTMLElement | null;
 }) {
   const [query, setQuery] = useState("");
+  const hint = useShortcutHint("k");
   const view = useMemo(() => paletteView(rows, query), [rows, query]);
   const byValue = useMemo(() => new Map(rows.map((row) => [row.value, row])), [rows]);
   const groups = (["Presets", "Characters", "Commands"] as PaletteGroup[])
@@ -59,7 +60,7 @@ export function CommandPalette({
         className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 ${focusRing}`}
       >
         Commands
-        <DialogShortcut className="text-muted" />
+        {hint !== null && <span className="text-muted">{hint}</span>}
       </DialogTrigger>
       <DialogBackdrop className="fixed inset-0 bg-black/50" />
       <DialogContent
