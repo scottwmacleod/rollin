@@ -3,7 +3,11 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 import { offlineWorker } from "./scripts/pwa.ts";
 
+// The build's commit on Vercel, so an error report says which deploy it came from.
+const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev";
+
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(version) },
   plugins: [react(), tailwindcss(), offlineWorker()],
   test: { include: ["src/**/*.test.{ts,tsx}"] },
 });
