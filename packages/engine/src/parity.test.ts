@@ -55,7 +55,7 @@ const DEFERRED_CASES: Record<string, string> = {
   "errors/unknown_preset_suggestion": "presets (loop 4)",
   "errors/unknown_preset_global_suggestion": "presets (loop 4)",
   "errors/roll_keyword_unknown": "presets (loop 4)",
-  "errors/session_word_one_shot": "session words (loop 2)",
+  "errors/session_word_one_shot": "a command-line-only message, gone with the CLI (#239)",
 };
 
 /**
