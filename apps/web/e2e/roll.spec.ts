@@ -237,11 +237,87 @@ test("a percentile roll shows the term as typed with its d100 faces", async ({ p
   await page.getByLabel("Formula").fill("2D%");
   await page.getByLabel("Formula").press("Enter");
 
-  const result = page.getByRole("region", { name: "Result" });
-  await expect(result).toContainText("› 2D%");
+  const result = page.getByRole("tree", { name: "Roll log" });
+  await expect(result).toContainText("2D%");
   await expect(result).toContainText("[37, 92]");
   await expect(result).toContainText("total 129");
 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
+});
+
+async function rollOnce(page: import("@playwright/test").Page, formula: string) {
+  await page.getByLabel("Formula").fill(formula);
+  await page.getByLabel("Formula").press("Enter");
+}
+
+test("the roll log survives a reload, and Clear empties it for good", async ({ page }) => {
+  await page.goto("/");
+  await rollOnce(page, "d6+1");
+  const log = page.getByRole("tree", { name: "Roll log" });
+  await expect(log).toContainText("d6+1");
+
+  await page.reload();
+  await expect(page.getByRole("tree", { name: "Roll log" })).toContainText("d6+1");
+
+  await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("tree", { name: "Roll log" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await page.getByRole("button", { name: "Yes, clear" }).click();
+  await expect(page.getByText("Rolls will appear here.")).toBeVisible();
+
+  // The delete is saved in the background; wait for it before reloading, as a person would.
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          new Promise<unknown>((resolve) => {
+            const open = indexedDB.open("rollin");
+            open.onsuccess = () => {
+              const get = open.result.transaction("kv").objectStore("kv").get("rollLog");
+              get.onsuccess = () => {
+                open.result.close();
+                resolve(get.result);
+              };
+            };
+          }),
+      ),
+    )
+    .toBeUndefined();
+
+  await page.reload();
+  await expect(page.getByText("Rolls will appear here.")).toBeVisible();
+});
+
+test("a roll in one tab appears in another, and Clear follows", async ({ context }) => {
+  const a = await context.newPage();
+  const b = await context.newPage();
+  await a.goto("/");
+  await b.goto("/");
+  await expect(b.getByText("Rolls will appear here.")).toBeVisible();
+
+  await rollOnce(a, "2d4");
+  await expect(b.getByRole("tree", { name: "Roll log" })).toContainText("2d4");
+
+  await rollOnce(b, "d8");
+  await expect(a.getByRole("tree", { name: "Roll log" })).toContainText("d8");
+  await expect(a.getByRole("tree", { name: "Roll log" })).toContainText("2d4");
+
+  await a.getByRole("button", { name: "Clear", exact: true }).click();
+  await a.getByRole("button", { name: "Yes, clear" }).click();
+  await expect(b.getByText("Rolls will appear here.")).toBeVisible();
+});
+
+test("with storage blocked the app still rolls and says the log won't be kept", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "indexedDB", { value: undefined });
+  });
+  await page.goto("/");
+  await expect(page.getByText(/won't be kept/)).toBeVisible();
+  await rollOnce(page, "d20");
+  await expect(page.getByRole("tree", { name: "Roll log" })).toContainText("d20");
 });
