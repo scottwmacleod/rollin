@@ -79,7 +79,7 @@ export function SettingsDialog({
           </DialogClose>
         </div>
         <p className="mt-4 mb-0 border-t border-line-strong pt-3 text-center text-xs text-text-2">
-          Brought to you by{" "}
+          Built by{" "}
           <a
             href="https://scottmacleod.co"
             target="_blank"
