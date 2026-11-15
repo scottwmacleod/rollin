@@ -39,17 +39,12 @@ const DEFERRED_AREAS: Record<string, string> = {
   characters: "characters and variables (loop 5)",
   d20_checks: "the d20 check rule (loop 5)",
   dnd5e: "game systems (loop 5)",
-  exploding: "exploding dice (loop 3)",
   presets: "presets (loop 4)",
-  rerolls: "rerolls (loop 3)",
 };
 
 /** Single cases in covered areas that use syntax a later loop brings. */
 const DEFERRED_CASES: Record<string, string> = {
-  "limits/dice_per_term_exploding": "exploding dice (loop 3)",
-  "limits/explosion_cap_after_other_rolls": "exploding dice (loop 3)",
   "keep_drop/advantage_spaced": "the d20 check rule marks a natural 20 (loop 5)",
-  "errors/syntax_bare_reroll": "rerolls (loop 3)",
   "errors/undefined_variable": "variables (loop 5)",
   "errors/undefined_variable_suggestion": "variables (loop 5)",
   "errors/undefined_variable_none_defined": "variables (loop 5)",

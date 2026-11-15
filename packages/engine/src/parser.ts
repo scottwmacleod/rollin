@@ -6,16 +6,27 @@
 import {
   type Arith,
   type Cmp,
+  type Explode,
   type FormulaAst,
   hasDice,
   isCount,
   precedence,
+  type Reroll,
   type RollAst,
   type Select,
   type SelectKind,
   type Success,
+  test,
 } from "./ast";
-import { countInArithmetic, invalidDice, limitExceeded, repeatWithoutDice, syntax } from "./errors";
+import {
+  countInArithmetic,
+  infiniteExplosion,
+  infiniteReroll,
+  invalidDice,
+  limitExceeded,
+  repeatWithoutDice,
+  syntax,
+} from "./errors";
 import { type Spanned, type Token, tokenize } from "./lexer";
 import { MAX_DEPTH, MAX_DICE_PER_ROLL, MAX_DICE_PER_TERM, MAX_REPEAT, MAX_SIDES } from "./limits";
 import type { Source } from "./source";
@@ -389,16 +400,25 @@ class Parser {
     if (sides < 2 || sides > MAX_SIDES) {
       throw invalidDice(`sides must be between 2 and ${MAX_SIDES}`, sidesSpan);
     }
+    const rerollStart = this.nextStart();
+    const reroll = this.parseReroll(sides);
+    const rerollText = this.clauseText(rerollStart, reroll !== undefined);
+    const explodeStart = this.nextStart();
+    const explode = this.parseExplode(sides);
+    const explodeText = this.clauseText(explodeStart, explode !== undefined);
     const selectStart = this.here();
     const advantage = this.parseAdvantage(count, sides, countSpan.start);
     const select: Select | undefined = advantage
       ? { kind: advantage, n: 1 }
       : this.parseSelect(count);
-    const modifiers: string[] = select ? [this.src.slice(selectStart, this.prevEnd())] : [];
+    const selectText = this.clauseText(selectStart, select !== undefined);
     this.rejectSelectWithAdvantage(advantage, select);
     const successStart = this.here();
     const success = this.parseCount();
-    if (success) modifiers.push(this.src.slice(successStart, this.prevEnd()));
+    const successText = this.clauseText(successStart, success !== undefined);
+    const modifiers = [rerollText, explodeText, selectText, successText].filter(
+      (c) => c !== undefined,
+    );
     const span = { start: countSpan.start, end: this.prevEnd() };
     // `adv` and `dis` roll two dice.
     if (advantage) count = 2;
@@ -414,7 +434,14 @@ class Parser {
           count,
           sides,
           ...(special ? { special } : {}),
+          ...(reroll ? { reroll } : {}),
+          ...(explode ? { explode } : {}),
           ...(select ? { select } : {}),
+          clauses: {
+            ...(rerollText === undefined ? {} : { reroll: rerollText }),
+            ...(explodeText === undefined ? {} : { explode: explodeText }),
+            ...(selectText === undefined ? {} : { select: selectText }),
+          },
           ...(success ? { success } : {}),
           modifiers,
         },
@@ -422,6 +449,64 @@ class Parser {
       span,
     };
   }
+  /** Byte offset where the next token starts (the end of the source when there is none). */
+  private nextStart(): number {
+    return this.here();
+  }
+
+  /** The source of the clause parsed since `start`, if there was one. */
+  private clauseText(start: number, present: boolean): string | undefined {
+    return present ? this.src.slice(start, this.prevEnd()) : undefined;
+  }
+
+  /** Optional `r` or `rr` reroll clause with a condition. */
+  private parseReroll(sides: number): Reroll | undefined {
+    const token = this.peek();
+    if (token?.kind !== "word" || (token.word !== "r" && token.word !== "rr")) return undefined;
+    const mode = token.word === "r" ? "once" : "repeat";
+    const start = this.here();
+    this.pos += 1;
+    if (!this.atComparison() && this.peek()?.kind !== "number") {
+      throw this.unexpected(
+        "a reroll condition (a number, or a comparison such as <2, <=2, >5, >=5, =3)",
+      );
+    }
+    const reroll: Reroll = { mode, ...this.parseCondition("a number after the reroll condition") };
+    if (mode === "repeat" && everyFace(sides, (face) => test(reroll.cmp, face, reroll.value))) {
+      const span = { start, end: this.prevEnd() };
+      throw infiniteReroll(this.src.slice(span.start, span.end), sides, span);
+    }
+    return reroll;
+  }
+
+  /**
+   * Optional `!` explode clause: `!` alone explodes on the maximum face, otherwise
+   * a comparison (`>`, `>=`, `<`, `<=`, `=`) and a number follow.
+   */
+  private parseExplode(sides: number): Explode | undefined {
+    if (this.peek()?.kind !== "bang") return undefined;
+    const start = this.here();
+    this.pos += 1;
+    const next = this.peek();
+    let mode: Explode["mode"] = "plain";
+    if (next?.kind === "bang") {
+      this.pos += 1;
+      mode = "compound";
+    } else if (next?.kind === "word" && next.word === "p") {
+      this.pos += 1;
+      mode = "penetrate";
+    }
+    const condition = this.atComparison()
+      ? this.parseCondition("a number after the explode condition")
+      : { cmp: "eq" as const, value: sides };
+    const explode: Explode = { mode, ...condition };
+    if (everyFace(sides, (face) => test(explode.cmp, face, explode.value))) {
+      const span = { start, end: this.prevEnd() };
+      throw infiniteExplosion(this.src.slice(span.start, span.end), sides, span);
+    }
+    return explode;
+  }
+
   /** Optional `adv`/`dis` suffix: sugar for rolling two dice and keeping the highest or lowest. */
   private parseAdvantage(count: number, sides: number, termStart: number): SelectKind | undefined {
     const token = this.peek();
@@ -481,4 +566,10 @@ class Parser {
     }
     return { kind, n };
   }
+}
+
+/** Whether `holds` is true for every face from 1 to `sides`. */
+function everyFace(sides: number, holds: (face: number) => boolean): boolean {
+  for (let face = 1; face <= sides; face += 1) if (!holds(face)) return false;
+  return true;
 }

@@ -1,9 +1,14 @@
 /** Evaluator: walks the syntax tree, drawing dice from the injected source. */
-import { type Arith, fails, isCount, type RollAst, type Select, succeeds } from "./ast";
+import { type Arith, fails, isCount, type RollAst, type Select, succeeds, test } from "./ast";
 import type { DieSource } from "./dice";
 import { divisionByZero, limitExceeded, overflow } from "./errors";
-import { MAX_DICE_PER_ROLL, MAX_INT } from "./limits";
-import type { BinOp, Die, Node, Roll, Span } from "./types";
+import { MAX_DICE_PER_ROLL, MAX_EXPLOSIONS_PER_DIE, MAX_INT, MAX_REROLLS_PER_DIE } from "./limits";
+import type { BinOp, Die, Node, Reason, Roll, Span } from "./types";
+
+const reason = (clause: string, from: number | undefined): Reason => ({
+  clause,
+  ...(from === undefined ? {} : { from }),
+});
 
 const total = (node: Node): number => (node.type === "number" ? node.value : nodeTotal(node));
 
@@ -21,8 +26,8 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
         return { type: "number", value: kind.value };
       case "dice": {
         const term = kind.dice;
-        const faces: Die[] = [];
-        for (let i = 0; i < term.count; i += 1) {
+        // Rolls one die, counting it toward the per-roll cap.
+        const draw = (): number => {
           rolled += 1;
           if (rolled > MAX_DICE_PER_ROLL)
             throw limitExceeded("dice_per_roll", term.text, expr.span);
@@ -30,10 +35,79 @@ export function evaluate(roll: RollAst, dice: DieSource): Roll {
           if (!Number.isInteger(value) || value < 1 || value > term.sides) {
             throw new RangeError(`the die source returned ${value} for a d${term.sides}`);
           }
-          faces.push({ value, status: "kept" });
+          return value;
+        };
+        const { reroll, explode, clauses } = term;
+        const faces: Die[] = [];
+        for (let i = 0; i < term.count; i += 1) {
+          let raw = draw();
+          // The index of the last die this one's reroll replaced.
+          let replaced: number | undefined;
+          if (reroll) {
+            let rerolls = 0;
+            while (test(reroll.cmp, raw, reroll.value)) {
+              if (rerolls === MAX_REROLLS_PER_DIE)
+                throw limitExceeded("rerolls_per_die", term.text, expr.span);
+              rerolls += 1;
+              faces.push({
+                value: raw,
+                status: "rerolled",
+                ...(clauses.reroll === undefined
+                  ? {}
+                  : { reason: reason(clauses.reroll, replaced) }),
+              });
+              replaced = faces.length - 1;
+              raw = draw();
+              if (reroll.mode === "once") break;
+            }
+          }
+          const die: Die = {
+            value: raw,
+            status: "kept",
+            ...(replaced !== undefined && clauses.reroll !== undefined
+              ? { reason: reason(clauses.reroll, replaced) }
+              : {}),
+          };
+          const dieIndex = faces.length;
+          const extras: number[] = [];
+          let explosions = 0;
+          while (explode && test(explode.cmp, raw, explode.value)) {
+            if (explosions === MAX_EXPLOSIONS_PER_DIE)
+              throw limitExceeded("explosions_per_die", term.text, expr.span);
+            explosions += 1;
+            raw = draw();
+            extras.push(raw);
+          }
+          if (explode?.mode === "compound" && extras.length > 0) {
+            die.parts = [die.value, ...extras];
+            die.value = die.parts.reduce((a, b) => a + b, 0);
+            // A reroll replacement keeps its reroll reason (so the link back
+            // survives) and records the compound clause as `also`.
+            if (die.reason) {
+              if (clauses.explode !== undefined) die.reason.also = clauses.explode;
+            } else if (clauses.explode !== undefined) {
+              die.reason = reason(clauses.explode, undefined);
+            }
+            faces.push(die);
+          } else {
+            faces.push(die);
+            // A penetrating extra die counts one less, with no floor.
+            const shift = explode?.mode === "penetrate" ? 1 : 0;
+            extras.forEach((face, n) => {
+              faces.push({
+                value: face - shift,
+                status: "exploded",
+                // Each extra die exploded from the die just before it.
+                ...(clauses.explode === undefined
+                  ? {}
+                  : { reason: reason(clauses.explode, dieIndex + n) }),
+              });
+            });
+          }
         }
-        if (term.select) applyDrops(faces, term.select, term.modifiers[0] ?? "");
-        const kept = faces.filter((die) => die.status === "kept");
+        if (term.select) applyDrops(faces, term.select, term.clauses.select ?? "");
+        // Dice a reroll replaced or a keep/drop clause removed never count.
+        const kept = faces.filter((die) => die.status === "kept" || die.status === "exploded");
         const modifiers = term.modifiers.length > 0 ? { modifiers: term.modifiers } : {};
         const success = term.success;
         if (success) {
@@ -137,7 +211,9 @@ function apply(op: BinOp, lhs: number, rhs: number, span: Span, rhsSpan: Span): 
  * rest from the other end; ties fall by roll order, as in the Rust engine.
  */
 function applyDrops(dice: Die[], { kind, n }: Select, clause: string): void {
-  const pool = dice.length;
+  // A die a reroll replaced is out of the pool before anything is dropped.
+  const live = dice.flatMap((die, i) => (die.status === "rerolled" ? [] : [i]));
+  const pool = live.length;
   const [lowest, highest] =
     kind === "drop_lowest"
       ? [n, 0]
@@ -147,7 +223,7 @@ function applyDrops(dice: Die[], { kind, n }: Select, clause: string): void {
           ? [pool - n, 0]
           : [0, pool - n];
   // Array.prototype.sort is stable, so equal faces keep their roll order.
-  const order = dice.map((_, i) => i).sort((a, b) => (dice[a]?.value ?? 0) - (dice[b]?.value ?? 0));
+  const order = live.sort((a, b) => (dice[a]?.value ?? 0) - (dice[b]?.value ?? 0));
   for (const i of [...order.slice(0, lowest), ...order.slice(pool - highest)]) {
     const die = dice[i];
     if (die) {

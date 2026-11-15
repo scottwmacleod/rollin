@@ -20,6 +20,10 @@ export interface DiceTerm {
   count: number;
   sides: number;
   special?: "percentile";
+  reroll?: Reroll;
+  explode?: Explode;
+  /** The source text of each clause, for reporting why a die is what it is. */
+  clauses: { reroll?: string; explode?: string; select?: string };
   /** The success clause, when the group counts successes instead of summing. */
   success?: Success;
   /** The keep/drop clause, or the keep that `adv` and `dis` stand for. */
@@ -37,6 +41,20 @@ export interface Select {
 
 export type Cmp = "gt" | "ge" | "lt" | "le" | "eq";
 
+/** `r` rerolls a matching die once (the second result stands); `rr` until it no longer matches. */
+export interface Reroll {
+  mode: "once" | "repeat";
+  cmp: Cmp;
+  value: number;
+}
+
+/** `!` adds a separate die, `!!` adds into the exploding die, `!p` adds a die that counts one less. */
+export interface Explode {
+  mode: "plain" | "compound" | "penetrate";
+  cmp: Cmp;
+  value: number;
+}
+
 /** A success clause such as `>=8`, with the optional failure clause `f1`. */
 export interface Success {
   cmp: Cmp;
@@ -44,7 +62,8 @@ export interface Success {
   failure?: { cmp: Cmp; value: number };
 }
 
-const test = (cmp: Cmp, face: number, value: number): boolean => {
+/** Whether `face <cmp> value` holds. */
+export const test = (cmp: Cmp, face: number, value: number): boolean => {
   switch (cmp) {
     case "gt":
       return face > value;
