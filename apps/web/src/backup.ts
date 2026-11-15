@@ -8,7 +8,7 @@ import type { Storage } from "./storage";
 /** Marks a file as a rollin backup, so a stray JSON file is refused with a clear reason. */
 export const BACKUP_FORMAT = "rollin-backup";
 /** The newest format this build writes and reads. Bump it with an entry in `UPGRADES`. */
-export const CURRENT_VERSION = 2;
+export const CURRENT_VERSION = 1;
 
 /** Everything a backup holds. The roll log is optional. */
 export interface BackupData {
@@ -30,30 +30,26 @@ type Json = Record<string, unknown>;
 const isRecord = (value: unknown): value is Json =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+export type Upgrades = Record<number, (file: Json) => Json>;
+
 /**
- * One step per version: `UPGRADES[n]` turns a version `n` file into a version
- * `n + 1` file. Importing walks the steps from the file's version to the
- * current one, so a file from any past version still opens.
+ * One step per past version: `UPGRADES[n]` turns a version `n` file into a
+ * version `n + 1` file. Importing walks the steps from the file's version to
+ * the current one, so a file from any past version still opens. Empty while
+ * version 1 is the only one.
  */
-const UPGRADES: Record<number, (file: Json) => Json> = {
-  // Version 1 kept the roster's characters and the global presets at the top
-  // level, with no active character. Version 2 groups everything under `data`.
-  1: (file) => {
-    const { characters, presets, settings, rollLog, ...rest } = file;
-    return {
-      ...rest,
-      version: 2,
-      data: { characters: { characters }, globalPresets: presets, settings, rollLog },
-    };
-  },
-};
+const UPGRADES: Upgrades = {};
 
 export type ParseResult = { ok: true; backup: Backup } | { ok: false; error: string };
 
 const fail = (error: string): ParseResult => ({ ok: false, error });
 
 /** Reads the text of a backup file: validates it, upgrades it, and cleans what it holds. */
-export function parseBackup(text: string): ParseResult {
+export function parseBackup(
+  text: string,
+  current: number = CURRENT_VERSION,
+  upgrades: Upgrades = UPGRADES,
+): ParseResult {
   let file: unknown;
   try {
     file = JSON.parse(text);
@@ -67,14 +63,14 @@ export function parseBackup(text: string): ParseResult {
   if (typeof version !== "number" || !Number.isInteger(version) || version < 1) {
     return fail("That backup has no usable version number.");
   }
-  if (version > CURRENT_VERSION) {
+  if (version > current) {
     return fail(
-      `That backup is from a newer rollin (format ${version}); this one reads up to ${CURRENT_VERSION}. Reload to get the latest rollin and try again.`,
+      `That backup is from a newer rollin (format ${version}); this one reads up to ${current}. Reload to get the latest rollin and try again.`,
     );
   }
   let upgraded: Json = file;
-  while (version < CURRENT_VERSION) {
-    const step = UPGRADES[version];
+  while (version < current) {
+    const step = upgrades[version];
     if (step === undefined) return fail(`That backup's format (${version}) isn't supported.`);
     upgraded = step(upgraded);
     version += 1;
@@ -98,7 +94,7 @@ export function parseBackup(text: string): ParseResult {
   const exportedAt = typeof upgraded.exportedAt === "string" ? upgraded.exportedAt : "";
   return {
     ok: true,
-    backup: { format: BACKUP_FORMAT, version: CURRENT_VERSION, exportedAt, data: clean },
+    backup: { format: BACKUP_FORMAT, version: current, exportedAt, data: clean },
   };
 }
 

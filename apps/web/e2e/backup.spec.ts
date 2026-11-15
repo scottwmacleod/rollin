@@ -65,7 +65,7 @@ test("export, clear storage, import: the same characters and presets come back",
   const file = testInfo.outputPath("backup.json");
   await (await download).saveAs(file);
   const saved = JSON.parse(readFileSync(file, "utf8"));
-  expect(saved).toMatchObject({ format: "rollin-backup", version: 2 });
+  expect(saved).toMatchObject({ format: "rollin-backup", version: 1 });
   expect(saved.data.rollLog).toBeUndefined();
 
   await clearStorage(page);
@@ -111,18 +111,6 @@ test("a malformed or newer file is refused and nothing changes", async ({ page }
 
   await dialog.getByRole("button", { name: "Done" }).click();
   await expect(sidebar(page)).toContainText("fireball");
-});
-
-test("an older version 1 file imports and is upgraded", async ({ page }) => {
-  await page.goto("/");
-  const dialog = await openSettings(page);
-  await dialog.getByLabel("Backup file").setInputFiles("src/fixtures/backup-v1.json");
-  await expect(dialog).toContainText("2 characters, 2 variables");
-  await dialog.getByRole("button", { name: "Replace my data" }).click();
-  await expect(dialog).toContainText("Imported");
-  await dialog.getByRole("button", { name: "Done" }).click();
-  await expect(sidebar(page)).toContainText("fireball");
-  await expect(characters(page).getByRole("button", { name: /^mira/i })).toBeVisible();
 });
 
 test("the backup reminder shows for old unsaved data and can be dismissed", async ({ page }) => {

@@ -13,7 +13,6 @@ import {
   summarise,
   trackState,
 } from "./backup";
-import v1 from "./fixtures/backup-v1.json?raw";
 import { memoryStorage } from "./storage";
 
 const sample: BackupData = {
@@ -51,20 +50,38 @@ describe("parseBackup", () => {
     expect(parsed.ok && parsed.backup.data.rollLog).toHaveLength(1);
   });
 
-  it("upgrades a version 1 file", () => {
-    const parsed = parseBackup(v1);
+  it("walks the upgrade steps from an older version, using a made-up format", () => {
+    // A pretend version 1 kept presets under `presets` and had no `data` envelope.
+    const old = JSON.stringify({
+      format: "rollin-backup",
+      version: 1,
+      characters: [{ name: "Mira", vars: { str: 3 }, presets: { attack: "1d20" } }],
+      presets: { fireball: "8d6" },
+    });
+    const upgrades = {
+      1: (file: Record<string, unknown>) => ({
+        ...file,
+        version: 2,
+        data: { characters: { characters: file.characters }, globalPresets: file.presets },
+      }),
+    };
+    const parsed = parseBackup(old, 2, upgrades);
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
-    expect(parsed.backup.version).toBe(CURRENT_VERSION);
-    expect(parsed.backup.data.settings.theme).toBe("dark");
+    expect(parsed.backup.version).toBe(2);
     expect(parsed.backup.data.globalPresets).toEqual({ fireball: "8d6" });
     expect(parsed.backup.data.characters.active).toBe("Mira");
-    expect(parsed.backup.data.characters.characters.map((c) => c.name)).toEqual(["Mira", "Tarn"]);
     expect(summarise(parsed.backup.data)).toMatchObject({
-      variables: 2,
+      variables: 1,
       presets: 1,
       rollLog: null,
     });
+  });
+
+  it("refuses an older version with no upgrade step", () => {
+    expect(parseBackup(JSON.stringify({ format: "rollin-backup", version: 1 }), 3, {}).ok).toBe(
+      false,
+    );
   });
 
   it.each([
