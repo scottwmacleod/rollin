@@ -671,3 +671,26 @@ test.describe("characters and variables", () => {
     ).toHaveAttribute("aria-pressed", "true");
   });
 });
+
+test("Up and Down in the formula box step through past rolls and back to the draft", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const formula = page.getByLabel("Formula");
+  await formula.fill("d20");
+  await formula.press("Enter");
+  await formula.fill("2d6+3");
+  await formula.press("Enter");
+
+  await formula.fill("d4");
+  await formula.press("ArrowUp");
+  await expect(formula).toHaveValue("2d6+3");
+  await formula.press("ArrowUp");
+  await expect(formula).toHaveValue("d20");
+  await formula.press("ArrowUp");
+  await expect(formula).toHaveValue("d20");
+  await formula.press("ArrowDown");
+  await expect(formula).toHaveValue("2d6+3");
+  await formula.press("ArrowDown");
+  await expect(formula).toHaveValue("d4");
+});

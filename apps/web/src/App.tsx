@@ -36,6 +36,7 @@ import {
 import { accept, complete } from "./completion";
 import { dieSource } from "./dice";
 import { CompletionList } from "./FormulaCompletion";
+import { type HistoryNav, pastFormulas, stepHistory } from "./history";
 import { Keypad } from "./Keypad";
 import { PresetDialog, type PresetDialogMode, type PresetRef } from "./PresetDialog";
 import { PresetSidebar } from "./PresetSidebar";
@@ -69,6 +70,7 @@ import { VariableDialog, type VariableDialogMode } from "./VariableDialog";
 
 export function App() {
   const [formula, setFormula] = useState("");
+  const [historyNav, setHistoryNav] = useState<HistoryNav>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [announcement, setAnnouncement] = useState("");
   const [kept, setKept] = useState(true);
@@ -290,6 +292,7 @@ export function App() {
   }, [confirming]);
 
   function changeFormula(next: string) {
+    setHistoryNav(null);
     setFormula(next);
     setHighlighted(0);
     setArmed(false);
@@ -404,7 +407,28 @@ export function App() {
   function submit(event?: FormEvent) {
     event?.preventDefault();
     const text = formula.trim();
+    setHistoryNav(null);
     if (text !== "") rollLine(text);
+  }
+
+  /** Up and Down in the formula box step through past rolls, like a shell. Returns whether it acted. */
+  function stepThroughHistory(event: KeyboardEvent): boolean {
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return false;
+    if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return false;
+    const step = stepHistory(
+      pastFormulas(entries.map((e) => e.input)),
+      historyNav,
+      event.key === "ArrowUp" ? "up" : "down",
+      formula,
+    );
+    if (step === null) return false;
+    event.preventDefault();
+    pendingCaret.current = step.text.length;
+    setCaret(step.text.length);
+    changeFormula(step.text);
+    setHistoryNav(step.nav);
+    setDismissed(true);
+    return true;
   }
 
   /**
@@ -473,8 +497,9 @@ export function App() {
   /**
    * Keys in the formula box. With suggestions open, the arrows move through
    * them, Tab accepts the highlighted one, Enter accepts it only after an arrow
-   * chose it (otherwise Enter rolls), and Esc closes them. Otherwise Esc moves to
-   * the newest log entry (the log is above the box).
+   * chose it (otherwise Enter rolls), and Esc closes them. Otherwise Up and Down
+   * step through past rolls, and Esc moves to the newest log entry (the log is
+   * above the box).
    */
   function formulaKeys(event: KeyboardEvent) {
     if (event.nativeEvent.isComposing) return;
@@ -501,6 +526,7 @@ export function App() {
         return;
       }
     }
+    if (stepThroughHistory(event)) return;
     focusLog(event);
   }
 
@@ -715,7 +741,7 @@ export function App() {
         >
           Save as preset
         </Button>
-        <Keypad formula={formula} onChange={setFormula} onRoll={() => submit()} />
+        <Keypad formula={formula} onChange={changeFormula} onRoll={() => submit()} />
       </form>
 
       {characterDialog !== null && roster !== null && (
