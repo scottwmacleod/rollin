@@ -78,7 +78,11 @@ function EntryHead({ entry, branch }: { entry: Entry; branch: boolean }) {
     <TreeItemLabel className={`${ROW} ${FOCUS} items-start py-3`}>
       {branch ? <Chevron /> : <span className="w-4 shrink-0" />}
       <span className="min-w-0 flex-1">
-        <span className="block font-mono text-sm text-muted">{entry.input}</span>
+        <span className="block font-mono text-sm text-muted">
+          {"ok" in report && report.ok.preset !== null
+            ? `${report.ok.preset[0]} · ${report.ok.preset[1]}`
+            : entry.input}
+        </span>
         {"ok" in report ? (
           report.ok.rolls.map((roll, i) => (
             <span key={i} className="mt-1 flex">

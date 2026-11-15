@@ -113,7 +113,8 @@ export interface RollsReport {
   rolls: Roll[];
   hints: Hint[];
   lines: string[];
-  preset: null;
+  /** `[name, formula]` when the line rolled a saved preset, else `null`. */
+  preset: [name: string, formula: string] | null;
 }
 
 export type ErrorReport =
@@ -126,7 +127,16 @@ export type ErrorReport =
       /** The formula the spans point into. */
       source: string;
     }
-  | { kind: "usage"; message: string; hints: Hint[]; usage: string };
+  | { kind: "usage"; message: string; hints: Hint[]; usage: string }
+  | {
+      kind: "unknown_preset";
+      /** The word as typed. */
+      word: string;
+      /** A saved name within edit distance 2 of the word. */
+      suggestion: string | null;
+      message: string;
+      hints: Hint[];
+    };
 
 /** What `roll` returns: the rolls, or why the line could not be rolled. */
 export type RollReport = { ok: RollsReport } | { error: ErrorReport };
