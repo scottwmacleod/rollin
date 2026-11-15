@@ -110,10 +110,9 @@ export function SettingsDialog({
             href="https://www.scottmacleod.co"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Shipped by sm"
             className={`inline-flex items-baseline gap-2 rounded-sm border border-line-strong px-3 py-1.5 font-mono text-xs text-text-2 transition-colors hover:border-signal-ink hover:text-text ${focusRing}`}
           >
-            Shipped by
+            <span>Shipped by </span>
             <span className="inline-flex items-baseline font-semibold tracking-[-0.06em] text-text">
               sm
               <span
