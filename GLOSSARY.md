@@ -1,6 +1,6 @@
 # rollin
 
-A command-line dice roller for tabletop RPGs. Players type dice formulas, optionally against a saved character, and see how each die contributed to the result.
+A web dice roller for tabletop RPGs. Players type dice formulas, optionally against a saved character, and see how each die contributed to the result.
 
 ## Language
 
@@ -11,11 +11,11 @@ Text a player types that describes one or more rolls, e.g. `4d6dl1, d20+@str # a
 _Avoid_: Expression, command, notation
 
 **Roll**:
-One comma-separated part of a formula, and its evaluation, which produces a result. In code, `ast::Roll` is the parsed roll and `RollResult` is what evaluating it returns.
+One comma-separated part of a formula, and its evaluation, which produces a result.
 _Avoid_: Throw, check
 
 **Term**:
-One dice group or number within a roll, e.g. `4d6dl1` or `+3`. In code, a dice group is `DiceTerm`; the arithmetic that combines terms is `Arith`.
+One dice group or number within a roll, e.g. `4d6dl1` or `+3`.
 _Avoid_: Component, operand
 
 **Die**:

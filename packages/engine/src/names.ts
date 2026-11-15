@@ -1,5 +1,5 @@
 /**
- * Preset names, checked by the same rules as the Rust engine (`src/name.rs`),
+ * Preset names, checked by the same rules as the former Rust engine,
  * and the small string helpers the preset lookup shares with them.
  */
 import { FormulaFailure, messageOf } from "./errors";

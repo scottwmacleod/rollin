@@ -9,7 +9,8 @@
       "!**/node_modules",
       "!**/playwright-report",
       "!**/test-results",
-      "!apps/web/src/generated"
+      "!apps/web/src/generated",
+      "!packages/engine/fixtures"
     ]
   },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },

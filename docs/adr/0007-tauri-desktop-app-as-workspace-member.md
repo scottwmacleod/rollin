@@ -9,3 +9,5 @@ The RNG stays injected and ChaCha8-pinned. The app holds one RNG in managed stat
 Consequences: contributors without Node can still build, test and release the CLI; CI gains a job for the app; the GUI and CLI share the TOML files of ADR-0004, so both read the same config directory.
 
 *Amended by [ADR-0008](0008-all-typescript-web-first-rebuild.md): the desktop app stays a workspace member only until the desktop swap, after which it wraps the web app and the TypeScript engine.*
+
+*Superseded by [ADR-0009](0009-retire-the-desktop-app-and-delete-the-rust.md): the desktop app and the Rust workspace were deleted on 2026-11-15.*

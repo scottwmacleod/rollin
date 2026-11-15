@@ -1,10 +1,10 @@
 # rollin
 
-Dice roller for tabletop RPGs: a Rust CLI, plus a Tauri desktop app in `apps/desktop` (ADR-0007). Domain terms are in `GLOSSARY.md`.
+Dice roller for tabletop RPGs: a TypeScript dice engine in `packages/engine` and a React web app in `apps/web`, live at rollin.scottmacleod.co (ADR-0008, ADR-0009). Domain terms are in `GLOSSARY.md`.
 
 ## Definition of done
 
-`just check` passes; it runs the same gates as CI. A change that touches `apps/desktop` also needs `just desktop-check`, which `check` leaves out so it stays buildable without Node. A change that touches `apps/web` or `packages/` (the TypeScript rebuild, #216) needs `just web-check`: typecheck, Biome, Vitest and Playwright with axe. Only `apps/web/src/ui` may import `@ui-sdk/*`.
+`just check` passes (Node 22); it runs the same gates as CI: the design-token drift check, typecheck, Biome, Vitest and Playwright with axe. Only `apps/web/src/ui` may import `@ui-sdk/*`. The parity fixtures in `packages/engine/fixtures/parity` are frozen; a change that alters one is a change to the engine's behaviour.
 
 ## Agent skills
 

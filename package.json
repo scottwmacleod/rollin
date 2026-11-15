@@ -1,7 +1,7 @@
 {
   "name": "rollin-workspace",
   "private": true,
-  "description": "npm workspace for the TypeScript rebuild (#216). The desktop app in apps/desktop is separate and keeps its own lockfile.",
+  "description": "npm workspace: the dice engine (packages/engine) and the web app (apps/web).",
   "workspaces": ["packages/engine", "apps/web"],
   "scripts": {
     "tokens": "node ui/generate-tokens.mjs",

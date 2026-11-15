@@ -1,5 +1,3 @@
-/target/
-
 # Web app (apps/web) and workspace
 node_modules/
 dist/

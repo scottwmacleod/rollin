@@ -1,8 +1,6 @@
 name: Web
 
-# Gates for the TypeScript web app and engine (#216). Kept apart from ci.yml so
-# the Rust gates and their aggregate `ci` check stay untouched. Scott adds `web`
-# to branch protection.
+# Gates for the TypeScript web app and engine. `web` is the only required check.
 
 on:
   pull_request:
@@ -19,7 +17,7 @@ concurrency:
 
 jobs:
   changes:
-    # Lets Rust-only and docs-only PRs skip `web`. A job skipped by `if`
+    # Lets docs-only PRs skip `web`. A job skipped by `if`
     # reports as skipped, which branch protection accepts. Fails open: pushes
     # to main, manual runs and any doubt about the diff run everything.
     runs-on: ubuntu-latest
@@ -30,11 +28,11 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 2
-      - name: Skip when only Rust, desktop or docs files changed
+      - name: Skip when only docs or repo-config files changed
         id: diff
         env:
           EVENT_NAME: ${{ github.event_name }}
-        run: .github/scripts/skip-if-only.sh '^(src/|xtask/|apps/desktop/|docs/|\.claude/|\.github/workflows/(ci|audit|release|dependabot-automerge)\.yml$|Cargo\.(toml|lock)$|rust-toolchain\.toml$|deny\.toml$|justfile$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
+        run: .github/scripts/skip-if-only.sh '^(docs/|\.claude/|\.github/workflows/(audit|dependabot-automerge)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
 
   web:
     needs: changes

@@ -7,44 +7,27 @@ body:
       value: |
         Thanks for taking the time to report this. The more exact the steps, the faster it gets fixed.
   - type: dropdown
-    id: where
+    id: browser
     attributes:
-      label: Where did it happen?
+      label: Browser
       options:
-        - Desktop app
-        - Command line (built from source)
-        - Not sure
-    validations:
-      required: true
-  - type: input
-    id: version
-    attributes:
-      label: Version
-      description: For the desktop app, use the version in the installer name (for example 0.4.2). For the CLI, run `rollin --version`.
-      placeholder: "2.0.1"
-    validations:
-      required: true
-  - type: dropdown
-    id: os
-    attributes:
-      label: Operating system
-      options:
-        - macOS
-        - Windows
-        - Linux
+        - Safari
+        - Chrome
+        - Firefox
+        - Edge
         - Other
     validations:
       required: true
   - type: input
-    id: os-version
+    id: device
     attributes:
-      label: Operating system version
-      placeholder: "macOS 15.1, Windows 11 23H2"
+      label: Browser version and device
+      placeholder: "Safari 19 on iPhone 16, Chrome 140 on Windows 11"
   - type: textarea
     id: steps
     attributes:
       label: Steps to reproduce
-      description: If a formula is involved, paste it exactly, and the seed if you used one.
+      description: If a formula is involved, paste it exactly.
       placeholder: |
         1. Open the app
         2. Roll `4d6!dl1`

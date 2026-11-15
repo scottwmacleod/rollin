@@ -1,7 +1,6 @@
 /**
- * The engine's public data. Shapes match what the Rust engine hands the desktop
- * app (`apps/desktop/src/api/generated.ts`) so the parity fixtures compare as
- * plain JSON. Fields the engine leaves unset are left out, never `undefined`.
+ * The engine's public data. Shapes match the former Rust engine's output, so the
+ * parity fixtures compare as plain JSON. Fields the engine leaves unset are left out, never `undefined`.
  */
 
 /** A UTF-8 byte range into the formula as the engine saw it. */

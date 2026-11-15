@@ -266,7 +266,7 @@ test("adv and dis match 2d20kh1 and 2d20kl1 die for die", () => {
   );
 });
 
-// ---- Ports of the remaining Rust proptest suite (tests/properties.rs) ----
+// ---- Ports of the remaining Rust proptest suite (the former Rust tests/properties.rs) ----
 
 const CMP = [">", ">=", "<", "<=", "="] as const;
 

@@ -13,27 +13,15 @@ const report = roll("4d6dl1 # strength", dieSource);
 `npm test --workspace @rollin/engine` runs three suites:
 
 - **`roll.test.ts`**: behaviour per glossary concept.
-- **`properties.test.ts`**: fast-check properties, ported from the Rust `tests/properties.rs`, plus a fuzz over random valid formulas that must never throw or hang.
-- **`parity.test.ts`**: replays the Rust engine's fixtures (`tests/fixtures/parity/*.json`). Each case scripts the dice the Rust engine drew and expects the same result tree, the same dice requested in the same order and every draw used.
+- **`properties.test.ts`**: fast-check properties, plus a fuzz over random valid formulas that must never throw or hang.
+- **`parity.test.ts`**: replays the frozen fixtures in `fixtures/parity/*.json`, recorded from the Rust engine this project used to have. Each case scripts the recorded dice and expects the same result tree, the same dice requested in the same order and every draw used. The fixtures are no longer regenerated: a change that alters one is a change to the engine's behaviour. `fixtures/parity/README.md` describes the format.
 
 ## Parity coverage
 
-| Fixture group                                           | Cases | Status                                    |
-| ------------------------------------------------------- | ----- | ----------------------------------------- |
-| `arithmetic`, `dice`, `limits`                          | 43    | covered                                   |
-| `keep_drop`, `exploding`, `rerolls`, `success_counting` | 73    | covered                                   |
-| `labels_repeats`                                        | 18    | covered                                   |
-| `errors`                                                | 35    | covered, except the cases listed below    |
-| `presets`                                               | 15    | covered, except the cases listed below    |
-| `characters`                                            | 15    | waits for characters and variables (#232) |
-| `d20_checks`, `dnd5e`                                   | 95    | wait for the 5e game system (#234)        |
-
-Three `presets` cases wait: two on variables (#232, `preset_variables_resolve_when_rolled`, `preset_undefined_variable`), `preset_dnd5e_crit` on the 5e game system, and `preset_repeat` on the d20 check rule (its fixture rolls a natural 20), both #234.
+Every fixture area is covered: arithmetic, dice, keep and drop, exploding, rerolls, success counting, labels and repeats, limits, errors, presets, characters, d20 checks and D&D 5e.
 
 Two `errors` cases differ on purpose (`overflow_add`, `overflow_mul`): this engine keeps every number inside JavaScript's safe integers, so it reports "number is too large" where the Rust engine's 64-bit sums overflowed. `DIVERGENT` in the parity test records what it says instead.
 
-`DEFERRED_AREAS` and `DEFERRED_CASES` in the parity test name each waiting case and the ticket that brings it. A test fails if a name there no longer exists in the fixtures, so the lists cannot go stale. `errors/session_word_one_shot` is a command-line message ("run `rollin` with no arguments"); it has no meaning in the web app and goes when the CLI is deleted (#239).
-
 ## Property tests
 
-Each Rust property test has a fast-check equivalent, except the ones that wait on a later ticket: the command parser (the web app has no command line) and variables (#232). Preset names and rolling a preset by name are ported in `presets.test.ts`.
+The properties of the former Rust proptest suite (totals within bounds, kept-dice counts, success-count arithmetic, limits never exceeded, preset names) each have a fast-check equivalent. Preset names and rolling a preset by name are in `presets.test.ts`.

@@ -14,7 +14,7 @@ The loop runs unattended. A human is interrupted only when a rule below says so.
 
 ## Touches
 
-Each issue may carry one line in its body: `**Touches:** ` followed by comma-separated backticked paths or globs, e.g. ``**Touches:** `src/command/**`, `tests/command_*` ``. This is the only definition of the format.
+Each issue may carry one line in its body: `**Touches:** ` followed by comma-separated backticked paths or globs, e.g. ``**Touches:** `packages/engine/src/**`, `apps/web/e2e/roll.spec.ts` ``. This is the only definition of the format.
 
 - Run at most 3 issues at once, and only if their `Touches:` globs are pairwise disjoint.
 - An issue with no `Touches:` line runs alone.
@@ -25,9 +25,7 @@ Each issue may carry one line in its body: `**Touches:** ` followed by comma-sep
 1. **Branch.** `agent/<n>-<slug>` from fresh `origin/main`, in its own checkout. In T3, start builders with `delegate_task` (call `orchestrator_capabilities` once per thread first), which gives each its own checkout; do not run `git worktree add` there. Outside T3, use the `Agent` tool with `isolation: "worktree"`.
 2. **Build.** Builder subagent (model `sonnet`) implements with `/tdd`, runs single tests as it goes, commits on the branch. It never opens a PR and never touches the issue labels.
 3. **Verify (main thread, independent).** The main thread itself runs these and reads the output; a builder saying "tests pass" is not evidence:
-   - `cargo fmt --check`
-   - `cargo clippy --all-targets -- -D warnings`
-   - `cargo test`
+   - `just web-check` (token drift, typecheck, Biome, Vitest, Playwright with axe)
    - then reads the diff against every acceptance criterion. If anything fails or is missing, spawn a fix subagent (`sonnet`) and verify again.
 4. **Review.** Reviewer subagent (model `opus`) runs `/code-review` on the branch and returns findings only; it never edits.
    - **Clear** means no correctness, standards or spec findings. Nits do not block; ignore them, or file `needs-triage` issues if they matter.
@@ -49,8 +47,8 @@ When a limit is hit (3 review rounds, 3 CI fix attempts, or an unresolvable conf
 
 Checked by the main thread against the PR diff. If any fires: open the PR but do **not** enable auto-merge, replace `ready-for-agent` with `ready-for-human`, comment why, and continue with other issues. Dependents stay blocked until a human merges.
 
-- Renames or removes the `lint`, `test`, `test-linux`, `desktop`, `desktop-windows` or `ci` jobs in `.github/workflows/ci.yml`, or changes what `ci` needs (`ci` is the aggregate required check; the others feed it).
-- Adds or edits anything that publishes or releases: a release workflow, `cargo publish`, tokens, `secrets.*`, `cargo-dist` or `release-plz` config.
+- Renames or removes the `web` job in `.github/workflows/web.yml`, which is the required check.
+- Adds or edits anything that publishes or releases: a release workflow, `npm publish`, tokens, `secrets.*`.
 - Uses `pull_request_target` or `workflow_run`, or widens workflow `permissions:` beyond `contents: read`.
 - Edits this file or `.claude/settings.json` (the loop's own rules).
 
@@ -60,7 +58,7 @@ Pass these as the `Agent` tool's `model` value: main thread `opus` (start the se
 
 ## Prerequisites
 
-The loop never installs tools. If a ticket needs one that is missing (`just`, `cargo-deny`, ...), swap `ready-for-agent` for `needs-info`, comment which tool, and move on. Tools currently expected: `just` and `cargo-deny` (`brew install just cargo-deny`).
+The loop never installs tools. If a ticket needs one that is missing (`just`, ...), swap `ready-for-agent` for `needs-info`, comment which tool, and move on. Tools currently expected: `just` and Node 22.
 
 ## Permissions
 

@@ -1,17 +1,15 @@
 name: Audit
 
-# Supply-chain checks (advisories, licences, bans, sources) via cargo-deny, configured in deny.toml.
-# Deliberately not part of the `ci` aggregate and not a required check: a new
-# advisory can turn this red on an unrelated PR or on the weekly run.
+# Dependency advisories via `npm audit`. Deliberately not a required check: a
+# new advisory can turn this red on an unrelated PR or on the weekly run.
 
 on:
   pull_request:
     branches: [main]
     paths:
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "**/Cargo.toml"
-      - "deny.toml"
+      - "package.json"
+      - "package-lock.json"
+      - "**/package.json"
       - ".github/workflows/audit.yml"
   push:
     branches: [main]
@@ -27,12 +25,13 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  cargo-deny:
+  npm-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-      # --workspace: the desktop app is not a default member, so without it the Tauri tree goes unchecked.
-      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+      - uses: actions/setup-node@v7
         with:
-          arguments: --workspace
+          node-version: 22
+      - name: Audit production and development dependencies
+        run: npm audit --audit-level=high
