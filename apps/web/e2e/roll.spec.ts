@@ -157,3 +157,25 @@ test("a success count in arithmetic is refused with the reason", async ({ page }
     "a success count cannot be used in arithmetic",
   );
 });
+
+test("a percentile roll shows the term as typed with its d100 faces", async ({ page }) => {
+  await page.addInitScript(() =>
+    Object.assign(window, {
+      __rollinDice: [
+        { sides: 100, face: 37 },
+        { sides: 100, face: 92 },
+      ],
+    }),
+  );
+  await page.goto("/");
+  await page.getByLabel("Formula").fill("2D%");
+  await page.getByLabel("Formula").press("Enter");
+
+  const result = page.getByRole("region", { name: "Result" });
+  await expect(result).toContainText("› 2D%");
+  await expect(result).toContainText("[37, 92]");
+  await expect(result).toContainText("total 129");
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
