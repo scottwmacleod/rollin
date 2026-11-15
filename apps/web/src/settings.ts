@@ -7,16 +7,27 @@ export const THEME_MIRROR_KEY = "rollin-theme";
 export type Theme = "system" | "light" | "dark";
 export const THEMES: readonly Theme[] = ["system", "light", "dark"];
 
+/** Whether the dice keypad shows: "auto" follows the device (on for touch screens). */
+export type KeypadSetting = "auto" | "on" | "off";
+export const KEYPAD_SETTINGS: readonly KeypadSetting[] = ["auto", "on", "off"];
+
 export interface Settings {
   theme: Theme;
+  keypad: KeypadSetting;
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: "system" };
+export const DEFAULT_SETTINGS: Settings = { theme: "system", keypad: "auto" };
 
 /** Anything saved by an older or newer build, or by hand, falls back to the defaults field by field. */
 export function parseSettings(value: unknown): Settings {
-  const theme = (value as { theme?: unknown } | null | undefined)?.theme;
-  return { theme: THEMES.includes(theme as Theme) ? (theme as Theme) : DEFAULT_SETTINGS.theme };
+  const saved = value as { theme?: unknown; keypad?: unknown } | null | undefined;
+  const { theme, keypad } = saved ?? {};
+  return {
+    theme: THEMES.includes(theme as Theme) ? (theme as Theme) : DEFAULT_SETTINGS.theme,
+    keypad: KEYPAD_SETTINGS.includes(keypad as KeypadSetting)
+      ? (keypad as KeypadSetting)
+      : DEFAULT_SETTINGS.keypad,
+  };
 }
 
 export async function loadSettings(storage: Storage): Promise<Settings> {

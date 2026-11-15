@@ -1,13 +1,29 @@
 import type { Die, Roll } from "@rollin/engine";
-import { type KeyboardEvent, type Ref, useEffect, useRef } from "react";
+import { type KeyboardEvent, type ReactNode, type Ref, useEffect, useRef, useState } from "react";
 import { type Entry, ErrorBody, Outcome, outcomeClass, RollLine } from "./Result";
 import { type Term, terms } from "./terms";
-import { Tree, TreeGroup, TreeItem, TreeItemIndicator, TreeItemLabel } from "./ui";
+import {
+  Button,
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuTrigger,
+  Tree,
+  TreeGroup,
+  TreeItem,
+  TreeItemIndicator,
+  TreeItemLabel,
+} from "./ui";
 
-/** How a die that was not kept reads, for the eye and for a screen reader. */
-const MARKS: Record<string, { word: string; className: string }> = {
-  dropped: { word: "dropped", className: "line-through opacity-60" },
-  rerolled: { word: "rerolled", className: "line-through opacity-60" },
+/**
+ * How a die that was not kept reads. Dropped and rerolled dice are faded and
+ * struck through with no word on screen; the word is generated content, which
+ * screen readers read in the die's name without it being a second piece of visible
+ * text for the name to disagree with. Exploded dice keep a visible word.
+ */
+const MARKS: Record<string, { word?: string; className: string }> = {
+  dropped: { className: "line-through opacity-60 after:sr-only after:content-['_dropped']" },
+  rerolled: { className: "line-through opacity-60 after:sr-only after:content-['_rerolled']" },
   exploded: { word: "exploded", className: "border-signal text-signal-ink" },
 };
 
@@ -20,7 +36,7 @@ function DieChip({ die }: { die: Die }) {
     >
       {die.value}
       <Outcome outcome={die.outcome} />
-      {mark && (
+      {mark?.word && (
         <>
           {" "}
           <span className="font-sans text-xs">{mark.word}</span>
@@ -143,27 +159,81 @@ function EntryItem({ entry }: { entry: Entry }) {
   );
 }
 
+/** How close to the bottom still counts as being at the bottom, in pixels. */
+const NEAR_BOTTOM = 48;
+
 /**
  * The roll log: every roll this session, newest at the bottom, each entry a
  * branch that opens to its breakdown by term and die. The tree is one tab stop;
  * arrow keys move, Right and Left open and close, Home and End jump.
+ *
+ * It is the only part of the page that scrolls. Like a chat it sticks to the
+ * bottom while the reader is there, lets go once they scroll up, and offers a way
+ * back. A roll made here (`rollCount` goes up) always brings it back to the bottom.
  */
 export function RollLog({
   entries,
   treeRef,
+  rollCount,
   onEscape,
+  onClear,
+  confirm,
+  compact,
 }: {
   entries: Entry[];
   treeRef: Ref<HTMLDivElement>;
+  /** Rolls made on this page; a new one scrolls to the bottom whatever the reader was doing. */
+  rollCount: number;
   /** Esc inside the log: hand focus back to the formula box. */
   onEscape: () => void;
+  /** Starts clearing the log (the app asks for confirmation). */
+  onClear: () => void;
+  /** The inline "Clear the whole roll log?" question, shown in the header while it is asked. */
+  confirm: ReactNode;
+  /** No header row (and no menu: Clear lives elsewhere) so a phone's log keeps its height; the confirmation still shows. */
+  compact: boolean;
 }) {
-  const end = useRef<HTMLDivElement>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const stuck = useRef(true);
+  const [away, setAway] = useState(false);
   const count = entries.length;
-  // Follow the newest entry; nothing to do for an empty log.
+
+  function toBottom() {
+    const el = scroller.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "instant" });
+  }
+
+  function onScroll() {
+    const el = scroller.current;
+    if (!el) return;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight <= NEAR_BOTTOM;
+    stuck.current = near;
+    setAway(!near);
+  }
+
+  // Stay at the bottom while stuck, whatever changes the height: a new entry, an
+  // entry opening, the keypad showing, the window resizing.
   useEffect(() => {
-    if (count > 0) end.current?.scrollIntoView({ block: "nearest" });
-  }, [count]);
+    const el = scroller.current;
+    const inner = content.current;
+    if (!el || !inner) return;
+    const follow = () => {
+      if (stuck.current) toBottom();
+    };
+    const observer = new ResizeObserver(follow);
+    observer.observe(el);
+    observer.observe(inner);
+    return () => observer.disconnect();
+  }, []);
+
+  // A roll made here shows its result at once.
+  useEffect(() => {
+    if (rollCount === 0) return;
+    stuck.current = true;
+    setAway(false);
+    toBottom();
+  }, [rollCount]);
 
   function onKeyDown(event: KeyboardEvent) {
     if (event.key === "Escape") {
@@ -173,22 +243,66 @@ export function RollLog({
   }
 
   return (
-    <div className="flex flex-col">
-      {count === 0 ? (
-        <p className="m-0 text-sm text-muted">Rolls will appear here.</p>
-      ) : (
-        <Tree
-          ref={treeRef}
-          aria-label="Roll log"
-          onKeyDown={onKeyDown}
-          className="flex flex-col divide-y divide-line rounded-md border border-line bg-surface px-3"
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div
+        className={`min-h-9 items-center justify-between gap-2 border-b border-line px-1 pb-1 ${compact && !confirm ? "hidden" : "flex"}`}
+      >
+        {confirm ?? <h2 className="m-0 text-sm font-medium text-text-2">Roll log</h2>}
+        {!compact && count > 0 && !confirm && (
+          <Menu onAction={(value) => value === "clear" && onClear()}>
+            <MenuTrigger
+              aria-label="Roll log menu"
+              className="inline-flex h-8 max-md:h-11 min-w-8 max-md:min-w-11 items-center justify-center rounded-md border border-line-strong px-2 text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+            >
+              <span aria-hidden="true">⋯</span>
+            </MenuTrigger>
+            <MenuContent className="min-w-40 rounded-md border border-line-strong bg-surface p-1 text-sm text-text shadow-lg">
+              <MenuItem
+                value="clear"
+                className="flex min-h-9 max-md:min-h-11 cursor-default items-center rounded px-3 data-[highlighted]:bg-surface-hover"
+              >
+                Clear roll log
+              </MenuItem>
+            </MenuContent>
+          </Menu>
+        )}
+      </div>
+      <div
+        ref={scroller}
+        onScroll={onScroll}
+        data-roll-scroll=""
+        className="min-h-0 flex-1 overflow-y-auto"
+      >
+        <div ref={content} className="px-1 pt-1">
+          {count === 0 ? (
+            <p className="m-0 py-3 text-sm text-muted">Rolls will appear here.</p>
+          ) : (
+            <Tree
+              ref={treeRef}
+              aria-label="Roll log"
+              onKeyDown={onKeyDown}
+              className="flex flex-col divide-y divide-line"
+            >
+              {entries.map((entry) => (
+                <EntryItem key={entry.id} entry={entry} />
+              ))}
+            </Tree>
+          )}
+        </div>
+      </div>
+      {away && count > 0 && (
+        <Button
+          type="button"
+          onClick={() => {
+            stuck.current = true;
+            setAway(false);
+            toBottom();
+          }}
+          className="absolute right-3 bottom-3 inline-flex h-9 max-md:h-11 items-center rounded-full border border-line-strong bg-surface px-4 text-sm text-text shadow-lg hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
         >
-          {entries.map((entry) => (
-            <EntryItem key={entry.id} entry={entry} />
-          ))}
-        </Tree>
+          Jump to newest
+        </Button>
       )}
-      <div ref={end} aria-hidden="true" />
     </div>
   );
 }

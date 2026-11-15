@@ -41,6 +41,7 @@ import { dieSource } from "./dice";
 import { CompletionList } from "./FormulaCompletion";
 import { type HistoryNav, pastFormulas, stepHistory } from "./history";
 import { Keypad } from "./Keypad";
+import { PresetChips } from "./PresetChips";
 import { PresetDialog, type PresetDialogMode, type PresetRef } from "./PresetDialog";
 import { PresetSidebar } from "./PresetSidebar";
 import { type PaletteRow, paletteRows } from "./palette";
@@ -68,7 +69,24 @@ import {
   saveSettings,
 } from "./settings";
 import { openStorage, type Storage } from "./storage";
-import { Button, Field, FieldLabel, Input } from "./ui";
+import {
+  Button,
+  Dialog,
+  DialogBackdrop,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+  Field,
+  FieldLabel,
+  Input,
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuTrigger,
+} from "./ui";
+import { TOUCH, useMedia, WIDE } from "./useMedia";
 import { VariableDialog, type VariableDialogMode } from "./VariableDialog";
 
 export function App() {
@@ -87,6 +105,10 @@ export function App() {
   const [variableDialog, setVariableDialog] = useState<VariableDialogMode | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /** The slide-over that holds characters, variables and presets where there is no sidebar. */
+  const [sideOpen, setSideOpen] = useState(false);
+  /** Rolls made on this page; the roll log scrolls to the newest when it goes up. */
+  const [rollCount, setRollCount] = useState(0);
   const [caret, setCaret] = useState<number | null>(null);
   const [focused, setFocused] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
@@ -105,6 +127,10 @@ export function App() {
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const update = useUpdate();
+  const wide = useMedia(WIDE);
+  const touch = useMedia(TOUCH);
+  /** Auto shows the keypad on touch screens, whatever their width. */
+  const keypadOn = settings.keypad === "on" || (settings.keypad === "auto" && touch);
   /** The character formulas roll for; `null` until storage has been read. */
   const acting = roster === null ? null : activeCharacter(roster);
   const available = useMemo(
@@ -263,16 +289,19 @@ export function App() {
 
   function openDialog(mode: PresetDialogMode) {
     remember();
+    setSideOpen(false);
     setDialog(mode);
   }
 
   function openCharacterDialog(mode: CharacterDialogMode) {
     remember();
+    setSideOpen(false);
     setCharacterDialog(mode);
   }
 
   function openVariableDialog(mode: VariableDialogMode) {
     remember();
+    setSideOpen(false);
     setVariableDialog(mode);
   }
 
@@ -399,6 +428,12 @@ export function App() {
     }
   }
 
+  /** Asks whether to clear the log, and moves focus to the answer. */
+  function startClear() {
+    confirmFocus.current = true;
+    setConfirming(true);
+  }
+
   function clearLog() {
     setConfirming(false);
     setEntries([]);
@@ -414,6 +449,7 @@ export function App() {
     });
     const next = capLog([...entries, { id: nextEntryId(entries), input: text, report }]);
     setEntries(next);
+    setRollCount((n) => n + 1);
     if (storage.current) void saveLog(storage.current, next).catch(() => setKept(false));
     const preset = "ok" in report ? report.ok.preset : null;
     const what = preset === null ? text : `${preset[0]} (${preset[1]})`;
@@ -550,7 +586,7 @@ export function App() {
     focusLog(event);
   }
 
-  /** Esc in the formula box moves to the newest log entry (the log is above it). */
+  /** Esc in the formula box moves to the newest log entry. */
   function focusLog(event: KeyboardEvent) {
     if (event.key !== "Escape") return;
     const items = log.current?.querySelectorAll<HTMLElement>('[role="treeitem"]');
@@ -560,19 +596,47 @@ export function App() {
     (current ?? items[items.length - 1])?.focus();
   }
 
+  const panels = (
+    <>
+      <CharacterPanel
+        roster={roster}
+        active={acting}
+        onSwitch={(name) => void changeRoster((r) => switchCharacter(r, name))}
+        onNew={() => openCharacterDialog({ kind: "new" })}
+        onEdit={(name) => openCharacterDialog({ kind: "edit", name })}
+        onNewVariable={() => openVariableDialog({ kind: "new" })}
+        onEditVariable={(name) => openVariableDialog({ kind: "edit", name })}
+      />
+      <PresetSidebar
+        presets={available}
+        onRoll={(name) => {
+          setSideOpen(false);
+          rollLine(name);
+        }}
+        onNew={() => openDialog({ kind: "new", formula: formula.trim() })}
+        onEdit={(name, scope) => openDialog({ kind: "edit", name, scope })}
+      />
+    </>
+  );
+  // Save as preset gets its own button except where the keypad leaves no room for one.
+  const saveInMenu = !wide && (keypadOn || touch);
+  const saveDisabled = presets === null || acting === null;
+  const barButton =
+    "inline-flex h-10 max-md:h-11 items-center justify-center rounded-md border border-line-strong px-3 text-sm text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-4 py-4 md:py-10">
-      <header className="flex items-center justify-between gap-4">
-        <span className="wordmark">
+    <main className="flex h-dvh flex-col overflow-hidden">
+      <header className="mx-auto flex w-full max-w-5xl shrink-0 items-center gap-2 px-4 py-1 md:py-4">
+        <span className="wordmark shrink-0">
           <img
-            className="wordmark-light"
+            className="wordmark-light h-7 w-auto md:h-[51px]"
             src="/rollin-wordmark-light.svg"
             alt=""
             width={162}
             height={51}
           />
           <img
-            className="wordmark-dark"
+            className="wordmark-dark h-7 w-auto md:h-[51px]"
             src="/rollin-wordmark-dark.svg"
             alt=""
             width={162}
@@ -580,7 +644,40 @@ export function App() {
           />
         </span>
         <h1 className="sr-only">rollin</h1>
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex min-w-0 items-center gap-2">
+          {!wide && (
+            <Dialog open={sideOpen} onOpenChange={setSideOpen}>
+              <DialogTrigger
+                aria-label={
+                  acting === null ? "Characters and presets" : `Character: ${acting.name}`
+                }
+                className="inline-flex h-8 max-md:h-11 min-w-0 max-w-40 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+              >
+                <span className="truncate font-mono">{acting?.name ?? "Characters"}</span>
+                <span aria-hidden="true" className="text-muted">
+                  ▾
+                </span>
+              </DialogTrigger>
+              <DialogBackdrop className="fixed inset-0 bg-black/50" />
+              <DialogContent className="fixed inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col gap-4 overflow-y-auto border-r border-line-strong bg-bg p-4 text-text shadow-lg">
+                <div className="flex items-center justify-between gap-2">
+                  <DialogTitle className="m-0 text-lg font-semibold">
+                    Characters and presets
+                  </DialogTitle>
+                  <DialogClose
+                    render={<Button type="button" />}
+                    className="inline-flex h-8 max-md:h-11 items-center rounded-md border border-line-strong px-3 text-sm text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+                  >
+                    Close
+                  </DialogClose>
+                </div>
+                <DialogDescription className="sr-only">
+                  Switch character, edit variables, and roll saved presets.
+                </DialogDescription>
+                {panels}
+              </DialogContent>
+            </Dialog>
+          )}
           <CommandPalette
             rows={rows}
             open={paletteOpen}
@@ -604,7 +701,7 @@ export function App() {
       {update.available && (
         <div
           role="status"
-          className="flex flex-wrap items-center gap-3 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
+          className="mx-auto mb-2 flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-3 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
         >
           <span>A new version of rollin is ready.</span>
           <Button
@@ -620,7 +717,7 @@ export function App() {
       {reminderDue(backupState, Date.now()) && (
         <div
           role="status"
-          className="flex flex-wrap items-center gap-3 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
+          className="mx-auto mb-2 flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-3 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
         >
           <span>Your characters and presets live only in this browser. Save a backup file?</span>
           <Button
@@ -640,26 +737,50 @@ export function App() {
         </div>
       )}
 
-      <div className="flex flex-1 flex-col gap-6 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <div className="flex flex-col gap-6">
-          <CharacterPanel
-            roster={roster}
-            active={acting}
-            onSwitch={(name) => void changeRoster((r) => switchCharacter(r, name))}
-            onNew={() => openCharacterDialog({ kind: "new" })}
-            onEdit={(name) => openCharacterDialog({ kind: "edit", name })}
-            onNewVariable={() => openVariableDialog({ kind: "new" })}
-            onEditVariable={(name) => openVariableDialog({ kind: "edit", name })}
+      <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 gap-8 px-4">
+        {wide && (
+          <div
+            data-sidebar=""
+            className="flex w-64 shrink-0 flex-col gap-6 overflow-y-auto pr-1 pb-4"
+          >
+            {panels}
+          </div>
+        )}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2">
+          <RollLog
+            entries={entries}
+            treeRef={log}
+            rollCount={rollCount}
+            compact={saveInMenu}
+            onEscape={() => input.current?.focus()}
+            onClear={startClear}
+            confirm={
+              confirming && entries.length > 0 ? (
+                <div
+                  role="group"
+                  aria-label="Confirm clear"
+                  className="flex flex-wrap items-center gap-3 text-sm"
+                >
+                  <span>Clear the whole roll log?</span>
+                  <Button
+                    type="button"
+                    ref={confirmYes}
+                    onClick={clearLog}
+                    className="h-8 max-md:h-11 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+                  >
+                    Yes, clear
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setConfirming(false)}
+                    className="h-8 max-md:h-11 rounded-md border border-line-strong px-3 text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : null
+            }
           />
-          <PresetSidebar
-            presets={available}
-            onRoll={rollLine}
-            onNew={() => openDialog({ kind: "new", formula: formula.trim() })}
-            onEdit={(name, scope) => openDialog({ kind: "edit", name, scope })}
-          />
-        </div>
-        <div className="flex min-w-0 flex-col gap-6">
-          <RollLog entries={entries} treeRef={log} onEscape={() => input.current?.focus()} />
 
           {!kept && (
             <p className="m-0 text-sm text-muted">
@@ -668,101 +789,125 @@ export function App() {
             </p>
           )}
 
-          {entries.length > 0 &&
-            (confirming ? (
-              <div
-                role="group"
-                aria-label="Confirm clear"
-                className="flex items-center gap-3 text-sm"
-              >
-                <span>Clear the whole roll log?</span>
-                <Button
-                  type="button"
-                  ref={confirmYes}
-                  onClick={clearLog}
-                  className="h-8 max-md:h-11 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
-                >
-                  Yes, clear
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => setConfirming(false)}
-                  className="h-8 max-md:h-11 rounded-md border border-line-strong px-3 text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
-                >
-                  Cancel
-                </Button>
-              </div>
-            ) : (
-              <div>
-                <Button
-                  type="button"
-                  onClick={() => setConfirming(true)}
-                  className="h-8 max-md:h-11 rounded-md border border-line-strong px-3 text-sm text-text-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
-                >
-                  Clear
-                </Button>
-              </div>
-            ))}
-
           <div role="status" className="sr-only">
             {announcement}
           </div>
         </div>
       </div>
 
-      <form
-        onSubmit={submit}
-        className="sticky bottom-0 flex flex-col gap-3 bg-bg py-3 sm:flex-row sm:items-end"
-      >
-        <Field name="formula" className="relative flex flex-1 flex-col gap-1">
-          <FieldLabel className="text-sm text-text-2">Formula</FieldLabel>
-          <Input
-            value={formula}
-            onValueChange={changeFormula}
-            placeholder="2d6+3"
-            autoComplete="off"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            autoFocus
-            ref={input}
-            onKeyDown={formulaKeys}
-            onFocus={(event) => {
-              setFocused(true);
-              setCaret(event.currentTarget.selectionStart);
-            }}
-            onBlur={() => setFocused(false)}
-            role="combobox"
-            aria-autocomplete="list"
-            aria-expanded={suggesting}
-            aria-controls={suggesting ? "formula-completions" : undefined}
-            aria-activedescendant={suggesting ? `formula-completions-${current}` : undefined}
-            className="h-10 max-md:h-11 w-full rounded-md border border-line-strong bg-surface px-3 font-mono text-text placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
-          />
-          {suggesting && (
-            <CompletionList
-              id="formula-completions"
-              candidates={completion.candidates}
-              active={current}
-              onPick={pick}
-            />
+      {!wide && (
+        <div className="mx-auto w-full max-w-5xl shrink-0 px-4">
+          <PresetChips presets={available} onRoll={rollLine} />
+        </div>
+      )}
+
+      <form onSubmit={submit} className="shrink-0 border-t border-line bg-bg">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 px-4 py-1 md:py-3">
+          <div className="flex items-end gap-1 md:gap-2">
+            <Field name="formula" className="relative flex min-w-0 flex-1 flex-col gap-1">
+              <FieldLabel className="text-sm text-text-2 max-md:sr-only">Formula</FieldLabel>
+              <Input
+                value={formula}
+                onValueChange={changeFormula}
+                placeholder="2d6+3"
+                autoComplete="off"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                autoFocus
+                ref={input}
+                onKeyDown={formulaKeys}
+                onFocus={(event) => {
+                  setFocused(true);
+                  setCaret(event.currentTarget.selectionStart);
+                }}
+                onBlur={() => setFocused(false)}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={suggesting}
+                aria-controls={suggesting ? "formula-completions" : undefined}
+                aria-activedescendant={suggesting ? `formula-completions-${current}` : undefined}
+                className="h-10 max-md:h-11 w-full rounded-md border border-line-strong bg-surface px-3 font-mono text-text placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+              />
+              {suggesting && (
+                <CompletionList
+                  id="formula-completions"
+                  candidates={completion.candidates}
+                  active={current}
+                  onPick={pick}
+                />
+              )}
+            </Field>
+            <Button
+              type="button"
+              aria-label="Keypad"
+              aria-pressed={keypadOn}
+              onClick={() => changeSettings({ ...settings, keypad: keypadOn ? "off" : "on" })}
+              className={`${barButton} w-10 max-md:w-11 px-0 aria-pressed:border-signal aria-pressed:bg-signal-tint aria-pressed:text-signal-ink`}
+            >
+              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+                {[3, 8, 13].flatMap((x) =>
+                  [3, 8, 13].map((y) => (
+                    <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5" fill="currentColor" />
+                  )),
+                )}
+              </svg>
+            </Button>
+            {saveInMenu && (
+              <Menu
+                onAction={(value) => {
+                  if (value === "save") openDialog({ kind: "new", formula: formula.trim() });
+                  if (value === "clear") startClear();
+                }}
+              >
+                <MenuTrigger aria-label="More" className={`${barButton} w-10 max-md:w-11 px-0`}>
+                  <span aria-hidden="true">⋯</span>
+                </MenuTrigger>
+                <MenuContent
+                  side="top"
+                  align="end"
+                  className="min-w-44 rounded-md border border-line-strong bg-surface p-1 text-sm text-text shadow-lg"
+                >
+                  <MenuItem
+                    value="save"
+                    disabled={saveDisabled}
+                    className="flex min-h-11 cursor-default items-center rounded px-3 data-[highlighted]:bg-surface-hover aria-disabled:text-muted"
+                  >
+                    Save as preset
+                  </MenuItem>
+                  <MenuItem
+                    value="clear"
+                    disabled={entries.length === 0}
+                    className="flex min-h-11 cursor-default items-center rounded px-3 data-[highlighted]:bg-surface-hover aria-disabled:text-muted"
+                  >
+                    Clear roll log
+                  </MenuItem>
+                </MenuContent>
+              </Menu>
+            )}
+            {!keypadOn && (
+              <Button
+                type="submit"
+                className="inline-flex h-10 max-md:h-11 items-center justify-center rounded-md bg-signal px-5 text-sm font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+              >
+                Roll
+              </Button>
+            )}
+            {!saveInMenu && (
+              <Button
+                type="button"
+                disabled={saveDisabled}
+                onClick={() => openDialog({ kind: "new", formula: formula.trim() })}
+                className={`${barButton} px-4 disabled:opacity-50`}
+              >
+                Save as preset
+              </Button>
+            )}
+          </div>
+          {keypadOn && (
+            <Keypad formula={formula} onChange={changeFormula} onRoll={() => submit()} />
           )}
-        </Field>
-        <Button
-          type="submit"
-          className="max-md:hidden inline-flex h-10 max-md:h-11 items-center justify-center rounded-md bg-signal px-5 text-sm font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
-        >
-          Roll
-        </Button>
-        <Button
-          type="button"
-          disabled={presets === null || acting === null}
-          onClick={() => openDialog({ kind: "new", formula: formula.trim() })}
-          className="inline-flex h-10 max-md:h-11 items-center justify-center rounded-md border border-line-strong px-4 text-sm text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text disabled:opacity-50"
-        >
-          Save as preset
-        </Button>
-        <Keypad formula={formula} onChange={changeFormula} onRoll={() => submit()} />
+        </div>
       </form>
 
       {characterDialog !== null && roster !== null && (

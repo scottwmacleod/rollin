@@ -55,11 +55,20 @@ export function outcomeClass(outcome?: "success" | "failure"): string {
   return outcome === "success" ? "text-signal-ink" : outcome === "failure" ? "text-danger" : "";
 }
 
+/** A critical hit gets a lime edge and a critical miss a red one; the text label stays, so colour is never the only cue. */
+const CRIT_EDGE: Record<string, string> = {
+  hit: "border-l-4 border-signal pl-2",
+  miss: "border-l-4 border-danger pl-2",
+};
+
 /** One roll in one line: its formula, the dice it landed on, and the total. */
 export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boolean }) {
   const cells = breakdown(roll);
   return (
-    <span className="flex flex-1 flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+    <span
+      data-crit={roll.crit}
+      className={`flex flex-1 flex-wrap items-baseline justify-between gap-x-6 gap-y-1 ${CRIT_EDGE[roll.crit ?? ""] ?? ""}`}
+    >
       {showFormula && (
         <span className="font-mono text-sm text-text-2">
           {roll.iteration !== undefined && (
@@ -85,11 +94,12 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
             <span
               key={i}
               className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 ${
-                cell.dropped ? "text-muted line-through" : outcomeClass(cell.outcome)
+                cell.dropped
+                  ? "text-muted line-through opacity-60 after:sr-only after:content-['_dropped']"
+                  : outcomeClass(cell.outcome)
               }`}
             >
               {cell.face}
-              {cell.dropped && <span> dropped</span>}
               <Outcome outcome={cell.outcome} />
             </span>
           ),

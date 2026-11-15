@@ -340,9 +340,10 @@ test("add: cancelling part way changes nothing", async ({ page }, testInfo) => {
 test("add: the clash prompt passes axe and has touch-sized controls on a phone", async ({
   page,
 }, testInfo) => {
-  await page.setViewportSize({ width: 375, height: 700 });
   await page.goto("/");
   await seed(page);
+  // The sidebar is a slide-over at this width, so seed at full width and then narrow the window.
+  await page.setViewportSize({ width: 375, height: 700 });
   const dialog = await pickPartial(page, testInfo, {
     characters: [
       { name: "aria", vars: { str: 9 }, presets: {} },
