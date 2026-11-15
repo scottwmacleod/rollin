@@ -1,6 +1,6 @@
 import type { Die, Roll } from "@rollin/engine";
 import { type KeyboardEvent, type Ref, useEffect, useRef } from "react";
-import { type Entry, ErrorBody, RollLine } from "./Result";
+import { type Entry, ErrorBody, Outcome, outcomeClass, RollLine } from "./Result";
 import { type Term, terms } from "./terms";
 import { Tree, TreeGroup, TreeItem, TreeItemIndicator, TreeItemLabel } from "./ui";
 
@@ -16,9 +16,10 @@ function DieChip({ die }: { die: Die }) {
   return (
     <span
       data-status={die.status}
-      className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 font-mono text-sm ${mark?.className ?? ""}`}
+      className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 font-mono text-sm ${mark?.className ?? ""} ${outcomeClass(die.outcome)}`}
     >
       {die.value}
+      <Outcome outcome={die.outcome} />
       {mark && (
         <>
           {" "}

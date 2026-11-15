@@ -125,3 +125,81 @@ for (const scheme of ["light", "dark"] as const) {
     await expect(formula).toBeFocused();
   });
 }
+
+test("a labelled, repeated formula shows each roll with its label and repeat number", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    Object.assign(window, {
+      __rollinDice: [
+        { sides: 20, face: 15 },
+        { sides: 8, face: 3 },
+        { sides: 20, face: 4 },
+        { sides: 8, face: 6 },
+      ],
+    }),
+  );
+  await page.goto("/");
+  await page.getByLabel("Formula").fill("2x d20+5 # attack, d8+3 # damage");
+  await page.getByLabel("Formula").press("Enter");
+
+  // One entry holds all four rolls.
+  const log = page.getByRole("tree", { name: "Roll log" });
+  await expect(log.getByRole("treeitem")).toHaveCount(1); // collapsed
+  const entry = log.getByRole("treeitem").first();
+  await expect(entry).toContainText("repeat 1 d20+5 # attack");
+  await expect(entry).toContainText("total 20");
+  await expect(entry).toContainText("d8+3 # damage");
+  await expect(entry).toContainText("total 6");
+  await expect(entry).toContainText("repeat 2 d20+5 # attack");
+  await expect(entry).toContainText("total 9");
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test("a repeat over the limit is refused with a hint when it has no dice", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Formula").fill("101x d6");
+  await page.getByLabel("Formula").press("Enter");
+  await expect(page.getByRole("tree", { name: "Roll log" })).toContainText(
+    "error: repeat cap (100) exceeded by '101x'",
+  );
+  await page.getByLabel("Formula").fill("2x3");
+  await page.getByLabel("Formula").press("Enter");
+  await expect(page.getByRole("tree", { name: "Roll log" })).toContainText(
+    "hint: for multiplication use *; did you mean 2*3?",
+  );
+});
+
+test("a success count marks each die and reports successes minus failures", async ({ page }) => {
+  await page.addInitScript(() =>
+    Object.assign(window, {
+      __rollinDice: [
+        { sides: 10, face: 9 },
+        { sides: 10, face: 5 },
+        { sides: 10, face: 1 },
+      ],
+    }),
+  );
+  await page.goto("/");
+  await page.getByLabel("Formula").fill("3d10>=8f1");
+  await page.getByLabel("Formula").press("Enter");
+
+  const result = page.getByRole("tree", { name: "Roll log" });
+  await expect(result).toContainText("9 ✓");
+  await expect(result).toContainText("1 ✗");
+  await expect(result).toContainText("total 0");
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test("a success count in arithmetic is refused with the reason", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Formula").fill("6d10>=8+2");
+  await page.getByLabel("Formula").press("Enter");
+  await expect(page.getByRole("tree", { name: "Roll log" })).toContainText(
+    "a success count cannot be used in arithmetic",
+  );
+});
