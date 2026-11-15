@@ -18,7 +18,28 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    # Lets Rust-only and docs-only PRs skip `web`. A job skipped by `if`
+    # reports as skipped, which branch protection accepts. Fails open: pushes
+    # to main, manual runs and any doubt about the diff run everything.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      skip: ${{ steps.diff.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Skip when only Rust, desktop or docs files changed
+        id: diff
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: .github/scripts/skip-if-only.sh '^(src/|xtask/|apps/desktop/|docs/|\.claude/|\.github/workflows/(ci|audit|release|dependabot-automerge)\.yml$|Cargo\.(toml|lock)$|rust-toolchain\.toml$|deny\.toml$|justfile$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
+
   web:
+    needs: changes
+    # !cancelled() so a failed `changes` job runs the gate rather than skipping it.
+    if: ${{ !cancelled() && needs.changes.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
