@@ -9,6 +9,7 @@ import {
   type Clash,
   describeAdd,
   describePartialSummary,
+  describeSkipped,
   describeSummary,
   downloadBackup,
   firstUndecided,
@@ -243,8 +244,9 @@ export function BackupSection({
       {!asking && pending?.kind === "full" && (
         <div role="group" aria-label="Confirm import" className="flex flex-col gap-2 text-sm">
           <p className="m-0">
-            This backup holds {describeSummary(summarise(pending.data))}. Replace my data swaps out
-            your characters, presets and settings
+            This backup holds {describeSummary(summarise(pending.data))}.
+            {describeSkipped(pending.skipped ?? 0)} Replace my data swaps out your characters,
+            presets and settings
             {pending.data.rollLog !== undefined ? " and your roll log" : ""}. Add to my data brings
             in only its characters and global presets.
           </p>

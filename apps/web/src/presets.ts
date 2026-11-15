@@ -1,3 +1,5 @@
+import { validatePresetName } from "@rollin/engine";
+import type { Tally } from "./characters";
 import type { Storage } from "./storage";
 
 export const PRESETS_KEY = "globalPresets";
@@ -6,11 +8,16 @@ export const PRESETS_KEY = "globalPresets";
 export type PresetMap = Record<string, string>;
 
 /** Keeps only name-to-text pairs, so a hand-edited or old save can't break the sidebar. */
-export function cleanPresets(value: unknown): PresetMap {
+export function cleanPresets(value: unknown, tally?: Tally): PresetMap {
   const out: PresetMap = {};
   if (typeof value !== "object" || value === null || Array.isArray(value)) return out;
   for (const [name, formula] of Object.entries(value)) {
-    if (typeof formula === "string") out[name] = formula;
+    if (typeof formula !== "string") continue;
+    // Same rules as a name typed into the app: lowercased, or dropped and counted.
+    const checked = validatePresetName(name);
+    if (!("name" in checked)) {
+      if (tally) tally.skipped += 1;
+    } else if (!Object.hasOwn(out, checked.name)) out[checked.name] = formula;
   }
   return out;
 }
