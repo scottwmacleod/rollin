@@ -16,7 +16,30 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    # Lets web-only and docs-only PRs skip the slow Rust and desktop gates.
+    # Those gates are required checks, and a job skipped by `if` reports as
+    # skipped, which branch protection accepts. Fails open: pushes to main,
+    # manual runs and any doubt about the diff run everything, so the release
+    # gate (release.yml) still sees every check pass on main.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      skip: ${{ steps.diff.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - name: Skip when only web or docs files changed
+        id: diff
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: .github/scripts/skip-if-only.sh '^(packages/|apps/web/|docs/|\.claude/|\.github/workflows/web\.yml$|package(-lock)?\.json$|biome\.json$|vercel\.json$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
+
   lint:
+    needs: changes
+    # !cancelled() so a failed `changes` job runs the gate rather than skipping it.
+    if: ${{ !cancelled() && needs.changes.outputs.skip != 'true' }}
     runs-on: macos-latest
     timeout-minutes: 15
     steps:
@@ -31,6 +54,9 @@ jobs:
         run: cargo clippy --all-targets --locked -- -D warnings
 
   test:
+    needs: changes
+    # !cancelled() so a failed `changes` job runs the gate rather than skipping it.
+    if: ${{ !cancelled() && needs.changes.outputs.skip != 'true' }}
     runs-on: macos-latest
     timeout-minutes: 15
     steps:
@@ -41,6 +67,9 @@ jobs:
         run: cargo test --locked
 
   test-linux:
+    needs: changes
+    # !cancelled() so a failed `changes` job runs the gate rather than skipping it.
+    if: ${{ !cancelled() && needs.changes.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -53,6 +82,9 @@ jobs:
   desktop:
     # Builds the Tauri app (ADR-0007). Workspace default-members keep it out of
     # the jobs above, so this is the only job that compiles it.
+    needs: changes
+    # !cancelled() so a failed `changes` job runs the gate rather than skipping it.
+    if: ${{ !cancelled() && needs.changes.outputs.skip != 'true' }}
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
@@ -83,6 +115,9 @@ jobs:
     # Same as `desktop` but on Windows (#144). Stays on `-p rollin-desktop`
     # because the root crate's rexpect dev-dependency is unix-only. Required
     # since #164, so `ci` needs it.
+    needs: changes
+    # !cancelled() so a failed `changes` job runs the gate rather than skipping it.
+    if: ${{ !cancelled() && needs.changes.outputs.skip != 'true' }}
     runs-on: windows-latest
     timeout-minutes: 40
     steps:
@@ -110,16 +145,18 @@ jobs:
         run: cargo build -p rollin-desktop --locked
 
   ci:
-    # The one required check (baseline). Fails if any gate failed or was
-    # skipped.
+    # Fails if any gate failed or was cancelled. A gate skipped because only
+    # web or docs files changed is fine, but `changes` itself must succeed.
     if: always()
-    needs: [lint, test, test-linux, desktop, desktop-windows]
+    needs: [changes, lint, test, test-linux, desktop, desktop-windows]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: All gates passed
         env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
+          CHANGES: ${{ needs.changes.result }}
         run: |
           echo "$RESULTS"
-          for r in $RESULTS; do [ "$r" = success ] || exit 1; done
+          for r in $RESULTS; do [ "$r" = success ] || [ "$r" = skipped ] || exit 1; done
+          [ "$CHANGES" = success ] || exit 1
