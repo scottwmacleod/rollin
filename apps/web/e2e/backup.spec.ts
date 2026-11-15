@@ -448,7 +448,7 @@ test("export one character, clear storage, add the file: it rolls the same", asy
   const download = page.waitForEvent("download");
   await dialog.getByRole("button", { name: "Export" }).click();
   const got = await download;
-  expect(got.suggestedFilename()).toMatch(/^rollin-grog-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(got.suggestedFilename()).toMatch(/^rollin-character-grog-\d{4}-\d{2}-\d{2}\.json$/);
   await expect(dialog.getByRole("status")).toHaveText("Exported grog.");
   await expect(dialog.getByRole("button", { name: "Export" })).toBeFocused();
   const file = testInfo.outputPath("grog.json");

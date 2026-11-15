@@ -582,10 +582,11 @@ describe("single-character export", () => {
 
   it("names the file after the character and the date, safe for file systems", () => {
     const now = new Date("2026-11-15T08:00:00.000Z");
-    expect(characterFilename("grog", now)).toBe("rollin-grog-2026-11-15.json");
+    expect(characterFilename("grog", now)).toBe("rollin-character-grog-2026-11-15.json");
     expect(characterFilename("Grog the/Brave: 2?", now)).toBe(
-      "rollin-grog-the-brave-2-2026-11-15.json",
+      "rollin-character-grog-the-brave-2-2026-11-15.json",
     );
-    expect(characterFilename("///", now)).toBe("rollin-character-2026-11-15.json");
+    expect(characterFilename("backup", now)).toBe("rollin-character-backup-2026-11-15.json");
+    expect(characterFilename("///", now)).toBe("rollin-character-unnamed-2026-11-15.json");
   });
 });

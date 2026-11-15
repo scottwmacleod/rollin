@@ -182,6 +182,7 @@ export function BackupSection({
   }
 
   function cancelAdd() {
+    if (busyRef.current) return;
     setAsking(null);
     setPending(null);
     setMessage("Cancelled. Nothing was changed.");

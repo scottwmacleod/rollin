@@ -573,14 +573,14 @@ export function backupFilename(now: Date = new Date()): string {
   return `rollin-backup-${now.toISOString().slice(0, 10)}.json`;
 }
 
-/** The file name for one exported character: `rollin-grog-2026-11-15.json`. Anything a file system may refuse becomes a hyphen. */
+/** The file name for one exported character: `rollin-character-grog-2026-11-15.json`. Anything a file system may refuse becomes a hyphen. */
 export function characterFilename(name: string, now: Date = new Date()): string {
   const safe =
     name
       .toLowerCase()
       .replace(/[^a-z0-9_-]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "character";
-  return `rollin-${safe}-${now.toISOString().slice(0, 10)}.json`;
+      .replace(/^-+|-+$/g, "") || "unnamed";
+  return `rollin-character-${safe}-${now.toISOString().slice(0, 10)}.json`;
 }
 
 // --- Backup reminder -------------------------------------------------------

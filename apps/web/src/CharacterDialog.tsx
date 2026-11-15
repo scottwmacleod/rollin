@@ -114,7 +114,7 @@ export function CharacterDialog({
             <DialogDescription className="m-0 text-sm text-muted">
               {editing === null
                 ? "A character keeps its own variables and presets. Creating one switches to it."
-                : "Rename this character, or delete it with its variables and presets."}
+                : "Rename this character, export it to a file, or delete it with its variables and presets."}
             </DialogDescription>
           </div>
 
@@ -126,7 +126,10 @@ export function CharacterDialog({
             <FieldLabel className="text-sm text-text-2">Name</FieldLabel>
             <Input
               value={name}
-              onValueChange={setName}
+              onValueChange={(v) => {
+                setName(v);
+                setExported(null);
+              }}
               placeholder="aria"
               autoComplete="off"
               autoCapitalize="off"
@@ -149,7 +152,10 @@ export function CharacterDialog({
             <select
               id="game-system"
               value={system}
-              onChange={(e) => setSystem(e.target.value as GameSystem | "")}
+              onChange={(e) => {
+                setSystem(e.target.value as GameSystem | "");
+                setExported(null);
+              }}
               className={FIELD}
             >
               <option value="">None</option>
@@ -174,7 +180,10 @@ export function CharacterDialog({
               <FieldLabel className="text-sm text-text-2">Crit range</FieldLabel>
               <Input
                 value={critText}
-                onValueChange={setCritText}
+                onValueChange={(v) => {
+                  setCritText(v);
+                  setExported(null);
+                }}
                 placeholder="20"
                 inputMode="numeric"
                 autoComplete="off"
@@ -216,6 +225,7 @@ export function CharacterDialog({
                 <Button
                   type="button"
                   onClick={exportCharacter}
+                  disabled={saving}
                   className={`${SECONDARY} max-md:h-11`}
                 >
                   Export
@@ -229,7 +239,7 @@ export function CharacterDialog({
             </div>
           )}
 
-          {existing !== undefined && (
+          {existing !== undefined && !confirming && (
             <div className="flex flex-col gap-1 text-sm text-muted">
               <span>
                 Export downloads this character as saved, without any unsaved changes here. Add the
