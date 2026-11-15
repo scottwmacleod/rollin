@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "rollin dice engine: no UI, no browser APIs. Dice terms and integer arithmetic so far (#216).",
+  "description": "rollin dice engine: no UI, no browser APIs. Parity with the Rust engine for everything but presets, characters and 5e (#216).",
   "exports": {
     ".": "./src/index.ts"
   },
