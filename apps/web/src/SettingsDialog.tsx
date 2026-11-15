@@ -19,12 +19,17 @@ const focusRing =
 export function SettingsDialog({
   settings,
   onChange,
+  open,
+  onOpenChange,
 }: {
   settings: Settings;
   onChange: (next: Settings) => void;
+  /** Lets the command palette open the dialog; without them the dialog manages itself. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         shortcut="mod+,"
         className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 ${focusRing}`}
