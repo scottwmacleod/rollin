@@ -403,7 +403,7 @@ test("settings credits its maker with a link", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Settings/ }).click();
   const link = page.getByRole("dialog").getByRole("link", { name: "Shipped by sm" });
-  await expect(link).toHaveAttribute("href", "https://www.scottmacleod.co");
+  await expect(link).toHaveAttribute("href", "https://scottmacleod.co");
   await expect(link).toContainText("Shipped by");
 });
 

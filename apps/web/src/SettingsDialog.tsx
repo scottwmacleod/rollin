@@ -107,7 +107,7 @@ export function SettingsDialog({
         </div>
         <div className="mt-4 border-t border-line-strong pt-3 text-center">
           <a
-            href="https://www.scottmacleod.co"
+            href="https://scottmacleod.co"
             target="_blank"
             rel="noopener noreferrer"
             className={`inline-flex items-baseline gap-2 rounded-sm border border-line-strong px-3 py-1.5 font-mono text-xs text-text-2 transition-colors hover:border-signal-ink hover:text-text ${focusRing}`}
