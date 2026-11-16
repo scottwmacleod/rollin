@@ -402,9 +402,9 @@ test("the backup reminder shows for old unsaved data and can be dismissed", asyn
 test("settings credits its maker with a link", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Settings/ }).click();
-  const link = page.getByRole("dialog").getByRole("link", { name: "Scott MacLeod" });
-  await expect(link).toHaveAttribute("href", "https://scottmacleod.co");
-  await expect(page.getByRole("dialog")).toContainText("Built by");
+  const link = page.getByRole("dialog").getByRole("link", { name: "Shipped by sm" });
+  await expect(link).toHaveAttribute("href", "https://www.scottmacleod.co");
+  await expect(link).toContainText("Shipped by");
 });
 
 test("export one character, clear storage, add the file: it rolls the same", async ({
