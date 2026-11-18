@@ -1,0 +1,48 @@
+name: ci
+
+# rollin's gates, from sm-core's shared workflows. `ci` is the only required
+# check: it passes when every web-ci job and the budgets passed. The daily run
+# on main seeds the node_modules cache and main's bundle sizes, because PRs
+# merged by auto-merge.yml start no push runs on main.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "37 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read # web-ci lists a PR's files for skip-paths
+
+jobs:
+  web:
+    uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@v26.11.3
+    with:
+      checks: npm run tokens:check
+      typecheck-command: bun run typecheck
+      e2e: true
+      skip-paths: '^(docs/|\.claude/|\.github/workflows/(auto-merge|audit|behind|dependabot-automerge|tsc)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
+
+  budgets:
+    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.3
+    permissions:
+      contents: read
+      pull-requests: write # one bundle-size comment per PR
+    with:
+      dist-dir: apps/web/dist
+      js-kb: 190
+      css-kb: 55
+      lighthouse-runs: 3
+
+  # The check branch protection requires.
+  ci:
+    needs: [web, budgets]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: test "${{ needs.web.result }}" = success && test "${{ needs.budgets.result }}" = success

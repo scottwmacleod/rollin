@@ -1,0 +1,7 @@
+{
+  "$comment": "Agent tools the suite pins outside package.json, so Dependabot can't see them. behind.yml checks npm for newer versions; keep sm-conventions.md in step.",
+  "npm": {
+    "agent-browser": "0.43.0",
+    "modern-web-guidance": "1.0.1"
+  }
+}

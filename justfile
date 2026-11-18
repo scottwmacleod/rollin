@@ -1,5 +1,6 @@
-# Local gates; `check` mirrors the `web` job in .github/workflows/web.yml.
-# Needs the Node version in .nvmrc (26) and Bun 1.4.4 (typecheck).
+# Local gates; `check` runs the same gates as the required `ci` check
+# (.github/workflows/ci.yml). Needs the Node version in .nvmrc (26) and
+# Bun 1.4.4 (typecheck).
 
 check: web-check
 
@@ -9,14 +10,11 @@ tokens:
 
 web-check:
     npm ci
-    npm run tokens:check
-    npm run typecheck
-    npx biome check .
-    npm test
     npx playwright install chromium
-    npm run e2e
+    npm run check
+    node vendor/sm-core/verify.mjs
 
 # Run the web app in dev mode.
 web-dev:
     npm ci
-    npm --workspace rollin-web run dev
+    npm run dev

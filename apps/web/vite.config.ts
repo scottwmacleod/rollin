@@ -9,5 +9,5 @@ const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev";
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
   plugins: [react(), tailwindcss(), offlineWorker()],
-  test: { include: ["src/**/*.test.{ts,tsx}"] },
+  test: { include: ["src/**/*.test.{ts,tsx}"], sequence: { shuffle: true } },
 });
