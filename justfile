@@ -1,5 +1,5 @@
 # Local gates; `check` mirrors the `web` job in .github/workflows/web.yml.
-# Needs the Node version in .nvmrc (26).
+# Needs the Node version in .nvmrc (26) and Bun 1.4.4 (typecheck).
 
 check: web-check
 

@@ -27,7 +27,7 @@ The decisions behind these are in [`docs/adr/`](docs/adr/).
 
 ## Setting up
 
-You need Node 26 (the version in `.nvmrc`). We use [`just`](https://github.com/casey/just) as the task runner, but every recipe is a short list of `npm` commands you can run yourself.
+You need Node 26 (the version in `.nvmrc`) and [Bun](https://bun.sh) 1.4.4, which runs the typecheck. We use [`just`](https://github.com/casey/just) as the task runner, but every recipe is a short list of `npm` commands you can run yourself.
 
 ```sh
 git clone https://github.com/scottwmacleod/rollin

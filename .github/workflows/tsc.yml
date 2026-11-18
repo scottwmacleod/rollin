@@ -1,0 +1,29 @@
+name: tsc fallback
+
+# `npm run typecheck` uses `bun check`. This runs plain `tsc --noEmit` weekly
+# so any gap between the two shows up. Not a required check; a red run here
+# means bun check missed an error tsc found, so file it and compare.
+
+on:
+  schedule:
+    # Weekly, Monday 05:51 UTC.
+    - cron: "51 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tsc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck with tsc
+        run: npm run typecheck:tsc
