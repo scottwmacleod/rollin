@@ -6,6 +6,8 @@ Dice roller for tabletop RPGs: a TypeScript dice engine in `packages/engine` and
 
 `just check` passes (Node 26, from `.nvmrc`); it runs the same gates as CI: the design-token drift check, typecheck, Biome, Vitest and Playwright with axe. Only `apps/web/src/ui` may import `@ui-sdk/*`. The parity fixtures in `packages/engine/fixtures/parity` are frozen; a change that alters one is a change to the engine's behaviour.
 
+Typecheck runs `bun check --no-script` (Bun 1.4.4), about 3 times faster than `tsc` here. `--no-script` matters: without it, `bun check` runs a package's `check` script instead of typechecking. `npm run typecheck:tsc` is the `tsc --noEmit` fallback; the weekly `tsc fallback` workflow runs it so a gap between the two shows up. If `bun check` misbehaves, switch the `typecheck` scripts back to `tsc --noEmit`.
+
 ## Agent skills
 
 ### Issue tracker

@@ -8,6 +8,7 @@
     "tokens": "node ui/generate-tokens.mjs",
     "tokens:check": "node ui/generate-tokens.mjs --check",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck:tsc": "npm run typecheck:tsc --workspaces --if-present",
     "lint": "biome check .",
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspace rollin-web",

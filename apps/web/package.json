@@ -10,7 +10,8 @@
     "prebuild": "npm run prepare-assets",
     "build": "tsc --noEmit && vite build && node scripts/check-no-test-hooks.mjs",
     "preview": "vite preview",
-    "typecheck": "npm run prepare-assets && tsc --noEmit",
+    "typecheck": "npm run prepare-assets && bun check --no-script",
+    "typecheck:tsc": "npm run prepare-assets && tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
     "build:e2e": "npm run prepare-assets && tsc --noEmit && vite build --mode e2e --outDir dist-e2e"
