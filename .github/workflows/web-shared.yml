@@ -9,7 +9,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   web:
@@ -31,3 +31,14 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: test "${{ needs.web.result }}" = success
+
+  budgets:
+    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@claude/project-thread-qpqkka
+    permissions:
+      contents: read
+      pull-requests: write
+    with:
+      node-version: "22"
+      dist-dir: apps/web/dist
+      js-kb: 185
+      css-kb: 60
