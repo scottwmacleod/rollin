@@ -1,0 +1,33 @@
+name: Web (shared trial)
+
+# Trial for sm-core#5: the same gates as web.yml, through sm-core's shared
+# web-ci.yml at a branch ref. Draft PR only; not to be merged as is.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  web:
+    uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@claude/project-thread-qpqkka
+    with:
+      node-version: "22"
+      checks: npm run tokens:check
+      lint-command: npx biome check .
+      typecheck-command: npm run typecheck
+      test-command: npm test
+      build-command: npm run build
+      e2e: true
+      skip-paths: '^(docs/|\.claude/|\.github/workflows/(audit|dependabot-automerge)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
+
+  ci:
+    needs: web
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: test "${{ needs.web.result }}" = success
