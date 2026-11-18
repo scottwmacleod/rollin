@@ -3,6 +3,7 @@
   "private": true,
   "description": "npm workspace: the dice engine (packages/engine) and the web app (apps/web).",
   "workspaces": ["packages/engine", "apps/web"],
+  "engines": { "node": ">=26" },
   "scripts": {
     "tokens": "node ui/generate-tokens.mjs",
     "tokens:check": "node ui/generate-tokens.mjs --check",

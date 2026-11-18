@@ -4,7 +4,7 @@ Dice roller for tabletop RPGs: a TypeScript dice engine in `packages/engine` and
 
 ## Definition of done
 
-`just check` passes (Node 22); it runs the same gates as CI: the design-token drift check, typecheck, Biome, Vitest and Playwright with axe. Only `apps/web/src/ui` may import `@ui-sdk/*`. The parity fixtures in `packages/engine/fixtures/parity` are frozen; a change that alters one is a change to the engine's behaviour.
+`just check` passes (Node 26, from `.nvmrc`); it runs the same gates as CI: the design-token drift check, typecheck, Biome, Vitest and Playwright with axe. Only `apps/web/src/ui` may import `@ui-sdk/*`. The parity fixtures in `packages/engine/fixtures/parity` are frozen; a change that alters one is a change to the engine's behaviour.
 
 ## Agent skills
 
