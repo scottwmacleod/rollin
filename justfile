@@ -1,5 +1,5 @@
 # Local gates; `check` mirrors the `web` job in .github/workflows/web.yml.
-# Needs Node 22.
+# Needs the Node version in .nvmrc (26).
 
 check: web-check
 

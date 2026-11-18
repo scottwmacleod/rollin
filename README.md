@@ -24,7 +24,7 @@ Characters, variables, presets, settings and the roll log live in your browser's
 
 ## Development
 
-rollin is a TypeScript monorepo (npm workspaces, Node 22): the dice engine in `packages/engine` (no UI, no browser APIs) and a React, Vite and Tailwind web app in `apps/web`. Design decisions are in [docs/adr](docs/adr) and domain terms in [GLOSSARY.md](GLOSSARY.md). The design tokens in `ui/tokens.json` generate `ui/tokens.css`.
+rollin is a TypeScript monorepo (npm workspaces, Node 26): the dice engine in `packages/engine` (no UI, no browser APIs) and a React, Vite and Tailwind web app in `apps/web`. Design decisions are in [docs/adr](docs/adr) and domain terms in [GLOSSARY.md](GLOSSARY.md). The design tokens in `ui/tokens.json` generate `ui/tokens.css`.
 
 ```sh
 npm ci
