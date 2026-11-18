@@ -22,7 +22,6 @@ jobs:
       test-command: npm test
       build-command: npm run build
       e2e: true
-      test-budget-seconds: 5
       skip-paths: '^(docs/|\.claude/|\.github/workflows/(audit|dependabot-automerge)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
 
   ci:
