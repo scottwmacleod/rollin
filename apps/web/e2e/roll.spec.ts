@@ -303,6 +303,35 @@ test("the roll log survives a reload, and Clear empties it for good", async ({ p
   await expect(page.getByText("Rolls will appear here.")).toBeVisible();
 });
 
+test("only a roll made now arrives with motion, and never under reduced motion", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await rollOnce(page, "d6+1");
+  await page.reload();
+  const log = page.getByRole("tree", { name: "Roll log" });
+  await expect(log).toContainText("d6+1");
+  // History that loads with the page animates nothing.
+  await expect(page.locator(".roll-arrive")).toHaveCount(0);
+
+  await rollOnce(page, "d8");
+  await rollOnce(page, "d4");
+  // Only the newest roll carries the arrival.
+  await expect(page.locator(".roll-arrive")).toHaveCount(1);
+  await expect(page.locator(".roll-arrive")).toContainText("d4");
+  const animation = await page
+    .locator(".roll-arrive")
+    .evaluate((el) => getComputedStyle(el).animationName);
+  expect(animation).toBe("roll-arrive");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await rollOnce(page, "d10");
+  const reduced = await page
+    .locator(".roll-arrive")
+    .evaluate((el) => getComputedStyle(el).animationName);
+  expect(reduced).toBe("none");
+});
+
 test("a roll in one tab appears in another, and Clear follows", async ({ context }) => {
   const a = await context.newPage();
   const b = await context.newPage();

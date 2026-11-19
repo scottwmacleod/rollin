@@ -1,5 +1,13 @@
 import type { Die, Roll } from "@rollin/engine";
-import { type KeyboardEvent, type ReactNode, type Ref, useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  type Ref,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { type Entry, ErrorBody, Outcome, outcomeClass, RollLine } from "./Result";
 import { type Term, terms } from "./terms";
 import {
@@ -88,12 +96,12 @@ function Chevron() {
   );
 }
 
-function EntryHead({ entry, branch }: { entry: Entry; branch: boolean }) {
+function EntryHead({ entry, branch, fresh }: { entry: Entry; branch: boolean; fresh: boolean }) {
   const { report } = entry;
   return (
     <TreeItemLabel className={`${ROW} ${FOCUS} items-start py-3`}>
       {branch ? <Chevron /> : <span className="w-4 shrink-0" />}
-      <span className="min-w-0 flex-1">
+      <span className={`min-w-0 flex-1${fresh ? " roll-arrive" : ""}`}>
         <span className="block font-mono text-sm text-muted">
           {"ok" in report && report.ok.preset !== null
             ? `${report.ok.preset[0]} · ${report.ok.preset[1]}`
@@ -113,12 +121,12 @@ function EntryHead({ entry, branch }: { entry: Entry; branch: boolean }) {
   );
 }
 
-function EntryItem({ entry }: { entry: Entry }) {
+function EntryItem({ entry, fresh }: { entry: Entry; fresh: boolean }) {
   const value = `entry-${entry.id}`;
   if (!("ok" in entry.report)) {
     return (
       <TreeItem value={value}>
-        <EntryHead entry={entry} branch={false} />
+        <EntryHead entry={entry} branch={false} fresh={fresh} />
       </TreeItem>
     );
   }
@@ -128,14 +136,14 @@ function EntryItem({ entry }: { entry: Entry }) {
   if (perRoll.every((list) => list.length === 0)) {
     return (
       <TreeItem value={value}>
-        <EntryHead entry={entry} branch={false} />
+        <EntryHead entry={entry} branch={false} fresh={fresh} />
       </TreeItem>
     );
   }
 
   return (
     <TreeItem value={value}>
-      <EntryHead entry={entry} branch />
+      <EntryHead entry={entry} branch fresh={fresh} />
       <TreeGroup className="pb-2">
         {rolls.length === 1 ? (
           <TermItems prefix={value} list={perRoll[0] ?? []} />
@@ -198,6 +206,10 @@ export function RollLog({
   const stuck = useRef(true);
   const [away, setAway] = useState(false);
   const count = entries.length;
+  // The entry a roll made here just added. History that loads with the page or
+  // arrives from another tab never changes `rollCount`, so it never arrives.
+  const [freshId, setFreshId] = useState<number | null>(null);
+  const latestId = entries[entries.length - 1]?.id;
 
   function toBottom() {
     const el = scroller.current;
@@ -226,6 +238,13 @@ export function RollLog({
     observer.observe(inner);
     return () => observer.disconnect();
   }, []);
+
+  // Marked before paint so the arrival starts with the entry's first frame.
+  useLayoutEffect(() => {
+    if (rollCount > 0) setFreshId(latestId ?? null);
+    // Only a new roll marks an entry; `latestId` is read as of that roll.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: see above
+  }, [rollCount]);
 
   // A roll made here shows its result at once.
   useEffect(() => {
@@ -284,7 +303,7 @@ export function RollLog({
               className="flex flex-col divide-y divide-line"
             >
               {entries.map((entry) => (
-                <EntryItem key={entry.id} entry={entry} />
+                <EntryItem key={entry.id} entry={entry} fresh={entry.id === freshId} />
               ))}
             </Tree>
           )}
