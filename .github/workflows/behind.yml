@@ -1,0 +1,17 @@
+name: behind
+
+# Weekly: opens one issue when vendor/sm-core is older than sm-core's latest
+# release, or a pinned agent tool has a newer version. Closes it when current.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  behind:
+    uses: scottwmacleod/sm-core/.github/workflows/behind.yml@v26.11.3

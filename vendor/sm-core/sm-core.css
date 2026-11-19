@@ -1,0 +1,211 @@
+/* sm_ core 26.11.3: generated from tokens.json by scripts/build.mjs. Do not edit. */
+/* Dark is the default; light follows the OS unless [data-theme] forces one. */
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --sm-ground: #0B0C0B;
+  --sm-surface: #131513;
+  --sm-surface-hover: #171A17;
+  --sm-surface-sunken: #080908;
+  --sm-code-bg: #1A1D1A;
+  --sm-line: #262A26;
+  --sm-line-strong: #333833;
+  --sm-control-line: #6B716A;
+  --sm-ink: #EDEFEA;
+  --sm-ink-body: #D9DCD5;
+  --sm-ink-muted: #9BA19A;
+  --sm-signal: #C5F04A;
+  --sm-signal-hover: #B5DD44;
+  --sm-on-signal: #0B0C0B;
+  --sm-signal-ink: #C5F04A;
+  --sm-signal-tint: rgba(197, 240, 74, 0.08);
+  --sm-wip: #FFB547;
+  --sm-wip-tint: rgba(255, 181, 71, 0.08);
+  --sm-danger: #FF8A80;
+  --sm-danger-tint: rgba(255, 138, 128, 0.06);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --sm-ground: #F6F7F3;
+    --sm-surface: #FFFFFF;
+    --sm-surface-hover: #EEF0EA;
+    --sm-surface-sunken: #EEF0EA;
+    --sm-code-bg: #E6E9E1;
+    --sm-line: #D9DCD3;
+    --sm-line-strong: #AEB3A8;
+    --sm-control-line: #7C8178;
+    --sm-ink: #121412;
+    --sm-ink-body: #2A2E29;
+    --sm-ink-muted: #5B615A;
+    --sm-signal: #C5F04A;
+    --sm-signal-hover: #B5DD44;
+    --sm-on-signal: #0B0C0B;
+    --sm-signal-ink: #3E5A00;
+    --sm-signal-tint: rgba(197, 240, 74, 0.28);
+    --sm-wip: #8A5300;
+    --sm-wip-tint: rgba(255, 181, 71, 0.18);
+    --sm-danger: #B42318;
+    --sm-danger-tint: rgba(180, 35, 24, 0.06);
+  }
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --sm-ground: #F6F7F3;
+  --sm-surface: #FFFFFF;
+  --sm-surface-hover: #EEF0EA;
+  --sm-surface-sunken: #EEF0EA;
+  --sm-code-bg: #E6E9E1;
+  --sm-line: #D9DCD3;
+  --sm-line-strong: #AEB3A8;
+  --sm-control-line: #7C8178;
+  --sm-ink: #121412;
+  --sm-ink-body: #2A2E29;
+  --sm-ink-muted: #5B615A;
+  --sm-signal: #C5F04A;
+  --sm-signal-hover: #B5DD44;
+  --sm-on-signal: #0B0C0B;
+  --sm-signal-ink: #3E5A00;
+  --sm-signal-tint: rgba(197, 240, 74, 0.28);
+  --sm-wip: #8A5300;
+  --sm-wip-tint: rgba(255, 181, 71, 0.18);
+  --sm-danger: #B42318;
+  --sm-danger-tint: rgba(180, 35, 24, 0.06);
+}
+
+:root {
+  --sm-font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sm-font-sans: Geist, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sm-space-1: 4px;
+  --sm-space-2: 8px;
+  --sm-space-3: 12px;
+  --sm-space-4: 16px;
+  --sm-space-5: 24px;
+  --sm-space-6: 32px;
+  --sm-space-7: 48px;
+  --sm-space-8: 72px;
+  --sm-radius-0: 0px;
+  --sm-radius-1: 2px;
+  --sm-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --sm-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --sm-duration-press: 100ms;
+  --sm-duration-enter: 150ms;
+  --sm-duration-move: 200ms;
+  --sm-duration-blink: 1.1s;
+  --sm-text-display-xl: 600 96px/1 var(--sm-font-mono);
+  --sm-text-display-xl-tracking: -0.06em;
+  --sm-text-display: 600 56px/1.08 var(--sm-font-mono);
+  --sm-text-display-tracking: -0.05em;
+  --sm-text-heading: 600 44px/1.1 var(--sm-font-mono);
+  --sm-text-heading-tracking: -0.05em;
+  --sm-text-title: 600 24px/1.2 var(--sm-font-mono);
+  --sm-text-title-tracking: -0.04em;
+  --sm-text-subhead: 600 20px/1.3 var(--sm-font-mono);
+  --sm-text-subhead-tracking: -0.03em;
+  --sm-text-label: 400 13px/1.4 var(--sm-font-mono);
+  --sm-text-lead: 400 20px/1.55 var(--sm-font-sans);
+  --sm-text-body: 400 19px/1.7 var(--sm-font-sans);
+  --sm-text-body-sm: 400 16px/1.6 var(--sm-font-sans);
+  --sm-text-ui-heading: 600 20px/26px var(--sm-font-mono);
+  --sm-text-ui-heading-tracking: -0.03em;
+  --sm-text-ui-title: 600 16px/22px var(--sm-font-mono);
+  --sm-text-ui-title-tracking: -0.02em;
+  --sm-text-ui: 400 14px/20px var(--sm-font-mono);
+  --sm-text-ui-strong: 600 14px/20px var(--sm-font-mono);
+  --sm-text-ui-sm: 400 13px/18px var(--sm-font-mono);
+  --sm-text-ui-xs: 400 11px/16px var(--sm-font-mono);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sm-duration-press: 0ms;
+    --sm-duration-enter: 0ms;
+    --sm-duration-move: 0ms;
+  }
+  .sm-cursor { animation: none; }
+}
+
+@media (prefers-contrast: more) {
+  :root { --sm-ink-muted: var(--sm-ink); --sm-line: var(--sm-control-line); --sm-line-strong: var(--sm-control-line); }
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+    --sm-ground: #F6F7F3;
+    --sm-surface: #FFFFFF;
+    --sm-surface-hover: #EEF0EA;
+    --sm-surface-sunken: #EEF0EA;
+    --sm-code-bg: #E6E9E1;
+    --sm-line: #D9DCD3;
+    --sm-line-strong: #AEB3A8;
+    --sm-control-line: #7C8178;
+    --sm-ink: #121412;
+    --sm-ink-body: #2A2E29;
+    --sm-ink-muted: #5B615A;
+    --sm-signal: #C5F04A;
+    --sm-signal-hover: #B5DD44;
+    --sm-on-signal: #0B0C0B;
+    --sm-signal-ink: #3E5A00;
+    --sm-signal-tint: rgba(197, 240, 74, 0.28);
+    --sm-wip: #8A5300;
+    --sm-wip-tint: rgba(255, 181, 71, 0.18);
+    --sm-danger: #B42318;
+    --sm-danger-tint: rgba(180, 35, 24, 0.06);
+  }
+  .sm-cursor { animation: none; }
+}
+
+/* The mark: a lowercase name in Geist Mono 600 and the lime cursor.
+   <span class="sm-mark">sm<span class="sm-cursor" aria-hidden="true"></span></span> */
+@keyframes sm-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.sm-mark {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--sm-font-mono);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 1;
+  color: var(--sm-ink);
+}
+
+.sm-cursor {
+  display: inline-block;
+  width: 0.46em;
+  height: 0.11em;
+  margin-left: 0.06em;
+  background: var(--sm-signal);
+  animation: sm-blink var(--sm-duration-blink) steps(1) infinite;
+}
+
+/* The credit:
+   <a class="sm-credit" href="https://scottmacleod.co">shipped by
+     <span class="sm-mark">sm<span class="sm-cursor" aria-hidden="true"></span></span></a> */
+.sm-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sm-space-2);
+  min-height: 44px;
+  padding: 0 var(--sm-space-3);
+  border: 1px solid var(--sm-control-line);
+  border-radius: var(--sm-radius-1);
+  font: var(--sm-text-ui-sm);
+  color: var(--sm-ink-muted);
+  text-decoration: none;
+  transition: border-color var(--sm-duration-enter) var(--sm-ease-out), color var(--sm-duration-enter) var(--sm-ease-out);
+}
+
+.sm-credit:hover { border-color: var(--sm-signal-ink); color: var(--sm-ink-body); }
+.sm-credit:focus-visible { outline: 2px solid var(--sm-signal-ink); outline-offset: 2px; }
+
+@media (forced-colors: active) {
+  .sm-cursor { background: CanvasText; }
+  .sm-credit { border-color: LinkText; }
+}

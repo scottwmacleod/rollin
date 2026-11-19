@@ -1,5 +1,6 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.6.7/schema.json",
+  "extends": ["./vendor/sm-core/tooling/biome.base.json"],
   "files": {
     "includes": [
       "packages/**",
@@ -12,8 +13,5 @@
       "!apps/web/src/generated",
       "!packages/engine/fixtures"
     ]
-  },
-  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
-  "linter": { "enabled": true, "rules": { "preset": "none" } },
-  "css": { "parser": { "tailwindDirectives": true } }
+  }
 }

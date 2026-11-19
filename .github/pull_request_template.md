@@ -1,6 +1,5 @@
 <!-- Shape from the /pr skill (mattpocock/skills). Keep prose brief and use GLOSSARY.md terms. -->
-
-<!-- First PR here? See CONTRIBUTING.md. For anything bigger than a small fix, please open or find an issue first. Maintainers fill in "Merge Danger" and apply the label if you are unsure. -->
+<!-- Synced from sm-core. Edit sm-core, not this copy. Add product sections below the product marker. -->
 
 ## Summary
 
@@ -10,8 +9,20 @@ Closes #
 
 ## Evidence
 
-- **Before:** <!-- output or failing test run -->
-  **After:** <!-- output or passing test run, e.g. `just check` -->
+- **Before:** <!-- screenshot, output, timing or failing test run -->
+  **After:** <!-- screenshot, output, timing or passing test run -->
+
+<!-- CI, build or tool changes: before and after numbers from real runs. -->
+
+## Merge Danger
+
+**Door:** <!-- one-way or two-way -->
+
+**Blast Radius:** <!-- one word -->
+
+<!-- product -->
+
+<!-- rollin: first PR here? See CONTRIBUTING.md. For anything bigger than a small fix, please open or find an issue first. -->
 
 ## Kind of change
 
@@ -19,12 +30,6 @@ Closes #
 - [ ] `enhancement`: something new for users
 - [ ] `bug`: fixes wrong behaviour
 - [ ] `internal`: tests, docs, tooling or refactoring, with no user-visible change
-
-## Merge Danger
-
-**Door:** <!-- one-way or two-way -->
-
-**Blast Radius:** <!-- one word -->
 
 ## CI / release config impact
 

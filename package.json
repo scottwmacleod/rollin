@@ -5,11 +5,15 @@
   "workspaces": ["packages/engine", "apps/web"],
   "engines": { "node": ">=26" },
   "scripts": {
+    "prepare": "node vendor/sm-core/tooling/hooks/install.mjs",
+    "dev": "npm --workspace rollin-web run dev",
+    "check": "npm run tokens:check && npm run typecheck && npm run lint && npm test && npm run e2e",
     "tokens": "node ui/generate-tokens.mjs",
     "tokens:check": "node ui/generate-tokens.mjs --check",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "typecheck:tsc": "npm run typecheck:tsc --workspaces --if-present",
     "lint": "biome check .",
+    "format": "biome format --write .",
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspace rollin-web",
     "e2e": "npm run e2e --workspace rollin-web"
