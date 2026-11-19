@@ -1,5 +1,6 @@
 import { roll } from "@rollin/engine";
 import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { captureRoll, type RollSource } from "./analytics";
 import {
   applyAdd,
   applyBackup,
@@ -452,11 +453,12 @@ export function App() {
   }
 
   /** Rolls what was typed, or a preset's name, and puts the result in the log. */
-  function rollLine(text: string) {
+  function rollLine(text: string, from: RollSource = "preset") {
     const report = roll(text, dieSource(), {
       globalPresets: presets ?? {},
       character: acting ?? undefined,
     });
+    if ("ok" in report) captureRoll(report.ok.rolls, from);
     saveLogSoon.current = true;
     setEntries((current) => addEntry(current, text, report));
     setRollCount((n) => n + 1);
@@ -472,8 +474,9 @@ export function App() {
   function submit(event?: FormEvent) {
     event?.preventDefault();
     const text = formula.trim();
+    const recalled = historyNav !== null;
     setHistoryNav(null);
-    if (text !== "") rollLine(text);
+    if (text !== "") rollLine(text, recalled ? "history" : "input");
   }
 
   /** Up and Down in the formula box step through past rolls, like a shell. Returns whether it acted. */

@@ -8,6 +8,8 @@ const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev";
 
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
+  // Public source maps (the repo is public), so PostHog shows readable stack traces. The offline worker skips .map files.
+  build: { sourcemap: true },
   plugins: [react(), tailwindcss(), offlineWorker()],
   test: { include: ["src/**/*.test.{ts,tsx}"], sequence: { shuffle: true } },
 });
