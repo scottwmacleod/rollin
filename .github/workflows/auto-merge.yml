@@ -9,7 +9,7 @@ name: auto-merge
 on:
   pull_request:
     branches: [main]
-    types: [opened, ready_for_review, reopened, labeled, unlabeled]
+    types: [opened, synchronize, ready_for_review, reopened, labeled, unlabeled]
 
 permissions:
   contents: write
