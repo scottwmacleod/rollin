@@ -93,7 +93,8 @@ test("chips follow the character, and a character's preset hides the global one"
   await page.getByRole("button", { name: /^Character:/ }).click();
   const sheet = page.getByRole("dialog", { name: "Characters and presets" });
   await sheet.getByRole("button", { name: "New preset" }).click();
-  const dialog = page.getByRole("dialog");
+  // The slide-over is still sliding out for 150ms, so name the dialog.
+  const dialog = page.getByRole("dialog", { name: "New preset" });
   await dialog.getByLabel("Name").fill("preset01");
   await dialog.getByLabel("Formula").fill("9d6");
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
@@ -133,4 +134,82 @@ test("resizing to full width keeps the formula, and the sidebar replaces the but
   await expect(page.getByLabel("Formula")).toHaveValue("3d8");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("complementary", { name: "Presets" })).toBeVisible();
+});
+
+test.describe("popup motion", () => {
+  const sheetOf = (page: import("@playwright/test").Page) =>
+    page.getByRole("dialog", { name: "Characters and presets" });
+
+  test("the slide-over slides in from the left and can close midway without jumping", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Character: default" }).click();
+    const sheet = sheetOf(page);
+    await expect(sheet).toBeVisible();
+    const timing = await sheet.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return `${s.transitionProperty} ${s.transitionDuration}`;
+    });
+    expect(timing).toBe("translate 0.2s");
+
+    // Close part-way through the 200ms open: it turns back from where it was.
+    await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "Character: default" }).click();
+    await expect(sheet).toBeAttached();
+    await page.waitForTimeout(60);
+    const before = await sheet.evaluate((el) => el.getBoundingClientRect().left);
+    await page.keyboard.press("Escape");
+    const after = await sheet.evaluate(
+      (el) =>
+        new Promise<number>((done) =>
+          requestAnimationFrame(() => done(el.getBoundingClientRect().left)),
+        ),
+    );
+    const width = await sheet.evaluate((el) => el.getBoundingClientRect().width);
+    expect(before).toBeLessThan(0); // still sliding in
+    // It turns back from where it was: heading out, but not snapped shut or open.
+    expect(after).toBeLessThanOrEqual(before);
+    expect(after).toBeGreaterThan(-width + 10);
+    await expect(sheet).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Character: default" })).toBeFocused();
+  });
+
+  test("menus and the palette scale and fade from where they open", async ({ page }) => {
+    await page.goto("/");
+    await page.getByLabel("Formula").fill("d6");
+    await page.getByLabel("Formula").press("Enter");
+    await page.getByRole("button", { name: "Roll log menu" }).click();
+    const menu = page.getByRole("menu");
+    await expect(menu).toBeVisible();
+    await expect.poll(() => menu.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+    const style = await menu.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { property: s.transitionProperty, origin: s.transformOrigin, scale: s.scale };
+    });
+    expect(style.property).toBe("opacity, scale");
+    expect(style.scale).toBe("none");
+    // The origin is on the button's side, not the menu's centre.
+    const box = await menu.boundingBox();
+    expect(style.origin).not.toBe(`${(box?.width ?? 0) / 2}px ${(box?.height ?? 0) / 2}px`);
+    await page.keyboard.press("Escape");
+    await expect(menu).toHaveCount(0);
+
+    await page.keyboard.press("ControlOrMeta+k");
+    const palette = page.getByRole("dialog", { name: "Command palette" });
+    await expect(palette).toBeVisible();
+    expect(await palette.evaluate((el) => getComputedStyle(el).transitionProperty)).toBe(
+      "opacity, scale",
+    );
+  });
+
+  test("under reduced motion, popups open and close at once", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/");
+    await page.getByRole("button", { name: "Character: default" }).click();
+    const sheet = sheetOf(page);
+    await expect(sheet).toBeVisible();
+    expect(await sheet.evaluate((el) => getComputedStyle(el).transitionProperty)).toBe("none");
+    expect(await sheet.evaluate((el) => getComputedStyle(el).translate)).toBe("none");
+  });
 });

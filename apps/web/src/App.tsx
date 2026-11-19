@@ -670,8 +670,8 @@ export function App() {
                   ▾
                 </span>
               </DialogTrigger>
-              <DialogBackdrop className="fixed inset-0 bg-ground/60" />
-              <DialogContent className="fixed inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col gap-4 overflow-y-auto border-r border-line-strong bg-surface p-4 text-ink">
+              <DialogBackdrop className="scrim fixed inset-0 bg-ground/60" />
+              <DialogContent className="slide-over fixed inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col gap-4 overflow-y-auto border-r border-line-strong bg-surface p-4 text-ink">
                 <div className="flex items-center justify-between gap-2">
                   <DialogTitle className="m-0 text-lg font-semibold">
                     Characters and presets
@@ -880,7 +880,7 @@ export function App() {
                 <MenuContent
                   side="top"
                   align="end"
-                  className="min-w-44 rounded-1 border border-line-strong bg-surface p-1 font-mono text-ui lowercase text-ink"
+                  className="pop min-w-44 rounded-1 border border-line-strong bg-surface p-1 font-mono text-ui lowercase text-ink"
                 >
                   <MenuItem
                     value="save"

@@ -69,6 +69,61 @@ button,
   }
 }
 
+/* Popups move in and out (#329): transform and opacity only, no shadows. CSS
+   transitions reverse from where they are, so a close midway through an open
+   never jumps. ui-sdk sets data-starting-style for the first frame and keeps the
+   popup mounted while data-ending-style runs. */
+
+/* The characters and presets slide-over: in from the left in 200ms, out in 150ms. */
+.slide-over {
+  transition: translate var(--sm-duration-move) var(--sm-ease-out);
+}
+.slide-over[data-starting-style],
+.slide-over[data-ending-style] {
+  translate: -100% 0;
+}
+.slide-over[data-ending-style] {
+  transition-duration: 150ms;
+}
+
+/* Scrims fade with what they sit under. */
+.scrim {
+  transition: opacity var(--sm-duration-move) var(--sm-ease-out);
+}
+.scrim[data-starting-style],
+.scrim[data-ending-style] {
+  opacity: 0;
+}
+.scrim[data-ending-style] {
+  transition-duration: 150ms;
+}
+
+/* Menus and the command palette scale up from 0.97 and fade in 150ms, out in
+   120ms. Menus grow from the button that opened them (ui-sdk's
+   --transform-origin); the palette from its top edge. */
+.pop {
+  transform-origin: var(--transform-origin, top center);
+  transition:
+    opacity var(--sm-duration-enter) var(--sm-ease-out),
+    scale var(--sm-duration-enter) var(--sm-ease-out);
+}
+.pop[data-starting-style],
+.pop[data-ending-style] {
+  opacity: 0;
+  scale: 0.97;
+}
+.pop[data-ending-style] {
+  transition-duration: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-over,
+  .scrim,
+  .pop {
+    transition: none;
+  }
+}
+
 /* People who ask for less motion get none: transitions and animations finish at once. */
 @media (prefers-reduced-motion: reduce) {
   *,

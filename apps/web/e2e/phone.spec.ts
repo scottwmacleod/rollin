@@ -83,7 +83,8 @@ test("Save as preset is in a menu beside the formula field and opens the dialog 
   await expect(page.getByRole("button", { name: "Save as preset" })).toHaveCount(0);
   await page.getByRole("button", { name: "More" }).tap();
   const item = page.getByRole("menuitem", { name: "Save as preset" });
-  expect((await item.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  // Polled: the menu scales up from 0.97 as it opens.
+  await expect.poll(async () => (await item.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await item.tap();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByLabel("Formula")).toHaveValue("d20+5");
@@ -143,7 +144,8 @@ test("Clear is in the More menu on a phone, and asks first", async ({ page }) =>
   await page.getByLabel("Formula").press("Enter");
   await page.getByRole("button", { name: "More" }).tap();
   const item = page.getByRole("menuitem", { name: "Clear roll log" });
-  expect((await item.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  // Polled: the menu scales up from 0.97 as it opens.
+  await expect.poll(async () => (await item.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await item.tap();
   await expect(page.getByRole("button", { name: "Yes, clear" })).toBeVisible();
   await page.getByRole("button", { name: "Yes, clear" }).tap();

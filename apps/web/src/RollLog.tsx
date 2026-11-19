@@ -156,7 +156,7 @@ export function RollLog({
             >
               <span aria-hidden="true">⋯</span>
             </MenuTrigger>
-            <MenuContent className="min-w-40 rounded-1 border border-line-strong bg-surface p-1 font-mono text-ui lowercase text-ink">
+            <MenuContent className="pop min-w-40 rounded-1 border border-line-strong bg-surface p-1 font-mono text-ui lowercase text-ink">
               <MenuItem
                 value="clear"
                 className="flex min-h-9 max-md:min-h-11 cursor-default items-center rounded-0 px-3 data-[highlighted]:bg-surface-hover"
