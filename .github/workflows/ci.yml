@@ -36,7 +36,6 @@ jobs:
       dist-dir: apps/web/dist
       js-kb: 190
       css-kb: 55
-      lighthouse-runs: 3
 
   # The check branch protection requires.
   ci:
