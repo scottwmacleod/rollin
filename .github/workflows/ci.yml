@@ -3,7 +3,7 @@ name: ci
 # rollin's gates, from sm-core's shared workflows. `ci` is the only required
 # check: it passes when every web-ci job and the budgets passed. The daily run
 # on main seeds the node_modules cache and main's bundle sizes, because PRs
-# merged by auto-merge.yml start no push runs on main.
+# merged without SM_MERGE_TOKEN start no push runs on main.
 
 on:
   pull_request:
@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   web:
-    uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@v26.11.3
+    uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@v26.11.4
     with:
       checks: npm run tokens:check
       typecheck-command: bun run typecheck
@@ -28,7 +28,7 @@ jobs:
       skip-paths: '^(docs/|\.claude/|\.github/workflows/(auto-merge|audit|behind|dependabot-automerge|tsc)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
 
   budgets:
-    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.3
+    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.4
     permissions:
       contents: read
       pull-requests: write # one bundle-size comment per PR

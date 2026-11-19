@@ -3,7 +3,8 @@ name: auto-merge
 # Squash auto-merge for every PR from this repo's own branches, from sm-core's
 # shared workflow. The implement loop's human stop is the `hold` label: a PR
 # carrying it never gets auto-merge (docs/agents/implement.md). Dependabot
-# PRs go through dependabot-automerge.yml instead.
+# PRs go through dependabot-automerge.yml instead. SM_MERGE_TOKEN turns
+# auto-merge on with Scott's token, so the merge starts ci on main.
 
 on:
   pull_request:
@@ -16,6 +17,8 @@ permissions:
 
 jobs:
   auto-merge:
-    uses: scottwmacleod/sm-core/.github/workflows/auto-merge.yml@v26.11.3
+    uses: scottwmacleod/sm-core/.github/workflows/auto-merge.yml@v26.11.4
     with:
       hold-label: hold
+    secrets:
+      merge-token: ${{ secrets.SM_MERGE_TOKEN }}
