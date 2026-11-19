@@ -237,3 +237,23 @@ test("keypad keys and chips act on a quick tap, with no double-tap zoom", async 
   const chip = page.getByRole("list", { name: "Preset shortcuts" }).getByRole("button").first();
   await expect(chip).toHaveCSS("touch-action", "manipulation");
 });
+
+test("a one-group roll keeps its total on the dice's line", async ({ page }) => {
+  await page.addInitScript(() =>
+    Object.assign(window, {
+      __rollinDice: [3, 1, 6, 2, 5, 4, 6, 2].map((face) => ({ sides: 6, face })),
+    }),
+  );
+  await page.goto("/");
+  await page.getByLabel("Formula").fill("8d6");
+  await page.getByLabel("Formula").press("Enter");
+  const entry = log(page).getByRole("treeitem").first();
+  await expect(entry).toContainText("total 29");
+  const dice = await entry.locator("[data-term]").boundingBox();
+  const total = await entry.getByText("total").boundingBox();
+  expect(dice).not.toBeNull();
+  expect(total).not.toBeNull();
+  if (!dice || !total) return;
+  // The total's label sits beside the dice, not on a line of its own below them.
+  expect(total.y).toBeLessThan(dice.y + dice.height);
+});

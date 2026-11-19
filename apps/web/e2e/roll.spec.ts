@@ -22,7 +22,7 @@ for (const scheme of ["light", "dark"] as const) {
 
     const result = page.getByRole("tree", { name: "Roll log" });
     await expect(result).toContainText("2d6+3");
-    await expect(result).toContainText("[4, 5] + 3");
+    await expect(result).toContainText("2d6 4 5 + 3");
     await expect(result).toContainText("total 12");
     await expect(page.getByRole("status")).toHaveText("Rolled 2d6+3: total 12");
 
@@ -31,7 +31,7 @@ for (const scheme of ["light", "dark"] as const) {
   });
 }
 
-test("a dropped die is marked in the breakdown, accessibly", async ({ page }) => {
+test("a dropped die is marked on the roll's line, accessibly", async ({ page }) => {
   await page.addInitScript(() =>
     Object.assign(window, {
       __rollinDice: [3, 4, 5, 1].map((face) => ({ sides: 6, face })),
@@ -51,6 +51,43 @@ test("a dropped die is marked in the breakdown, accessibly", async ({ page }) =>
   await expect(page.getByText("dropped", { exact: false })).toHaveCount(0);
   // The accessible name of the roll still says which die was dropped.
   await expect(result.getByRole("treeitem", { name: /1 dropped/ }).first()).toBeAttached();
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test("rerolled and exploded dice are marked on the roll's line, accessibly", async ({ page }) => {
+  await page.addInitScript(() =>
+    Object.assign(window, {
+      __rollinDice: [1, 4, 5, 6, 3, 2].map((face) => ({ sides: 6, face })),
+    }),
+  );
+  await page.goto("/");
+  const formula = page.getByLabel("Formula");
+  await formula.fill("2d6r1");
+  await formula.press("Enter");
+  await formula.fill("2d6!");
+  await formula.press("Enter");
+
+  const entries = page.getByRole("tree", { name: "Roll log" }).getByRole("treeitem");
+  await expect(entries).toHaveCount(2);
+
+  // The rerolled 1 is struck, so the dice that count add up to the total.
+  const rerolled = entries.first().locator("[data-mark=rerolled]");
+  await expect(rerolled).toHaveText("1");
+  await expect(rerolled).toHaveCSS("text-decoration-line", "line-through");
+  await expect(entries.first()).toContainText("total 9");
+  await expect(page.getByRole("treeitem", { name: /2d6r1 1 rerolled 4 5 total 9/ })).toBeAttached();
+
+  // The 6 that exploded has the lime edge; the 3 it added counts like any other die.
+  const exploded = entries.nth(1).locator("[data-mark]");
+  await expect(exploded).toHaveCount(1);
+  await expect(exploded).toHaveText("6");
+  await expect(entries.nth(1)).toContainText("total 11");
+  await expect(page.getByRole("treeitem", { name: /2d6! 6 exploded 3 2 total 11/ })).toBeAttached();
+
+  // The words are for screen readers only.
+  await expect(page.getByText(/rerolled|exploded/)).toHaveCount(0);
 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
@@ -117,33 +154,20 @@ for (const scheme of ["light", "dark"] as const) {
     await formula.press("Escape");
     await expect(log.getByRole("treeitem").first()).toBeFocused();
 
-    await page.keyboard.press("ArrowRight");
-    await expect(log.getByRole("treeitem").first()).toHaveAttribute("aria-expanded", "true");
-    // The breakdown by term and die.
-    const term = log.getByRole("treeitem").nth(1);
-    await expect(term).toContainText("2d6");
-    await expect(term).toContainText("4");
-    await expect(term).toContainText("5");
-    await expect(term).toContainText("subtotal 9");
+    // A flat list: every die is on the entry's own line, nothing opens.
+    await expect(log.getByRole("treeitem").first()).not.toHaveAttribute("aria-expanded");
+    await expect(log.getByRole("treeitem").first()).toContainText("2d6 4 5 + 3");
 
-    // axe reads an open branch's nested group as visible text missing from its name
-    // (a false positive for a tree); every other rule still runs, and the collapsed
-    // log is checked with all of them in the first test.
-    const results = await new AxeBuilder({ page })
-      .disableRules(["label-content-name-mismatch"])
-      .analyze();
-    expect(results.violations).toEqual([]);
-
-    // Down moves into the term, then to the next entry; focus is never lost.
+    // Down and Up move between entries; focus is never lost.
     await page.keyboard.press("ArrowDown");
-    await expect(term).toBeFocused();
+    await expect(log.getByRole("treeitem").nth(1)).toBeFocused();
     await page.keyboard.press("ArrowDown");
-    await expect(log.getByRole("treeitem").nth(2)).toBeFocused();
+    await expect(log.getByRole("treeitem").nth(1)).toBeFocused();
     await page.keyboard.press("ArrowUp");
-    await page.keyboard.press("ArrowUp");
-    await page.keyboard.press("ArrowLeft");
-    await expect(log.getByRole("treeitem").first()).toHaveAttribute("aria-expanded", "false");
     await expect(log.getByRole("treeitem").first()).toBeFocused();
+
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations).toEqual([]);
 
     // Esc returns to the formula box.
     await page.keyboard.press("Escape");
@@ -170,7 +194,7 @@ test("a labelled, repeated formula shows each roll with its label and repeat num
 
   // One entry holds all four rolls.
   const log = page.getByRole("tree", { name: "Roll log" });
-  await expect(log.getByRole("treeitem")).toHaveCount(1); // collapsed
+  await expect(log.getByRole("treeitem")).toHaveCount(1);
   const entry = log.getByRole("treeitem").first();
   await expect(entry).toContainText("repeat 1 d20+5 # attack");
   await expect(entry).toContainText("total 20");
@@ -244,7 +268,7 @@ test("a percentile roll shows the term as typed with its d100 faces", async ({ p
 
   const result = page.getByRole("tree", { name: "Roll log" });
   await expect(result).toContainText("2D%");
-  await expect(result).toContainText("[37, 92]");
+  await expect(result).toContainText("37 92");
   await expect(result).toContainText("total 129");
 
   const results = await new AxeBuilder({ page }).analyze();

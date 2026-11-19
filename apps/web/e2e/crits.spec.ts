@@ -39,7 +39,7 @@ test.describe("D&D 5e checks and crits", () => {
     const result = log(page);
     await expect(result).toContainText("Critical hit");
     await expect(result).toContainText("Dice doubled");
-    await expect(result).toContainText("[6, 5] + 3");
+    await expect(result).toContainText("6 5 + 3");
     await expect(result).toContainText("total 25");
     await expect(result).toContainText("total 14");
     await expect(page.getByRole("status")).toHaveText(
@@ -75,7 +75,7 @@ test.describe("D&D 5e checks and crits", () => {
     await page.getByLabel("Formula").fill("d20+5, 1d8+3");
     await page.getByLabel("Formula").press("Enter");
     await expect(log(page)).toContainText("Critical hit");
-    await expect(log(page)).toContainText("[2, 5] + 3");
+    await expect(log(page)).toContainText("2 5 + 3");
   });
 
   test("a character with no game system never shows crits", async ({ page }) => {
