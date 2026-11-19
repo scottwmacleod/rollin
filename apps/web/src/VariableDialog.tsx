@@ -86,7 +86,7 @@ export function VariableDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogBackdrop className="fixed inset-0 bg-black/50" />
+      <DialogBackdrop className="fixed inset-0 bg-ground/60" />
       <DialogContent className={OVERLAY}>
         <form onSubmit={save} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">

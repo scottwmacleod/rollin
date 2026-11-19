@@ -58,14 +58,14 @@ export function CommandPalette({
     >
       <DialogTrigger
         shortcut="mod+k"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-control-line px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-1 border border-control-line px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
       >
         <HeaderLabel label="Commands" hint={hint} icon={<SearchIcon />} />
       </DialogTrigger>
-      <DialogBackdrop className="fixed inset-0 bg-black/50" />
+      <DialogBackdrop className="fixed inset-0 bg-ground/60" />
       <DialogContent
         finalFocus={finalFocus}
-        className="fixed top-[15vh] left-1/2 w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-line bg-surface p-3 text-ink shadow-lg"
+        className="fixed top-[15vh] left-1/2 w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 rounded-1 border border-line-strong bg-surface p-3 text-ink"
       >
         <DialogTitle className="sr-only">Command palette</DialogTitle>
         <Command
@@ -84,7 +84,7 @@ export function CommandPalette({
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
-            className="h-10 max-md:h-11 w-full rounded-md border border-control-line bg-surface-sunken px-3 text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="h-10 max-md:h-11 w-full rounded-1 border border-control-line bg-surface-sunken px-3 text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           />
           <p className="m-0 mt-2 px-1 text-xs text-ink-muted">
             {view.scope === "characters"
@@ -106,7 +106,7 @@ export function CommandPalette({
                     value={row.value}
                     label={row.label}
                     disabled={row.disabled}
-                    className="flex min-h-9 max-md:min-h-11 items-center gap-3 rounded-md px-2 py-1 text-sm data-[highlighted]:bg-surface-hover data-[highlighted]:outline-2 data-[highlighted]:-outline-offset-2 data-[highlighted]:outline-ink aria-disabled:text-ink-muted"
+                    className="flex min-h-9 max-md:min-h-11 items-center gap-3 rounded-0 px-2 py-1 text-sm data-[highlighted]:bg-surface-hover data-[highlighted]:outline-2 data-[highlighted]:-outline-offset-2 data-[highlighted]:outline-ink aria-disabled:text-ink-muted"
                   >
                     <span className={group === "Commands" ? "" : "font-mono"}>{row.label}</span>
                     {row.detail !== undefined && (

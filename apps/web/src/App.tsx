@@ -642,7 +642,7 @@ export function App() {
   const saveInMenu = !wide && (keypadOn || touch || small);
   const saveDisabled = presets === null || acting === null;
   const barButton =
-    "inline-flex h-10 max-md:h-11 items-center justify-center rounded-md border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+    "inline-flex h-10 max-md:h-11 items-center justify-center rounded-1 border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden">
@@ -671,22 +671,22 @@ export function App() {
                 aria-label={
                   acting === null ? "Characters and presets" : `Character: ${acting.name}`
                 }
-                className="inline-flex h-8 max-md:h-11 min-w-0 max-w-40 items-center gap-2 rounded-md border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="inline-flex h-8 max-md:h-11 min-w-0 max-w-40 items-center gap-2 rounded-1 border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 <span className="truncate font-mono">{acting?.name ?? "Characters"}</span>
                 <span aria-hidden="true" className="text-ink-muted">
                   ▾
                 </span>
               </DialogTrigger>
-              <DialogBackdrop className="fixed inset-0 bg-black/50" />
-              <DialogContent className="fixed inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col gap-4 overflow-y-auto border-r border-line-strong bg-ground p-4 text-ink shadow-lg">
+              <DialogBackdrop className="fixed inset-0 bg-ground/60" />
+              <DialogContent className="fixed inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col gap-4 overflow-y-auto border-r border-line-strong bg-surface p-4 text-ink">
                 <div className="flex items-center justify-between gap-2">
                   <DialogTitle className="m-0 text-lg font-semibold">
                     Characters and presets
                   </DialogTitle>
                   <DialogClose
                     render={<Button type="button" />}
-                    className="inline-flex h-8 max-md:h-11 items-center rounded-md border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    className="inline-flex h-8 max-md:h-11 items-center rounded-1 border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                   >
                     Close
                   </DialogClose>
@@ -721,13 +721,13 @@ export function App() {
       {update.available && (
         <div
           role="status"
-          className="mx-auto mb-2 flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-3 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
+          className="mx-auto mb-2 flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-3 rounded-1 border border-line-strong bg-surface px-3 py-2 text-sm"
         >
           <span>A new version of rollin is ready.</span>
           <Button
             type="button"
             onClick={update.reload}
-            className="h-8 max-md:h-11 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             Reload to update
           </Button>
@@ -737,20 +737,20 @@ export function App() {
       {reminderDue(backupState, Date.now()) && (
         <div
           role="status"
-          className="mx-auto mb-2 flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-3 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
+          className="mx-auto mb-2 flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-3 rounded-1 border border-line-strong bg-surface px-3 py-2 text-sm"
         >
           <span>Your characters and presets live only in this browser. Save a backup file?</span>
           <Button
             type="button"
             onClick={() => void exportNow()}
-            className="h-8 max-md:h-11 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             Export backup
           </Button>
           <Button
             type="button"
             onClick={() => changeBackupState({ ...backupState, dismissedAt: Date.now() })}
-            className="h-8 max-md:h-11 rounded-md border border-control-line px-3 text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="h-8 max-md:h-11 rounded-1 border border-control-line px-3 text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             Not now
           </Button>
@@ -787,14 +787,14 @@ export function App() {
                     type="button"
                     ref={confirmYes}
                     onClick={clearLog}
-                    className="h-8 max-md:h-11 rounded-md bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                   >
                     Yes, clear
                   </Button>
                   <Button
                     type="button"
                     onClick={() => setConfirming(false)}
-                    className="h-8 max-md:h-11 rounded-md border border-control-line px-3 text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    className="h-8 max-md:h-11 rounded-1 border border-control-line px-3 text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                   >
                     Cancel
                   </Button>
@@ -849,7 +849,7 @@ export function App() {
                 aria-expanded={suggesting}
                 aria-controls={suggesting ? "formula-completions" : undefined}
                 aria-activedescendant={suggesting ? `formula-completions-${current}` : undefined}
-                className="h-10 max-md:h-11 w-full rounded-md border border-control-line bg-surface px-3 font-mono text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="h-10 max-md:h-11 w-full rounded-1 border border-control-line bg-surface px-3 font-mono text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               />
               {suggesting && (
                 <CompletionList
@@ -888,19 +888,19 @@ export function App() {
                 <MenuContent
                   side="top"
                   align="end"
-                  className="min-w-44 rounded-md border border-line-strong bg-surface p-1 text-sm text-ink shadow-lg"
+                  className="min-w-44 rounded-1 border border-line-strong bg-surface p-1 text-sm text-ink"
                 >
                   <MenuItem
                     value="save"
                     disabled={saveDisabled}
-                    className="flex min-h-11 cursor-default items-center rounded px-3 data-[highlighted]:bg-surface-hover aria-disabled:text-ink-muted"
+                    className="flex min-h-11 cursor-default items-center rounded-0 px-3 data-[highlighted]:bg-surface-hover aria-disabled:text-ink-muted"
                   >
                     Save as preset
                   </MenuItem>
                   <MenuItem
                     value="clear"
                     disabled={entries.length === 0}
-                    className="flex min-h-11 cursor-default items-center rounded px-3 data-[highlighted]:bg-surface-hover aria-disabled:text-ink-muted"
+                    className="flex min-h-11 cursor-default items-center rounded-0 px-3 data-[highlighted]:bg-surface-hover aria-disabled:text-ink-muted"
                   >
                     Clear roll log
                   </MenuItem>
@@ -910,7 +910,7 @@ export function App() {
             {!keypadOn && (
               <Button
                 type="submit"
-                className="press inline-flex h-10 max-md:h-11 items-center justify-center rounded-md bg-signal px-5 text-sm font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="press inline-flex h-10 max-md:h-11 items-center justify-center rounded-1 bg-signal px-5 text-sm font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 Roll
               </Button>
