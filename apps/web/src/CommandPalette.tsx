@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { HEADER_ICON_BUTTON, HeaderLabel, SearchIcon } from "./HeaderLabel";
 import { type PaletteGroup, type PaletteRow, paletteView } from "./palette";
 import { useShortcutHint } from "./shortcuts";
 import {
@@ -57,10 +58,9 @@ export function CommandPalette({
     >
       <DialogTrigger
         shortcut="mod+k"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 ${HEADER_ICON_BUTTON} ${focusRing}`}
       >
-        Commands
-        {hint !== null && <span className="text-muted">{hint}</span>}
+        <HeaderLabel label="Commands" hint={hint} icon={<SearchIcon />} />
       </DialogTrigger>
       <DialogBackdrop className="fixed inset-0 bg-black/50" />
       <DialogContent

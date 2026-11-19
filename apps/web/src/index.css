@@ -35,6 +35,13 @@ body {
   margin: 0;
 }
 
+/* Taps act at once: no double-tap zoom when a key is tapped twice quickly, and no grey flash. */
+button,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* The wordmark has a light and a dark artwork; show the one that matches the
    theme in force (data-theme, else the OS). */
 .wordmark-light {

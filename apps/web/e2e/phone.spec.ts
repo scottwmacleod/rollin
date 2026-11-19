@@ -149,3 +149,91 @@ test("Clear is in the More menu on a phone, and asks first", async ({ page }) =>
   await page.getByRole("button", { name: "Yes, clear" }).tap();
   await expect(page.getByText("Rolls will appear here.")).toBeVisible();
 });
+
+test("after a roll, the keypad's next digit or die starts a new formula", async ({ page }) => {
+  await page.addInitScript(() =>
+    Object.assign(window, {
+      __rollinDice: [
+        { sides: 6, face: 4 },
+        { sides: 6, face: 2 },
+        { sides: 6, face: 5 },
+        { sides: 6, face: 1 },
+      ],
+    }),
+  );
+  await page.goto("/");
+  const pad = page.getByRole("group", { name: "Dice keypad" });
+  const formula = page.getByLabel("Formula");
+  await pad.getByRole("button", { name: "2", exact: true }).tap();
+  await pad.getByRole("button", { name: "d6", exact: true }).tap();
+  await pad.getByRole("button", { name: "Roll" }).tap();
+  await expect(log(page)).toContainText("total 6");
+
+  // The rolled formula stays, so rolling it again is one tap.
+  await expect(formula).toHaveValue("2d6");
+  await pad.getByRole("button", { name: "Roll" }).tap();
+  await expect(log(page)).toContainText("total 6");
+
+  // An operator carries on from it; a digit starts afresh.
+  await pad.getByRole("button", { name: "plus" }).tap();
+  await expect(formula).toHaveValue("2d6+");
+  await pad.getByRole("button", { name: "Roll" }).tap();
+  await pad.getByRole("button", { name: "1", exact: true }).tap();
+  await expect(formula).toHaveValue("1");
+});
+
+test("the header gives the character its full name, with icon buttons beside it", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open("rollin");
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const tx = open.result.transaction("kv", "readwrite");
+          tx.objectStore("kv").put(
+            { active: "throkmaren", characters: [{ name: "throkmaren", vars: {}, presets: {} }] },
+            "characters",
+          );
+          tx.oncomplete = () => {
+            open.result.close();
+            resolve();
+          };
+        };
+      }),
+  );
+  await page.reload();
+  const name = page.getByRole("button", { name: "Character: throkmaren" }).locator(".truncate");
+  await expect(name).toHaveText("throkmaren");
+  expect(await name.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+
+  for (const label of ["Commands", "Settings"]) {
+    const button = page.getByRole("button", { name: label, exact: true });
+    await expect(button).toBeVisible();
+    const box = await button.boundingBox();
+    expect(box?.width).toBeGreaterThanOrEqual(44);
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+  }
+  await expectNoPageScroll(page);
+});
+
+test("the formula field doesn't take focus on load, so no system keyboard covers the keypad", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByRole("group", { name: "Dice keypad" })).toBeVisible();
+  await expect(page.getByLabel("Formula")).not.toBeFocused();
+});
+
+test("keypad keys and chips act on a quick tap, with no double-tap zoom", async ({ page }) => {
+  await page.goto("/");
+  await seedPresets(page, 1);
+  const key = page
+    .getByRole("group", { name: "Dice keypad" })
+    .getByRole("button", { name: "2", exact: true });
+  await expect(key).toHaveCSS("touch-action", "manipulation");
+  const chip = page.getByRole("list", { name: "Preset shortcuts" }).getByRole("button").first();
+  await expect(chip).toHaveCSS("touch-action", "manipulation");
+});

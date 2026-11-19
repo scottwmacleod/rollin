@@ -94,6 +94,8 @@ import { VariableDialog, type VariableDialogMode } from "./VariableDialog";
 export function App() {
   const [formula, setFormula] = useState("");
   const [historyNav, setHistoryNav] = useState<HistoryNav>(null);
+  /** The formula in the box was just rolled; the keypad's next digit or die replaces it. */
+  const [fresh, setFresh] = useState(false);
   const [entries, setEntries] = useState<Entry[]>([]);
   /** Set when the log changed here and still needs saving; the effect below saves what is on screen. */
   const saveLogSoon = useRef(false);
@@ -356,6 +358,7 @@ export function App() {
 
   function changeFormula(next: string) {
     setHistoryNav(null);
+    setFresh(false);
     setFormula(next);
     setHighlighted(0);
     setArmed(false);
@@ -479,7 +482,9 @@ export function App() {
     const text = formula.trim();
     const recalled = historyNav !== null;
     setHistoryNav(null);
-    if (text !== "") rollLine(text, recalled ? "history" : "input");
+    if (text === "") return;
+    rollLine(text, recalled ? "history" : "input");
+    setFresh(true);
   }
 
   /** Up and Down in the formula box step through past rolls, like a shell. Returns whether it acted. */
@@ -830,7 +835,8 @@ export function App() {
                 autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
-                autoFocus
+                // On a touch screen, focus on load can raise the system keyboard over the keypad.
+                autoFocus={!touch}
                 ref={input}
                 onKeyDown={formulaKeys}
                 onFocus={(event) => {
@@ -921,7 +927,12 @@ export function App() {
             )}
           </div>
           {keypadOn && (
-            <Keypad formula={formula} onChange={changeFormula} onRoll={() => submit()} />
+            <Keypad
+              formula={formula}
+              fresh={fresh}
+              onChange={changeFormula}
+              onRoll={() => submit()}
+            />
           )}
         </div>
       </form>
