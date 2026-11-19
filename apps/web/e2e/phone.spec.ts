@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { axe } from "./axe";
+
 import {
   expectNewestAboveFormulaBar,
   expectNoPageScroll,
@@ -112,12 +113,14 @@ test("a preset chip rolls in one tap, with no sideways scrolling and 44-point ta
   await expectNewestAboveFormulaBar(page, "attack · d20+5");
   await expectNoPageScroll(page);
 
+  // Layout size, not the drawn box: a tapped chip stays scaled down (its press
+  // feedback) for as long as the browser holds it :active.
   const small = await page.evaluate(() =>
-    [...document.querySelectorAll("button, [role=menuitem]")]
-      .filter((b) => (b as HTMLElement).offsetParent !== null)
+    [...document.querySelectorAll<HTMLElement>("button, [role=menuitem]")]
+      .filter((b) => b.offsetParent !== null)
       .map((b) => ({
         label: b.textContent || b.getAttribute("aria-label"),
-        box: b.getBoundingClientRect(),
+        box: { width: b.offsetWidth, height: b.offsetHeight },
       }))
       .filter(({ box }) => box.width < 44 || box.height < 44)
       .map(({ label }) => label),

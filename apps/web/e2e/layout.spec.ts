@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { axe } from "./axe";
+import { stored } from "./helpers";
 import {
   expectNewestAboveFormulaBar,
   expectNoPageScroll,
@@ -109,6 +110,10 @@ test("there is no keypad under Auto; its button shows it below the log, and the 
   await expectNoPageScroll(page);
   await expectNewestAboveFormulaBar(page, "d20+25");
   expect((await (await axe(page)).analyze()).violations).toEqual([]);
+
+  await expect
+    .poll(async () => ((await stored(page, "settings")) as { keypad?: string })?.keypad)
+    .toBe("on");
 
   await page.reload();
   await expect(page.getByRole("group", { name: "Dice keypad" })).toBeVisible();

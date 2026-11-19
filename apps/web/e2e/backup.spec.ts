@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { expect, type Page, type TestInfo, test } from "@playwright/test";
 import { axe } from "./axe";
+import { stored } from "./helpers";
 
 const sidebar = (page: Page) => page.getByRole("complementary", { name: "Presets" });
 const characters = (page: Page) => page.getByRole("complementary", { name: "Characters" });
@@ -395,6 +396,10 @@ test("the backup reminder shows for old unsaved data and can be dismissed", asyn
   await expect(reminder).toBeVisible();
   await page.getByRole("button", { name: "Not now" }).click();
   await expect(reminder).toHaveCount(0);
+  // Hidden is not saved: reload only once the dismissal has reached storage.
+  await expect
+    .poll(() => stored(page, "backupState"))
+    .toMatchObject({ dismissedAt: expect.any(Number) });
   await page.reload();
   await expect(reminder).toHaveCount(0);
 });

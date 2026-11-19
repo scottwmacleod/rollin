@@ -478,6 +478,7 @@ test.describe("global presets", () => {
     await page.getByLabel("Formula").fill("ATTACK");
     await page.getByLabel("Formula").press("Enter");
     await expect(log(page)).toContainText("total 17");
+    await expect.poll(async () => (await savedLog(page))?.length).toBe(2);
 
     // Survives a reload.
     await page.reload();
@@ -490,8 +491,10 @@ test.describe("global presets", () => {
     await dialog.getByRole("button", { name: "Save", exact: true }).click();
     await expect(sidebar.getByRole("button", { name: "strike d20+7" })).toBeVisible();
     await expect(sidebar.getByRole("button", { name: "attack d20+5" })).toHaveCount(0);
+    // The dialog's own Formula field is gone once it has closed.
+    await expect(dialog).toBeHidden();
     // The renamed preset's old Edit button is gone, so focus lands in the formula box.
-    await expect(page.getByLabel("Formula")).toBeFocused();
+    await expect(page.getByRole("combobox", { name: "Formula" })).toBeFocused();
 
     // Delete, after a confirmation.
     await sidebar.getByRole("button", { name: "Edit strike" }).click();
