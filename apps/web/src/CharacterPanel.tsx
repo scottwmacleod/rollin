@@ -44,6 +44,9 @@ export function CharacterPanel({
             New character
           </Button>
         </div>
+        {/* Until storage is read, hold one row's height (every roster has a character),
+            so the panels below don't jump when it arrives. Modern Web Guidance: performance. */}
+        {roster === null && <div aria-hidden="true" className="min-h-11" />}
         {list.length > 0 && (
           <ul className="m-0 flex max-h-56 list-none flex-col gap-1 overflow-y-auto p-0">
             {list.map((character) => (
