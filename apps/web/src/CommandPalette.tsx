@@ -18,7 +18,7 @@ import {
 } from "./ui";
 
 const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
 /**
  * The ⌘K palette (#86, option B): one input over presets, characters and
@@ -58,14 +58,14 @@ export function CommandPalette({
     >
       <DialogTrigger
         shortcut="mod+k"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 ${HEADER_ICON_BUTTON} ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
       >
         <HeaderLabel label="Commands" hint={hint} icon={<SearchIcon />} />
       </DialogTrigger>
       <DialogBackdrop className="fixed inset-0 bg-black/50" />
       <DialogContent
         finalFocus={finalFocus}
-        className="fixed top-[15vh] left-1/2 w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-line bg-surface p-3 text-text shadow-lg"
+        className="fixed top-[15vh] left-1/2 w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-line bg-surface p-3 text-ink shadow-lg"
       >
         <DialogTitle className="sr-only">Command palette</DialogTitle>
         <Command
@@ -84,20 +84,20 @@ export function CommandPalette({
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
-            className="h-10 max-md:h-11 w-full rounded-md border border-line-strong bg-sunken px-3 text-text placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+            className="h-10 max-md:h-11 w-full rounded-md border border-line-strong bg-surface-sunken px-3 text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           />
-          <p className="m-0 mt-2 px-1 text-xs text-muted">
+          <p className="m-0 mt-2 px-1 text-xs text-ink-muted">
             {view.scope === "characters"
               ? "Characters only. Delete the @ to search everything."
               : view.scope === "commands"
                 ? "Commands only. Delete the > to search everything."
                 : "Type @ for characters or > for commands."}
           </p>
-          <CommandEmpty className="px-1 py-3 text-sm text-muted">Nothing matches.</CommandEmpty>
+          <CommandEmpty className="px-1 py-3 text-sm text-ink-muted">Nothing matches.</CommandEmpty>
           <CommandList className="mt-2 flex max-h-72 flex-col gap-1 overflow-y-auto">
             {groups.map(({ group, rows: items }) => (
               <CommandGroup key={group} className="flex flex-col">
-                <CommandGroupLabel className="px-2 py-1 text-xs font-medium text-text-2">
+                <CommandGroupLabel className="px-2 py-1 text-xs font-medium text-ink-body">
                   {group}
                 </CommandGroupLabel>
                 {items.map((row) => (
@@ -106,11 +106,11 @@ export function CommandPalette({
                     value={row.value}
                     label={row.label}
                     disabled={row.disabled}
-                    className="flex min-h-9 max-md:min-h-11 items-center gap-3 rounded-md px-2 py-1 text-sm data-[highlighted]:bg-surface-hover data-[highlighted]:outline-2 data-[highlighted]:-outline-offset-2 data-[highlighted]:outline-text aria-disabled:text-muted"
+                    className="flex min-h-9 max-md:min-h-11 items-center gap-3 rounded-md px-2 py-1 text-sm data-[highlighted]:bg-surface-hover data-[highlighted]:outline-2 data-[highlighted]:-outline-offset-2 data-[highlighted]:outline-ink aria-disabled:text-ink-muted"
                   >
                     <span className={group === "Commands" ? "" : "font-mono"}>{row.label}</span>
                     {row.detail !== undefined && (
-                      <span className="ml-auto truncate font-mono text-xs text-muted">
+                      <span className="ml-auto truncate font-mono text-xs text-ink-muted">
                         {row.detail}
                       </span>
                     )}

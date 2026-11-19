@@ -36,7 +36,7 @@ export function CritMarks({ roll }: { roll: Roll }) {
         </span>
       )}
       {roll.doubled && (
-        <span className="rounded-sm border border-line-strong px-1.5 py-0.5 text-text-2">
+        <span className="rounded-sm border border-line-strong px-1.5 py-0.5 text-ink-body">
           Dice doubled
         </span>
       )}
@@ -70,22 +70,22 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
       className={`flex flex-1 flex-wrap items-baseline justify-between gap-x-6 gap-y-1 ${CRIT_EDGE[roll.crit ?? ""] ?? ""}`}
     >
       {showFormula && (
-        <span className="font-mono text-sm text-text-2">
+        <span className="font-mono text-sm text-ink-body">
           {roll.iteration !== undefined && (
             <>
-              <span className="mr-2 text-muted">repeat {roll.iteration}</span>{" "}
+              <span className="mr-2 text-ink-muted">repeat {roll.iteration}</span>{" "}
             </>
           )}
           {roll.formula}
           {roll.label !== undefined && (
             <>
               {" "}
-              <span className="ml-2 text-muted"># {roll.label}</span>
+              <span className="ml-2 text-ink-muted"># {roll.label}</span>
             </>
           )}
         </span>
       )}
-      <span className="font-mono text-sm text-text">
+      <span className="font-mono text-sm text-ink">
         {cells.map((cell, i) =>
           cell.type === "text" ? (
             // The cells are a fixed, ordered rendering of one roll, so the index is the identity.
@@ -93,9 +93,9 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
           ) : (
             <span
               key={i}
-              className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 ${
+              className={`rounded-sm border border-line-strong bg-surface-sunken px-1.5 py-0.5 ${
                 cell.dropped
-                  ? "text-muted line-through opacity-60 after:sr-only after:content-['_dropped']"
+                  ? "text-ink-muted line-through opacity-60 after:sr-only after:content-['_dropped']"
                   : outcomeClass(cell.outcome)
               }`}
             >
@@ -106,8 +106,9 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
         )}
       </span>
       <CritMarks roll={roll} />
-      <span className="ml-auto font-mono text-3xl font-semibold text-text">
-        <span className="mr-2 font-sans text-xs font-normal text-muted">total</span> {roll.total}
+      <span className="ml-auto font-mono text-3xl font-semibold text-ink">
+        <span className="mr-2 font-sans text-xs font-normal text-ink-muted">total</span>{" "}
+        {roll.total}
       </span>
     </span>
   );
@@ -124,7 +125,7 @@ export function ErrorBody({ error }: { error: Extract<RollReport, { error: unkno
       {caret && (
         <span
           data-caret
-          className="block overflow-x-auto whitespace-pre font-mono text-sm text-text-2"
+          className="block overflow-x-auto whitespace-pre font-mono text-sm text-ink-body"
         >
           {caret[0]}
           {"\n"}
@@ -132,7 +133,7 @@ export function ErrorBody({ error }: { error: Extract<RollReport, { error: unkno
         </span>
       )}
       {error.hints.map((hint) => (
-        <span key={hintText(hint)} className="block font-mono text-sm text-text-2">
+        <span key={hintText(hint)} className="block font-mono text-sm text-ink-body">
           {hintText(hint)}
         </span>
       ))}

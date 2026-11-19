@@ -20,7 +20,7 @@ const LABELS: Record<Theme, string> = { system: "System", light: "Light", dark: 
 const KEYPAD_LABELS: Record<KeypadSetting, string> = { auto: "Auto", on: "On", off: "Off" };
 
 const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
 export function SettingsDialog({
   settings,
@@ -47,18 +47,18 @@ export function SettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         shortcut="mod+,"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 ${HEADER_ICON_BUTTON} ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
       >
         <HeaderLabel label="Settings" hint={hint} icon={<SettingsIcon />} />
       </DialogTrigger>
       <DialogBackdrop className="fixed inset-0 bg-black/50" />
-      <DialogContent className="fixed top-1/2 left-1/2 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-line-strong bg-surface p-5 text-text">
+      <DialogContent className="fixed top-1/2 left-1/2 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-line-strong bg-surface p-5 text-ink">
         <DialogTitle className="m-0 text-lg font-semibold">Settings</DialogTitle>
-        <DialogDescription className="mt-1 mb-4 text-sm text-text-2">
+        <DialogDescription className="mt-1 mb-4 text-sm text-ink-body">
           Kept in this browser only.
         </DialogDescription>
         <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-          <legend className="mb-2 p-0 text-sm text-text-2">Theme</legend>
+          <legend className="mb-2 p-0 text-sm text-ink-body">Theme</legend>
           {THEMES.map((theme) => (
             <label key={theme} className="flex items-center gap-2 text-sm">
               <input
@@ -70,12 +70,12 @@ export function SettingsDialog({
                 className="accent-signal"
               />
               {LABELS[theme]}
-              {theme === "system" && <span className="text-muted">(follow your device)</span>}
+              {theme === "system" && <span className="text-ink-muted">(follow your device)</span>}
             </label>
           ))}
         </fieldset>
         <fieldset className="m-0 mt-4 flex flex-col gap-2 border-0 p-0">
-          <legend className="mb-2 p-0 text-sm text-text-2">Dice keypad</legend>
+          <legend className="mb-2 p-0 text-sm text-ink-body">Dice keypad</legend>
           {KEYPAD_SETTINGS.map((keypad) => (
             <label key={keypad} className="flex items-center gap-2 text-sm">
               <input
@@ -87,7 +87,7 @@ export function SettingsDialog({
                 className="accent-signal"
               />
               {KEYPAD_LABELS[keypad]}
-              {keypad === "auto" && <span className="text-muted">(on for touch screens)</span>}
+              {keypad === "auto" && <span className="text-ink-muted">(on for touch screens)</span>}
             </label>
           ))}
         </fieldset>
@@ -110,10 +110,10 @@ export function SettingsDialog({
             href="https://scottmacleod.co"
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-flex items-baseline gap-2 rounded-sm border border-line-strong px-3 py-1.5 font-mono text-xs text-text-2 transition-colors hover:border-signal-ink hover:text-text ${focusRing}`}
+            className={`inline-flex items-baseline gap-2 rounded-sm border border-line-strong px-3 py-1.5 font-mono text-xs text-ink-body transition-colors hover:border-signal-ink hover:text-ink ${focusRing}`}
           >
             <span>Shipped by </span>
-            <span className="inline-flex items-baseline font-semibold tracking-[-0.06em] text-text">
+            <span className="inline-flex items-baseline font-semibold tracking-[-0.06em] text-ink">
               sm
               <span
                 aria-hidden="true"

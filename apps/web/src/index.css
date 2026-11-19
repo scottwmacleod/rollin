@@ -4,34 +4,17 @@
 @import "@fontsource/geist/600.css";
 @import "@fontsource/geist-mono/400.css";
 @import "@fontsource/geist-mono/600.css";
+/* Every colour, font, space, radius and motion token comes from the pinned
+   sm-core copy (vendor/sm-core, checked by verify.mjs). Dark is the default and
+   light follows the OS. ui/tokens.css adds rollin's own --rollin-* sizes. */
+@import "../../../vendor/sm-core/sm-core.css";
+@import "../../../vendor/sm-core/sm-tailwind.css";
 @import "./generated/tokens.css";
 
-/* Tailwind utilities read the design tokens (ui/tokens.css), so light and dark
-   follow the OS exactly as the desktop app does. */
-@theme inline {
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-hover: var(--surface-hover);
-  --color-sunken: var(--sunken);
-  --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
-  --color-text: var(--text);
-  --color-text-2: var(--text-2);
-  --color-muted: var(--muted);
-  --color-signal: var(--signal);
-  --color-on-signal: var(--on-signal);
-  --color-signal-ink: var(--signal-ink);
-  --color-signal-tint: var(--signal-tint);
-  --color-wip: var(--wip);
-  --color-danger: var(--danger);
-  --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-}
-
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-sans);
+  background: var(--sm-ground);
+  color: var(--sm-ink);
+  font-family: var(--sm-font-sans);
   margin: 0;
 }
 
@@ -59,31 +42,6 @@ button,
   }
   :root:not([data-theme="dark"]) .wordmark-dark {
     display: none;
-  }
-}
-
-/* The underscore in the "Shipped by sm_" credit blinks like the cursor on scottmacleod.co. */
-@keyframes sm-blink {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
-}
-.sm-cursor {
-  animation: sm-blink 1.1s steps(1) infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .sm-cursor {
-    animation: none;
-  }
-}
-@media (forced-colors: active) {
-  .sm-cursor {
-    background: CanvasText;
   }
 }
 

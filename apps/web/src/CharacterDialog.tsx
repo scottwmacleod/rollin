@@ -111,7 +111,7 @@ export function CharacterDialog({
             <DialogTitle className="m-0 text-lg font-semibold">
               {editing === null ? "New character" : `Edit ${editing}`}
             </DialogTitle>
-            <DialogDescription className="m-0 text-sm text-muted">
+            <DialogDescription className="m-0 text-sm text-ink-muted">
               {editing === null
                 ? "A character keeps its own variables and presets. Creating one switches to it."
                 : "Rename this character, export it to a file, or delete it with its variables and presets."}
@@ -123,7 +123,7 @@ export function CharacterDialog({
             invalid={problem === null ? undefined : true}
             className="flex flex-col gap-1"
           >
-            <FieldLabel className="text-sm text-text-2">Name</FieldLabel>
+            <FieldLabel className="text-sm text-ink-body">Name</FieldLabel>
             <Input
               value={name}
               onValueChange={(v) => {
@@ -146,7 +146,7 @@ export function CharacterDialog({
           </Field>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="game-system" className="text-sm text-text-2">
+            <label htmlFor="game-system" className="text-sm text-ink-body">
               Game system
             </label>
             <select
@@ -165,7 +165,7 @@ export function CharacterDialog({
                 </option>
               ))}
             </select>
-            <span className="text-sm text-muted">
+            <span className="text-sm text-ink-muted">
               Under D&amp;D 5e a natural 20 on an attack is a critical hit and doubles the damage
               dice that follow.
             </span>
@@ -177,7 +177,7 @@ export function CharacterDialog({
               invalid={critProblem === null ? undefined : true}
               className="flex flex-col gap-1"
             >
-              <FieldLabel className="text-sm text-text-2">Crit range</FieldLabel>
+              <FieldLabel className="text-sm text-ink-body">Crit range</FieldLabel>
               <Input
                 value={critText}
                 onValueChange={(v) => {
@@ -189,7 +189,7 @@ export function CharacterDialog({
                 autoComplete="off"
                 className={FIELD}
               />
-              <span className="text-sm text-muted">
+              <span className="text-sm text-ink-muted">
                 The lowest d20 that is a critical hit; 19 means 19 to 20. Leave empty for 20.
               </span>
               {critProblem !== null && (
@@ -240,12 +240,12 @@ export function CharacterDialog({
           )}
 
           {existing !== undefined && !confirming && (
-            <div className="flex flex-col gap-1 text-sm text-muted">
+            <div className="flex flex-col gap-1 text-sm text-ink-muted">
               <span>
                 Export downloads this character as saved, without any unsaved changes here. Add the
                 file from Settings on another device.
               </span>
-              <span role="status" className="min-h-5 text-text-2">
+              <span role="status" className="min-h-5 text-ink-body">
                 {exported}
               </span>
             </div>

@@ -2,18 +2,20 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-// Ported from the desktop app: text pairs must meet 4.5:1 in both themes.
-// Reads the design tokens at their source, so a token edit that breaks contrast fails here.
-const css = readFileSync(resolve(__dirname, "../../../ui/tokens.css"), "utf8").replace(
+// The text pairs rollin relies on must meet 4.5:1 in both themes. Reads the
+// pinned sm-core copy, so a core update that breaks one of rollin's pairs fails here.
+const css = readFileSync(resolve(__dirname, "../../../vendor/sm-core/sm-core.css"), "utf8").replace(
   /\r\n/g,
   "\n",
 );
 
 function block(selector: string): Record<string, string> {
   const start = css.indexOf(`${selector} {`);
-  if (start < 0) throw new Error(`no ${selector} block in tokens.css`);
+  if (start < 0) throw new Error(`no ${selector} block in sm-core.css`);
   const body = css.slice(start, css.indexOf("}", start));
-  return Object.fromEntries([...body.matchAll(/--([\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2]]));
+  return Object.fromEntries(
+    [...body.matchAll(/--sm-([\w-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2]]),
+  );
 }
 
 type RGB = [number, number, number];
@@ -55,17 +57,17 @@ describe.each(Object.entries(themes))("%s theme contrast", (_name, t) => {
     return v;
   };
   const rgb = (k: string) => parse(colour(k)).rgb;
-  const bg = rgb("bg");
+  const ground = rgb("ground");
   const pairs: [string, RGB, RGB][] = [
-    ["text on bg", rgb("text"), bg],
-    ["text-2 on bg", rgb("text-2"), bg],
-    ["muted on bg", rgb("muted"), bg],
-    ["text on surface", rgb("text"), rgb("surface")],
-    ["muted on surface", rgb("muted"), rgb("surface")],
-    ["signal-ink on bg", rgb("signal-ink"), bg],
-    ["danger on bg", rgb("danger"), bg],
+    ["ink on ground", rgb("ink"), ground],
+    ["ink-body on ground", rgb("ink-body"), ground],
+    ["ink-muted on ground", rgb("ink-muted"), ground],
+    ["ink on surface", rgb("ink"), rgb("surface")],
+    ["ink-muted on surface", rgb("ink-muted"), rgb("surface")],
+    ["signal-ink on ground", rgb("signal-ink"), ground],
+    ["danger on ground", rgb("danger"), ground],
     ["on-signal on signal", rgb("on-signal"), rgb("signal")],
-    ["danger on danger-tint", rgb("danger"), over(colour("danger-tint"), bg)],
+    ["danger on danger-tint", rgb("danger"), over(colour("danger-tint"), ground)],
   ];
   it.each(pairs)("%s is at least 4.5:1", (_label, fg, back) => {
     expect(ratio(fg, back)).toBeGreaterThanOrEqual(4.5);

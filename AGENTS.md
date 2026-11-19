@@ -10,7 +10,7 @@ The rules every sm_ repo shares are in [`docs/agents/sm-conventions.md`](docs/ag
 
 Typecheck runs `bun check --no-script` (Bun 1.4.4). `npm run typecheck:tsc` is the `tsc --noEmit` fallback; the weekly `tsc fallback` workflow runs it so a gap between the two shows up. If `bun check` misbehaves, switch the `typecheck` scripts back to `tsc --noEmit`.
 
-rollin's own design tokens live in `ui/tokens.json` and generate `ui/tokens.css`; `npm run tokens:check` fails if they drift.
+Colour, type, spacing, radius and motion come from the sm-core copy (`vendor/sm-core/sm-core.css` and `sm-tailwind.css`), checked by `verify.mjs`. Only rollin's own sizes live in `ui/tokens.json`, which generates `--rollin-*` variables in `ui/tokens.css`; `npm run tokens:check` fails if they drift.
 
 ## Merging
 

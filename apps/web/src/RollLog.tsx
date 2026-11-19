@@ -41,7 +41,7 @@ function DieChip({ die }: { die: Die }) {
   return (
     <span
       data-status={die.status}
-      className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 font-mono text-sm ${mark?.className ?? ""} ${outcomeClass(die.outcome)}`}
+      className={`rounded-sm border border-line-strong bg-surface-sunken px-1.5 py-0.5 font-mono text-sm ${mark?.className ?? ""} ${outcomeClass(die.outcome)}`}
     >
       {die.value}
       <Outcome outcome={die.outcome} />
@@ -58,7 +58,7 @@ function DieChip({ die }: { die: Die }) {
 function TermLabel({ term }: { term: Term }) {
   return (
     <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <span className="font-mono text-sm text-text-2">{term.label}</span>{" "}
+      <span className="font-mono text-sm text-ink-body">{term.label}</span>{" "}
       <span className="flex flex-wrap gap-1">
         {term.dice.map((die, i) => (
           // A term's dice are a fixed, ordered list, so the index is the identity.
@@ -67,8 +67,8 @@ function TermLabel({ term }: { term: Term }) {
           </span>
         ))}
       </span>{" "}
-      <span className="font-mono text-sm text-text">
-        <span className="mr-1 font-sans text-xs text-muted">subtotal</span> {term.subtotal}
+      <span className="font-mono text-sm text-ink">
+        <span className="mr-1 font-sans text-xs text-ink-muted">subtotal</span> {term.subtotal}
       </span>
     </span>
   );
@@ -89,7 +89,7 @@ function TermItems({ prefix, list }: { prefix: string; list: Term[] }) {
 
 function Chevron() {
   return (
-    <TreeItemIndicator className="mt-1.5 inline-flex w-4 shrink-0 justify-center text-muted transition-transform data-[expanded]:rotate-90">
+    <TreeItemIndicator className="mt-1.5 inline-flex w-4 shrink-0 justify-center text-ink-muted transition-transform data-[expanded]:rotate-90">
       <svg viewBox="0 0 8 8" width="8" height="8" aria-hidden="true" focusable="false">
         <path d="M2 1l4 3-4 3" fill="none" stroke="currentColor" strokeWidth="1.5" />
       </svg>
@@ -103,7 +103,7 @@ function EntryHead({ entry, branch, fresh }: { entry: Entry; branch: boolean; fr
     <TreeItemLabel className={`${ROW} ${FOCUS} items-start py-3`}>
       {branch ? <Chevron /> : <span className="w-4 shrink-0" />}
       <span className={`min-w-0 flex-1${fresh ? " roll-arrive" : ""}`}>
-        <span className="block font-mono text-sm text-muted">
+        <span className="block font-mono text-sm text-ink-muted">
           {"ok" in report && report.ok.preset !== null
             ? `${report.ok.preset[0]} · ${report.ok.preset[1]}`
             : entry.input}
@@ -154,7 +154,7 @@ function EntryItem({ entry, fresh }: { entry: Entry; fresh: boolean }) {
               <TreeItem key={i} value={`${value}/${i}`}>
                 <TreeItemLabel className={`${ROW} ${FOCUS} pl-6`}>
                   <Chevron />
-                  <span className="font-mono text-sm text-text-2">{roll.formula}</span>
+                  <span className="font-mono text-sm text-ink-body">{roll.formula}</span>
                 </TreeItemLabel>
                 <TreeGroup>
                   <TermItems prefix={`${value}/${i}`} list={perRoll[i] ?? []} />
@@ -268,16 +268,16 @@ export function RollLog({
       <div
         className={`min-h-9 items-center justify-between gap-2 border-b border-line px-1 pb-1 ${compact && !confirm ? "hidden" : "flex"}`}
       >
-        {confirm ?? <h2 className="m-0 text-sm font-medium text-text-2">Roll log</h2>}
+        {confirm ?? <h2 className="m-0 text-sm font-medium text-ink-body">Roll log</h2>}
         {!compact && count > 0 && !confirm && (
           <Menu onAction={(value) => value === "clear" && onClear()}>
             <MenuTrigger
               aria-label="Roll log menu"
-              className="inline-flex h-8 max-md:h-11 min-w-8 max-md:min-w-11 items-center justify-center rounded-md border border-line-strong px-2 text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+              className="inline-flex h-8 max-md:h-11 min-w-8 max-md:min-w-11 items-center justify-center rounded-md border border-line-strong px-2 text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             >
               <span aria-hidden="true">⋯</span>
             </MenuTrigger>
-            <MenuContent className="min-w-40 rounded-md border border-line-strong bg-surface p-1 text-sm text-text shadow-lg">
+            <MenuContent className="min-w-40 rounded-md border border-line-strong bg-surface p-1 text-sm text-ink shadow-lg">
               <MenuItem
                 value="clear"
                 className="flex min-h-9 max-md:min-h-11 cursor-default items-center rounded px-3 data-[highlighted]:bg-surface-hover"
@@ -296,7 +296,7 @@ export function RollLog({
       >
         <div ref={content} className="px-1 pt-1">
           {count === 0 ? (
-            <p className="m-0 py-3 text-sm text-muted">Rolls will appear here.</p>
+            <p className="m-0 py-3 text-sm text-ink-muted">Rolls will appear here.</p>
           ) : (
             <Tree
               ref={treeRef}
@@ -319,7 +319,7 @@ export function RollLog({
             setAway(false);
             toBottom();
           }}
-          className="absolute right-3 bottom-3 inline-flex h-9 max-md:h-11 items-center rounded-full border border-line-strong bg-surface px-4 text-sm text-text shadow-lg hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+          className="absolute right-3 bottom-3 inline-flex h-9 max-md:h-11 items-center rounded-full border border-line-strong bg-surface px-4 text-sm text-ink shadow-lg hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
           Jump to newest
         </Button>
