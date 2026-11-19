@@ -1,4 +1,4 @@
-import { type PresetEntry, type PresetScope } from "./presets";
+import type { PresetEntry, PresetScope } from "./presets";
 import { Button } from "./ui";
 
 const BUTTON =

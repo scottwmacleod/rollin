@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   web:
-    uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@v26.11.8
+    uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@v26.11.10
     with:
       checks: npm run tokens:check
       typecheck-command: bun run typecheck
@@ -28,7 +28,7 @@ jobs:
       skip-paths: '^(docs/|\.claude/|\.github/workflows/(auto-merge|audit|behind|dependabot-automerge|tsc)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
 
   budgets:
-    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.8
+    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.10
     permissions:
       contents: read
       pull-requests: write # one bundle-size comment per PR

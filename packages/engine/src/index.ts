@@ -5,7 +5,7 @@
 
 import { type Role, type RollAst, roleOf } from "./ast";
 import type { DieSource } from "./dice";
-import { FormulaFailure, hintsOf, messageOf, spanOf } from "./errors";
+import { FormulaFailure, hintsOf, messageOf } from "./errors";
 import { checkDie, evaluate } from "./eval";
 import { editDistance, isNameShaped } from "./names";
 import { parse } from "./parser";
@@ -29,10 +29,7 @@ export {
 export type * from "./types";
 
 /** Unicode White_Space, as Rust's `split_whitespace` sees it. */
-const WHITESPACE = new RegExp(
-  "[\\t\\n\\v\\f\\r \\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]+",
-  "u",
-);
+const WHITESPACE = /[\t\n\v\f\r \u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/u;
 
 const USAGE = "roll <formula or preset name>";
 
