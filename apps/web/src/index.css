@@ -122,3 +122,23 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* A 16px fade (a mask, no shadow) at the top or bottom of a scroll area, only
+   while there is content past that edge (useScrollEdges sets the attributes). */
+.scroll-fade {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-top),
+    #000 calc(100% - var(--fade-bottom)),
+    transparent 100%
+  );
+}
+.scroll-fade[data-edge-top] {
+  --fade-top: 16px;
+}
+.scroll-fade[data-edge-bottom] {
+  --fade-bottom: 16px;
+}
