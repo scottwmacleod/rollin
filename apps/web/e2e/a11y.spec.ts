@@ -1,10 +1,10 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
+import { axe } from "./axe";
 
 const log = (page: Page) => page.getByRole("tree", { name: "Roll log" });
 
 async function expectClean(page: Page, where: string) {
-  const { violations } = await new AxeBuilder({ page }).analyze();
+  const { violations } = await (await axe(page)).analyze();
   expect(
     violations.map(
       (v) => `${where}: ${v.id} (${v.impact}) ${v.nodes.map((n) => n.target).join(" ")}`,
