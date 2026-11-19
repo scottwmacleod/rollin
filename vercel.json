@@ -5,9 +5,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "apps/web/dist",
   "rewrites": [
-    { "source": "/_sm/static/:path*", "destination": "https://us-assets.i.posthog.com/static/:path*" },
-    { "source": "/_sm/array/:path*", "destination": "https://us-assets.i.posthog.com/array/:path*" },
-    { "source": "/_sm/:path*", "destination": "https://us.i.posthog.com/:path*" }
+    { "source": "/_sm/static/:path(.*)", "destination": "https://us-assets.i.posthog.com/static/:path" },
+    { "source": "/_sm/array/:path(.*)", "destination": "https://us-assets.i.posthog.com/array/:path" },
+    { "source": "/_sm/:path(.*)", "destination": "https://us.i.posthog.com/:path" }
   ],
   "headers": [
     { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
