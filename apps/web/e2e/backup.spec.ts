@@ -402,9 +402,9 @@ test("the backup reminder shows for old unsaved data and can be dismissed", asyn
 test("settings credits its maker with a link", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Settings/ }).click();
-  const link = page.getByRole("dialog").getByRole("link", { name: "Shipped by sm" });
+  const link = page.getByRole("dialog").getByRole("link", { name: "shipped by sm" });
   await expect(link).toHaveAttribute("href", "https://scottmacleod.co");
-  await expect(link).toContainText("Shipped by");
+  await expect(link).toContainText("shipped by");
 });
 
 test("export one character, clear storage, add the file: it rolls the same", async ({

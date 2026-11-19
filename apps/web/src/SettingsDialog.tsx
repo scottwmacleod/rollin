@@ -91,15 +91,12 @@ export function SettingsDialog({
             href="https://scottmacleod.co"
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-flex items-baseline gap-2 rounded-1 border border-control-line px-3 py-1.5 font-mono text-xs text-ink-body transition-colors hover:border-signal-ink hover:text-ink ${focusRing}`}
+            className="sm-credit"
           >
-            <span>Shipped by </span>
-            <span className="inline-flex items-baseline font-semibold tracking-[-0.06em] text-ink">
+            shipped by{" "}
+            <span className="sm-mark">
               sm
-              <span
-                aria-hidden="true"
-                className="sm-cursor ml-[0.06em] inline-block h-[0.11em] w-[0.46em] bg-signal"
-              />
+              <span className="sm-cursor" aria-hidden="true" />
             </span>
           </a>
         </div>
