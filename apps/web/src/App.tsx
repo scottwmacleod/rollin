@@ -69,6 +69,7 @@ import {
   saveSettings,
 } from "./settings";
 import { openStorage, type Storage } from "./storage";
+import { useSwipeClose } from "./swipeClose";
 import {
   Button,
   Dialog,
@@ -112,6 +113,8 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   /** The slide-over that holds characters, variables and presets where there is no sidebar. */
   const [sideOpen, setSideOpen] = useState(false);
+  // Swipe the slide-over left to close it on touch screens (#330).
+  const swipe = useSwipeClose(() => setSideOpen(false));
   /** Rolls made on this page; the roll log scrolls to the newest when it goes up. */
   const [rollCount, setRollCount] = useState(0);
   const [caret, setCaret] = useState<number | null>(null);
@@ -671,7 +674,10 @@ export function App() {
                 </span>
               </DialogTrigger>
               <DialogBackdrop className="scrim fixed inset-0 bg-ground/60" />
-              <DialogContent className="slide-over fixed inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col gap-4 overflow-y-auto border-r border-line-strong bg-surface p-4 text-ink">
+              <DialogContent
+                {...swipe}
+                className="slide-over touch-pan-y fixed inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col gap-4 overflow-y-auto border-r border-line-strong bg-surface p-4 text-ink"
+              >
                 <div className="flex items-center justify-between gap-2">
                   <DialogTitle className="m-0 text-lg font-semibold">
                     Characters and presets
