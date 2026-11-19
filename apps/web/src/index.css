@@ -80,6 +80,37 @@ body {
   }
 }
 
+/* Press feedback: Roll, keypad keys and preset chips shrink a touch while held.
+   Transform only, 100ms ease-out, no bounce. */
+@utility press {
+  transition: transform 100ms ease-out;
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &:active:not(:disabled) {
+      transform: none;
+    }
+  }
+}
+
+/* A roll made on this page fades in and rises 4px. Opacity and transform only, 150ms. */
+@keyframes roll-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.roll-arrive {
+  animation: roll-arrive 150ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .roll-arrive {
+    animation: none;
+  }
+}
+
 /* People who ask for less motion get none: transitions and animations finish at once. */
 @media (prefers-reduced-motion: reduce) {
   *,

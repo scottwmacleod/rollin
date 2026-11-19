@@ -24,7 +24,7 @@ export function PresetChips({
             type="button"
             title={formula}
             onClick={() => onRoll(name)}
-            className="inline-flex h-9 max-md:h-11 items-center rounded-full border border-line-strong bg-surface px-4 font-mono text-sm text-text hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+            className="press inline-flex h-9 max-md:h-11 items-center rounded-full border border-line-strong bg-surface px-4 font-mono text-sm text-text hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
           >
             {name}
           </Button>
