@@ -162,13 +162,22 @@ test("the whole page can be tabbed through without a trap, and every stop shows 
       const style = getComputedStyle(el);
       const ring = style.outlineStyle !== "none" && Number.parseFloat(style.outlineWidth) > 0;
       const path = `${el.tagName}:${el.getAttribute("aria-label") ?? el.textContent?.trim().slice(0, 30) ?? ""}`;
-      return { path, ring, matches: el.matches(":focus-visible") };
+      // The ring is signal-ink: resolve the token to the same colour format as outlineColor.
+      const probe = document.createElement("span");
+      probe.style.color = "var(--sm-signal-ink)";
+      document.body.append(probe);
+      const signalInk = getComputedStyle(probe).color;
+      probe.remove();
+      const signal = style.outlineColor === signalInk;
+      return { path, ring, signal, matches: el.matches(":focus-visible") };
     });
     if (stop === null) continue;
     expect(stop.matches, `${stop.path} is focus-visible`).toBe(true);
     // Buttons, links and inputs must draw a ring (the tree rows draw their own highlight).
-    if (!/^(DIV|LI):/.test(stop.path))
+    if (!/^(DIV|LI):/.test(stop.path)) {
       expect(stop.ring, `${stop.path} shows a focus ring`).toBe(true);
+      expect(stop.signal, `${stop.path} rings in signal-ink`).toBe(true);
+    }
     seen.add(stop.path);
   }
   // Tabbing wrapped round the page, so it visited more than a few stops and never got stuck.

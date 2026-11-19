@@ -1,7 +1,7 @@
 import { BackupSection } from "./BackupSection";
 import type { AddResult, Backup, Choices, Incoming } from "./backup";
 import { HEADER_ICON_BUTTON, HeaderLabel, SettingsIcon } from "./HeaderLabel";
-import { KEYPAD_SETTINGS, type KeypadSetting, type Settings, THEMES, type Theme } from "./settings";
+import { KEYPAD_SETTINGS, type KeypadSetting, type Settings } from "./settings";
 import { useShortcutHint } from "./shortcuts";
 import type { Storage } from "./storage";
 import {
@@ -15,12 +15,10 @@ import {
   DialogTrigger,
 } from "./ui";
 
-const LABELS: Record<Theme, string> = { system: "System", light: "Light", dark: "Dark" };
-
 const KEYPAD_LABELS: Record<KeypadSetting, string> = { auto: "Auto", on: "On", off: "Off" };
 
 const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
 export function SettingsDialog({
   settings,
@@ -47,7 +45,7 @@ export function SettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         shortcut="mod+,"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-1 border border-control-line px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
       >
         <HeaderLabel label="Settings" hint={hint} icon={<SettingsIcon />} />
       </DialogTrigger>
@@ -58,23 +56,6 @@ export function SettingsDialog({
           Kept in this browser only.
         </DialogDescription>
         <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-          <legend className="mb-2 p-0 text-sm text-ink-body">Theme</legend>
-          {THEMES.map((theme) => (
-            <label key={theme} className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="theme"
-                value={theme}
-                checked={settings.theme === theme}
-                onChange={() => onChange({ ...settings, theme })}
-                className="accent-signal"
-              />
-              {LABELS[theme]}
-              {theme === "system" && <span className="text-ink-muted">(follow your device)</span>}
-            </label>
-          ))}
-        </fieldset>
-        <fieldset className="m-0 mt-4 flex flex-col gap-2 border-0 p-0">
           <legend className="mb-2 p-0 text-sm text-ink-body">Dice keypad</legend>
           {KEYPAD_SETTINGS.map((keypad) => (
             <label key={keypad} className="flex items-center gap-2 text-sm">
@@ -100,7 +81,7 @@ export function SettingsDialog({
         <div className="mt-5 flex justify-end">
           <DialogClose
             render={<Button type="button" />}
-            className={`h-8 max-md:h-11 rounded-1 bg-signal px-4 text-sm font-medium text-on-signal hover:opacity-90 ${focusRing}`}
+            className={`h-8 max-md:h-11 rounded-1 bg-signal px-4 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover ${focusRing}`}
           >
             Done
           </DialogClose>

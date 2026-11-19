@@ -61,7 +61,6 @@ import { RollLog } from "./RollLog";
 import { addEntry, cleanLog, loadLog, mergeLoaded, ROLL_LOG_KEY, saveLog } from "./rollLog";
 import { SettingsDialog } from "./SettingsDialog";
 import {
-  applyTheme,
   DEFAULT_SETTINGS,
   loadSettings,
   parseSettings,
@@ -203,10 +202,7 @@ export function App() {
         setBackupState(tracked);
         if (tracked !== before) void opened.set(BACKUP_STATE_KEY, tracked).catch(() => {});
       }
-      if (savedSettings) {
-        setSettings(savedSettings);
-        applyTheme(savedSettings.theme);
-      }
+      if (savedSettings) setSettings(savedSettings);
       setKept(ok);
       setPresets((current) => ({ ...savedPresets, ...current }));
       setRoster((current) => current ?? savedRoster);
@@ -219,9 +215,7 @@ export function App() {
         setEntries(cleanLog(value)),
       );
       const stopSettings = opened.subscribe<unknown>(SETTINGS_KEY, (value) => {
-        const next = parseSettings(value);
-        setSettings(next);
-        applyTheme(next.theme);
+        setSettings(parseSettings(value));
       });
       const stopPresets = opened.subscribe<PresetMap>(PRESETS_KEY, (value) =>
         setPresets(cleanPresets(value)),
@@ -244,7 +238,6 @@ export function App() {
 
   function changeSettings(next: Settings) {
     setSettings(next);
-    applyTheme(next.theme);
     if (storage.current) void saveSettings(storage.current, next).catch(() => setKept(false));
   }
 
@@ -276,7 +269,6 @@ export function App() {
     setRoster(backup.data.characters);
     setPresets(backup.data.globalPresets);
     setSettings(backup.data.settings);
-    applyTheme(backup.data.settings.theme);
     if (backup.data.rollLog !== undefined) setEntries(backup.data.rollLog);
     markBackedUp(backup);
   }
@@ -642,7 +634,7 @@ export function App() {
   const saveInMenu = !wide && (keypadOn || touch || small);
   const saveDisabled = presets === null || acting === null;
   const barButton =
-    "inline-flex h-10 max-md:h-11 items-center justify-center rounded-1 border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+    "inline-flex h-10 max-md:h-11 items-center justify-center rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden">
@@ -671,7 +663,7 @@ export function App() {
                 aria-label={
                   acting === null ? "Characters and presets" : `Character: ${acting.name}`
                 }
-                className="inline-flex h-8 max-md:h-11 min-w-0 max-w-40 items-center gap-2 rounded-1 border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="inline-flex h-8 max-md:h-11 min-w-0 max-w-40 items-center gap-2 rounded-1 border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
               >
                 <span className="truncate font-mono">{acting?.name ?? "Characters"}</span>
                 <span aria-hidden="true" className="text-ink-muted">
@@ -686,7 +678,7 @@ export function App() {
                   </DialogTitle>
                   <DialogClose
                     render={<Button type="button" />}
-                    className="inline-flex h-8 max-md:h-11 items-center rounded-1 border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    className="inline-flex h-8 max-md:h-11 items-center rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
                   >
                     Close
                   </DialogClose>
@@ -727,7 +719,7 @@ export function App() {
           <Button
             type="button"
             onClick={update.reload}
-            className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
           >
             Reload to update
           </Button>
@@ -743,14 +735,14 @@ export function App() {
           <Button
             type="button"
             onClick={() => void exportNow()}
-            className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
           >
             Export backup
           </Button>
           <Button
             type="button"
             onClick={() => changeBackupState({ ...backupState, dismissedAt: Date.now() })}
-            className="h-8 max-md:h-11 rounded-1 border border-control-line px-3 text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="h-8 max-md:h-11 rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
           >
             Not now
           </Button>
@@ -787,14 +779,14 @@ export function App() {
                     type="button"
                     ref={confirmYes}
                     onClick={clearLog}
-                    className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
                   >
                     Yes, clear
                   </Button>
                   <Button
                     type="button"
                     onClick={() => setConfirming(false)}
-                    className="h-8 max-md:h-11 rounded-1 border border-control-line px-3 text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    className="h-8 max-md:h-11 rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
                   >
                     Cancel
                   </Button>
@@ -849,7 +841,7 @@ export function App() {
                 aria-expanded={suggesting}
                 aria-controls={suggesting ? "formula-completions" : undefined}
                 aria-activedescendant={suggesting ? `formula-completions-${current}` : undefined}
-                className="h-10 max-md:h-11 w-full rounded-1 border border-control-line bg-surface px-3 font-mono text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="h-10 max-md:h-11 w-full rounded-1 border border-control-line bg-surface px-3 font-mono text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
               />
               {suggesting && (
                 <CompletionList
@@ -888,7 +880,7 @@ export function App() {
                 <MenuContent
                   side="top"
                   align="end"
-                  className="min-w-44 rounded-1 border border-line-strong bg-surface p-1 text-sm text-ink"
+                  className="min-w-44 rounded-1 border border-line-strong bg-surface p-1 font-mono text-ui lowercase text-ink"
                 >
                   <MenuItem
                     value="save"
@@ -910,7 +902,7 @@ export function App() {
             {!keypadOn && (
               <Button
                 type="submit"
-                className="press inline-flex h-10 max-md:h-11 items-center justify-center rounded-1 bg-signal px-5 text-sm font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="press inline-flex h-10 max-md:h-11 items-center justify-center rounded-1 bg-signal px-5 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
               >
                 Roll
               </Button>

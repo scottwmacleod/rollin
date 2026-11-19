@@ -25,9 +25,3 @@ export function stored(page: Page, key: string): Promise<unknown> {
     key,
   );
 }
-
-/** The inputs of the saved roll log, oldest first, for waiting until a roll is saved before a reload. */
-export async function savedRolls(page: Page): Promise<string[]> {
-  const log = await stored(page, "rollLog");
-  return Array.isArray(log) ? log.map((entry: { input: string }) => entry.input) : [];
-}
