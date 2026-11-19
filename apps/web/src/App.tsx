@@ -641,17 +641,17 @@ export function App() {
       <header className="mx-auto flex w-full max-w-5xl shrink-0 items-center gap-2 px-4 py-1 md:py-4">
         <span className="wordmark shrink-0">
           <img
-            className="wordmark-light h-7 w-auto md:h-[51px]"
+            className="wordmark-light h-5 w-auto md:h-10"
             src="/rollin-wordmark-light.svg"
             alt=""
-            width={162}
+            width={263}
             height={51}
           />
           <img
-            className="wordmark-dark h-7 w-auto md:h-[51px]"
+            className="wordmark-dark h-5 w-auto md:h-10"
             src="/rollin-wordmark-dark.svg"
             alt=""
-            width={162}
+            width={263}
             height={51}
           />
         </span>
