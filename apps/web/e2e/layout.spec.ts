@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { axe, stored } from "./helpers";
 import {
   expectNewestAboveFormulaBar,
   expectNoPageScroll,
@@ -108,7 +108,10 @@ test("there is no keypad under Auto; its button shows it below the log, and the 
   expect(logBox && padBox && logBox.y + logBox.height <= padBox.y).toBe(true);
   await expectNoPageScroll(page);
   await expectNewestAboveFormulaBar(page, "d20+25");
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await axe(page)).violations).toEqual([]);
+  await expect
+    .poll(async () => ((await stored(page, "settings")) as { keypad?: string })?.keypad)
+    .toBe("on");
 
   await page.reload();
   await expect(page.getByRole("group", { name: "Dice keypad" })).toBeVisible();
@@ -143,7 +146,7 @@ test("Clear is in the roll log's menu and the palette, not under the log", async
   await page.getByRole("button", { name: "Roll log menu" }).click();
   await page.getByRole("menuitem", { name: "Clear roll log" }).click();
   await expect(page.getByRole("button", { name: "Yes, clear" })).toBeFocused();
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await axe(page)).violations).toEqual([]);
   await page.getByRole("button", { name: "Yes, clear" }).click();
   await expect(page.getByText("Rolls will appear here.")).toBeVisible();
 });
@@ -187,7 +190,7 @@ test("a critical hit gets a lime edge and keeps its label, in both themes", asyn
   await expect(roll).toHaveCSS("border-left-width", "4px");
   for (const scheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: scheme });
-    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    expect((await axe(page)).violations).toEqual([]);
   }
 });
 

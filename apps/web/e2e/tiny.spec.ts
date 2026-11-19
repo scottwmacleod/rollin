@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { axe } from "./helpers";
 import { expectNewestAboveFormulaBar, expectNoPageScroll, rollMany } from "./layout";
 
 // A very narrow desktop window: 400px wide, mouse, no touch. It gets the phone arrangement
@@ -38,5 +38,5 @@ test("rolls stay visible above the bar, and axe passes", async ({ page }) => {
   await rollMany(page, 25);
   await expectNoPageScroll(page);
   await expectNewestAboveFormulaBar(page, "d20+25");
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await axe(page)).violations).toEqual([]);
 });

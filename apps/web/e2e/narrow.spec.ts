@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { axe } from "./helpers";
 import {
   expectNewestAboveFormulaBar,
   expectNoPageScroll,
@@ -23,7 +23,7 @@ test("there is no keypad under Auto, and shown, it fits without page scroll", as
   await page.getByRole("button", { name: "Keypad" }).click();
   await expect(page.getByRole("group", { name: "Dice keypad" })).toBeVisible();
   await expectNoPageScroll(page);
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await axe(page)).violations).toEqual([]);
 });
 
 test("the character button opens a slide-over that traps focus and closes three ways", async ({
@@ -38,7 +38,7 @@ test("the character button opens a slide-over that traps focus and closes three 
   await expect(sheet).toBeVisible();
   await expect(sheet.getByRole("complementary", { name: "Presets" })).toBeVisible();
   await expect(sheet.getByRole("complementary", { name: "Characters" })).toBeVisible();
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await axe(page)).violations).toEqual([]);
 
   // Focus stays inside while it is open.
   for (let i = 0; i < 12; i++) await page.keyboard.press("Tab");
@@ -82,7 +82,7 @@ test("preset chips roll in one click, and scroll sideways without the page doing
   await chips.getByRole("button", { name: "preset01" }).click();
   await expect(log(page)).toContainText("preset01 · 1d20+1");
   await expectNewestAboveFormulaBar(page, "preset01 · 1d20+1");
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await axe(page)).violations).toEqual([]);
 });
 
 test("chips follow the character, and a character's preset hides the global one", async ({

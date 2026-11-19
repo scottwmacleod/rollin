@@ -1,5 +1,5 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { axe } from "./helpers";
 
 const log = (page: import("@playwright/test").Page) => page.getByRole("tree", { name: "Roll log" });
 
@@ -17,7 +17,7 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await expect(palette).toBeVisible();
   const search = palette.getByRole("combobox");
   await expect(search).toBeFocused();
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await axe(page);
   expect(results.violations).toEqual([]);
   await page.keyboard.press("Escape");
   await expect(palette).toBeHidden();
@@ -44,7 +44,7 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await formula.fill("d20+@s");
   const list = page.getByRole("listbox", { name: "Completions" });
   await expect(list.getByRole("option")).toHaveText(["@str"]);
-  await expect(await new AxeBuilder({ page }).analyze()).toHaveProperty("violations", []);
+  await expect(await axe(page)).toHaveProperty("violations", []);
   await page.keyboard.press("Tab");
   await expect(formula).toHaveValue("d20+@str");
   await expect(list).toBeHidden();
