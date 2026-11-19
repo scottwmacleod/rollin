@@ -32,7 +32,7 @@ jobs:
         id: diff
         env:
           EVENT_NAME: ${{ github.event_name }}
-        run: .github/scripts/skip-if-only.sh '^(docs/|\.claude/|\.github/workflows/(audit|dependabot-automerge|tsc)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
+        run: .github/scripts/skip-if-only.sh '^(docs/|\.claude/|\.github/workflows/(audit|auto-merge|dependabot-automerge|tsc)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
 
   web:
     needs: changes

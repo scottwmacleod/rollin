@@ -31,11 +31,12 @@ Each issue may carry one line in its body: `**Touches:** ` followed by comma-sep
    - **Clear** means no correctness, standards or spec findings. Nits do not block; ignore them, or file `needs-triage` issues if they matter.
    - Blocking findings go to fix subagents (`sonnet`), then back to step 3. Maximum 3 review rounds.
 5. **Stop check.** Run the human-stop triggers below against the diff.
-6. **PR.** PR subagent (model `haiku`) pushes the branch, opens the PR with `Closes #n`, and unless step 5 tripped runs `gh pr merge --auto --squash --delete-branch`. It returns the PR URL and does not wait.
+6. **PR.** PR subagent (model `haiku`) pushes the branch and opens the PR with `Closes #n`. If step 5 tripped, it opens it as a draft with the label (`gh pr create --draft --label hold`) and then runs `gh pr ready`, so the label is on before auto-merge can see the PR; `gh pr create` adds labels in a second call, and a docs-only PR can pass CI in seconds. It never runs `gh pr merge` itself: the `auto-merge` workflow turns on squash auto-merge for every PR without the `hold` label. It returns the PR URL and does not wait.
 7. **Wait.** The main thread waits for CI, not the subagent. In T3 call `link_pull_request` on the new PR, then `watch_pull_request`, and end the turn; call `unwatch_pull_request` once the PR is merged or abandoned. Outside T3 poll `gh pr view <n> --json state,statusCheckRollup`. Do not use `sleep` loops or `gh pr checks --watch` where the harness forbids waiting.
 8. **Resolve.**
    - `MERGED`: `git fetch origin` (every branch is cut from `origin/main`, so local `main` is never needed), then go back to the queue.
    - Branch behind `main`: (strict protection; merge queue is unavailable on user-owned repos) `gh pr update-branch`, wait again, auto-merge stays enabled.
+   - `hold` label on: the PR waits for a human. It is not stuck; leave it and go back to the queue.
    - Infrastructure failure (runner error, network): `gh run rerun --failed`, at most 2 times.
    - Real failure: read the logs, spawn a fix subagent (`sonnet`), push, verify (step 3) again. Maximum 3 attempts. The last attempt uses `opus`.
 
@@ -45,7 +46,9 @@ When a limit is hit (3 review rounds, 3 CI fix attempts, or an unresolvable conf
 
 ## Human-stop triggers
 
-Checked by the main thread against the PR diff. If any fires: open the PR but do **not** enable auto-merge, replace `ready-for-agent` with `ready-for-human`, comment why, and continue with other issues. Dependents stay blocked until a human merges.
+Checked by the main thread against the PR diff. If any fires: open the PR with the `hold` label, replace `ready-for-agent` with `ready-for-human` on the issue, comment why, and continue with other issues. Dependents stay blocked until a human merges.
+
+The `hold` label is the stop. `.github/workflows/auto-merge.yml` (sm-core's shared workflow) never turns auto-merge on for a PR that carries it; adding the label later turns auto-merge off, and removing it turns auto-merge back on. A human merges a held PR by removing the label or merging it by hand. Never remove `hold` yourself.
 
 - Renames or removes the `web` job in `.github/workflows/web.yml`, which is the required check.
 - Adds or edits anything that publishes or releases: a release workflow, `npm publish`, tokens, `secrets.*`.
@@ -58,7 +61,7 @@ Pass these as the `Agent` tool's `model` value: main thread `opus` (start the se
 
 ## Prerequisites
 
-The loop never installs tools. If a ticket needs one that is missing (`just`, ...), swap `ready-for-agent` for `needs-info`, comment which tool, and move on. Tools currently expected: `just` and Node 22.
+The loop never installs tools. If a ticket needs one that is missing (`just`, ...), swap `ready-for-agent` for `needs-info`, comment which tool, and move on. Tools currently expected: `just`, the Node version in `.nvmrc`, and Bun (typecheck).
 
 ## Permissions
 
