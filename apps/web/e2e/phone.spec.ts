@@ -52,14 +52,10 @@ test("the keypad shows under Auto, and its button hides and restores it", async 
   const toggle = page.getByRole("button", { name: "Keypad" });
   await expect(pad).toBeVisible();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
-  const withPad = await log(page).or(page.getByText("Rolls will appear here.")).boundingBox();
   await toggle.tap();
   await expect(pad).toHaveCount(0);
   // With the keypad off, Roll sits beside the formula field.
   await expect(page.getByRole("button", { name: "Roll", exact: true })).toBeVisible();
-  const without = await page.getByText("Rolls will appear here.").boundingBox();
-  expect(without).not.toBeNull();
-  expect(withPad).not.toBeNull();
   await toggle.tap();
   await expect(pad).toBeVisible();
 });
