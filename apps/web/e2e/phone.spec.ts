@@ -259,3 +259,72 @@ test("a one-group roll keeps its total on the dice's line", async ({ page }) => 
   // The total's label sits beside the dice, not on a line of its own below them.
   expect(total.y).toBeLessThan(dice.y + dice.height);
 });
+
+test.describe("swipe left to close the slide-over", () => {
+  type Page = import("@playwright/test").Page;
+
+  /** A one-finger drag by `dx`, `dy` in `steps` moves, as real touch events. */
+  async function drag(
+    page: Page,
+    from: { x: number; y: number },
+    dx: number,
+    dy: number,
+    steps = 12,
+  ) {
+    const cdp = await page.context().newCDPSession(page);
+    const point = (i: number) => [
+      { x: from.x + (dx * i) / steps, y: from.y + (dy * i) / steps, id: 1 },
+    ];
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: point(0) });
+    for (let i = 1; i <= steps; i++) {
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: point(i) });
+      await page.waitForTimeout(16);
+    }
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await cdp.detach();
+  }
+
+  async function open(page: Page) {
+    await page.goto("/");
+    await page.getByRole("button", { name: /^Character:/ }).tap();
+    const sheet = page.getByRole("dialog", { name: "Characters and presets" });
+    await expect(sheet).toBeVisible();
+    await expect.poll(() => sheet.evaluate((el) => el.getBoundingClientRect().left)).toBe(0);
+    const box = await sheet.boundingBox();
+    if (!box) throw new Error("no slide-over");
+    return { sheet, box, from: { x: box.x + box.width * 0.7, y: box.y + box.height * 0.5 } };
+  }
+
+  test("a left drag past a third closes it", async ({ page }) => {
+    const { sheet, box, from } = await open(page);
+    await drag(page, from, -box.width * 0.45, 0);
+    await expect(sheet).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^Character:/ })).toBeFocused();
+  });
+
+  test("a short slow drag springs back, and a vertical drag doesn't move it", async ({ page }) => {
+    const { sheet, box, from } = await open(page);
+    await drag(page, from, -box.width * 0.15, 0, 20);
+    await expect(sheet).toBeVisible();
+    await expect.poll(() => sheet.evaluate((el) => el.getBoundingClientRect().left)).toBe(0);
+
+    await drag(page, from, -10, -200);
+    await expect(sheet).toBeVisible();
+    expect(await sheet.evaluate((el) => el.getBoundingClientRect().left)).toBe(0);
+  });
+
+  test("the close button, tapping outside and Escape still close it", async ({ page }) => {
+    let { sheet } = await open(page);
+    await sheet.getByRole("button", { name: "Close" }).tap();
+    await expect(sheet).toHaveCount(0);
+
+    ({ sheet } = await open(page));
+    const viewport = page.viewportSize();
+    await page.touchscreen.tap((viewport?.width ?? 390) - 10, (viewport?.height ?? 800) / 2);
+    await expect(sheet).toHaveCount(0);
+
+    ({ sheet } = await open(page));
+    await page.keyboard.press("Escape");
+    await expect(sheet).toHaveCount(0);
+  });
+});
