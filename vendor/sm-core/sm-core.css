@@ -1,4 +1,4 @@
-/* sm_ core 26.11.4: generated from tokens.json by scripts/build.mjs. Do not edit. */
+/* sm_ core 26.11.6: generated from tokens.json by scripts/build.mjs. Do not edit. */
 /* Dark is the default; light follows the OS unless [data-theme] forces one. */
 
 :root,
@@ -125,7 +125,6 @@
     --sm-duration-enter: 0ms;
     --sm-duration-move: 0ms;
   }
-  .sm-cursor { animation: none; }
 }
 
 @media (prefers-contrast: more) {
@@ -156,7 +155,6 @@
     --sm-danger: #B42318;
     --sm-danger-tint: rgba(180, 35, 24, 0.06);
   }
-  .sm-cursor { animation: none; }
 }
 
 /* The mark: a lowercase name in Geist Mono 600 and the lime cursor.
@@ -208,4 +206,14 @@
 @media (forced-colors: active) {
   .sm-cursor { background: CanvasText; }
   .sm-credit { border-color: LinkText; }
+}
+
+/* Still on screen under reduced motion, and in print. These come after
+   .sm-cursor so they win. */
+@media (prefers-reduced-motion: reduce) {
+  .sm-cursor { animation: none; }
+}
+
+@media print {
+  .sm-cursor { animation: none; }
 }

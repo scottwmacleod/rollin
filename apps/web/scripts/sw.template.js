@@ -29,6 +29,8 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
+  // PostHog's proxy (/_sm/) always goes to the network, never to the cache.
+  if (url.pathname.startsWith("/_sm/")) return;
   event.respondWith(
     (async () => {
       const cache = await caches.open(CACHE);
