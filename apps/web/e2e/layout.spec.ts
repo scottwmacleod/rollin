@@ -238,3 +238,34 @@ test("the side panels don't shift while the page loads", async ({ page }) => {
   );
   expect(shifts).toEqual([]);
 });
+
+test("the roll log fades only an edge with content beyond it, and a row stays near 40rem wide", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await rollMany(page, 40);
+  const scroller = page.locator("[data-roll-scroll]");
+  // At the bottom the newest roll is clear: no fade there, a fade at the top.
+  await expect(scroller).toHaveAttribute("data-edge-top", "");
+  await expect(scroller).not.toHaveAttribute("data-edge-bottom", "");
+  await scroller.evaluate((el) => {
+    el.scrollTop = 0;
+  });
+  await expect(scroller).not.toHaveAttribute("data-edge-top", "");
+  await expect(scroller).toHaveAttribute("data-edge-bottom", "");
+
+  const tree = await log(page).boundingBox();
+  expect(tree?.width).toBeLessThanOrEqual(640);
+});
+
+test("the sidebar fades its bottom edge when the presets run past it", async ({ page }) => {
+  await page.goto("/");
+  await seedPresets(page, 30);
+  const sidebar = page.locator("[data-sidebar]");
+  await expect(sidebar).toHaveAttribute("data-edge-bottom", "");
+  await sidebar.evaluate((el) => {
+    el.scrollTop = el.scrollHeight;
+  });
+  await expect(sidebar).not.toHaveAttribute("data-edge-bottom", "");
+  await expect(sidebar).toHaveAttribute("data-edge-top", "");
+});

@@ -88,6 +88,7 @@ import {
   MenuTrigger,
 } from "./ui";
 import { SMALL, TOUCH, useMedia, WIDE } from "./useMedia";
+import { useScrollEdges } from "./useScrollEdges";
 import { VariableDialog, type VariableDialogMode } from "./VariableDialog";
 
 export function App() {
@@ -129,8 +130,10 @@ export function App() {
   const storage = useRef<Storage | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
+  const sidebar = useRef<HTMLDivElement>(null);
   const update = useUpdate();
   const wide = useMedia(WIDE);
+  useScrollEdges(sidebar, wide);
   const touch = useMedia(TOUCH);
   const small = useMedia(SMALL);
   /** Auto shows the keypad on touch screens, whatever their width. */
@@ -753,7 +756,8 @@ export function App() {
         {wide && (
           <div
             data-sidebar=""
-            className="flex w-64 shrink-0 flex-col gap-6 overflow-y-auto pr-1 pb-4"
+            ref={sidebar}
+            className="scroll-fade flex w-64 shrink-0 flex-col gap-6 overflow-y-auto pr-1 pb-4"
           >
             {panels}
           </div>

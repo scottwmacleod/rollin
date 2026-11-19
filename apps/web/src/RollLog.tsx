@@ -14,6 +14,7 @@ import {
   TreeItemIndicator,
   TreeItemLabel,
 } from "./ui";
+import { useScrollEdges } from "./useScrollEdges";
 
 /**
  * How a die that was not kept reads. Dropped and rerolled dice are faded and
@@ -197,6 +198,7 @@ export function RollLog({
   const content = useRef<HTMLDivElement>(null);
   const stuck = useRef(true);
   const [away, setAway] = useState(false);
+  useScrollEdges(scroller);
   const count = entries.length;
 
   function toBottom() {
@@ -271,7 +273,7 @@ export function RollLog({
         ref={scroller}
         onScroll={onScroll}
         data-roll-scroll=""
-        className="min-h-0 flex-1 overflow-y-auto"
+        className="scroll-fade min-h-0 flex-1 overflow-y-auto"
       >
         <div ref={content} className="px-1 pt-1">
           {count === 0 ? (
@@ -281,7 +283,7 @@ export function RollLog({
               ref={treeRef}
               aria-label="Roll log"
               onKeyDown={onKeyDown}
-              className="flex flex-col divide-y divide-line"
+              className="flex max-w-[40rem] flex-col divide-y divide-line"
             >
               {entries.map((entry) => (
                 <EntryItem key={entry.id} entry={entry} />
