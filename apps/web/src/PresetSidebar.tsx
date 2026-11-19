@@ -2,7 +2,7 @@ import type { PresetEntry, PresetScope } from "./presets";
 import { Button } from "./ui";
 
 const BUTTON =
-  "whitespace-nowrap rounded-md border border-line-strong px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+  "whitespace-nowrap rounded-md border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
 /**
  * The saved presets: click one to roll it, Edit to rename, change or delete it.
@@ -42,7 +42,7 @@ export function PresetSidebar({
               <Button
                 type="button"
                 onClick={() => onRoll(name)}
-                className="flex min-h-11 min-w-0 flex-1 flex-col items-start justify-center rounded-md border border-line bg-surface px-3 py-1 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="flex min-h-11 min-w-0 flex-1 flex-col items-start justify-center rounded-md border border-control-line bg-surface px-3 py-1 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 <span className="font-mono text-sm text-ink">{name}</span>
                 <span className="max-w-full truncate font-mono text-xs text-ink-muted">

@@ -2,7 +2,7 @@ import { type Character, type Roster, sortedCharacters, sortedVars } from "./cha
 import { Button } from "./ui";
 
 const BUTTON =
-  "whitespace-nowrap rounded-md border border-line-strong px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+  "whitespace-nowrap rounded-md border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
 /**
  * The character switcher (#86, option A) and the active character's variables.
@@ -55,7 +55,7 @@ export function CharacterPanel({
                   type="button"
                   aria-pressed={character.name === roster?.active}
                   onClick={() => onSwitch(character.name)}
-                  className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-line bg-surface px-3 py-1 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-pressed:border-line-strong aria-pressed:bg-surface-hover"
+                  className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-control-line bg-surface px-3 py-1 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-pressed:border-control-line aria-pressed:bg-surface-hover"
                 >
                   <span className="truncate font-mono text-sm text-ink">{character.name}</span>
                   {character.name === roster?.active && (

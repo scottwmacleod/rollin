@@ -58,7 +58,7 @@ export function CommandPalette({
     >
       <DialogTrigger
         shortcut="mod+k"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-control-line px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
       >
         <HeaderLabel label="Commands" hint={hint} icon={<SearchIcon />} />
       </DialogTrigger>
@@ -84,7 +84,7 @@ export function CommandPalette({
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
-            className="h-10 max-md:h-11 w-full rounded-md border border-line-strong bg-surface-sunken px-3 text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="h-10 max-md:h-11 w-full rounded-md border border-control-line bg-surface-sunken px-3 text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           />
           <p className="m-0 mt-2 px-1 text-xs text-ink-muted">
             {view.scope === "characters"

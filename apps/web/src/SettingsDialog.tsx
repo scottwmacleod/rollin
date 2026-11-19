@@ -47,7 +47,7 @@ export function SettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         shortcut="mod+,"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-control-line px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
       >
         <HeaderLabel label="Settings" hint={hint} icon={<SettingsIcon />} />
       </DialogTrigger>
@@ -110,7 +110,7 @@ export function SettingsDialog({
             href="https://scottmacleod.co"
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-flex items-baseline gap-2 rounded-sm border border-line-strong px-3 py-1.5 font-mono text-xs text-ink-body transition-colors hover:border-signal-ink hover:text-ink ${focusRing}`}
+            className={`inline-flex items-baseline gap-2 rounded-sm border border-control-line px-3 py-1.5 font-mono text-xs text-ink-body transition-colors hover:border-signal-ink hover:text-ink ${focusRing}`}
           >
             <span>Shipped by </span>
             <span className="inline-flex items-baseline font-semibold tracking-[-0.06em] text-ink">

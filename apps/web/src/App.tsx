@@ -642,7 +642,7 @@ export function App() {
   const saveInMenu = !wide && (keypadOn || touch || small);
   const saveDisabled = presets === null || acting === null;
   const barButton =
-    "inline-flex h-10 max-md:h-11 items-center justify-center rounded-md border border-line-strong px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+    "inline-flex h-10 max-md:h-11 items-center justify-center rounded-md border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden">
@@ -671,7 +671,7 @@ export function App() {
                 aria-label={
                   acting === null ? "Characters and presets" : `Character: ${acting.name}`
                 }
-                className="inline-flex h-8 max-md:h-11 min-w-0 max-w-40 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="inline-flex h-8 max-md:h-11 min-w-0 max-w-40 items-center gap-2 rounded-md border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 <span className="truncate font-mono">{acting?.name ?? "Characters"}</span>
                 <span aria-hidden="true" className="text-ink-muted">
@@ -686,7 +686,7 @@ export function App() {
                   </DialogTitle>
                   <DialogClose
                     render={<Button type="button" />}
-                    className="inline-flex h-8 max-md:h-11 items-center rounded-md border border-line-strong px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    className="inline-flex h-8 max-md:h-11 items-center rounded-md border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                   >
                     Close
                   </DialogClose>
@@ -750,7 +750,7 @@ export function App() {
           <Button
             type="button"
             onClick={() => changeBackupState({ ...backupState, dismissedAt: Date.now() })}
-            className="h-8 max-md:h-11 rounded-md border border-line-strong px-3 text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="h-8 max-md:h-11 rounded-md border border-control-line px-3 text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             Not now
           </Button>
@@ -794,7 +794,7 @@ export function App() {
                   <Button
                     type="button"
                     onClick={() => setConfirming(false)}
-                    className="h-8 max-md:h-11 rounded-md border border-line-strong px-3 text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    className="h-8 max-md:h-11 rounded-md border border-control-line px-3 text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                   >
                     Cancel
                   </Button>
@@ -849,7 +849,7 @@ export function App() {
                 aria-expanded={suggesting}
                 aria-controls={suggesting ? "formula-completions" : undefined}
                 aria-activedescendant={suggesting ? `formula-completions-${current}` : undefined}
-                className="h-10 max-md:h-11 w-full rounded-md border border-line-strong bg-surface px-3 font-mono text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                className="h-10 max-md:h-11 w-full rounded-md border border-control-line bg-surface px-3 font-mono text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               />
               {suggesting && (
                 <CompletionList

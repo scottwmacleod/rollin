@@ -152,7 +152,7 @@ export function RollLog({
           <Menu onAction={(value) => value === "clear" && onClear()}>
             <MenuTrigger
               aria-label="Roll log menu"
-              className="inline-flex h-8 max-md:h-11 min-w-8 max-md:min-w-11 items-center justify-center rounded-md border border-line-strong px-2 text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              className="inline-flex h-8 max-md:h-11 min-w-8 max-md:min-w-11 items-center justify-center rounded-md border border-control-line px-2 text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             >
               <span aria-hidden="true">⋯</span>
             </MenuTrigger>
@@ -198,7 +198,7 @@ export function RollLog({
             setAway(false);
             toBottom();
           }}
-          className="absolute right-3 bottom-3 inline-flex h-9 max-md:h-11 items-center rounded-full border border-line-strong bg-surface px-4 text-sm text-ink shadow-lg hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          className="absolute right-3 bottom-3 inline-flex h-9 max-md:h-11 items-center rounded-full border border-control-line bg-surface px-4 text-sm text-ink shadow-lg hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
           Jump to newest
         </Button>

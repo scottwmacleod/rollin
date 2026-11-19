@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, type TestInfo, test } from "@playwright/test";
+import { axe } from "./axe";
 
 const sidebar = (page: Page) => page.getByRole("complementary", { name: "Presets" });
 const characters = (page: Page) => page.getByRole("complementary", { name: "Characters" });
@@ -59,7 +59,7 @@ test("export, clear storage, import: the same characters and presets come back",
   await expect(sidebar(page)).toContainText("fireball");
 
   const dialog = await openSettings(page);
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await (await axe(page)).analyze()).violations).toEqual([]);
   const download = page.waitForEvent("download");
   await dialog.getByRole("button", { name: "Export backup" }).click();
   const file = testInfo.outputPath("backup.json");
@@ -75,7 +75,7 @@ test("export, clear storage, import: the same characters and presets come back",
   const again = await openSettings(page);
   await again.getByLabel("Backup file").setInputFiles(file);
   await expect(again).toContainText("2 characters, 1 variable");
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await (await axe(page)).analyze()).violations).toEqual([]);
   await again.getByRole("button", { name: "Replace my data" }).click();
   await expect(again).toContainText("Imported");
   await again.getByRole("button", { name: "Done" }).click();
@@ -139,7 +139,7 @@ test("a partial file shows its summary, offers no replace and says why", async (
   await expect(info).toContainText("Replace needs a full backup");
   await expect(dialog.getByRole("status")).toContainText("You can add it to your data");
   await expect(dialog.getByRole("button", { name: "Replace my data" })).toHaveCount(0);
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await (await axe(page)).analyze()).violations).toEqual([]);
 
   await info.getByRole("button", { name: "Close" }).click();
   await expect(info).toHaveCount(0);
@@ -353,7 +353,7 @@ test("add: the clash prompt passes axe and has touch-sized controls on a phone",
   await dialog.getByRole("button", { name: "Add to my data" }).click();
   const prompt = dialog.getByRole("group", { name: /You already have a character/ });
   await expect(prompt).toBeVisible();
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await (await axe(page)).analyze()).violations).toEqual([]);
   await expect(dialog.getByRole("button", { name: "Import backup…" })).toBeDisabled();
   const label = await prompt.getByText(/Do the same for the other/).boundingBox();
   expect(label?.height).toBeGreaterThanOrEqual(44);
@@ -445,7 +445,7 @@ test("export one character, clear storage, add the file: it rolls the same", asy
   dialog = page.getByRole("dialog");
   // The export is of the saved character, not of what is typed here.
   await dialog.getByLabel("Name").fill("unsaved");
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  expect((await (await axe(page)).analyze()).violations).toEqual([]);
   const download = page.waitForEvent("download");
   await dialog.getByRole("button", { name: "Export" }).click();
   const got = await download;
