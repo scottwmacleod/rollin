@@ -203,3 +203,38 @@ test("resizing to a narrow window keeps the formula and the log", async ({ page 
   await expect(page.getByLabel("Formula")).toHaveValue("2d6+4");
   await expect(page.getByRole("complementary", { name: "Presets" })).toBeVisible();
 });
+
+test("the side panels don't shift while the page loads", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "New character" })).toBeEnabled();
+  // Layout shifts since navigation (buffered) that moved something in a side panel
+  // up or down by more than a few pixels, i.e. content arriving late above it.
+  // A web-font swap still nudges text sideways by a pixel or two (CLS about
+  // 0.0001); that's tracked separately, since the font stacks come from sm-core.
+  const shifts = await page.evaluate(
+    () =>
+      new Promise<string[]>((resolve) => {
+        const seen: string[] = [];
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as unknown as {
+            value: number;
+            hadRecentInput: boolean;
+            sources: { node?: Node | null; previousRect: DOMRect; currentRect: DOMRect }[];
+          }[]) {
+            if (entry.hadRecentInput) continue;
+            const inPanel = entry.sources.filter(
+              (s) =>
+                s.node instanceof Element &&
+                s.node.closest("aside") &&
+                Math.abs(s.currentRect.y - s.previousRect.y) > 4,
+            );
+            if (inPanel.length === 0) continue;
+            const text = inPanel.map((s) => s.node?.textContent?.slice(0, 30) ?? "?");
+            seen.push(`${entry.value.toFixed(4)}: ${text.join(", ")}`);
+          }
+        }).observe({ type: "layout-shift", buffered: true });
+        setTimeout(() => resolve(seen), 500);
+      }),
+  );
+  expect(shifts).toEqual([]);
+});
