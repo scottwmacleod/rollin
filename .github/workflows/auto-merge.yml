@@ -16,6 +16,6 @@ permissions:
 
 jobs:
   auto-merge:
-    uses: scottwmacleod/sm-core/.github/workflows/auto-merge.yml@v26.11.2
+    uses: scottwmacleod/sm-core/.github/workflows/auto-merge.yml@v26.11.3
     with:
       hold-label: hold
