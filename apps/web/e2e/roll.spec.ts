@@ -407,32 +407,22 @@ test.describe("settings", () => {
     await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
   });
 
-  test("a chosen theme survives reload, with no flash, and reaches a second tab", async ({
-    page,
-    context,
-  }) => {
+  test("light and dark follow the OS, with no theme switch and nothing saved", async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("rollin-theme", "light"));
     await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/");
-    const second = await context.newPage();
-    await second.emulateMedia({ colorScheme: "dark" });
-    await second.goto("/");
     const dark = await bgOf(page);
-
-    await page.getByRole("button", { name: /Settings/ }).click();
-    await page.getByRole("radio", { name: /Light/ }).check();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-    expect(await bgOf(page)).not.toBe(dark);
-    await expect(second.locator("html")).toHaveAttribute("data-theme", "light");
-
-    // The saved theme is applied by the inline script before the app loads.
-    await page.reload({ waitUntil: "commit" });
-    await page.waitForFunction(() => document.documentElement.dataset.theme === "light");
-    await page.getByRole("button", { name: /Settings/ }).click();
-    await expect(page.getByRole("radio", { name: /Light/ })).toBeChecked();
-
-    await page.getByRole("radio", { name: /System/ }).check();
+    // An old saved choice is ignored and cleared.
     await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
-    expect(await bgOf(page)).toBe(dark);
+    expect(await page.evaluate(() => localStorage.getItem("rollin-theme"))).toBeNull();
+
+    await page.getByRole("button", { name: /Settings/ }).click();
+    const settings = page.getByRole("dialog", { name: "Settings" });
+    await expect(settings.getByRole("group", { name: "Dice keypad" })).toBeVisible();
+    await expect(settings.getByRole("radio", { name: /Light|Dark|System/ })).toHaveCount(0);
+
+    await page.emulateMedia({ colorScheme: "light" });
+    expect(await bgOf(page)).not.toBe(dark);
   });
 });
 

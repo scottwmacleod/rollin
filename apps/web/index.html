@@ -13,13 +13,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="rollin" />
     <title>rollin</title>
-    <script>
-      // Set the saved theme before first paint so the page never flashes the wrong colours.
-      try {
-        const t = localStorage.getItem("rollin-theme");
-        if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
-      } catch {}
-    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -25,22 +25,15 @@ button,
   -webkit-tap-highlight-color: transparent;
 }
 
-/* The wordmark has a light and a dark artwork; show the one that matches the
-   theme in force (data-theme, else the OS). */
+/* The wordmark has a light and a dark artwork; show the one that matches the OS. */
 .wordmark-light {
   display: none;
 }
-:root[data-theme="light"] .wordmark-light {
-  display: block;
-}
-:root[data-theme="light"] .wordmark-dark {
-  display: none;
-}
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) .wordmark-light {
+  .wordmark-light {
     display: block;
   }
-  :root:not([data-theme="dark"]) .wordmark-dark {
+  .wordmark-dark {
     display: none;
   }
 }

@@ -61,7 +61,6 @@ import { RollLog } from "./RollLog";
 import { addEntry, cleanLog, loadLog, mergeLoaded, ROLL_LOG_KEY, saveLog } from "./rollLog";
 import { SettingsDialog } from "./SettingsDialog";
 import {
-  applyTheme,
   DEFAULT_SETTINGS,
   loadSettings,
   parseSettings,
@@ -203,10 +202,7 @@ export function App() {
         setBackupState(tracked);
         if (tracked !== before) void opened.set(BACKUP_STATE_KEY, tracked).catch(() => {});
       }
-      if (savedSettings) {
-        setSettings(savedSettings);
-        applyTheme(savedSettings.theme);
-      }
+      if (savedSettings) setSettings(savedSettings);
       setKept(ok);
       setPresets((current) => ({ ...savedPresets, ...current }));
       setRoster((current) => current ?? savedRoster);
@@ -219,9 +215,7 @@ export function App() {
         setEntries(cleanLog(value)),
       );
       const stopSettings = opened.subscribe<unknown>(SETTINGS_KEY, (value) => {
-        const next = parseSettings(value);
-        setSettings(next);
-        applyTheme(next.theme);
+        setSettings(parseSettings(value));
       });
       const stopPresets = opened.subscribe<PresetMap>(PRESETS_KEY, (value) =>
         setPresets(cleanPresets(value)),
@@ -244,7 +238,6 @@ export function App() {
 
   function changeSettings(next: Settings) {
     setSettings(next);
-    applyTheme(next.theme);
     if (storage.current) void saveSettings(storage.current, next).catch(() => setKept(false));
   }
 
@@ -276,7 +269,6 @@ export function App() {
     setRoster(backup.data.characters);
     setPresets(backup.data.globalPresets);
     setSettings(backup.data.settings);
-    applyTheme(backup.data.settings.theme);
     if (backup.data.rollLog !== undefined) setEntries(backup.data.rollLog);
     markBackedUp(backup);
   }
