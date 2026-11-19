@@ -1,7 +1,7 @@
 import { BackupSection } from "./BackupSection";
 import type { AddResult, Backup, Choices, Incoming } from "./backup";
 import { HEADER_ICON_BUTTON, HeaderLabel, SettingsIcon } from "./HeaderLabel";
-import { KEYPAD_SETTINGS, type KeypadSetting, type Settings, THEMES, type Theme } from "./settings";
+import { KEYPAD_SETTINGS, type KeypadSetting, type Settings } from "./settings";
 import { useShortcutHint } from "./shortcuts";
 import type { Storage } from "./storage";
 import {
@@ -14,8 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui";
-
-const LABELS: Record<Theme, string> = { system: "System", light: "Light", dark: "Dark" };
 
 const KEYPAD_LABELS: Record<KeypadSetting, string> = { auto: "Auto", on: "On", off: "Off" };
 
@@ -58,23 +56,6 @@ export function SettingsDialog({
           Kept in this browser only.
         </DialogDescription>
         <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-          <legend className="mb-2 p-0 text-sm text-ink-body">Theme</legend>
-          {THEMES.map((theme) => (
-            <label key={theme} className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="theme"
-                value={theme}
-                checked={settings.theme === theme}
-                onChange={() => onChange({ ...settings, theme })}
-                className="accent-signal"
-              />
-              {LABELS[theme]}
-              {theme === "system" && <span className="text-ink-muted">(follow your device)</span>}
-            </label>
-          ))}
-        </fieldset>
-        <fieldset className="m-0 mt-4 flex flex-col gap-2 border-0 p-0">
           <legend className="mb-2 p-0 text-sm text-ink-body">Dice keypad</legend>
           {KEYPAD_SETTINGS.map((keypad) => (
             <label key={keypad} className="flex items-center gap-2 text-sm">

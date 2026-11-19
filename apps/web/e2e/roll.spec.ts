@@ -281,6 +281,23 @@ async function openClear(page: import("@playwright/test").Page) {
   await page.getByRole("menuitem", { name: "Clear roll log" }).click();
 }
 
+/** The roll log as saved in IndexedDB, which is written in the background after a roll. */
+function savedLog(page: import("@playwright/test").Page): Promise<unknown[] | undefined> {
+  return page.evaluate(
+    () =>
+      new Promise<unknown[] | undefined>((resolve) => {
+        const open = indexedDB.open("rollin");
+        open.onsuccess = () => {
+          const get = open.result.transaction("kv").objectStore("kv").get("rollLog");
+          get.onsuccess = () => {
+            open.result.close();
+            resolve(get.result as unknown[] | undefined);
+          };
+        };
+      }),
+  );
+}
+
 async function rollOnce(page: import("@playwright/test").Page, formula: string) {
   await page.getByLabel("Formula").fill(formula);
   await page.getByLabel("Formula").press("Enter");
@@ -291,6 +308,8 @@ test("the roll log survives a reload, and Clear empties it for good", async ({ p
   await rollOnce(page, "d6+1");
   const log = page.getByRole("tree", { name: "Roll log" });
   await expect(log).toContainText("d6+1");
+  // The save runs in the background; reloading before it lands would lose the roll.
+  await expect.poll(async () => (await savedLog(page))?.length).toBe(1);
 
   await page.reload();
   await expect(page.getByRole("tree", { name: "Roll log" })).toContainText("d6+1");
@@ -305,23 +324,7 @@ test("the roll log survives a reload, and Clear empties it for good", async ({ p
   await expect(page.getByText("Rolls will appear here.")).toBeVisible();
 
   // The delete is saved in the background; wait for it before reloading, as a person would.
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () =>
-          new Promise<unknown>((resolve) => {
-            const open = indexedDB.open("rollin");
-            open.onsuccess = () => {
-              const get = open.result.transaction("kv").objectStore("kv").get("rollLog");
-              get.onsuccess = () => {
-                open.result.close();
-                resolve(get.result);
-              };
-            };
-          }),
-      ),
-    )
-    .toBeUndefined();
+  await expect.poll(() => savedLog(page)).toBeUndefined();
 
   await page.reload();
   await expect(page.getByText("Rolls will appear here.")).toBeVisible();
@@ -332,6 +335,7 @@ test("only a roll made now arrives with motion, and never under reduced motion",
 }) => {
   await page.goto("/");
   await rollOnce(page, "d6+1");
+  await expect.poll(async () => (await savedLog(page))?.length).toBe(1);
   await page.reload();
   const log = page.getByRole("tree", { name: "Roll log" });
   await expect(log).toContainText("d6+1");
@@ -407,32 +411,22 @@ test.describe("settings", () => {
     await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
   });
 
-  test("a chosen theme survives reload, with no flash, and reaches a second tab", async ({
-    page,
-    context,
-  }) => {
+  test("light and dark follow the OS, with no theme switch and nothing saved", async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem("rollin-theme", "light"));
     await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/");
-    const second = await context.newPage();
-    await second.emulateMedia({ colorScheme: "dark" });
-    await second.goto("/");
     const dark = await bgOf(page);
-
-    await page.getByRole("button", { name: /Settings/ }).click();
-    await page.getByRole("radio", { name: /Light/ }).check();
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-    expect(await bgOf(page)).not.toBe(dark);
-    await expect(second.locator("html")).toHaveAttribute("data-theme", "light");
-
-    // The saved theme is applied by the inline script before the app loads.
-    await page.reload({ waitUntil: "commit" });
-    await page.waitForFunction(() => document.documentElement.dataset.theme === "light");
-    await page.getByRole("button", { name: /Settings/ }).click();
-    await expect(page.getByRole("radio", { name: /Light/ })).toBeChecked();
-
-    await page.getByRole("radio", { name: /System/ }).check();
+    // An old saved choice is ignored and cleared.
     await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
-    expect(await bgOf(page)).toBe(dark);
+    expect(await page.evaluate(() => localStorage.getItem("rollin-theme"))).toBeNull();
+
+    await page.getByRole("button", { name: /Settings/ }).click();
+    const settings = page.getByRole("dialog", { name: "Settings" });
+    await expect(settings.getByRole("group", { name: "Dice keypad" })).toBeVisible();
+    await expect(settings.getByRole("radio", { name: /Light|Dark|System/ })).toHaveCount(0);
+
+    await page.emulateMedia({ colorScheme: "light" });
+    expect(await bgOf(page)).not.toBe(dark);
   });
 });
 
