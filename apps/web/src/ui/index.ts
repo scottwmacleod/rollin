@@ -24,6 +24,6 @@ export {
   DialogTrigger,
 } from "@ui-sdk/react/dialog";
 export { Menu, MenuContent, MenuItem, MenuTrigger } from "@ui-sdk/react/menu";
-export { Tree, TreeGroup, TreeItem, TreeItemIndicator, TreeItemLabel } from "@ui-sdk/react/tree";
+export { Tree, TreeItem, TreeItemLabel } from "@ui-sdk/react/tree";
 export { Button } from "./button";
 export { Field, FieldError, FieldLabel, Input } from "./input";

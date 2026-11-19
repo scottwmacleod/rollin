@@ -1,5 +1,5 @@
 import { type Roll, type RollReport, spanOf } from "@rollin/engine";
-import { breakdown } from "./breakdown";
+import { breakdown, type Mark, type Shown } from "./breakdown";
 import { caretLines } from "./caret";
 import { hintText } from "./hints";
 
@@ -61,7 +61,35 @@ const CRIT_EDGE: Record<string, string> = {
   miss: "border-l-4 border-danger pl-2",
 };
 
-/** One roll in one line: its formula, the dice it landed on, and the total. */
+/**
+ * How a marked die reads. Dropped and rerolled dice are faded and struck through,
+ * an exploded die has a lime edge; none has a word on screen. The word is generated
+ * content, which screen readers read in the die's name without it being a second
+ * piece of visible text for the name to disagree with.
+ */
+const MARKS: Record<Mark, string> = {
+  dropped:
+    "border-line-strong bg-sunken text-muted line-through opacity-60 after:sr-only after:content-['_dropped']",
+  rerolled:
+    "border-line-strong bg-sunken text-muted line-through opacity-60 after:sr-only after:content-['_rerolled']",
+  exploded: "border-signal-ink bg-signal-tint after:sr-only after:content-['_exploded']",
+};
+
+function DieChip({ die }: { die: Shown }) {
+  return (
+    <span
+      data-mark={die.mark}
+      className={`rounded-sm border px-1.5 py-0.5 ${
+        die.mark ? MARKS[die.mark] : `border-line-strong bg-sunken ${outcomeClass(die.outcome)}`
+      }`}
+    >
+      {die.value}
+      <Outcome outcome={die.outcome} />
+    </span>
+  );
+}
+
+/** One roll in one line: its formula, each dice group's term and dice, and the total. */
 export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boolean }) {
   const cells = breakdown(roll);
   return (
@@ -85,28 +113,26 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
           )}
         </span>
       )}
-      <span className="font-mono text-sm text-text">
+      {/* Grows from nothing, so the dice wrap among themselves before the total leaves the line. */}
+      <span className="flex min-w-[min(100%,10rem)] grow basis-0 flex-wrap items-baseline gap-x-2 gap-y-1.5 font-mono text-sm text-text">
         {cells.map((cell, i) =>
           cell.type === "text" ? (
             // The cells are a fixed, ordered rendering of one roll, so the index is the identity.
-            <span key={i}>{cell.text}</span>
+            <span key={i}>{cell.text} </span>
           ) : (
-            <span
-              key={i}
-              className={`rounded-sm border border-line-strong bg-sunken px-1.5 py-0.5 ${
-                cell.dropped
-                  ? "text-muted line-through opacity-60 after:sr-only after:content-['_dropped']"
-                  : outcomeClass(cell.outcome)
-              }`}
-            >
-              {cell.face}
-              <Outcome outcome={cell.outcome} />
+            <span key={i} data-term="" className="flex flex-wrap items-baseline gap-1">
+              <span className="text-text-2">{cell.term} </span>
+              {cell.dice.map((die, j) => (
+                <span key={j}>
+                  <DieChip die={die} />{" "}
+                </span>
+              ))}
             </span>
           ),
         )}
       </span>
       <CritMarks roll={roll} />
-      <span className="ml-auto font-mono text-3xl font-semibold text-text">
+      <span className="ml-auto shrink-0 font-mono text-3xl font-semibold text-text">
         <span className="mr-2 font-sans text-xs font-normal text-muted">total</span> {roll.total}
       </span>
     </span>
