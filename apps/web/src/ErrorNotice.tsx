@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Button } from "./ui";
 
 const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
 /**
  * Tells the player something went wrong and lets them copy details for a GitHub
@@ -64,7 +64,7 @@ export function ErrorNotice({
         <Button
           type="button"
           onClick={() => void copy()}
-          className={`inline-flex h-10 items-center justify-center rounded-1 bg-signal px-4 text-sm font-medium text-on-signal hover:opacity-90 ${focusRing}`}
+          className={`inline-flex h-10 items-center justify-center rounded-1 bg-signal px-4 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover ${focusRing}`}
         >
           Copy error details
         </Button>
@@ -72,7 +72,7 @@ export function ErrorNotice({
           <Button
             type="button"
             onClick={() => location.reload()}
-            className={`h-10 rounded-1 border border-control-line px-4 text-sm text-ink-body hover:bg-surface-hover ${focusRing}`}
+            className={`h-10 rounded-1 border border-control-line px-4 font-mono text-ui lowercase text-ink-body hover:bg-surface-hover ${focusRing}`}
           >
             Reload
           </Button>
@@ -80,7 +80,7 @@ export function ErrorNotice({
           <Button
             type="button"
             onClick={onDismiss}
-            className={`h-10 rounded-1 border border-control-line px-4 text-sm text-ink-body hover:bg-surface-hover ${focusRing}`}
+            className={`h-10 rounded-1 border border-control-line px-4 font-mono text-ui lowercase text-ink-body hover:bg-surface-hover ${focusRing}`}
           >
             Dismiss
           </Button>

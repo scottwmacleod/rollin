@@ -18,7 +18,7 @@ import {
 } from "./ui";
 
 const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
 /**
  * The ⌘K palette (#86, option B): one input over presets, characters and
@@ -58,7 +58,7 @@ export function CommandPalette({
     >
       <DialogTrigger
         shortcut="mod+k"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-1 border border-control-line px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
       >
         <HeaderLabel label="Commands" hint={hint} icon={<SearchIcon />} />
       </DialogTrigger>
@@ -84,7 +84,7 @@ export function CommandPalette({
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
-            className="h-10 max-md:h-11 w-full rounded-1 border border-control-line bg-surface-sunken px-3 text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="h-10 max-md:h-11 w-full rounded-1 border border-control-line bg-surface-sunken px-3 text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
           />
           <p className="m-0 mt-2 px-1 text-xs text-ink-muted">
             {view.scope === "characters"
@@ -106,7 +106,7 @@ export function CommandPalette({
                     value={row.value}
                     label={row.label}
                     disabled={row.disabled}
-                    className="flex min-h-9 max-md:min-h-11 items-center gap-3 rounded-0 px-2 py-1 text-sm data-[highlighted]:bg-surface-hover data-[highlighted]:outline-2 data-[highlighted]:-outline-offset-2 data-[highlighted]:outline-ink aria-disabled:text-ink-muted"
+                    className="flex min-h-9 max-md:min-h-11 items-center gap-3 rounded-0 px-2 py-1 text-sm data-[highlighted]:bg-surface-hover data-[highlighted]:outline-2 data-[highlighted]:-outline-offset-2 data-[highlighted]:outline-signal-ink aria-disabled:text-ink-muted"
                   >
                     <span className={group === "Commands" ? "" : "font-mono"}>{row.label}</span>
                     {row.detail !== undefined && (

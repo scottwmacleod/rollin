@@ -28,9 +28,9 @@ import type { Storage } from "./storage";
 import { Button } from "./ui";
 
 const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
-const secondary = `h-8 max-md:h-11 rounded-1 border border-control-line px-3 text-sm text-ink-body ${focusRing}`;
-const primary = `h-8 max-md:h-11 rounded-1 bg-signal px-3 text-sm font-medium text-on-signal hover:opacity-90 ${focusRing}`;
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
+const secondary = `h-8 max-md:h-11 rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body ${focusRing}`;
+const primary = `h-8 max-md:h-11 rounded-1 bg-signal px-3 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover ${focusRing}`;
 
 /** Where Add has got to: the clashes to ask about, what has been chosen so far, and which one is showing. */
 interface Asking {
