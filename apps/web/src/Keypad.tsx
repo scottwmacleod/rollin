@@ -2,7 +2,7 @@ import { KEYPAD_DICE, type Key, press } from "./keypad";
 import { Button } from "./ui";
 
 const KEY =
-  "press inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-line-strong bg-surface font-mono text-base text-ink active:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+  "press inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-control-line bg-surface font-mono text-base text-ink active:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
 /**
  * A tap-to-build keypad for phones: dice, digits, + and −, backspace and clear.

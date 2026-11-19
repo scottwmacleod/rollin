@@ -12,6 +12,61 @@ async function expectClean(page: Page, where: string) {
   ).toEqual([]);
 }
 
+/**
+ * Every visible control border (buttons, fields, chips) must reach 3:1 against
+ * what's behind it (WCAG 1.4.11). The old `line-strong` borders were 1.64:1.
+ */
+async function expectControlBorders(page: Page, where: string) {
+  const weak = await page.evaluate(() => {
+    type RGBA = [number, number, number, number];
+    const parse = (c: string): RGBA => {
+      const n = c.match(/[\d.]+/g)?.map(Number) ?? [];
+      return [n[0] ?? 0, n[1] ?? 0, n[2] ?? 0, n[3] ?? 1];
+    };
+    const over = (top: RGBA, under: RGBA): RGBA => {
+      const a = top[3];
+      return [0, 1, 2].map((i) => (top[i] ?? 0) * a + (under[i] ?? 0) * (1 - a)).concat(1) as RGBA;
+    };
+    const lum = (c: RGBA) =>
+      [0, 1, 2]
+        .map((i) => {
+          const s = (c[i] ?? 0) / 255;
+          return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+        })
+        .reduce((sum, v, i) => sum + v * ([0.2126, 0.7152, 0.0722][i] ?? 0), 0);
+    const behind = (el: Element): RGBA => {
+      const layers: RGBA[] = [];
+      for (let e: Element | null = el.parentElement; e; e = e.parentElement) {
+        const bg = parse(getComputedStyle(e).backgroundColor);
+        if (bg[3] > 0) layers.push(bg);
+        if (bg[3] === 1) break;
+      }
+      return layers.reduceRight((under, top) => over(top, under), [255, 255, 255, 1] as RGBA);
+    };
+    const out: string[] = [];
+    const controls = document.querySelectorAll(
+      "button, a[href], textarea, select, input:not([type=radio]):not([type=checkbox]):not([type=hidden])",
+    );
+    for (const el of controls) {
+      const s = getComputedStyle(el);
+      if (!(el as HTMLElement).checkVisibility?.() || s.borderTopStyle === "none") continue;
+      if (Number.parseFloat(s.borderTopWidth) === 0) continue;
+      const border = parse(s.borderTopColor);
+      if (border[3] === 0) continue;
+      const back = behind(el);
+      const a = lum(over(border, back));
+      const b = lum(back);
+      const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+      if (ratio < 3) {
+        const name = el.getAttribute("aria-label") ?? el.textContent?.trim().slice(0, 30);
+        out.push(`${el.tagName} "${name}" border ${ratio.toFixed(2)}:1`);
+      }
+    }
+    return out;
+  });
+  expect(weak, `${where}: control borders under 3:1`).toEqual([]);
+}
+
 /** Gives the page something in every region: a character, a variable, presets and rolls. */
 async function populate(page: Page) {
   await page.getByRole("button", { name: "New character" }).click();
@@ -48,6 +103,7 @@ for (const scheme of ["light", "dark"] as const) {
     await expectClean(page, "empty page");
     await populate(page);
     await expectClean(page, "populated page");
+    await expectControlBorders(page, "populated page");
 
     const dialog = page.getByRole("dialog");
     // Each opener, with what to open; Escape must close every one and give focus back.
@@ -64,6 +120,7 @@ for (const scheme of ["light", "dark"] as const) {
       await open();
       await expect(dialog).toBeVisible();
       await expectClean(page, where);
+      await expectControlBorders(page, where);
       await page.keyboard.press("Escape");
       await expect(dialog).toBeHidden();
       await expect(page.locator(":focus")).not.toHaveJSProperty("tagName", "BODY");
@@ -82,6 +139,7 @@ for (const scheme of ["light", "dark"] as const) {
     const search = page.getByRole("combobox", { name: /Search presets/ });
     await expect(search).toBeFocused();
     await expectClean(page, "palette");
+    await expectControlBorders(page, "palette");
     await search.fill("clear");
     await page.keyboard.press("Enter");
     await expect(page.getByRole("button", { name: "Yes, clear" })).toBeFocused();

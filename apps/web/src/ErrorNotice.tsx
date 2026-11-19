@@ -57,7 +57,7 @@ export function ErrorNotice({
           readOnly
           rows={6}
           value={details}
-          className={`w-full resize-y rounded-md border border-line-strong bg-surface-sunken p-2 font-mono text-xs text-ink ${focusRing}`}
+          className={`w-full resize-y rounded-md border border-control-line bg-surface-sunken p-2 font-mono text-xs text-ink ${focusRing}`}
         />
       </label>
       <div className="flex flex-wrap items-center gap-3">
@@ -72,7 +72,7 @@ export function ErrorNotice({
           <Button
             type="button"
             onClick={() => location.reload()}
-            className={`h-10 rounded-md border border-line-strong px-4 text-sm text-ink-body hover:bg-surface-hover ${focusRing}`}
+            className={`h-10 rounded-md border border-control-line px-4 text-sm text-ink-body hover:bg-surface-hover ${focusRing}`}
           >
             Reload
           </Button>
@@ -80,7 +80,7 @@ export function ErrorNotice({
           <Button
             type="button"
             onClick={onDismiss}
-            className={`h-10 rounded-md border border-line-strong px-4 text-sm text-ink-body hover:bg-surface-hover ${focusRing}`}
+            className={`h-10 rounded-md border border-control-line px-4 text-sm text-ink-body hover:bg-surface-hover ${focusRing}`}
           >
             Dismiss
           </Button>
