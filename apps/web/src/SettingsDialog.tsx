@@ -47,12 +47,12 @@ export function SettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         shortcut="mod+,"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-control-line px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-1 border border-control-line px-3 text-sm text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
       >
         <HeaderLabel label="Settings" hint={hint} icon={<SettingsIcon />} />
       </DialogTrigger>
-      <DialogBackdrop className="fixed inset-0 bg-black/50" />
-      <DialogContent className="fixed top-1/2 left-1/2 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-line-strong bg-surface p-5 text-ink">
+      <DialogBackdrop className="fixed inset-0 bg-ground/60" />
+      <DialogContent className="fixed top-1/2 left-1/2 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-1 border border-line-strong bg-surface p-5 text-ink">
         <DialogTitle className="m-0 text-lg font-semibold">Settings</DialogTitle>
         <DialogDescription className="mt-1 mb-4 text-sm text-ink-body">
           Kept in this browser only.
@@ -100,7 +100,7 @@ export function SettingsDialog({
         <div className="mt-5 flex justify-end">
           <DialogClose
             render={<Button type="button" />}
-            className={`h-8 max-md:h-11 rounded-md bg-signal px-4 text-sm font-medium text-on-signal hover:opacity-90 ${focusRing}`}
+            className={`h-8 max-md:h-11 rounded-1 bg-signal px-4 text-sm font-medium text-on-signal hover:opacity-90 ${focusRing}`}
           >
             Done
           </DialogClose>
@@ -110,7 +110,7 @@ export function SettingsDialog({
             href="https://scottmacleod.co"
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-flex items-baseline gap-2 rounded-sm border border-control-line px-3 py-1.5 font-mono text-xs text-ink-body transition-colors hover:border-signal-ink hover:text-ink ${focusRing}`}
+            className={`inline-flex items-baseline gap-2 rounded-1 border border-control-line px-3 py-1.5 font-mono text-xs text-ink-body transition-colors hover:border-signal-ink hover:text-ink ${focusRing}`}
           >
             <span>Shipped by </span>
             <span className="inline-flex items-baseline font-semibold tracking-[-0.06em] text-ink">

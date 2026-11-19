@@ -26,17 +26,17 @@ export function CritMarks({ roll }: { roll: Roll }) {
   return (
     <span className="flex flex-wrap items-center gap-2 text-xs font-medium">
       {roll.crit === "hit" && (
-        <span className="rounded-sm border border-signal-ink px-1.5 py-0.5 text-signal-ink">
+        <span className="rounded-0 border border-signal-ink px-1.5 py-0.5 text-signal-ink">
           Critical hit
         </span>
       )}
       {roll.crit === "miss" && (
-        <span className="rounded-sm border border-danger px-1.5 py-0.5 text-danger">
+        <span className="rounded-0 border border-danger px-1.5 py-0.5 text-danger">
           Critical miss
         </span>
       )}
       {roll.doubled && (
-        <span className="rounded-sm border border-line-strong px-1.5 py-0.5 text-ink-body">
+        <span className="rounded-0 border border-line-strong px-1.5 py-0.5 text-ink-body">
           Dice doubled
         </span>
       )}
@@ -79,7 +79,7 @@ function DieChip({ die }: { die: Shown }) {
   return (
     <span
       data-mark={die.mark}
-      className={`rounded-sm border px-1.5 py-0.5 ${
+      className={`rounded-0 border px-1.5 py-0.5 ${
         die.mark
           ? MARKS[die.mark]
           : `border-line-strong bg-surface-sunken ${outcomeClass(die.outcome)}`
