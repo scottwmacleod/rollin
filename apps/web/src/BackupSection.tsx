@@ -28,8 +28,8 @@ import type { Storage } from "./storage";
 import { Button } from "./ui";
 
 const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";
-const secondary = `h-8 max-md:h-11 rounded-md border border-line-strong px-3 text-sm text-text-2 ${focusRing}`;
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+const secondary = `h-8 max-md:h-11 rounded-md border border-line-strong px-3 text-sm text-ink-body ${focusRing}`;
 const primary = `h-8 max-md:h-11 rounded-md bg-signal px-3 text-sm font-medium text-on-signal hover:opacity-90 ${focusRing}`;
 
 /** Where Add has got to: the clashes to ask about, what has been chosen so far, and which one is showing. */
@@ -205,8 +205,8 @@ export function BackupSection({
 
   return (
     <section className="mt-5 flex flex-col gap-3 border-t border-line pt-4">
-      <h3 className="m-0 text-sm font-medium text-text-2">Your data</h3>
-      <p className="m-0 text-sm text-muted">
+      <h3 className="m-0 text-sm font-medium text-ink-body">Your data</h3>
+      <p className="m-0 text-sm text-ink-muted">
         Characters, variables, presets and settings. Browsers can clear their storage, so keep a
         backup file.
       </p>
@@ -278,7 +278,7 @@ export function BackupSection({
           <p className="m-0">
             This is a partial file. It holds {describePartialSummary(pending.data)}.
           </p>
-          <p className="m-0 text-muted">
+          <p className="m-0 text-ink-muted">
             Add to my data brings them in and leaves everything else as it is. Replace needs a full
             backup, because a partial file can't replace everything you have.
           </p>
@@ -316,7 +316,7 @@ export function BackupSection({
             You already have {clash.kind === "character" ? "a character" : "a global preset"} called{" "}
             <strong>{clash.name}</strong>.
           </p>
-          <p className="m-0 text-muted">
+          <p className="m-0 text-ink-muted">
             Yours:{" "}
             {describeContent(clash, asking.saved.roster.characters, asking.saved.globalPresets)}.
             The file's:{" "}
@@ -373,7 +373,7 @@ export function BackupSection({
           </div>
         </div>
       )}
-      <p role="status" className="m-0 min-h-5 text-sm text-text-2">
+      <p role="status" className="m-0 min-h-5 text-sm text-ink-body">
         {message}
       </p>
     </section>

@@ -27,7 +27,7 @@ function EntryItem({ entry, fresh }: { entry: Entry; fresh: boolean }) {
     <TreeItem value={`entry-${entry.id}`}>
       <TreeItemLabel className="block py-3 outline-none data-[highlighted]:outline-2 data-[highlighted]:outline-offset-2">
         <span className={`block${fresh ? " roll-arrive" : ""}`}>
-          <span className="block font-mono text-sm text-muted">
+          <span className="block font-mono text-sm text-ink-muted">
             {"ok" in report && report.ok.preset !== null
               ? `${report.ok.preset[0]} · ${report.ok.preset[1]}`
               : entry.input}
@@ -147,16 +147,16 @@ export function RollLog({
       <div
         className={`min-h-9 items-center justify-between gap-2 border-b border-line px-1 pb-1 ${compact && !confirm ? "hidden" : "flex"}`}
       >
-        {confirm ?? <h2 className="m-0 text-sm font-medium text-text-2">Roll log</h2>}
+        {confirm ?? <h2 className="m-0 text-sm font-medium text-ink-body">Roll log</h2>}
         {!compact && count > 0 && !confirm && (
           <Menu onAction={(value) => value === "clear" && onClear()}>
             <MenuTrigger
               aria-label="Roll log menu"
-              className="inline-flex h-8 max-md:h-11 min-w-8 max-md:min-w-11 items-center justify-center rounded-md border border-line-strong px-2 text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+              className="inline-flex h-8 max-md:h-11 min-w-8 max-md:min-w-11 items-center justify-center rounded-md border border-line-strong px-2 text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             >
               <span aria-hidden="true">⋯</span>
             </MenuTrigger>
-            <MenuContent className="min-w-40 rounded-md border border-line-strong bg-surface p-1 text-sm text-text shadow-lg">
+            <MenuContent className="min-w-40 rounded-md border border-line-strong bg-surface p-1 text-sm text-ink shadow-lg">
               <MenuItem
                 value="clear"
                 className="flex min-h-9 max-md:min-h-11 cursor-default items-center rounded px-3 data-[highlighted]:bg-surface-hover"
@@ -175,7 +175,7 @@ export function RollLog({
       >
         <div ref={content} className="px-1 pt-1">
           {count === 0 ? (
-            <p className="m-0 py-3 text-sm text-muted">Rolls will appear here.</p>
+            <p className="m-0 py-3 text-sm text-ink-muted">Rolls will appear here.</p>
           ) : (
             <Tree
               ref={treeRef}
@@ -198,7 +198,7 @@ export function RollLog({
             setAway(false);
             toBottom();
           }}
-          className="absolute right-3 bottom-3 inline-flex h-9 max-md:h-11 items-center rounded-full border border-line-strong bg-surface px-4 text-sm text-text shadow-lg hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+          className="absolute right-3 bottom-3 inline-flex h-9 max-md:h-11 items-center rounded-full border border-line-strong bg-surface px-4 text-sm text-ink shadow-lg hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
           Jump to newest
         </Button>

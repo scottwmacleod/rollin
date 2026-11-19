@@ -27,7 +27,7 @@ export function CompletionList({
             aria-selected={i === active}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onPick(candidate)}
-            className="flex min-h-9 max-md:min-h-11 cursor-pointer items-center rounded px-2 font-mono text-sm aria-selected:bg-surface-hover aria-selected:outline-2 aria-selected:-outline-offset-2 aria-selected:outline-text"
+            className="flex min-h-9 max-md:min-h-11 cursor-pointer items-center rounded px-2 font-mono text-sm aria-selected:bg-surface-hover aria-selected:outline-2 aria-selected:-outline-offset-2 aria-selected:outline-ink"
           >
             {candidate}
           </li>

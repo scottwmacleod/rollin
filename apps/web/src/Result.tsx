@@ -36,7 +36,7 @@ export function CritMarks({ roll }: { roll: Roll }) {
         </span>
       )}
       {roll.doubled && (
-        <span className="rounded-sm border border-line-strong px-1.5 py-0.5 text-text-2">
+        <span className="rounded-sm border border-line-strong px-1.5 py-0.5 text-ink-body">
           Dice doubled
         </span>
       )}
@@ -69,9 +69,9 @@ const CRIT_EDGE: Record<string, string> = {
  */
 const MARKS: Record<Mark, string> = {
   dropped:
-    "border-line-strong bg-sunken text-muted line-through opacity-60 after:sr-only after:content-['_dropped']",
+    "border-line-strong bg-surface-sunken text-ink-muted line-through opacity-60 after:sr-only after:content-['_dropped']",
   rerolled:
-    "border-line-strong bg-sunken text-muted line-through opacity-60 after:sr-only after:content-['_rerolled']",
+    "border-line-strong bg-surface-sunken text-ink-muted line-through opacity-60 after:sr-only after:content-['_rerolled']",
   exploded: "border-signal-ink bg-signal-tint after:sr-only after:content-['_exploded']",
 };
 
@@ -80,7 +80,9 @@ function DieChip({ die }: { die: Shown }) {
     <span
       data-mark={die.mark}
       className={`rounded-sm border px-1.5 py-0.5 ${
-        die.mark ? MARKS[die.mark] : `border-line-strong bg-sunken ${outcomeClass(die.outcome)}`
+        die.mark
+          ? MARKS[die.mark]
+          : `border-line-strong bg-surface-sunken ${outcomeClass(die.outcome)}`
       }`}
     >
       {die.value}
@@ -98,30 +100,30 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
       className={`flex flex-1 flex-wrap items-baseline justify-between gap-x-6 gap-y-1 ${CRIT_EDGE[roll.crit ?? ""] ?? ""}`}
     >
       {showFormula && (
-        <span className="font-mono text-sm text-text-2">
+        <span className="font-mono text-sm text-ink-body">
           {roll.iteration !== undefined && (
             <>
-              <span className="mr-2 text-muted">repeat {roll.iteration}</span>{" "}
+              <span className="mr-2 text-ink-muted">repeat {roll.iteration}</span>{" "}
             </>
           )}
           {roll.formula}
           {roll.label !== undefined && (
             <>
               {" "}
-              <span className="ml-2 text-muted"># {roll.label}</span>
+              <span className="ml-2 text-ink-muted"># {roll.label}</span>
             </>
           )}
         </span>
       )}
       {/* Grows from nothing, so the dice wrap among themselves before the total leaves the line. */}
-      <span className="flex min-w-[min(100%,10rem)] grow basis-0 flex-wrap items-baseline gap-x-2 gap-y-1.5 font-mono text-sm text-text">
+      <span className="flex min-w-[min(100%,10rem)] grow basis-0 flex-wrap items-baseline gap-x-2 gap-y-1.5 font-mono text-sm text-ink">
         {cells.map((cell, i) =>
           cell.type === "text" ? (
             // The cells are a fixed, ordered rendering of one roll, so the index is the identity.
             <span key={i}>{cell.text} </span>
           ) : (
             <span key={i} data-term="" className="flex flex-wrap items-baseline gap-1">
-              <span className="text-text-2">{cell.term} </span>
+              <span className="text-ink-body">{cell.term} </span>
               {cell.dice.map((die, j) => (
                 <span key={j}>
                   <DieChip die={die} />{" "}
@@ -132,8 +134,9 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
         )}
       </span>
       <CritMarks roll={roll} />
-      <span className="ml-auto shrink-0 font-mono text-3xl font-semibold text-text">
-        <span className="mr-2 font-sans text-xs font-normal text-muted">total</span> {roll.total}
+      <span className="ml-auto shrink-0 font-mono text-3xl font-semibold text-ink">
+        <span className="mr-2 font-sans text-xs font-normal text-ink-muted">total</span>{" "}
+        {roll.total}
       </span>
     </span>
   );
@@ -150,7 +153,7 @@ export function ErrorBody({ error }: { error: Extract<RollReport, { error: unkno
       {caret && (
         <span
           data-caret
-          className="block overflow-x-auto whitespace-pre font-mono text-sm text-text-2"
+          className="block overflow-x-auto whitespace-pre font-mono text-sm text-ink-body"
         >
           {caret[0]}
           {"\n"}
@@ -158,7 +161,7 @@ export function ErrorBody({ error }: { error: Extract<RollReport, { error: unkno
         </span>
       )}
       {error.hints.map((hint) => (
-        <span key={hintText(hint)} className="block font-mono text-sm text-text-2">
+        <span key={hintText(hint)} className="block font-mono text-sm text-ink-body">
           {hintText(hint)}
         </span>
       ))}
