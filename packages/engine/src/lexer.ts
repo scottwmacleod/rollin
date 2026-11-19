@@ -5,7 +5,7 @@
  */
 import { syntax } from "./errors";
 import { MAX_INT } from "./limits";
-import { Source, utf8Length } from "./source";
+import { type Source, utf8Length } from "./source";
 import type { Span } from "./types";
 
 export type Token =

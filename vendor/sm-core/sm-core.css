@@ -1,4 +1,4 @@
-/* sm_ core 26.11.8: generated from tokens.json by scripts/build.mjs. Do not edit. */
+/* sm_ core 26.11.10: generated from tokens.json by scripts/build.mjs. Do not edit. */
 /* Dark is the default; light follows the OS unless [data-theme] forces one. */
 
 :root,
@@ -76,9 +76,27 @@
   --sm-danger-tint: rgba(180, 35, 24, 0.06);
 }
 
+@font-face {
+  font-family: "Geist Fallback";
+  src: local("Arial"), local("Liberation Sans");
+  size-adjust: 102.7%;
+  ascent-override: 97.86%;
+  descent-override: 28.72%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Geist Mono Fallback";
+  src: local("Courier New"), local("Liberation Mono");
+  size-adjust: 100%;
+  ascent-override: 100.5%;
+  descent-override: 29.5%;
+  line-gap-override: 0%;
+}
+
 :root {
-  --sm-font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --sm-font-sans: Geist, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sm-font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sm-font-sans: Geist, "Geist Fallback", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --sm-space-1: 4px;
   --sm-space-2: 8px;
   --sm-space-3: 12px;

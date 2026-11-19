@@ -9,7 +9,7 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 - `npm run check` passes on the Node version in `.nvmrc` (the latest LTS). It runs the same gates as CI.
 - Every app uses the same script names: `dev`, `build`, `check`, `test`, `e2e`, plus `typecheck`, `lint` and `format`. A repo without one of these leaves it out rather than renaming another.
 - TypeScript is the latest stable 7.x and extends `vendor/sm-core/tooling/tsconfig.base.json`. Typecheck runs `bun check --no-script` (without `--no-script`, bun runs a `check` script instead of typechecking), with `tsc --noEmit` as the fallback.
-- Biome extends `vendor/sm-core/tooling/biome.base.json`.
+- Biome extends `vendor/sm-core/tooling/biome.base.json`, which turns on the recommended lint rules. Fix a finding, or turn a rule off in the product's own `biome.json` with a comment saying why.
 
 ## Workflow
 

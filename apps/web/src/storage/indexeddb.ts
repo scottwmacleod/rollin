@@ -30,7 +30,7 @@ export async function openIndexedDbStorage(name = "rollin"): Promise<Storage> {
   const db = await request(open);
   const channel = typeof BroadcastChannel === "undefined" ? null : new BroadcastChannel(name);
 
-  const write = async (key: string, apply: (store: IDBObjectStore) => void) => {
+  const write = async (apply: (store: IDBObjectStore) => void) => {
     const tx = db.transaction(STORE, "readwrite");
     apply(tx.objectStore(STORE));
     await done(tx);
@@ -40,11 +40,11 @@ export async function openIndexedDbStorage(name = "rollin"): Promise<Storage> {
     get: async <T>(key: string) =>
       (await request(db.transaction(STORE).objectStore(STORE).get(key))) as T | undefined,
     async set(key, value) {
-      await write(key, (store) => store.put(value, key));
+      await write((store) => store.put(value, key));
       channel?.postMessage({ key, value });
     },
     async delete(key) {
-      await write(key, (store) => store.delete(key));
+      await write((store) => store.delete(key));
       channel?.postMessage({ key, value: undefined });
     },
     subscribe<T>(key: string, listener: (value: T | undefined) => void) {
