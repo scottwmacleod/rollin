@@ -35,6 +35,13 @@ body {
   margin: 0;
 }
 
+/* Taps act at once: no double-tap zoom when a key is tapped twice quickly, and no grey flash. */
+button,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* The wordmark has a light and a dark artwork; show the one that matches the
    theme in force (data-theme, else the OS). */
 .wordmark-light {
@@ -80,6 +87,37 @@ body {
   }
 }
 
+/* Press feedback: Roll, keypad keys and preset chips shrink a touch while held.
+   Transform only, 100ms ease-out, no bounce. */
+@utility press {
+  transition: transform 100ms ease-out;
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &:active:not(:disabled) {
+      transform: none;
+    }
+  }
+}
+
+/* A roll made on this page fades in and rises 4px. Opacity and transform only, 150ms. */
+@keyframes roll-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.roll-arrive {
+  animation: roll-arrive 150ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .roll-arrive {
+    animation: none;
+  }
+}
+
 /* People who ask for less motion get none: transitions and animations finish at once. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -90,4 +128,24 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* A 16px fade (a mask, no shadow) at the top or bottom of a scroll area, only
+   while there is content past that edge (useScrollEdges sets the attributes). */
+.scroll-fade {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--fade-top),
+    #000 calc(100% - var(--fade-bottom)),
+    transparent 100%
+  );
+}
+.scroll-fade[data-edge-top] {
+  --fade-top: 16px;
+}
+.scroll-fade[data-edge-bottom] {
+  --fade-bottom: 16px;
 }

@@ -2,7 +2,7 @@ import { KEYPAD_DICE, type Key, press } from "./keypad";
 import { Button } from "./ui";
 
 const KEY =
-  "inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-line-strong bg-surface font-mono text-base text-text active:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";
+  "press inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-line-strong bg-surface font-mono text-base text-text active:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";
 
 /**
  * A tap-to-build keypad for phones: dice, digits, + and −, backspace and clear.
@@ -10,14 +10,17 @@ const KEY =
  */
 export function Keypad({
   formula,
+  fresh,
   onChange,
   onRoll,
 }: {
   formula: string;
+  /** The formula was just rolled, so the next digit or die starts a new one. */
+  fresh: boolean;
   onChange: (formula: string) => void;
   onRoll: () => void;
 }) {
-  const tap = (key: Key) => onChange(press(formula, key));
+  const tap = (key: Key) => onChange(press(formula, key, fresh));
   const digit = (d: string) => (
     <Button key={d} type="button" className={KEY} onClick={() => tap({ kind: "digit", digit: d })}>
       {d}
@@ -77,7 +80,7 @@ export function Keypad({
         <Button
           type="button"
           onClick={onRoll}
-          className="inline-flex min-h-11 items-center justify-center rounded-md bg-signal text-base font-medium text-on-signal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+          className="press inline-flex min-h-11 items-center justify-center rounded-md bg-signal text-base font-medium text-on-signal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
         >
           Roll
         </Button>

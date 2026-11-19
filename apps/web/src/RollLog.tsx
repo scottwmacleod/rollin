@@ -1,4 +1,12 @@
-import { type KeyboardEvent, type ReactNode, type Ref, useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  type Ref,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { type Entry, ErrorBody, RollLine } from "./Result";
 import {
   Button,
@@ -10,27 +18,30 @@ import {
   TreeItem,
   TreeItemLabel,
 } from "./ui";
+import { useScrollEdges } from "./useScrollEdges";
 
 /** One entry: what was typed (or the preset), then a line per roll, or the error. */
-function EntryItem({ entry }: { entry: Entry }) {
+function EntryItem({ entry, fresh }: { entry: Entry; fresh: boolean }) {
   const { report } = entry;
   return (
     <TreeItem value={`entry-${entry.id}`}>
       <TreeItemLabel className="block py-3 outline-none data-[highlighted]:outline-2 data-[highlighted]:outline-offset-2">
-        <span className="block font-mono text-sm text-muted">
-          {"ok" in report && report.ok.preset !== null
-            ? `${report.ok.preset[0]} · ${report.ok.preset[1]}`
-            : entry.input}
+        <span className={`block${fresh ? " roll-arrive" : ""}`}>
+          <span className="block font-mono text-sm text-muted">
+            {"ok" in report && report.ok.preset !== null
+              ? `${report.ok.preset[0]} · ${report.ok.preset[1]}`
+              : entry.input}
+          </span>
+          {"ok" in report ? (
+            report.ok.rolls.map((roll, i) => (
+              <span key={i} className="mt-1 flex">
+                <RollLine roll={roll} showFormula={report.ok.rolls.length > 1} />
+              </span>
+            ))
+          ) : (
+            <ErrorBody error={report.error} />
+          )}
         </span>
-        {"ok" in report ? (
-          report.ok.rolls.map((roll, i) => (
-            <span key={i} className="mt-1 flex">
-              <RollLine roll={roll} showFormula={report.ok.rolls.length > 1} />
-            </span>
-          ))
-        ) : (
-          <ErrorBody error={report.error} />
-        )}
       </TreeItemLabel>
     </TreeItem>
   );
@@ -74,7 +85,12 @@ export function RollLog({
   const content = useRef<HTMLDivElement>(null);
   const stuck = useRef(true);
   const [away, setAway] = useState(false);
+  useScrollEdges(scroller);
   const count = entries.length;
+  // The entry a roll made here just added. History that loads with the page or
+  // arrives from another tab never changes `rollCount`, so it never arrives.
+  const [freshId, setFreshId] = useState<number | null>(null);
+  const latestId = entries[entries.length - 1]?.id;
 
   function toBottom() {
     const el = scroller.current;
@@ -103,6 +119,13 @@ export function RollLog({
     observer.observe(inner);
     return () => observer.disconnect();
   }, []);
+
+  // Marked before paint so the arrival starts with the entry's first frame.
+  useLayoutEffect(() => {
+    if (rollCount > 0) setFreshId(latestId ?? null);
+    // Only a new roll marks an entry; `latestId` is read as of that roll.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: see above
+  }, [rollCount]);
 
   // A roll made here shows its result at once.
   useEffect(() => {
@@ -148,7 +171,7 @@ export function RollLog({
         ref={scroller}
         onScroll={onScroll}
         data-roll-scroll=""
-        className="min-h-0 flex-1 overflow-y-auto"
+        className="scroll-fade min-h-0 flex-1 overflow-y-auto"
       >
         <div ref={content} className="px-1 pt-1">
           {count === 0 ? (
@@ -158,10 +181,10 @@ export function RollLog({
               ref={treeRef}
               aria-label="Roll log"
               onKeyDown={onKeyDown}
-              className="flex flex-col divide-y divide-line"
+              className="flex max-w-[40rem] flex-col divide-y divide-line"
             >
               {entries.map((entry) => (
-                <EntryItem key={entry.id} entry={entry} />
+                <EntryItem key={entry.id} entry={entry} fresh={entry.id === freshId} />
               ))}
             </Tree>
           )}

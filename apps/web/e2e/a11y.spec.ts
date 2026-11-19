@@ -37,6 +37,8 @@ async function populate(page: Page) {
   await page.getByLabel("Formula").fill("2d6+3");
   await page.getByLabel("Formula").press("Enter");
   await expect(log(page)).toContainText("2d6+3");
+  // Axe reads colours as they are now, so let the 150ms arrival finish first.
+  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
 }
 
 for (const scheme of ["light", "dark"] as const) {

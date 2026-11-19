@@ -88,11 +88,14 @@ import {
   MenuTrigger,
 } from "./ui";
 import { SMALL, TOUCH, useMedia, WIDE } from "./useMedia";
+import { useScrollEdges } from "./useScrollEdges";
 import { VariableDialog, type VariableDialogMode } from "./VariableDialog";
 
 export function App() {
   const [formula, setFormula] = useState("");
   const [historyNav, setHistoryNav] = useState<HistoryNav>(null);
+  /** The formula in the box was just rolled; the keypad's next digit or die replaces it. */
+  const [fresh, setFresh] = useState(false);
   const [entries, setEntries] = useState<Entry[]>([]);
   /** Set when the log changed here and still needs saving; the effect below saves what is on screen. */
   const saveLogSoon = useRef(false);
@@ -129,8 +132,10 @@ export function App() {
   const storage = useRef<Storage | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const log = useRef<HTMLDivElement>(null);
+  const sidebar = useRef<HTMLDivElement>(null);
   const update = useUpdate();
   const wide = useMedia(WIDE);
+  useScrollEdges(sidebar, wide);
   const touch = useMedia(TOUCH);
   const small = useMedia(SMALL);
   /** Auto shows the keypad on touch screens, whatever their width. */
@@ -353,6 +358,7 @@ export function App() {
 
   function changeFormula(next: string) {
     setHistoryNav(null);
+    setFresh(false);
     setFormula(next);
     setHighlighted(0);
     setArmed(false);
@@ -476,7 +482,9 @@ export function App() {
     const text = formula.trim();
     const recalled = historyNav !== null;
     setHistoryNav(null);
-    if (text !== "") rollLine(text, recalled ? "history" : "input");
+    if (text === "") return;
+    rollLine(text, recalled ? "history" : "input");
+    setFresh(true);
   }
 
   /** Up and Down in the formula box step through past rolls, like a shell. Returns whether it acted. */
@@ -753,7 +761,8 @@ export function App() {
         {wide && (
           <div
             data-sidebar=""
-            className="flex w-64 shrink-0 flex-col gap-6 overflow-y-auto pr-1 pb-4"
+            ref={sidebar}
+            className="scroll-fade flex w-64 shrink-0 flex-col gap-6 overflow-y-auto pr-1 pb-4"
           >
             {panels}
           </div>
@@ -826,7 +835,8 @@ export function App() {
                 autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
-                autoFocus
+                // On a touch screen, focus on load can raise the system keyboard over the keypad.
+                autoFocus={!touch}
                 ref={input}
                 onKeyDown={formulaKeys}
                 onFocus={(event) => {
@@ -900,7 +910,7 @@ export function App() {
             {!keypadOn && (
               <Button
                 type="submit"
-                className="inline-flex h-10 max-md:h-11 items-center justify-center rounded-md bg-signal px-5 text-sm font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
+                className="press inline-flex h-10 max-md:h-11 items-center justify-center rounded-md bg-signal px-5 text-sm font-medium text-on-signal hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text"
               >
                 Roll
               </Button>
@@ -917,7 +927,12 @@ export function App() {
             )}
           </div>
           {keypadOn && (
-            <Keypad formula={formula} onChange={changeFormula} onRoll={() => submit()} />
+            <Keypad
+              formula={formula}
+              fresh={fresh}
+              onChange={changeFormula}
+              onRoll={() => submit()}
+            />
           )}
         </div>
       </form>
