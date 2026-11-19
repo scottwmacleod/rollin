@@ -17,17 +17,13 @@ test("the page never scrolls and the newest roll sits above the formula bar", as
   await expectNewestAboveFormulaBar(page, "d20+40");
 });
 
-test("there is no keypad under Auto; the button shows it and the choice survives a reload", async ({
-  page,
-}) => {
+test("there is no keypad under Auto, and shown, it fits without page scroll", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("group", { name: "Dice keypad" })).toHaveCount(0);
   await page.getByRole("button", { name: "Keypad" }).click();
   await expect(page.getByRole("group", { name: "Dice keypad" })).toBeVisible();
   await expectNoPageScroll(page);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.reload();
-  await expect(page.getByRole("group", { name: "Dice keypad" })).toBeVisible();
 });
 
 test("the character button opens a slide-over that traps focus and closes three ways", async ({

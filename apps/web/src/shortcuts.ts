@@ -8,7 +8,7 @@ export function isApple(): boolean {
 }
 
 /** How a shortcut reads on this device: ⌘K on Apple platforms, Ctrl+K elsewhere. */
-export function shortcutText(key: string, apple: boolean): string {
+function shortcutText(key: string, apple: boolean): string {
   return apple ? `⌘${key.toUpperCase()}` : `Ctrl+${key.toUpperCase()}`;
 }
 

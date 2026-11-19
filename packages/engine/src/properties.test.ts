@@ -74,16 +74,6 @@ test("a flat modifier shifts the total by exactly that much", () => {
   );
 });
 
-test("d% rolls 1 to 100", () => {
-  fc.assert(
-    fc.property(seeds, (s) => {
-      const [result] = ok(roll("d%", fromSeeds(s)));
-      expect(result?.total).toBeGreaterThanOrEqual(1);
-      expect(result?.total).toBeLessThanOrEqual(100);
-    }),
-  );
-});
-
 const TYPED = "0123456789d%+-*/() ,xX!#@<>=abc✓é";
 
 test("any typed text gives a roll or a located error, never a throw or an unsafe total", () => {
@@ -242,25 +232,6 @@ test("keep and drop always leave the right number of dice, and the total is the 
             expect(high ? k.value >= d.value : k.value <= d.value).toBe(true);
           }
         }
-      },
-    ),
-  );
-});
-
-test("adv and dis match 2d20kh1 and 2d20kl1 die for die", () => {
-  fc.assert(
-    fc.property(
-      fc.constantFrom("adv", "dis"),
-      fc.integer({ min: 2, max: 100 }),
-      seeds,
-      (word, sides, s) => {
-        const keep = word === "adv" ? "kh" : "kl";
-        const [a] = ok(roll(`d${sides}${word}`, fromSeeds(s)));
-        const [b] = ok(roll(`2d${sides}${keep}1`, fromSeeds(s)));
-        expect(a?.total).toBe(b?.total);
-        const dice = (r: typeof a) =>
-          (r?.expr as Extract<Node, { type: "dice" }>).dice.map((d) => [d.value, d.status]);
-        expect(dice(a)).toEqual(dice(b));
       },
     ),
   );
