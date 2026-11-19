@@ -10,14 +10,17 @@ const KEY =
  */
 export function Keypad({
   formula,
+  fresh,
   onChange,
   onRoll,
 }: {
   formula: string;
+  /** The formula was just rolled, so the next digit or die starts a new one. */
+  fresh: boolean;
   onChange: (formula: string) => void;
   onRoll: () => void;
 }) {
-  const tap = (key: Key) => onChange(press(formula, key));
+  const tap = (key: Key) => onChange(press(formula, key, fresh));
   const digit = (d: string) => (
     <Button key={d} type="button" className={KEY} onClick={() => tap({ kind: "digit", digit: d })}>
       {d}

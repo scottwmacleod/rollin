@@ -26,4 +26,15 @@ describe("keypad", () => {
     expect(run([die(6), { kind: "back" }])).toBe("d");
     expect(run([die(6), { kind: "clear" }])).toBe("");
   });
+  it("starts a new formula after a roll when a digit or die comes first", () => {
+    expect(press("8d6", digit("1"), true)).toBe("1");
+    expect(press("8d6", die(20), true)).toBe("d20");
+  });
+  it("carries on from the rolled formula after a roll when an operator comes first", () => {
+    expect(press("8d6", { kind: "op", op: "+" }, true)).toBe("8d6+");
+  });
+  it("edits the rolled formula with backspace and clears it with C", () => {
+    expect(press("8d6", { kind: "back" }, true)).toBe("8d");
+    expect(press("8d6", { kind: "clear" }, true)).toBe("");
+  });
 });

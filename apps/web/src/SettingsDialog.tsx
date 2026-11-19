@@ -1,5 +1,6 @@
 import { BackupSection } from "./BackupSection";
 import type { AddResult, Backup, Choices, Incoming } from "./backup";
+import { HEADER_ICON_BUTTON, HeaderLabel, SettingsIcon } from "./HeaderLabel";
 import { KEYPAD_SETTINGS, type KeypadSetting, type Settings, THEMES, type Theme } from "./settings";
 import { useShortcutHint } from "./shortcuts";
 import type { Storage } from "./storage";
@@ -46,10 +47,9 @@ export function SettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         shortcut="mod+,"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 ${focusRing}`}
+        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-md border border-line-strong px-3 text-sm text-text-2 ${HEADER_ICON_BUTTON} ${focusRing}`}
       >
-        Settings
-        {hint !== null && <span className="text-muted">{hint}</span>}
+        <HeaderLabel label="Settings" hint={hint} icon={<SettingsIcon />} />
       </DialogTrigger>
       <DialogBackdrop className="fixed inset-0 bg-black/50" />
       <DialogContent className="fixed top-1/2 left-1/2 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-line-strong bg-surface p-5 text-text">
