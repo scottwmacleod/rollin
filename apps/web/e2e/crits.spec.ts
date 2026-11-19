@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { axe } from "./helpers";
+import { axe } from "./axe";
 
 const log = (page: Page) => page.getByRole("tree", { name: "Roll log" });
 
@@ -46,7 +46,7 @@ test.describe("D&D 5e checks and crits", () => {
       "Rolled d20+5, 1d8+3: total 25, critical hit, total 14, damage dice doubled",
     );
 
-    const results = await axe(page);
+    const results = await (await axe(page)).analyze();
     expect(results.violations).toEqual([]);
   });
 

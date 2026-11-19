@@ -1,28 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
-
-/**
- * Waits for the page's motion to finish. A roll fades in and a pressed control
- * springs back, so a check made mid-way reads a part-faded colour or a
- * part-scaled size that a player never sees at rest. Endless animations (the
- * cursor blink) are left alone.
- */
-export async function settled(page: Page) {
-  await page.evaluate(() =>
-    Promise.all(
-      document
-        .getAnimations()
-        .filter((a) => a.effect?.getComputedTiming().endTime !== Number.POSITIVE_INFINITY)
-        .map((a) => a.finished.catch(() => undefined)),
-    ),
-  );
-}
-
-/** Runs axe once the page's motion has finished (see `settled`). */
-export async function axe(page: Page) {
-  await settled(page);
-  return new AxeBuilder({ page }).analyze();
-}
 
 /** A value the app saved, read straight from its IndexedDB store; undefined when nothing is saved. */
 export function stored(page: Page, key: string): Promise<unknown> {

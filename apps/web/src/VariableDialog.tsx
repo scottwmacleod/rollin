@@ -86,14 +86,14 @@ export function VariableDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogBackdrop className="fixed inset-0 bg-black/50" />
+      <DialogBackdrop className="fixed inset-0 bg-ground/60" />
       <DialogContent className={OVERLAY}>
         <form onSubmit={save} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <DialogTitle className="m-0 text-lg font-semibold">
               {editing === null ? "New variable" : `Edit @${editing}`}
             </DialogTitle>
-            <DialogDescription className="m-0 text-sm text-muted">
+            <DialogDescription className="m-0 text-sm text-ink-muted">
               A whole number on {character.name}. Use it in a formula as @name, as in d20+@str.
             </DialogDescription>
           </div>
@@ -103,7 +103,7 @@ export function VariableDialog({
             invalid={nameProblem === null ? undefined : true}
             className="flex flex-col gap-1"
           >
-            <FieldLabel className="text-sm text-text-2">Name</FieldLabel>
+            <FieldLabel className="text-sm text-ink-body">Name</FieldLabel>
             <Input
               value={name}
               onValueChange={setName}
@@ -121,7 +121,7 @@ export function VariableDialog({
               </FieldError>
             )}
             {replaces && (
-              <span className="text-sm text-muted">
+              <span className="text-sm text-ink-muted">
                 @{stored} is already set on {character.name}. Saving replaces it.
               </span>
             )}
@@ -132,7 +132,7 @@ export function VariableDialog({
             invalid={valueProblem === null ? undefined : true}
             className="flex flex-col gap-1"
           >
-            <FieldLabel className="text-sm text-text-2">Value</FieldLabel>
+            <FieldLabel className="text-sm text-ink-body">Value</FieldLabel>
             <Input
               value={value}
               onValueChange={setValue}

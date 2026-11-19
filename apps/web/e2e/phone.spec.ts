@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { axe } from "./helpers";
+import { axe } from "./axe";
+
 import {
   expectNewestAboveFormulaBar,
   expectNoPageScroll,
@@ -29,7 +30,7 @@ test("the keypad builds a formula by tapping and rolls it", async ({ page }) => 
   await expect(log(page)).toContainText("total 12");
   await expectNewestAboveFormulaBar(page, "2d6+3");
 
-  const results = await axe(page);
+  const results = await (await axe(page)).analyze();
   expect(results.violations).toEqual([]);
 });
 
@@ -125,7 +126,7 @@ test("a preset chip rolls in one tap, with no sideways scrolling and 44-point ta
   );
   expect(small).toEqual([]);
 
-  const results = await axe(page);
+  const results = await (await axe(page)).analyze();
   expect(results.violations).toEqual([]);
 });
 
@@ -134,7 +135,7 @@ test("the character slide-over works on a phone", async ({ page }) => {
   await page.getByRole("button", { name: /^Character:/ }).tap();
   const sheet = page.getByRole("dialog", { name: "Characters and presets" });
   await expect(sheet).toBeVisible();
-  expect((await axe(page)).violations).toEqual([]);
+  expect((await (await axe(page)).analyze()).violations).toEqual([]);
   await sheet.getByRole("button", { name: "Close" }).tap();
   await expect(sheet).toBeHidden();
 });

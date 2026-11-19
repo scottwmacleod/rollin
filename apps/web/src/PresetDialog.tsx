@@ -111,14 +111,14 @@ export function PresetDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogBackdrop className="fixed inset-0 bg-black/50" />
+      <DialogBackdrop className="fixed inset-0 bg-ground/60" />
       <DialogContent className={OVERLAY}>
         <form onSubmit={save} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <DialogTitle className="m-0 text-lg font-semibold">
               {editing === null ? "New preset" : `Edit ${editing}`}
             </DialogTitle>
-            <DialogDescription className="m-0 text-sm text-muted">
+            <DialogDescription className="m-0 text-sm text-ink-muted">
               Rolls the same formula every time you click it. Variables are read when it rolls.
             </DialogDescription>
           </div>
@@ -128,7 +128,7 @@ export function PresetDialog({
             invalid={nameError === null ? undefined : true}
             className="flex flex-col gap-1"
           >
-            <FieldLabel className="text-sm text-text-2">Name</FieldLabel>
+            <FieldLabel className="text-sm text-ink-body">Name</FieldLabel>
             <Input
               value={name}
               onValueChange={setName}
@@ -146,19 +146,19 @@ export function PresetDialog({
               </FieldError>
             )}
             {replaces && (
-              <span className="text-sm text-muted">
+              <span className="text-sm text-ink-muted">
                 A preset named '{stored}' already exists here. Saving replaces it.
               </span>
             )}
             {shadows && (
-              <span className="text-sm text-muted">
+              <span className="text-sm text-ink-muted">
                 This character's '{stored}' will be rolled instead of the global one.
               </span>
             )}
           </Field>
 
           <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-            <legend className="mb-1 p-0 text-sm text-text-2">Scope</legend>
+            <legend className="mb-1 p-0 text-sm text-ink-body">Scope</legend>
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="radio"
@@ -186,7 +186,7 @@ export function PresetDialog({
             invalid={formulaProblem === null ? undefined : true}
             className="flex flex-col gap-1"
           >
-            <FieldLabel className="text-sm text-text-2">Formula</FieldLabel>
+            <FieldLabel className="text-sm text-ink-body">Formula</FieldLabel>
             <Input
               value={formula}
               onValueChange={setFormula}
@@ -206,7 +206,7 @@ export function PresetDialog({
             {caret && (
               <span
                 aria-hidden="true"
-                className="block overflow-x-auto whitespace-pre font-mono text-sm text-text-2"
+                className="block overflow-x-auto whitespace-pre font-mono text-sm text-ink-body"
               >
                 {caret[0]}
                 {"\n"}

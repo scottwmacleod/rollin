@@ -16,7 +16,7 @@ export function CompletionList({
         id={id}
         role="listbox"
         aria-label="Completions"
-        className="m-0 flex max-h-56 list-none flex-col overflow-y-auto rounded-md border border-line-strong bg-surface p-1 shadow-lg"
+        className="m-0 flex max-h-56 list-none flex-col overflow-y-auto rounded-1 border border-line-strong bg-surface p-1"
       >
         {candidates.map((candidate, i) => (
           // Keys drive the listbox from the input (aria-activedescendant); a click picks.
@@ -27,7 +27,7 @@ export function CompletionList({
             aria-selected={i === active}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onPick(candidate)}
-            className="flex min-h-9 max-md:min-h-11 cursor-pointer items-center rounded px-2 font-mono text-sm aria-selected:bg-surface-hover aria-selected:outline-2 aria-selected:-outline-offset-2 aria-selected:outline-text"
+            className="flex min-h-9 max-md:min-h-11 cursor-pointer items-center rounded-0 px-2 font-mono text-sm aria-selected:bg-surface-hover aria-selected:outline-2 aria-selected:-outline-offset-2 aria-selected:outline-ink"
           >
             {candidate}
           </li>

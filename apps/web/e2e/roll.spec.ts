@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { axe, savedRolls } from "./helpers";
+import { axe } from "./axe";
+import { savedRolls } from "./helpers";
 
 for (const scheme of ["light", "dark"] as const) {
   test(`rolling 2d6+3 with scripted dice shows the total and both dice in ${scheme}`, async ({
@@ -26,7 +27,7 @@ for (const scheme of ["light", "dark"] as const) {
     await expect(result).toContainText("total 12");
     await expect(page.getByRole("status")).toHaveText("Rolled 2d6+3: total 12");
 
-    const results = await axe(page);
+    const results = await (await axe(page)).analyze();
     expect(results.violations).toEqual([]);
   });
 }
@@ -52,7 +53,7 @@ test("a dropped die is marked on the roll's line, accessibly", async ({ page }) 
   // The accessible name of the roll still says which die was dropped.
   await expect(result.getByRole("treeitem", { name: /1 dropped/ }).first()).toBeAttached();
 
-  const results = await axe(page);
+  const results = await (await axe(page)).analyze();
   expect(results.violations).toEqual([]);
 });
 
@@ -89,7 +90,7 @@ test("rerolled and exploded dice are marked on the roll's line, accessibly", asy
   // The words are for screen readers only.
   await expect(page.getByText(/rerolled|exploded/)).toHaveCount(0);
 
-  const results = await axe(page);
+  const results = await (await axe(page)).analyze();
   expect(results.violations).toEqual([]);
 });
 
@@ -104,7 +105,7 @@ test("an invalid formula shows the error and where it went wrong, accessibly", a
   );
   await expect(result.locator("[data-caret]")).toHaveText("2d6+\n    ^");
 
-  const results = await axe(page);
+  const results = await (await axe(page)).analyze();
   expect(results.violations).toEqual([]);
 });
 
@@ -166,7 +167,7 @@ for (const scheme of ["light", "dark"] as const) {
     await page.keyboard.press("ArrowUp");
     await expect(log.getByRole("treeitem").first()).toBeFocused();
 
-    const results = await axe(page);
+    const results = await (await axe(page)).analyze();
     expect(results.violations).toEqual([]);
 
     // Esc returns to the formula box.
@@ -203,7 +204,7 @@ test("a labelled, repeated formula shows each roll with its label and repeat num
   await expect(entry).toContainText("repeat 2 d20+5 # attack");
   await expect(entry).toContainText("total 9");
 
-  const results = await axe(page);
+  const results = await (await axe(page)).analyze();
   expect(results.violations).toEqual([]);
 });
 
@@ -240,7 +241,7 @@ test("a success count marks each die and reports successes minus failures", asyn
   await expect(result).toContainText("1 ✗");
   await expect(result).toContainText("total 0");
 
-  const results = await axe(page);
+  const results = await (await axe(page)).analyze();
   expect(results.violations).toEqual([]);
 });
 
@@ -271,7 +272,7 @@ test("a percentile roll shows the term as typed with its d100 faces", async ({ p
   await expect(result).toContainText("37 92");
   await expect(result).toContainText("total 129");
 
-  const results = await axe(page);
+  const results = await (await axe(page)).analyze();
   expect(results.violations).toEqual([]);
 });
 
@@ -400,7 +401,7 @@ test.describe("settings", () => {
     await page.goto("/");
     await page.getByRole("button", { name: /Settings/ }).click();
     await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
-    const results = await axe(page);
+    const results = await (await axe(page)).analyze();
     expect(results.violations).toEqual([]);
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toBeHidden();
@@ -471,7 +472,7 @@ test.describe("global presets", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByLabel("Formula")).toHaveValue("d20+5");
     await dialog.getByLabel("Name").fill("Attack");
-    const results = await axe(page);
+    const results = await (await axe(page)).analyze();
     expect(results.violations).toEqual([]);
     await dialog.getByRole("button", { name: "Save", exact: true }).click();
     await expect(dialog).toBeHidden();
@@ -500,8 +501,10 @@ test.describe("global presets", () => {
     await dialog.getByRole("button", { name: "Save", exact: true }).click();
     await expect(sidebar.getByRole("button", { name: "strike d20+7" })).toBeVisible();
     await expect(sidebar.getByRole("button", { name: "attack d20+5" })).toHaveCount(0);
+    // The dialog's own Formula field is gone once it has closed.
+    await expect(dialog).toBeHidden();
     // The renamed preset's old Edit button is gone, so focus lands in the formula box.
-    await expect(page.getByLabel("Formula")).toBeFocused();
+    await expect(page.getByRole("combobox", { name: "Formula" })).toBeFocused();
 
     // Delete, after a confirmation.
     await sidebar.getByRole("button", { name: "Edit strike" }).click();
@@ -538,7 +541,7 @@ test.describe("global presets", () => {
       "error: expected a number, a dice group or '(', found end of input",
     );
     await expect(save).toBeDisabled();
-    const results = await axe(page);
+    const results = await (await axe(page)).analyze();
     expect(results.violations).toEqual([]);
 
     // A name that is taken says so and the button says Replace.
@@ -635,7 +638,7 @@ test.describe("characters and variables", () => {
     await expect(dialog).toContainText("it is a command word");
     await expect(dialog.getByRole("button", { name: "Create" })).toBeDisabled();
     await dialog.getByLabel("Name").fill("Aria");
-    expect((await axe(page)).violations).toEqual([]);
+    expect((await (await axe(page)).analyze()).violations).toEqual([]);
     await dialog.getByRole("button", { name: "Create" }).click();
     await expect(dialog).toBeHidden();
     await expect(characters.getByRole("button", { name: /^aria/ })).toHaveAttribute(
@@ -660,7 +663,7 @@ test.describe("characters and variables", () => {
 
     await characters.getByRole("button", { name: /^aria/ }).click();
     await expect(variables).toContainText("@str");
-    expect((await axe(page)).violations).toEqual([]);
+    expect((await (await axe(page)).analyze()).violations).toEqual([]);
   });
 
   test("an unknown variable gets the defined names and a suggestion", async ({ page }) => {

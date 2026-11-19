@@ -1,8 +1,9 @@
 import { type Character, type Roster, sortedCharacters, sortedVars } from "./characters";
+import { EditButton } from "./EditButton";
 import { Button } from "./ui";
 
 const BUTTON =
-  "whitespace-nowrap rounded-md border border-line-strong px-3 text-sm text-text-2 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text";
+  "whitespace-nowrap rounded-1 border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
 /**
  * The character switcher (#86, option A) and the active character's variables.
@@ -32,7 +33,7 @@ export function CharacterPanel({
     <>
       <aside aria-labelledby="characters-heading" className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <h2 id="characters-heading" className="m-0 text-sm font-medium text-text-2">
+          <h2 id="characters-heading" className="m-0 text-sm font-medium text-ink-body">
             Characters
           </h2>
           <Button
@@ -55,21 +56,17 @@ export function CharacterPanel({
                   type="button"
                   aria-pressed={character.name === roster?.active}
                   onClick={() => onSwitch(character.name)}
-                  className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md border border-line bg-surface px-3 py-1 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text aria-pressed:border-line-strong aria-pressed:bg-surface-hover"
+                  className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-1 border border-control-line bg-surface px-3 py-1 text-left hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink aria-pressed:border-control-line aria-pressed:bg-surface-hover"
                 >
-                  <span className="truncate font-mono text-sm text-text">{character.name}</span>
+                  <span className="truncate font-mono text-sm text-ink">{character.name}</span>
                   {character.name === roster?.active && (
-                    <span className="ml-auto text-xs text-muted">active</span>
+                    <span className="ml-auto text-xs text-ink-muted">active</span>
                   )}
                 </Button>
-                <Button
-                  type="button"
-                  aria-label={`Edit ${character.name}`}
+                <EditButton
+                  label={`Edit ${character.name}`}
                   onClick={() => onEdit(character.name)}
-                  className={`min-h-11 w-14 ${BUTTON}`}
-                >
-                  Edit
-                </Button>
+                />
               </li>
             ))}
           </ul>
@@ -79,11 +76,11 @@ export function CharacterPanel({
       <aside aria-labelledby="variables-heading" className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-baseline gap-2">
-            <h2 id="variables-heading" className="m-0 shrink-0 text-sm font-medium text-text-2">
+            <h2 id="variables-heading" className="m-0 shrink-0 text-sm font-medium text-ink-body">
               Variables{active === null ? "" : ` · ${active.name}`}
             </h2>
             {active !== null && vars.length === 0 && (
-              <span className="truncate text-xs text-muted">No variables yet</span>
+              <span className="truncate text-xs text-ink-muted">No variables yet</span>
             )}
           </div>
           <Button
@@ -99,18 +96,11 @@ export function CharacterPanel({
           <ul className="m-0 flex max-h-56 list-none flex-col gap-1 overflow-y-auto p-0">
             {vars.map(([name, value]) => (
               <li key={name} className="flex gap-1">
-                <span className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md border border-line bg-surface px-3 py-1 font-mono text-sm">
-                  <span className="truncate text-text">@{name}</span>
-                  <span className="text-text-2">{value}</span>
+                <span className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-1 border border-line bg-surface px-3 py-1 font-mono text-sm">
+                  <span className="truncate text-ink">@{name}</span>
+                  <span className="text-ink-body">{value}</span>
                 </span>
-                <Button
-                  type="button"
-                  aria-label={`Edit @${name}`}
-                  onClick={() => onEditVariable(name)}
-                  className={`min-h-11 w-14 ${BUTTON}`}
-                >
-                  Edit
-                </Button>
+                <EditButton label={`Edit @${name}`} onClick={() => onEditVariable(name)} />
               </li>
             ))}
           </ul>
