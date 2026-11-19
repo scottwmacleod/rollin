@@ -12,12 +12,19 @@
 // fetched from `/flags` straight away, cached, and handed to PostHog as
 // bootstrap values, so the page never flickers between variants.
 //
+// PostHog also records errors and Core Web Vitals. Errors thrown before it
+// loads are queued, and `captureException` reports caught ones (an error
+// boundary's, say). Its error and web vitals code (about 6 kB and 4 kB
+// gzipped) loads from the same host, never from the bundle.
+//
 // Nothing loads, and every export is a safe no-op, outside a browser or when
 // the visitor sends Global Privacy Control or Do Not Track.
 
 // Calls the queue accepts before PostHog loads. After that, use window.posthog.
 const METHODS =
-  "capture register identify reset opt_in_capturing opt_out_capturing onFeatureFlags".split(" ");
+  "capture captureException register identify reset opt_in_capturing opt_out_capturing onFeatureFlags".split(
+    " ",
+  );
 const CACHE = "sm_ph_flags";
 
 let started = false;
@@ -105,6 +112,11 @@ export function startPostHog({
   q.register({ product });
   q.onFeatureFlags((_keys, all) => all && setValues(all));
 
+  // PostHog catches errors once it has loaded; until then, queue them.
+  const queueError = (error) => window.posthog === q && q.captureException(error);
+  addEventListener("error", (e) => queueError(e.error));
+  addEventListener("unhandledrejection", (e) => queueError(e.reason));
+
   let loaded = false;
   const load = () => {
     if (loaded) return;
@@ -120,6 +132,8 @@ export function startPostHog({
           person_profiles: "identified_only",
           capture_pageview: "history_change",
           session_recording: { maskAllInputs: true },
+          capture_exceptions: true,
+          capture_performance: { web_vitals: true },
           bootstrap: { distinctID: id, featureFlags: values },
           ...options,
         },
@@ -163,6 +177,11 @@ export function onFlags(cb) {
   return () => {
     listeners = listeners.filter((l) => l !== cb);
   };
+}
+
+/** Reports a caught error, for example from a React error boundary. */
+export function captureException(error, properties) {
+  ph()?.captureException(error, properties);
 }
 
 /** Sends a custom event. Queued until PostHog loads. */

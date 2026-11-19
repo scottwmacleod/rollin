@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from "react";
+import { captureException } from "../../../vendor/sm-core/tooling/analytics/sm-posthog.js";
 import { ErrorNotice } from "./ErrorNotice";
 import { buildReport, currentContext } from "./errorReport";
 
@@ -7,6 +8,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { details:
   state: { details: string | null } = { details: null };
 
   componentDidCatch(error: unknown, info: ErrorInfo) {
+    captureException(error, { componentStack: info.componentStack });
     this.setState({ details: buildReport(error, currentContext(), info.componentStack) });
   }
 
