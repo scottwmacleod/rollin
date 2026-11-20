@@ -17,8 +17,8 @@
     "build:e2e": "bun run prepare-assets && tsc --noEmit && bun --bun vite build --mode e2e --outDir dist-e2e"
   },
   "dependencies": {
-    "@fontsource/geist": "5.3.0",
-    "@fontsource/geist-mono": "5.3.0",
+    "@fontsource-variable/geist": "5.3.0",
+    "@fontsource-variable/geist-mono": "5.3.0",
     "@rollin/engine": "*",
     "@ui-sdk/core": "0.1.0-beta.2",
     "@ui-sdk/react": "0.1.0-beta.2",
