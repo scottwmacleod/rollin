@@ -148,6 +148,26 @@ for (const scheme of ["light", "dark"] as const) {
   });
 }
 
+// Modern Web Guidance `dialog`: a form dialog closes on Esc, not on a press outside (#346).
+test("a press outside a form dialog keeps what was typed; settings still closes", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const dialog = page.getByRole("dialog");
+  await page.getByRole("button", { name: "New preset" }).click();
+  await dialog.getByLabel("Name").fill("Fireball");
+  await page.mouse.click(5, 400);
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("Name")).toHaveValue("Fireball");
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+
+  await page.getByRole("button", { name: /Settings/ }).click();
+  await expect(dialog).toBeVisible();
+  await page.mouse.click(5, 400);
+  await expect(dialog).toBeHidden();
+});
+
 test("the whole page can be tabbed through without a trap, and every stop shows focus", async ({
   page,
 }) => {
