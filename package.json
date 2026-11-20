@@ -3,8 +3,8 @@
   "private": true,
   "description": "Bun workspace: the dice engine (packages/engine) and the web app (apps/web).",
   "workspaces": ["packages/engine", "apps/web"],
-  "packageManager": "bun@1.4.4",
-  "engines": { "bun": ">=1.4.4" },
+  "packageManager": "bun@1.4.5",
+  "engines": { "bun": ">=1.4.5" },
   "scripts": {
     "prepare": "bun vendor/sm-core/tooling/hooks/install.mjs",
     "dev": "bun run --filter rollin-web dev",

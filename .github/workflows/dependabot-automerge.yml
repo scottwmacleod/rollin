@@ -10,4 +10,4 @@ permissions:
 
 jobs:
   dependabot:
-    uses: scottwmacleod/sm-core/.github/workflows/dependabot-automerge.yml@v26.11.12
+    uses: scottwmacleod/sm-core/.github/workflows/dependabot-automerge.yml@v26.11.13
