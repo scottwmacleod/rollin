@@ -6,7 +6,8 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 
 ## Definition of done
 
-- `npm run check` passes on the Node version in `.nvmrc` (the latest LTS). It runs the same gates as CI.
+- The `check` script passes: `bun run check` in a Bun product (rollin, planning-poker), `npm run check` otherwise, on the Node version in `.nvmrc` (the latest LTS). It runs the same gates as CI.
+- A Bun product names its Bun in `package.json`'s `packageManager` (`"bun@1.4.4"`), and CI reads it from there. `vercel.json`'s install command repeats the version until Vercel ships Bun 1.4 (see sm-core's README). Commit `bun.lock`, not `package-lock.json`. Scripts call `bun` and `bun --bun x <tool>`, not `npm run`, `npx` or `node`. Vitest (on Bun's runtime) and Biome stay; `bun test` and `bun fmt` don't replace them.
 - Every app uses the same script names: `dev`, `build`, `check`, `test`, `e2e`, plus `typecheck`, `lint` and `format`. A repo without one of these leaves it out rather than renaming another.
 - TypeScript is the latest stable 7.x and extends `vendor/sm-core/tooling/tsconfig.base.json`. Typecheck runs `bun check --no-script` (without `--no-script`, bun runs a `check` script instead of typechecking), with `tsc --noEmit` as the fallback.
 - Biome extends `vendor/sm-core/tooling/biome.base.json`, which turns on the recommended lint rules. Fix a finding, or turn a rule off in the product's own `biome.json` with a comment saying why.
