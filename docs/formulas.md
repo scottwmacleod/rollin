@@ -166,7 +166,9 @@ There is always one active character, and a character called `default` always ex
 
 A character can play under a game system, which gives some rolls meaning beyond their total. The only system is `dnd5e`. Without one, no roll is ever a critical hit.
 
-Under `dnd5e`, a roll with a single d20 is an attack, and a natural 20 on its kept die (so `d20adv` counts) is a critical hit; a natural 1 is a critical miss, which only flags the roll. Every later roll in the formula with no d20 is damage from the nearest attack before it. When that attack is a critical hit the damage rolls twice as many dice (`1d8+3` rolls `2d8+3`; flat numbers are added once).
+Under `dnd5e`, a d20 check (see below) followed by damage is an attack: every later roll in the formula with no d20 is damage from the nearest check before it. A natural 20 on an attack's kept die (so `d20adv` counts) is a critical hit; a natural 1 is a critical miss, which only flags the roll. When the attack is a critical hit its damage rolls twice as many dice (`1d8+3` rolls `2d8+3`; flat numbers are added once).
+
+Only attacks crit. A check with no damage after it, such as a skill check or saving throw (`d20+5` on its own, or `d20+3` straight before another check), is never a critical hit or miss, whatever it rolls. Mark it `atk` to make it one.
 
 ```
 d20+5, 1d8+3, 2d6 # sneak
@@ -175,7 +177,7 @@ d20+5  [20] + 5  →  25  CRITICAL HIT
 2d6  [1, 6, 4, 4]  →  15  (dice doubled)  # sneak
 ```
 
-An `atk` or `dmg` word after a roll, before any `# label`, sets its role instead of inferring it: `d20+5 atk, 1d8 dmg`. Without a system the words change nothing. Each `Nx` repeat pairs its attacks and damage afresh.
+An `atk` or `dmg` word after a roll, before any `# label`, sets its role instead of inferring it: `d20+5 atk, 1d8 dmg`. A roll marked `atk` is an attack even with no damage after it. Without a system the words change nothing. Each `Nx` repeat pairs its attacks and damage afresh.
 
 A character can widen its critical hits with a **crit range**, the lowest kept d20 that counts (`19` means 19-20, as for a Champion fighter). It takes an integer from 2 to 20, defaults to 20, and applies under a system only; a natural 1 stays the only critical miss. The die is highlighted only on a natural 20 or 1, so a 19 shows `CRITICAL HIT` without the highlight.
 

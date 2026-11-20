@@ -185,7 +185,7 @@ test("a critical hit gets a lime edge and keeps its label, in both themes", asyn
   await dialog.getByRole("button", { name: "Create" }).click();
   await expect(dialog).toBeHidden();
 
-  await page.getByLabel("Formula").fill("d20+5");
+  await page.getByLabel("Formula").fill("d20+5 atk");
   await page.getByLabel("Formula").press("Enter");
   const roll = log(page).locator('[data-crit="hit"]');
   await expect(roll).toContainText("Critical hit");

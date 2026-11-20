@@ -64,6 +64,17 @@ test.describe("D&D 5e checks and crits", () => {
     await expect(page.getByRole("status")).toContainText("critical miss");
   });
 
+  test("a natural 20 on a check with no damage is not a critical hit", async ({ page }) => {
+    await script(page, [[20, 20]]);
+    await page.goto("/");
+    await newCharacter(page, "aria", "dnd5e");
+    await page.getByLabel("Formula").fill("d20+5");
+    await page.getByLabel("Formula").press("Enter");
+    await expect(log(page)).toContainText("total 25");
+    await expect(log(page)).not.toContainText("Critical");
+    await expect(page.getByRole("status")).toHaveText("Rolled d20+5: total 25");
+  });
+
   test("a crit range of 19 makes a 19 a critical hit", async ({ page }) => {
     await script(page, [
       [20, 19],

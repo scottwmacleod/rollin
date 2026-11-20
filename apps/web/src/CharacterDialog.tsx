@@ -166,8 +166,8 @@ export function CharacterDialog({
               ))}
             </select>
             <span className="text-sm text-ink-muted">
-              Under D&amp;D 5e a natural 20 on an attack is a critical hit and doubles the damage
-              dice that follow.
+              Under D&amp;D 5e a natural 20 on an attack (a d20 roll with damage after it) is a
+              critical hit and doubles the damage dice. Skill checks and saves never crit.
             </span>
           </div>
 
