@@ -4,17 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "prepare-assets": "node scripts/copy-tokens.mjs",
-    "predev": "npm run prepare-assets",
-    "dev": "vite",
-    "prebuild": "npm run prepare-assets",
-    "build": "tsc --noEmit && vite build && node scripts/check-no-test-hooks.mjs",
-    "preview": "vite preview",
-    "typecheck": "npm run prepare-assets && bun check --no-script",
-    "typecheck:tsc": "npm run prepare-assets && tsc --noEmit",
-    "test": "vitest run",
-    "e2e": "playwright test",
-    "build:e2e": "npm run prepare-assets && tsc --noEmit && vite build --mode e2e --outDir dist-e2e"
+    "prepare-assets": "bun scripts/copy-tokens.mjs",
+    "predev": "bun run prepare-assets",
+    "dev": "bun --bun vite",
+    "prebuild": "bun run prepare-assets",
+    "build": "tsc --noEmit && bun --bun vite build && bun scripts/check-no-test-hooks.mjs",
+    "preview": "bun --bun vite preview",
+    "typecheck": "bun run prepare-assets && bun check --no-script",
+    "typecheck:tsc": "bun run prepare-assets && tsc --noEmit",
+    "test": "bun --bun vitest run",
+    "e2e": "bun --bun playwright test",
+    "build:e2e": "bun run prepare-assets && tsc --noEmit && bun --bun vite build --mode e2e --outDir dist-e2e"
   },
   "dependencies": {
     "@fontsource/geist": "5.3.0",

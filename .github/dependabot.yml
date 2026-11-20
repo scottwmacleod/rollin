@@ -12,12 +12,12 @@ updates:
           - "minor"
           - "patch"
 
-  - package-ecosystem: "npm"
+  - package-ecosystem: "bun"
     directory: "/"
     schedule:
       interval: "weekly"
     groups:
-      web-npm-minor-patch:
+      web-bun-minor-patch:
         update-types: ["minor", "patch"]
     ignore:
       # Beta library pinned behind apps/web/src/ui; upgrade by hand.

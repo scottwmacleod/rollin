@@ -1,7 +1,7 @@
 // Generates ui/tokens.css from ui/tokens.json.
 //
-//   node ui/generate-tokens.mjs          write ui/tokens.css
-//   node ui/generate-tokens.mjs --check  fail if ui/tokens.css has drifted
+//   bun ui/generate-tokens.mjs          write ui/tokens.css
+//   bun ui/generate-tokens.mjs --check  fail if ui/tokens.css has drifted
 //
 // tokens.json holds only rollin's own sizes; colour, type, spacing, radius and
 // motion come from sm-core (vendor/sm-core, checked by verify.mjs). Never
@@ -37,7 +37,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (process.argv.includes("--check")) {
     const have = readFileSync(cssPath, "utf8");
     if (have !== want) {
-      console.error("ui/tokens.css is out of date with ui/tokens.json; run `npm run tokens`");
+      console.error("ui/tokens.css is out of date with ui/tokens.json; run `bun run tokens`");
       process.exit(1);
     }
   } else {

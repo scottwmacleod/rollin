@@ -46,7 +46,7 @@ export default defineConfig({
   ],
   webServer: {
     command:
-      "npm run build:e2e && npx vite preview --outDir dist-e2e --host 127.0.0.1 --port 4173 --strictPort",
+      "bun run build:e2e && bun --bun vite preview --outDir dist-e2e --host 127.0.0.1 --port 4173 --strictPort",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

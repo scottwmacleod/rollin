@@ -10,7 +10,7 @@ const report = roll("4d6dl1 # strength", dieSource);
 
 ## Tests
 
-`npm test --workspace @rollin/engine` runs three suites:
+`bun run --filter @rollin/engine test` runs three suites:
 
 - **`roll.test.ts`**: behaviour per glossary concept.
 - **`properties.test.ts`**: fast-check properties, plus a fuzz over random valid formulas that must never throw or hang.
