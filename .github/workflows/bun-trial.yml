@@ -1,0 +1,75 @@
+name: bun trial
+
+# Temporary measurement, not for merge: the whole toolchain on npm + Node
+# against the same steps on bun (package manager and runtime), side by side on
+# the same commit. Five runs per tool on ubuntu-latest. Each step prints a
+# `TIMING <step> <ms>` line; the medians go in the PR body. The bun side also
+# builds the Vercel preview with bun (vercel.json), to check Vercel copes.
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/bun-trial.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trial:
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: [npm, bun]
+        run: [1, 2, 3, 4, 5]
+    name: ${{ matrix.tool }} ${{ matrix.run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: true
+      TOOL: ${{ matrix.tool }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+
+      - name: Measure
+        shell: bash
+        run: |
+          set -euo pipefail
+          t() { local name=$1; shift; local s e; s=$(date +%s%N); "$@"; e=$(date +%s%N); echo "TIMING $name $(( (e - s) / 1000000 ))"; }
+          if [ "$TOOL" = npm ]; then RUN="npx"; else RUN="bun --bun x"; fi
+          if [ "$TOOL" = npm ]; then JS="node"; else JS="bun"; fi
+
+          install() {
+            if [ "$TOOL" = npm ]; then npm ci --no-audit --no-fund --cache "$1" ${2:-}; else BUN_INSTALL_CACHE_DIR="$1" bun install --frozen-lockfile; fi
+          }
+          t install-cold install "$RUNNER_TEMP/pkg"
+          rm -rf node_modules packages/*/node_modules apps/*/node_modules
+          t install-warm install "$RUNNER_TEMP/pkg" --prefer-offline
+          git diff --exit-code -- package-lock.json bun.lock
+
+          t tokens-check $JS ui/generate-tokens.mjs --check
+          (cd apps/web && $JS scripts/copy-tokens.mjs)
+          t typecheck bash -c "(cd packages/engine && bun check --no-script) && (cd apps/web && bun check --no-script)"
+          t lint npx biome lint .
+          # Same files both ways. bun fmt's output differs from Biome's on a few files, so its exit code is ignored.
+          if [ "$TOOL" = npm ]; then t format npx biome format apps/web/src packages/engine/src; else t format bash -c "bun fmt --check --print-width=100 apps/web/src packages/engine/src || true"; fi
+          t test-engine bash -c "cd packages/engine && $RUN vitest run"
+          t test-web bash -c "cd apps/web && $RUN vitest run"
+          t build bash -c "cd apps/web && $RUN vite build"
+
+          # Dev server: time from start to the first 200 on /.
+          (cd apps/web && $RUN vite --port 5173 --strictPort > "$RUNNER_TEMP/dev.log" 2>&1 &)
+          s=$(date +%s%N)
+          until curl -sf -o /dev/null http://127.0.0.1:5173/; do sleep 0.05; done
+          e=$(date +%s%N); echo "TIMING dev-ready $(( (e - s) / 1000000 ))"
+          pkill -f "vite --port 5173" || true
+
+          npx playwright install --with-deps chromium > /dev/null
+          (cd apps/web && $RUN vite build --mode e2e --outDir dist-e2e > /dev/null)
+          t e2e bash -c "cd apps/web && $RUN playwright test --reporter=dot"
