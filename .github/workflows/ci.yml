@@ -22,7 +22,8 @@ jobs:
   web:
     uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@v26.11.11
     with:
-      checks: npm run tokens:check
+      package-manager: bun
+      checks: bun run tokens:check
       typecheck-command: bun run typecheck
       e2e: true
       skip-paths: '^(docs/|\.claude/|\.github/workflows/(auto-merge|audit|behind|dependabot-automerge|tsc)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
@@ -33,6 +34,7 @@ jobs:
       contents: read
       pull-requests: write # one bundle-size comment per PR
     with:
+      package-manager: bun
       dist-dir: apps/web/dist
       js-kb: 190
       css-kb: 55

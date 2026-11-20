@@ -27,13 +27,13 @@ The decisions behind these are in [`docs/adr/`](docs/adr/).
 
 ## Setting up
 
-You need Node 26 (the version in `.nvmrc`) and [Bun](https://bun.sh) 1.4.4, which runs the typecheck. We use [`just`](https://github.com/casey/just) as the task runner, but every recipe is a short list of `npm` commands you can run yourself.
+You need [Bun](https://bun.sh) 1.4.4 (the version in `package.json`'s `packageManager`), which installs packages and runs every script, and Node 26 (the version in `.nvmrc`) for the sm-core copy check. We use [`just`](https://github.com/casey/just) as the task runner, but every recipe is a short list of `bun` commands you can run yourself.
 
 ```sh
 git clone https://github.com/scottwmacleod/rollin
 cd rollin
-npm ci
-just web-dev    # or: npm --workspace rollin-web run dev
+bun install
+just web-dev    # or: bun run dev
 ```
 
 ## Checks

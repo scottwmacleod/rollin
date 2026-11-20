@@ -1,6 +1,6 @@
 name: tsc fallback
 
-# `npm run typecheck` uses `bun check`. This runs plain `tsc --noEmit` weekly
+# `bun run typecheck` uses `bun check`. This runs plain `tsc --noEmit` weekly
 # so any gap between the two shows up. Not a required check; a red run here
 # means bun check missed an error tsc found, so file it and compare.
 
@@ -19,11 +19,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version-file: .nvmrc
-          cache: npm
+          bun-version-file: package.json
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
       - name: Typecheck with tsc
-        run: npm run typecheck:tsc
+        run: bun run typecheck:tsc

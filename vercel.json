@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "npm ci",
-  "buildCommand": "npm run build",
+  "installCommand": "curl -fsSL https://bun.sh/install | bash -s bun-v1.4.4 && ~/.bun/bin/bun install --frozen-lockfile",
+  "buildCommand": "~/.bun/bin/bun --bun run build",
   "outputDirectory": "apps/web/dist",
   "rewrites": [
     { "source": "/_sm/static/:path(.*)", "destination": "https://us-assets.i.posthog.com/static/:path" },

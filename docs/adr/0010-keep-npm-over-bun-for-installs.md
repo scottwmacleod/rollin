@@ -1,5 +1,7 @@
 # Keep npm over bun for installs
 
+**Superseded by [ADR-0012](0012-switch-to-bun.md)** on 2026-11-20.
+
 rollin keeps npm as its package manager. bun was trialled side by side on the same commit (#299, PR #310) and was faster, but not by enough to pay for switching the whole suite. Decided on 2026-11-18. Bun stays in use as the typechecker (`bun check --no-script`, #301); that choice is separate.
 
 **Numbers.** rollin's two workspaces, 78 packages, Node 26.13.1, bun 1.4.4, npm 10.9.9. CI is ten jobs per tool on `ubuntu-latest` in one run; GitHub reports step times in whole seconds. Cold means an empty package cache; warm means the package cache restored from `actions/cache` (restore plus install).

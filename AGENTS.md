@@ -6,11 +6,13 @@ The rules every sm_ repo shares are in [`docs/agents/sm-conventions.md`](docs/ag
 
 ## Definition of done
 
-`just check` passes (it runs `npm run check` plus the sm-core copy check, the same gates as the required `ci` check): the design-token drift check, typecheck, Biome, Vitest and Playwright with axe. Only `apps/web/src/ui` may import `@ui-sdk/*`. The parity fixtures in `packages/engine/fixtures/parity` are frozen; a change that alters one is a change to the engine's behaviour.
+`just check` passes (it runs `bun run check` plus the sm-core copy check, the same gates as the required `ci` check): the design-token drift check, typecheck, Biome, Vitest and Playwright with axe. Only `apps/web/src/ui` may import `@ui-sdk/*`. The parity fixtures in `packages/engine/fixtures/parity` are frozen; a change that alters one is a change to the engine's behaviour.
 
-Typecheck runs `bun check --no-script` (Bun 1.4.4). `npm run typecheck:tsc` is the `tsc --noEmit` fallback; the weekly `tsc fallback` workflow runs it so a gap between the two shows up. If `bun check` misbehaves, switch the `typecheck` scripts back to `tsc --noEmit`.
+Bun 1.4.4 is the package manager and the runtime (ADR-0012): `bun install`, `bun run <script>` and `bun --bun x <tool>`, never npm, npx or node. The version lives only in `packageManager` in `package.json`. Vitest and Biome stay.
 
-Colour, type, spacing, radius and motion come from the sm-core copy (`vendor/sm-core/sm-core.css` and `sm-tailwind.css`), checked by `verify.mjs`. Only rollin's own sizes live in `ui/tokens.json`, which generates `--rollin-*` variables in `ui/tokens.css`; `npm run tokens:check` fails if they drift.
+Typecheck runs `bun check --no-script`. `bun run typecheck:tsc` is the `tsc --noEmit` fallback; the weekly `tsc fallback` workflow runs it so a gap between the two shows up. If `bun check` misbehaves, switch the `typecheck` scripts back to `tsc --noEmit`.
+
+Colour, type, spacing, radius and motion come from the sm-core copy (`vendor/sm-core/sm-core.css` and `sm-tailwind.css`), checked by `verify.mjs`. Only rollin's own sizes live in `ui/tokens.json`, which generates `--rollin-*` variables in `ui/tokens.css`; `bun run tokens:check` fails if they drift.
 
 ## Merging
 
@@ -38,4 +40,4 @@ Repo rules for `/implement`: queue, branch, PR and merge mechanics, limits, and 
 
 The UI skills, Modern Web Guidance (agent-browser) and prune-tests live in `.claude/skills/`, with versions in `skills-lock.json`. When to use each, the pinned versions and the setup are in `sm-conventions.md`. Update them with `npx skills update -p -y`.
 
-For browser checks in rollin, `npm run build && npm run preview --workspace rollin-web` serves the built app on port 4173.
+For browser checks in rollin, `bun run build && bun run --filter rollin-web preview` serves the built app on port 4173.

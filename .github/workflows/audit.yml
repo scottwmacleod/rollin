@@ -1,11 +1,11 @@
 name: audit
 
-# npm audit, from sm-core. Not a required check: a new advisory can turn it
+# bun audit, from sm-core. Not a required check: a new advisory can turn it
 # red on an unrelated PR.
 
 on:
   pull_request:
-    paths: ["**/package.json", "**/package-lock.json"]
+    paths: ["**/package.json", "bun.lock"]
   push:
     branches: [main]
   schedule:
@@ -17,3 +17,5 @@ permissions:
 jobs:
   audit:
     uses: scottwmacleod/sm-core/.github/workflows/audit.yml@v26.11.11
+    with:
+      package-manager: bun

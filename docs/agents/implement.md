@@ -51,7 +51,7 @@ Checked by the main thread against the PR diff. If any fires: open the PR with t
 The `hold` label is the stop. `.github/workflows/auto-merge.yml` (sm-core's shared workflow) never turns auto-merge on for a PR that carries it; adding the label later turns auto-merge off, and removing it turns auto-merge back on. A human merges a held PR by removing the label or merging it by hand. Never remove `hold` yourself.
 
 - Renames or removes the `ci` job in `.github/workflows/ci.yml`, which is the required check, or changes the sm-core tag its shared workflows run at.
-- Adds or edits anything that publishes or releases: a release workflow, `npm publish`, tokens, `secrets.*`.
+- Adds or edits anything that publishes or releases: a release workflow, `bun publish`, tokens, `secrets.*`.
 - Uses `pull_request_target` or `workflow_run`, or widens workflow `permissions:` beyond `contents: read`.
 - Edits this file or `.claude/settings.json` (the loop's own rules).
 
