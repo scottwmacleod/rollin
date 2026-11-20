@@ -788,7 +788,6 @@
               "total": 7
             },
             {
-              "crit": "hit",
               "expr": {
                 "dice": [
                   {
@@ -838,7 +837,6 @@
           "preset": null,
           "rolls": [
             {
-              "crit": "hit",
               "expr": {
                 "first": {
                   "dice": [
@@ -3378,6 +3376,456 @@
       },
       "line": "3d20+5, 1d8+3",
       "name": "crit_range_never_a_check"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 20,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "twenty",
+                      "status": "kept",
+                      "value": 20
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 20,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 25,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 25
+            }
+          ]
+        }
+      },
+      "line": "d20+5",
+      "name": "lone_check_natural_20_no_crit"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 1,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "one",
+                      "status": "kept",
+                      "value": 1
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 1,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 6,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 6
+            }
+          ]
+        }
+      },
+      "line": "d20+5",
+      "name": "lone_check_natural_1_no_crit"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 20,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "crit": "hit",
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "twenty",
+                      "status": "kept",
+                      "value": 20
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 20,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 25,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 25
+            }
+          ]
+        }
+      },
+      "line": "d20+5 atk",
+      "name": "lone_check_marked_atk_crits"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 1,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "crit": "miss",
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "one",
+                      "status": "kept",
+                      "value": 1
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 1,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 6,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 6
+            }
+          ]
+        }
+      },
+      "line": "d20+5 atk",
+      "name": "lone_check_marked_atk_misses"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 20,
+          "sides": 20
+        },
+        {
+          "face": 20,
+          "sides": 20
+        },
+        {
+          "face": 3,
+          "sides": 8
+        },
+        {
+          "face": 4,
+          "sides": 8
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "twenty",
+                      "status": "kept",
+                      "value": 20
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 20,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 2
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 22,
+                "type": "chain"
+              },
+              "formula": "d20+2",
+              "total": 22
+            },
+            {
+              "crit": "hit",
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "twenty",
+                      "status": "kept",
+                      "value": 20
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 20,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 25,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "total": 25
+            },
+            {
+              "doubled": true,
+              "expr": {
+                "dice": [
+                  {
+                    "status": "kept",
+                    "value": 3
+                  },
+                  {
+                    "status": "kept",
+                    "value": 4
+                  }
+                ],
+                "sides": 8,
+                "subtotal": 7,
+                "term": "1d8",
+                "type": "dice"
+              },
+              "formula": "1d8",
+              "total": 7
+            }
+          ]
+        }
+      },
+      "line": "d20+2, d20+5, 1d8",
+      "name": "check_then_attack_only_attack_crits"
+    },
+    {
+      "context": {
+        "character": {
+          "name": "hero",
+          "presets": {},
+          "system": "dnd5e",
+          "vars": {}
+        }
+      },
+      "draws": [
+        {
+          "face": 20,
+          "sides": 20
+        },
+        {
+          "face": 1,
+          "sides": 20
+        }
+      ],
+      "expected": {
+        "ok": {
+          "hints": [],
+          "kind": "rolls",
+          "lines": [],
+          "preset": null,
+          "rolls": [
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "twenty",
+                      "status": "kept",
+                      "value": 20
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 20,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 25,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "iteration": 1,
+              "total": 25
+            },
+            {
+              "expr": {
+                "first": {
+                  "dice": [
+                    {
+                      "natural": "one",
+                      "status": "kept",
+                      "value": 1
+                    }
+                  ],
+                  "sides": 20,
+                  "subtotal": 1,
+                  "term": "d20",
+                  "type": "dice"
+                },
+                "rest": [
+                  {
+                    "node": {
+                      "type": "number",
+                      "value": 5
+                    },
+                    "op": "+"
+                  }
+                ],
+                "total": 6,
+                "type": "chain"
+              },
+              "formula": "d20+5",
+              "iteration": 2,
+              "total": 6
+            }
+          ]
+        }
+      },
+      "line": "2x d20+5",
+      "name": "repeat_lone_checks_no_crit"
     }
   ],
   "format_version": 1

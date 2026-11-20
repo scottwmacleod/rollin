@@ -107,13 +107,14 @@ Object keys are written in sorted order, so compare parsed JSON, not text.
 | `characters`       | `@variable` in every position a number can go.                                                                          |
 | `presets`          | Rolling a preset, shadowing, variables resolved when rolled, near misses.                                               |
 | `d20_checks`       | The d20 check rule, with every crit face.                                                                               |
-| `dnd5e`            | Crit hits and misses, damage doubling, the `atk` and `dmg` markers, repeats, `crit` suffix, crit range, default system. |
+| `dnd5e`            | Crit hits and misses, damage doubling, lone checks that never crit, the `atk` and `dmg` markers, repeats, `crit` suffix, crit range, default system. |
 
 ### The d20 check rule
 
 A check is `1d20`, or `2d20` keeping one die (`adv`, `dis`, `kh1`, `kl1`,
-`dl1`, `dh1`). Under a game system a check pairs as an attack and can crit; the
-kept die is flagged `natural` on a 20 or a 1. `d20_checks` has, for every
+`dl1`, `dh1`). Under a game system a check followed by damage (or marked
+`atk`) pairs as an attack and can crit; a check on its own never does. The
+kept die is flagged `natural` on a 20 or a 1 either way. `d20_checks` has, for every
 check form, a natural 20, a natural 1 and a face between, plus the dropped-die
 cases (a 20 or a 1 on a die that did not count is nothing).
 

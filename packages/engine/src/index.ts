@@ -70,23 +70,41 @@ export interface RollContext {
 /**
  * Pairs attacks with the damage that follows them. Start a new one for each
  * `Nx` repeat. With no game system every roll stands alone.
+ *
+ * Only an attack can crit, and a d20 check is only an attack when damage
+ * follows it before the next check, or when it is marked `atk`. A lone check
+ * (a skill check or a save) gets no verdict, though its die is still natural.
  */
-function pairing(system: GameSystem | undefined, critRange: number) {
+function pairing(system: GameSystem | undefined, critRange: number, rolls: Roll[]) {
+  /** The last check's verdict, waiting for damage to make it an attack. */
+  let pending: { at: number; verdict: "hit" | "miss" } | undefined;
   let attack: "hit" | "miss" | undefined;
   const role = (spec: RollAst): Role | undefined => (system ? roleOf(spec) : undefined);
+  const mark = (at: number, verdict: "hit" | "miss"): void => {
+    const rolled = rolls[at];
+    if (rolled) rolls[at] = { ...rolled, crit: verdict };
+  };
   return {
     /** Whether `spec`'s dice double: by its `crit` suffix, or as damage after a critical hit. */
-    doubles: (spec: RollAst): boolean =>
-      spec.crit === true || (role(spec) === "damage" && attack === "hit"),
-    /** Records the verdict on an evaluated attack. */
-    judge(spec: RollAst, rolled: Roll): void {
+    doubles(spec: RollAst): boolean {
+      if (role(spec) === "damage" && pending) {
+        mark(pending.at, pending.verdict);
+        pending = undefined;
+      }
+      return spec.crit === true || (role(spec) === "damage" && attack === "hit");
+    },
+    /** Weighs an evaluated check, held at `rolls[at]`; the verdict lands once it proves an attack. */
+    judge(spec: RollAst, rolled: Roll, at: number): void {
       if (role(spec) !== "attack") return;
       const die = checkDie(rolled.expr);
       let verdict: "hit" | "miss" | undefined;
       if (findNatural(rolled.expr) === "one") verdict = "miss";
       else if (die && die.value >= critRange) verdict = "hit";
-      if (verdict) rolled.crit = verdict;
       attack = verdict;
+      pending = undefined;
+      if (!verdict) return;
+      if (spec.role === "attack") mark(at, verdict);
+      else pending = { at, verdict };
     },
   };
 }
@@ -125,11 +143,12 @@ function rollText(
       const rules = pairing(
         character.system ?? defaultSystem,
         character.critRange ?? MAX_CRIT_RANGE,
+        rolls,
       );
       for (const ast of formula.rolls) {
         const rolled = evaluate(ast, dice, rules.doubles(ast));
-        rules.judge(ast, rolled);
         rolls.push(formula.repeat === undefined ? rolled : { ...rolled, iteration });
+        rules.judge(ast, rolled, rolls.length - 1);
       }
     }
     return { ok: { kind: "rolls", rolls, hints: [], lines: [], preset } };
