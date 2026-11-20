@@ -124,18 +124,6 @@ button,
   }
 }
 
-/* People who ask for less motion get none: transitions and animations finish at once. */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
 /* A 16px fade (a mask, no shadow) at the top or bottom of a scroll area, only
    while there is content past that edge (useScrollEdges sets the attributes). */
 .scroll-fade {
