@@ -110,7 +110,7 @@ export function PresetDialog({
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open closeOnOutsidePress={false} onOpenChange={(open) => !open && onClose()}>
       <DialogBackdrop className="fixed inset-0 bg-ground/60" />
       <DialogContent className={OVERLAY}>
         <form onSubmit={save} className="flex flex-col gap-4">
