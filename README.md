@@ -24,7 +24,7 @@ Characters, variables, presets, settings and the roll log live in your browser's
 
 ## Development
 
-rollin is a TypeScript monorepo (Bun 1.4.4 workspaces): the dice engine in `packages/engine` (no UI, no browser APIs) and a React, Vite and Tailwind web app in `apps/web`. Design decisions are in [docs/adr](docs/adr) and domain terms in [GLOSSARY.md](GLOSSARY.md). Colours, type and spacing come from the shared [sm-core](https://github.com/scottwmacleod/sm-core) copy in `vendor/sm-core`; rollin's own sizes are in `ui/tokens.json`.
+rollin is a TypeScript monorepo (Bun 1.4.5 workspaces): the dice engine in `packages/engine` (no UI, no browser APIs) and a React, Vite and Tailwind web app in `apps/web`. Design decisions are in [docs/adr](docs/adr) and domain terms in [GLOSSARY.md](GLOSSARY.md). Colours, type and spacing come from the shared [sm-core](https://github.com/scottwmacleod/sm-core) copy in `vendor/sm-core`; rollin's own sizes are in `ui/tokens.json`.
 
 ```sh
 bun install

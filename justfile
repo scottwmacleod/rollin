@@ -1,5 +1,5 @@
 # Local gates; `check` runs the same gates as the required `ci` check
-# (.github/workflows/ci.yml). Needs Bun 1.4.4 (the version in package.json's
+# (.github/workflows/ci.yml). Needs Bun 1.4.5 (the version in package.json's
 # packageManager); Node only runs the sm-core copy check.
 
 check: web-check
