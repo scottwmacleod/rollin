@@ -20,7 +20,7 @@
     "e2e": "bun run --filter rollin-web e2e"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.7",
+    "@biomejs/biome": "2.6.8",
     "typescript": "7.0.2",
     "vitest": "5.1.0"
   }
