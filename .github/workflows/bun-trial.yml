@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          t() { local name=$1; shift; local s e; s=$(date +%s%N); "$@"; e=$(date +%s%N); echo "TIMING $name $(( (e - s) / 1000000 ))"; }
+          t() { local name=$1; shift; local s e; s=$(date +%s%N); "$@"; e=$(date +%s%N); echo "TIMING $name $(( (e - s) / 1000000 ))" | tee -a "$RUNNER_TEMP/timings"; }
           if [ "$TOOL" = npm ]; then RUN="npx"; else RUN="bun --bun x"; fi
           if [ "$TOOL" = npm ]; then JS="node"; else JS="bun"; fi
 
@@ -64,12 +64,16 @@ jobs:
           t build bash -c "cd apps/web && $RUN vite build"
 
           # Dev server: time from start to the first 200 on /.
-          (cd apps/web && $RUN vite --port 5173 --strictPort > "$RUNNER_TEMP/dev.log" 2>&1 &)
+          (cd apps/web && $RUN vite --host 127.0.0.1 --port 5173 --strictPort > "$RUNNER_TEMP/dev.log" 2>&1 & echo $! > "$RUNNER_TEMP/dev.pid")
           s=$(date +%s%N)
-          until curl -sf -o /dev/null http://127.0.0.1:5173/; do sleep 0.05; done
-          e=$(date +%s%N); echo "TIMING dev-ready $(( (e - s) / 1000000 ))"
-          pkill -f "vite --port 5173" || true
+          timeout 60 bash -c 'until curl -sf -o /dev/null http://127.0.0.1:5173/; do sleep 0.05; done' || { cat "$RUNNER_TEMP/dev.log"; exit 1; }
+          e=$(date +%s%N); echo "TIMING dev-ready $(( (e - s) / 1000000 ))" | tee -a "$RUNNER_TEMP/timings"
+          kill "$(cat "$RUNNER_TEMP/dev.pid")" 2>/dev/null || true
 
           npx playwright install --with-deps chromium > /dev/null
           (cd apps/web && $RUN vite build --mode e2e --outDir dist-e2e > /dev/null)
           t e2e bash -c "cd apps/web && $RUN playwright test --reporter=dot"
+
+      - name: Timings
+        if: always()
+        run: cat "$RUNNER_TEMP/timings" || true
