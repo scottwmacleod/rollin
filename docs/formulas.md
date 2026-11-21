@@ -156,7 +156,7 @@ A **preset** is a named formula saved once and rolled by name. A preset belongs 
 
 Presets resolve their variables **when rolled**, not when saved, so changing `str` changes `atk`. Saving checks the formula's syntax only when it uses `@` (the variable may not exist yet); a formula without `@` is checked fully.
 
-**Names** are stored lowercase and must match `[a-z][a-z0-9_-]*`. A name is rejected when it is a reserved dice keyword (`adv dis dl dh kl kh r rr p f d`), or would itself parse as a dice formula (`d20`, `D6`).
+**Names** are stored lowercase and must match `[a-z][a-z0-9_-]*`. A name is rejected when it is `roll` (which can come before a preset's name), a reserved dice keyword (`adv dis dl dh kl kh r rr p f d`), or would itself parse as a dice formula (`d20`, `D6`).
 
 ## Characters
 

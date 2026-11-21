@@ -1,6 +1,12 @@
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
-import { checkFormula, roll, scriptedDice, validatePresetName } from "./index";
+import {
+  checkFormula,
+  roll,
+  scriptedDice,
+  validateCharacterName,
+  validatePresetName,
+} from "./index";
 
 describe("preset names follow the Rust rules", () => {
   test.each([
@@ -17,8 +23,8 @@ describe("preset names follow the Rust rules", () => {
     ["_x", "shape"],
     ["has space", "shape"],
     ["héros", "shape"],
-    ["save", "command_word"],
-    ["ROLL", "command_word"],
+    ["roll", "reserved_word"],
+    ["ROLL", "reserved_word"],
     ["kh", "dice_keyword"],
     ["adv", "dice_keyword"],
     ["d6", "parses_as_formula"],
@@ -29,10 +35,13 @@ describe("preset names follow the Rust rules", () => {
     expect("error" in result && result.error.rule).toBe(rule);
   });
 
-  test("the reason names the command words", () => {
-    const result = validatePresetName("char");
-    expect("error" in result && result.error.reason).toContain("command word (save, presets,");
-  });
+  test.each(["save", "help", "history", "char", "new", "rename"])(
+    "%s, a word the retired command line reserved, is a valid name",
+    (raw) => {
+      expect(validatePresetName(raw)).toEqual({ name: raw });
+      expect(validateCharacterName(raw)).toEqual({ name: raw });
+    },
+  );
 });
 
 describe("rolling a saved preset", () => {

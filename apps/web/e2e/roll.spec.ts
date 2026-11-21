@@ -490,8 +490,8 @@ test.describe("global presets", () => {
     const dialog = page.getByRole("dialog");
     const save = dialog.getByRole("button", { name: "Save", exact: true });
 
-    await dialog.getByLabel("Name").fill("save");
-    await expect(dialog).toContainText("it is a command word");
+    await dialog.getByLabel("Name").fill("roll");
+    await expect(dialog).toContainText("it is reserved");
     await expect(save).toBeDisabled();
     await dialog.getByLabel("Name").fill("d6");
     await expect(dialog).toContainText("it would parse as the dice formula d6");
@@ -596,7 +596,7 @@ test.describe("characters and variables", () => {
     await page.getByRole("button", { name: "New character" }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Name").fill("roll");
-    await expect(dialog).toContainText("it is a command word");
+    await expect(dialog).toContainText("it is reserved");
     await expect(dialog.getByRole("button", { name: "Create" })).toBeDisabled();
     await dialog.getByLabel("Name").fill("Aria");
     expect((await (await axe(page)).analyze()).violations).toEqual([]);

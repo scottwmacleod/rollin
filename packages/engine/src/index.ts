@@ -15,8 +15,8 @@ export { spanOf } from "./errors";
 export { CAP_LIMITS, MAX_INT } from "./limits";
 export type { NameError, NameRule } from "./names";
 export {
-  COMMAND_WORDS,
   checkFormula,
+  RESERVED_WORD,
   validateCharacterName,
   validatePresetName,
   validateVariableName,
