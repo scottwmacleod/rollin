@@ -24,7 +24,7 @@ jobs:
       skip-paths: '^(docs/|\.claude/|\.github/workflows/(auto-merge|audit|behind|dependabot-automerge|tsc)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
 
   budgets:
-    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.21
+    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.22
     permissions:
       contents: read
       pull-requests: write
