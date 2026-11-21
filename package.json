@@ -18,7 +18,8 @@
     "format": "bun fmt --no-script .",
     "test": "bun test --parallel",
     "build": "bun run --filter rollin-web build",
-    "e2e": "bun run --filter rollin-web e2e"
+    "e2e": "bun run --filter rollin-web e2e",
+    "pre-push": "bun run tokens:check && bun run typecheck && bun run lint && bun run test && node vendor/sm-core/verify.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",

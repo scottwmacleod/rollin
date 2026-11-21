@@ -1,0 +1,11 @@
+amends "vendor/sm-core/tooling/hooks/sm.pkl"
+
+hooks {
+  ["pre-push"] {
+    steps {
+      ["check"] {
+        check = "bun run --silent pre-push"
+      }
+    }
+  }
+}
