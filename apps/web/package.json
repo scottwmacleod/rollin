@@ -13,6 +13,7 @@
     "typecheck": "bun run prepare-assets && bun check --no-script",
     "typecheck:tsc": "bun run prepare-assets && tsc --noEmit",
     "e2e": "bun --bun playwright test",
+    "e2e:changed": "bun -e \"process.exitCode = await (await import('./scripts/e2e-changed.ts')).main()\"",
     "build:e2e": "bun run prepare-assets && tsc --noEmit && bun --bun vite build --mode e2e --outDir dist-e2e"
   },
   "dependencies": {
