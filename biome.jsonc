@@ -4,25 +4,16 @@
   "linter": {
     "rules": {
       "complexity": {
-        // The reduced-motion reset must beat every component's own animation and transition values.
         "noImportantStyles": "off"
       },
       "suspicious": {
-        // Every keyed list here is a fixed, ordered rendering of one roll or one tree level, so the
-        // index is the identity; a content key would collide on repeated dice or terms.
         "noArrayIndexKey": "off"
       },
       "correctness": {
-        // The effects are deliberate: refs, stable callbacks and a roll counter trigger them on
-        // purpose. Adding the suggested dependencies would change when they run.
         "useExhaustiveDependencies": "off"
       },
       "a11y": {
-        // role="group" divs avoid fieldset's default border, padding and legend layout, so the
-        // swap would change how the controls look.
         "useSemanticElements": "off",
-        // The completion list is a combobox listbox driven by aria-activedescendant from the
-        // input; focus stays in the input, so the options must not be focusable or take keys.
         "noNoninteractiveElementToInteractiveRole": "off",
         "useFocusableInteractive": "off",
         "useKeyWithClickEvents": "off"

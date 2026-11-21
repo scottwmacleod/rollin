@@ -1,8 +1,5 @@
 name: audit
 
-# bun audit, from sm-core. Not a required check: a new advisory can turn it
-# red on an unrelated PR.
-
 on:
   pull_request:
     paths: ["**/package.json", "bun.lock"]
@@ -16,6 +13,6 @@ permissions:
 
 jobs:
   audit:
-    uses: scottwmacleod/sm-core/.github/workflows/audit.yml@v26.11.13
+    uses: scottwmacleod/sm-core/.github/workflows/audit.yml@v26.11.15
     with:
       package-manager: bun

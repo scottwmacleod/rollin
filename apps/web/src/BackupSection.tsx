@@ -32,7 +32,6 @@ const focusRing =
 const secondary = `h-8 max-md:h-11 rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body ${focusRing}`;
 const primary = `h-8 max-md:h-11 rounded-1 bg-signal px-3 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover ${focusRing}`;
 
-/** Where Add has got to: the clashes to ask about, what has been chosen so far, and which one is showing. */
 interface Asking {
   incoming: Incoming;
   saved: Saved;
@@ -41,7 +40,6 @@ interface Asking {
   at: number;
 }
 
-/** How a clashing item reads in the prompt: a preset's formula, or a character's counts. */
 const describeContent = (clash: Clash, characters: Character[], globalPresets: PresetMap) => {
   if (clash.kind === "preset") return globalPresets[clash.name] ?? "";
   const c = characters.find((x) => x.name === clash.name);
@@ -51,7 +49,6 @@ const describeContent = (clash: Clash, characters: Character[], globalPresets: P
   return `${plural(vars, "variable")}, ${plural(presets, "preset")}`;
 };
 
-/** Export everything to a file, or replace or add to your data from one. Lives in the settings dialog. */
 export function BackupSection({
   storage,
   onExported,
@@ -71,7 +68,6 @@ export function BackupSection({
   const [asking, setAsking] = useState<Asking | null>(null);
   const [sameForAll, setSameForAll] = useState(false);
   const prompt = useRef<HTMLDivElement>(null);
-  // A second tap while an add is being saved would run it twice.
   const busyRef = useRef(false);
   const [busy, setBusy] = useState(false);
   const hold = (value: boolean) => {
@@ -80,7 +76,6 @@ export function BackupSection({
   };
   const promptAt = asking?.at;
 
-  // Focus goes back to the import button once it is enabled again, which is after the render that closes the prompt.
   const refocus = useRef(false);
   useEffect(() => {
     if (refocus.current && asking === null) {
@@ -89,7 +84,6 @@ export function BackupSection({
     }
   });
 
-  // Each new question puts focus on its first choice.
   useEffect(() => {
     if (promptAt !== undefined) prompt.current?.querySelector("button")?.focus();
   }, [promptAt]);

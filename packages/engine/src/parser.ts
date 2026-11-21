@@ -1,8 +1,3 @@
-/**
- * Parser: tokens to rolls. A roll is arithmetic over terms (dice groups and
- * numbers), parsed by precedence climbing. A port of the Rust parser for dice
- * terms and integer arithmetic; later loops of #216 add the rest of the syntax.
- */
 import {
   type Arith,
   type Cmp,
@@ -36,7 +31,6 @@ import { MAX_DEPTH, MAX_DICE_PER_ROLL, MAX_DICE_PER_TERM, MAX_REPEAT, MAX_SIDES 
 import type { Source } from "./source";
 import type { BinOp, Span } from "./types";
 
-/** `d%` is a d100. */
 const PERCENTILE_SIDES = 100;
 
 const SELECT_WORDS = new Map<string, SelectKind>([
@@ -46,15 +40,8 @@ const SELECT_WORDS = new Map<string, SelectKind>([
   ["kh", "keep_highest"],
 ]);
 
-/** A variable lookup: lowercase name to value, or `undefined` when there is none. */
 export type Lookup = (name: string) => number | undefined;
 
-/**
- * Parses a formula. `@name` variables are resolved through `vars` first: each
- * becomes a number token that keeps the span of the `@name`, so an error still
- * points at it. An error that touches variables comes back wrapped with the
- * values they had, so the message can mention them.
- */
 export function parse(source: Source, vars: Lookup = () => undefined): FormulaAst {
   const tokens = tokenize(source);
   const bound: { name: string; value: number; span: Span }[] = [];
@@ -127,7 +114,6 @@ const BINOPS: Partial<Record<Token["kind"], BinOp>> = {
   slash: "/",
 };
 
-/** A success count is its own kind of result and cannot be an operand. */
 function rejectCount(operand: Arith): void {
   if (isCount(operand)) throw countInArithmetic(operand.span);
 }
@@ -140,7 +126,6 @@ const COMPARISONS: Partial<Record<Token["kind"], Cmp>> = {
   eq: "eq",
 };
 
-/** Joins `lhs op rhs`, extending a flat chain when the operator's level matches. */
 function link(lhs: Arith, op: BinOp, rhs: Arith): Arith {
   const end = rhs.span.end;
   if (lhs.kind.type === "chain") {
@@ -159,9 +144,7 @@ function link(lhs: Arith, op: BinOp, rhs: Arith): Arith {
 
 class Parser {
   private pos = 0;
-  /** Parentheses and unary minus signs currently open. */
   private depth = 0;
-  /** Dice rolled so far by the roll being parsed. */
   private itemDice = 0;
 
   constructor(
@@ -173,7 +156,6 @@ class Parser {
     const repeat = this.parseRepeat();
     const rolls: RollAst[] = [];
     for (;;) {
-      // Empty rolls are ignored, so `d20,,d6` and a trailing comma are fine.
       while (this.peek()?.kind === "comma") this.pos += 1;
       if (this.atEnd()) break;
       const lead = this.tokens[this.pos];
@@ -184,7 +166,6 @@ class Parser {
       this.itemDice = 0;
       const expr = this.parseExpr(1);
       const stop = this.prevEnd();
-      // `atk` / `dmg` and `crit` may each appear once, in either order.
       let role: Role | undefined;
       let crit = false;
       for (;;) {
@@ -232,7 +213,6 @@ class Parser {
     return repeat === undefined ? { rolls } : { repeat, rolls };
   }
 
-  /** The span of a leading `Nx`. */
   private repeatSpan(): Span {
     return {
       start: this.tokens[0]?.span.start ?? 0,
@@ -240,7 +220,6 @@ class Parser {
     };
   }
 
-  /** Reads a leading `Nx`, returning N. */
   private parseRepeat(): number | undefined {
     const [n, x] = this.tokens;
     if (n?.token.kind !== "number" || x?.token.kind !== "word" || x.token.word !== "x") {
@@ -277,7 +256,6 @@ class Parser {
       const end = this.src.length;
       return syntax(`expected ${expected}, found end of input`, { start: end, end });
     }
-    // A variable already resolved to a number is still a variable to the person who typed it.
     const written = this.src.slice(t.span.start, t.span.end);
     const found = written.startsWith("@") ? `variable ${written}` : describe(t.token);
     return syntax(`expected ${expected}, found ${found}`, t.span);
@@ -290,7 +268,6 @@ class Parser {
     return token.value;
   }
 
-  /** Precedence climbing: parses operators binding at least as tightly as `minPrec`. */
   private parseExpr(minPrec: number): Arith {
     let lhs = this.parseUnary();
     for (;;) {
@@ -306,7 +283,6 @@ class Parser {
     return lhs;
   }
 
-  /** Unary `-` negates and unary `+` is a no-op. */
   private parseUnary(): Arith {
     const token = this.peek();
     if (token?.kind === "minus") {
@@ -325,7 +301,6 @@ class Parser {
     return this.parseOperand();
   }
 
-  /** Opens one more level of nesting at byte offset `at`. */
   private enter(at: number): void {
     this.depth += 1;
     if (this.depth > MAX_DEPTH) {
@@ -363,7 +338,6 @@ class Parser {
     return kind !== undefined && kind in COMPARISONS;
   }
 
-  /** A condition on a face: a comparison then a number, or a bare number meaning equals. */
   private parseCondition(what: string): { cmp: Cmp; value: number } {
     const kind = this.peek()?.kind;
     const cmp = (kind !== undefined && COMPARISONS[kind]) || "eq";
@@ -371,7 +345,6 @@ class Parser {
     return { cmp, value: this.number(what) };
   }
 
-  /** Optional success clause such as `>=8`, with an optional failure clause `f1`. */
   private parseCount(): Success | undefined {
     const isF = (): boolean => {
       const token = this.peek();
@@ -396,7 +369,6 @@ class Parser {
     return { cmp, value, failure };
   }
 
-  /** A parenthesised group, a number or a dice group. */
   private parseOperand(): Arith {
     const start = this.pos;
     if (this.peek()?.kind === "lparen") return this.parseGroup();
@@ -471,7 +443,6 @@ class Parser {
       (c) => c !== undefined,
     );
     const span = { start: countSpan.start, end: this.prevEnd() };
-    // `adv` and `dis` roll two dice.
     if (advantage) count = 2;
     this.itemDice += count;
     if (this.itemDice > MAX_DICE_PER_ROLL) {
@@ -500,17 +471,14 @@ class Parser {
       span,
     };
   }
-  /** Byte offset where the next token starts (the end of the source when there is none). */
   private nextStart(): number {
     return this.here();
   }
 
-  /** The source of the clause parsed since `start`, if there was one. */
   private clauseText(start: number, present: boolean): string | undefined {
     return present ? this.src.slice(start, this.prevEnd()) : undefined;
   }
 
-  /** Optional `r` or `rr` reroll clause with a condition. */
   private parseReroll(sides: number): Reroll | undefined {
     const token = this.peek();
     if (token?.kind !== "word" || (token.word !== "r" && token.word !== "rr")) return undefined;
@@ -530,10 +498,6 @@ class Parser {
     return reroll;
   }
 
-  /**
-   * Optional `!` explode clause: `!` alone explodes on the maximum face, otherwise
-   * a comparison (`>`, `>=`, `<`, `<=`, `=`) and a number follow.
-   */
   private parseExplode(sides: number): Explode | undefined {
     if (this.peek()?.kind !== "bang") return undefined;
     const start = this.here();
@@ -558,7 +522,6 @@ class Parser {
     return explode;
   }
 
-  /** Optional `adv`/`dis` suffix: sugar for rolling two dice and keeping the highest or lowest. */
   private parseAdvantage(count: number, sides: number, termStart: number): SelectKind | undefined {
     const token = this.peek();
     if (token?.kind !== "word" || (token.word !== "adv" && token.word !== "dis")) return undefined;
@@ -573,7 +536,6 @@ class Parser {
     return adv ? "keep_highest" : "keep_lowest";
   }
 
-  /** `adv`/`dis` already keep one die, so a keep/drop clause on either side of it is an error. */
   private rejectSelectWithAdvantage(
     advantage: SelectKind | undefined,
     select: Select | undefined,
@@ -594,7 +556,6 @@ class Parser {
     );
   }
 
-  /** Optional `dl`/`dh`/`kl`/`kh` clause with an optional count (default 1). */
   private parseSelect(count: number): Select | undefined {
     const token = this.peek();
     const kind = token?.kind === "word" ? SELECT_WORDS.get(token.word) : undefined;
@@ -619,7 +580,6 @@ class Parser {
   }
 }
 
-/** Whether `holds` is true for every face from 1 to `sides`. */
 function everyFace(sides: number, holds: (face: number) => boolean): boolean {
   for (let face = 1; face <= sides; face += 1) if (!holds(face)) return false;
   return true;

@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { type DieSource, type RollReport, roll, scriptedDice } from "./index";
 
-/** A die source that always rolls the same face (clamped to the die). */
 const always =
   (face: number): DieSource =>
   (sides) =>
@@ -94,7 +93,6 @@ describe("errors say what and where", () => {
   test("spans are UTF-8 byte offsets, as in the Rust engine", () => {
     const error = failure(roll("2d6 ✓", always(1)));
     expect(error.error).toMatchObject({ kind: "syntax", span: { start: 4, end: 7 } });
-    // A label may hold any text; the offset after it counts bytes, not characters.
     const after = failure(roll("d6 # é, ✓", always(1)));
     expect(after.error).toMatchObject({ span: { start: 9, end: 12 } });
   });

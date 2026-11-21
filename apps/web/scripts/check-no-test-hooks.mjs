@@ -1,5 +1,3 @@
-// Fails the build if the test-only dice hook reached the production bundle
-// (it is dropped at build time unless the mode is "e2e"; see src/dice.ts).
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -1,11 +1,3 @@
-// Generates ui/tokens.css from ui/tokens.json.
-//
-//   bun ui/generate-tokens.mjs          write ui/tokens.css
-//   bun ui/generate-tokens.mjs --check  fail if ui/tokens.css has drifted
-//
-// tokens.json holds only rollin's own sizes; colour, type, spacing, radius and
-// motion come from sm-core (vendor/sm-core, checked by verify.mjs). Never
-// hand-edit tokens.css.
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,7 +6,6 @@ const HEADER =
   "/* rollin: generated from ui/tokens.json. Edit tokens.json, then regenerate. */\n" +
   "/* Product sizes only; everything else comes from sm-core. */\n";
 
-/** Turn the contents of tokens.json into the contents of tokens.css. */
 export function generate(json) {
   const doc = JSON.parse(json);
   const names = new Set();

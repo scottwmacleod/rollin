@@ -9,8 +9,6 @@ import {
   seedPresets,
 } from "./layout";
 
-// Full-width desktop (the chromium project, 1280 wide, mouse and keyboard).
-
 test("the page never scrolls; the newest roll sits above the formula bar after many rolls", async ({
   page,
 }) => {
@@ -45,8 +43,6 @@ test("scrolling up stops following; Jump to newest brings it back", async ({ pag
   });
   await expect(page.getByRole("button", { name: "Jump to newest" })).toBeVisible();
 
-  // A roll made elsewhere does not pull the reader away: simulate by checking the position holds
-  // after the reader scrolls up and nothing is rolled.
   const top = await scroller.evaluate((el) => el.scrollTop);
   expect(top).toBe(0);
 
@@ -54,7 +50,6 @@ test("scrolling up stops following; Jump to newest brings it back", async ({ pag
   await expect(page.getByRole("button", { name: "Jump to newest" })).toHaveCount(0);
   await expectNewestAboveFormulaBar(page, "d20+30");
 
-  // Rolling from the formula bar always returns to the bottom, even from far up.
   await scroller.evaluate((el) => {
     el.scrollTop = 0;
   });
@@ -76,7 +71,6 @@ test("the sidebar scrolls on its own when its lists are long", async ({ page }) 
     el.scrollTop = el.scrollHeight;
   });
   await expect(page.getByRole("button", { name: "preset30 1d20+30" })).toBeInViewport();
-  // The header and formula bar did not move.
   await expect(page.getByRole("button", { name: "Settings" })).toBeInViewport();
   await expect(page.getByLabel("Formula")).toBeInViewport();
 });
@@ -212,10 +206,6 @@ test("resizing to a narrow window keeps the formula and the log", async ({ page 
 test("the side panels don't shift while the page loads", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "New character" })).toBeEnabled();
-  // Layout shifts since navigation (buffered) that moved something in a side panel
-  // up or down by more than a few pixels, i.e. content arriving late above it.
-  // A web-font swap still nudges text sideways by a pixel or two (CLS about
-  // 0.0001); that's tracked separately, since the font stacks come from sm-core.
   const shifts = await page.evaluate(
     () =>
       new Promise<string[]>((resolve) => {
@@ -250,7 +240,6 @@ test("the roll log fades only an edge with content beyond it, and a row stays ne
   await page.goto("/");
   await rollMany(page, 40);
   const scroller = page.locator("[data-roll-scroll]");
-  // At the bottom the newest roll is clear: no fade there, a fade at the top.
   await expect(scroller).toHaveAttribute("data-edge-top", "");
   await expect(scroller).not.toHaveAttribute("data-edge-bottom", "");
   await scroller.evaluate((el) => {

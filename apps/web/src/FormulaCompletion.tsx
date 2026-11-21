@@ -1,4 +1,3 @@
-/** One suggestion list under the formula box; the box itself owns focus and keys (see App). */
 export function CompletionList({
   id,
   candidates,
@@ -19,7 +18,6 @@ export function CompletionList({
         className="m-0 flex max-h-56 list-none flex-col overflow-y-auto rounded-1 border border-line-strong bg-surface p-1"
       >
         {candidates.map((candidate, i) => (
-          // Keys drive the listbox from the input (aria-activedescendant); a click picks.
           <li
             key={candidate}
             id={`${id}-${i}`}

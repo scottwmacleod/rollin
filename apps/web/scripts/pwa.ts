@@ -3,12 +3,6 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import type { Plugin } from "vite";
 
-/**
- * Writes `sw.js` after the build: a service worker that precaches every file
- * the build emitted, so the app loads and rolls with no network after one
- * visit. The cache name carries a hash of those files, so any change to the
- * app produces a new worker, which the page offers as "update available".
- */
 export function offlineWorker(): Plugin {
   let outDir = "";
   return {
@@ -23,7 +17,6 @@ export function offlineWorker(): Plugin {
         .map((entry) => relative(outDir, join(entry.parentPath, entry.name)).split(sep).join("/"))
         .filter((f) => f !== "sw.js" && !f.endsWith(".map"))
         .sort();
-      // Every browser that can run the worker supports woff2, so skip the woff fallbacks.
       const precache = files.filter((f) => !f.endsWith(".woff"));
       const hash = createHash("sha256");
       for (const f of files) hash.update(f).update(readFileSync(join(outDir, f)));

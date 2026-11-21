@@ -2,8 +2,6 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-// The text pairs rollin relies on must meet 4.5:1 in both themes. Reads the
-// pinned sm-core copy, so a core update that breaks one of rollin's pairs fails here.
 const css = readFileSync(resolve(__dirname, "../../../vendor/sm-core/sm-core.css"), "utf8").replace(
   /\r\n/g,
   "\n",

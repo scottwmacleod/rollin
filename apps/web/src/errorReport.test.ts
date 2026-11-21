@@ -38,7 +38,6 @@ test("a report never contains the error message or the origin", () => {
 });
 
 test("frames read from Chrome and Safari stacks alike, and skip the message line", () => {
-  // Safari and Firefox put no message in the stack.
   const safari = new Error("secret name");
   safari.stack =
     "roll@https://h.test/assets/index-1.js:3:4\nglobal code@https://h.test/assets/index-1.js:9:9";

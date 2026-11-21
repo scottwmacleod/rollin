@@ -1,9 +1,3 @@
-/**
- * Replays the fixtures in packages/engine/fixtures/parity (recorded from the
- * former Rust engine, frozen since the Rust was deleted) through the engine.
- * Each case scripts the recorded dice, rolls the line, and expects the same
- * result, the same dice asked for in the same order, and every draw used.
- */
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
@@ -42,12 +36,6 @@ const areas: Area[] = readdirSync(FIXTURES)
   .sort()
   .map((file) => JSON.parse(readFileSync(join(FIXTURES, file), "utf8")) as Area);
 
-/**
- * Cases where the answer differs on purpose. The Rust engine does its sums in
- * 64-bit integers; this one keeps every number inside JavaScript's safe
- * integers (2^53 - 1), so it reports "number is too large" or an overflow
- * sooner. `expected` is what the TypeScript engine says instead.
- */
 const DIVERGENT: Record<string, unknown> = {
   "errors/overflow_add": {
     error: {
@@ -104,7 +92,6 @@ for (const area of areas) {
           defaultSystem: fixture.context?.default_system,
         });
         expect(json(result)).toEqual(key in DIVERGENT ? DIVERGENT[key] : fixture.expected);
-        // A roll that finishes (or fails) has used exactly the dice that were recorded.
         if (!(key in DIVERGENT)) expect(dice.remaining()).toBe(0);
       });
     }

@@ -20,5 +20,4 @@ updates:
       web-bun-minor-patch:
         update-types: ["minor", "patch"]
     ignore:
-      # Beta library pinned behind apps/web/src/ui; upgrade by hand.
       - dependency-name: "@ui-sdk/*"

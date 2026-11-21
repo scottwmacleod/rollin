@@ -55,7 +55,6 @@ test("the keypad shows under Auto, and its button hides and restores it", async 
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
   await toggle.tap();
   await expect(pad).toHaveCount(0);
-  // With the keypad off, Roll sits beside the formula field.
   await expect(page.getByRole("button", { name: "Roll", exact: true })).toBeVisible();
   await toggle.tap();
   await expect(pad).toBeVisible();
@@ -84,7 +83,6 @@ test("Save as preset is in a menu beside the formula field and opens the dialog 
   await expect(page.getByRole("button", { name: "Save as preset" })).toHaveCount(0);
   await page.getByRole("button", { name: "More" }).tap();
   const item = page.getByRole("menuitem", { name: "Save as preset" });
-  // Polled: the menu scales up from 0.97 as it opens.
   await expect.poll(async () => (await item.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await item.tap();
   const dialog = page.getByRole("dialog");
@@ -113,8 +111,6 @@ test("a preset chip rolls in one tap, with no sideways scrolling and 44-point ta
   await expectNewestAboveFormulaBar(page, "attack · d20+5");
   await expectNoPageScroll(page);
 
-  // Layout size, not the drawn box: a tapped chip stays scaled down (its press
-  // feedback) for as long as the browser holds it :active.
   const small = await page.evaluate(() =>
     [...document.querySelectorAll<HTMLElement>("button, [role=menuitem]")]
       .filter((b) => b.offsetParent !== null)
@@ -147,7 +143,6 @@ test("Clear is in the More menu on a phone, and asks first", async ({ page }) =>
   await page.getByLabel("Formula").press("Enter");
   await page.getByRole("button", { name: "More" }).tap();
   const item = page.getByRole("menuitem", { name: "Clear roll log" });
-  // Polled: the menu scales up from 0.97 as it opens.
   await expect.poll(async () => (await item.boundingBox())?.height).toBeGreaterThanOrEqual(44);
   await item.tap();
   await expect(page.getByRole("button", { name: "Yes, clear" })).toBeVisible();
@@ -174,12 +169,10 @@ test("after a roll, the keypad's next digit or die starts a new formula", async 
   await pad.getByRole("button", { name: "Roll" }).tap();
   await expect(log(page)).toContainText("total 6");
 
-  // The rolled formula stays, so rolling it again is one tap.
   await expect(formula).toHaveValue("2d6");
   await pad.getByRole("button", { name: "Roll" }).tap();
   await expect(log(page)).toContainText("total 6");
 
-  // An operator carries on from it; a digit starts afresh.
   await pad.getByRole("button", { name: "plus" }).tap();
   await expect(formula).toHaveValue("2d6+");
   await pad.getByRole("button", { name: "Roll" }).tap();
@@ -259,14 +252,12 @@ test("a one-group roll keeps its total on the dice's line", async ({ page }) => 
   expect(dice).not.toBeNull();
   expect(total).not.toBeNull();
   if (!dice || !total) return;
-  // The total's label sits beside the dice, not on a line of its own below them.
   expect(total.y).toBeLessThan(dice.y + dice.height);
 });
 
 test.describe("swipe left to close the slide-over", () => {
   type Page = import("@playwright/test").Page;
 
-  /** A one-finger drag by `dx`, `dy` in `steps` moves, as real touch events. */
   async function drag(
     page: Page,
     from: { x: number; y: number },

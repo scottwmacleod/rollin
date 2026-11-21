@@ -1,15 +1,3 @@
-// sm_ pre-push hook, synced from sm-core. Edit sm-core, not this copy.
-//
-// Runs format, lint and typecheck on the files this push changes, so mistakes
-// are caught before CI. Git runs it through the `pre-push` wrapper; install.mjs sets core.hooksPath.
-//
-// What runs, in order:
-//   1. `npm run pre-push -- <files>` if package.json has that script. It
-//      replaces the steps below, for repos that need something else.
-//   2. Biome on the changed files (format and lint), if Biome is installed.
-//   3. `npm run typecheck`, if that script exists and a code file changed.
-//
-// No dependencies. Budget: under 9 seconds on a 10-file change.
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -31,7 +19,6 @@ const tryGit = (...args) => {
 const root = git("rev-parse", "--show-toplevel");
 process.chdir(root);
 
-// Each stdin line: <local ref> <local sha> <remote ref> <remote sha>
 let input = "";
 try {
   input = readFileSync(0, "utf8");
@@ -46,11 +33,11 @@ const has = (sha) => {
 };
 const files = new Set();
 for (const line of input.split("\n")) {
-  const [, local, , remote] = line.trim().split(/\s+/);
-  if (!local || ZERO.test(local)) continue; // deleting a branch
+  const [_localRef, local, _remoteRef, remote] = line.trim().split(/\s+/);
+  const deletingBranch = !local || ZERO.test(local);
+  if (deletingBranch) continue;
   let base = remote && !ZERO.test(remote) && has(remote) ? remote : "";
   if (!base) {
-    // New branch: compare with the default branch.
     const head = tryGit("symbolic-ref", "--short", "refs/remotes/origin/HEAD");
     const candidates = [head, "origin/main", "origin/master"].filter(Boolean);
     for (const c of candidates) {
@@ -60,7 +47,7 @@ for (const line of input.split("\n")) {
   }
   const out = base
     ? tryGit("diff", "--name-only", "--diff-filter=ACMR", `${base}..${local}`)
-    : tryGit("ls-tree", "-r", "--name-only", local); // no shared history: check everything
+    : tryGit("ls-tree", "-r", "--name-only", local);
   for (const f of out.split("\n")) if (f && existsSync(f)) files.add(f);
 }
 

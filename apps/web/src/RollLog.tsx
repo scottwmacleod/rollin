@@ -20,7 +20,6 @@ import {
 } from "./ui";
 import { useScrollEdges } from "./useScrollEdges";
 
-/** One entry: what was typed (or the preset), then a line per roll, or the error. */
 function EntryItem({ entry, fresh }: { entry: Entry; fresh: boolean }) {
   const { report } = entry;
   return (
@@ -47,18 +46,8 @@ function EntryItem({ entry, fresh }: { entry: Entry; fresh: boolean }) {
   );
 }
 
-/** How close to the bottom still counts as being at the bottom, in pixels. */
 const NEAR_BOTTOM = 48;
 
-/**
- * The roll log: every roll this session, newest at the bottom, each entry one
- * line per roll that shows every die. It is a flat tree so it stays one tab stop:
- * Up and Down move between entries, Home and End jump.
- *
- * It is the only part of the page that scrolls. Like a chat it sticks to the
- * bottom while the reader is there, lets go once they scroll up, and offers a way
- * back. A roll made here (`rollCount` goes up) always brings it back to the bottom.
- */
 export function RollLog({
   entries,
   treeRef,
@@ -70,15 +59,10 @@ export function RollLog({
 }: {
   entries: Entry[];
   treeRef: Ref<HTMLDivElement>;
-  /** Rolls made on this page; a new one scrolls to the bottom whatever the reader was doing. */
   rollCount: number;
-  /** Esc inside the log: hand focus back to the formula box. */
   onEscape: () => void;
-  /** Starts clearing the log (the app asks for confirmation). */
   onClear: () => void;
-  /** The inline "Clear the whole roll log?" question, shown in the header while it is asked. */
   confirm: ReactNode;
-  /** No header row (and no menu: Clear lives elsewhere) so a phone's log keeps its height; the confirmation still shows. */
   compact: boolean;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
@@ -87,8 +71,6 @@ export function RollLog({
   const [away, setAway] = useState(false);
   useScrollEdges(scroller);
   const count = entries.length;
-  // The entry a roll made here just added. History that loads with the page or
-  // arrives from another tab never changes `rollCount`, so it never arrives.
   const [freshId, setFreshId] = useState<number | null>(null);
   const latestId = entries[entries.length - 1]?.id;
 
@@ -105,8 +87,6 @@ export function RollLog({
     setAway(!near);
   }
 
-  // Stay at the bottom while stuck, whatever changes the height: a new entry, the
-  // keypad showing, the window resizing.
   useEffect(() => {
     const el = scroller.current;
     const inner = content.current;
@@ -120,14 +100,10 @@ export function RollLog({
     return () => observer.disconnect();
   }, []);
 
-  // Marked before paint so the arrival starts with the entry's first frame.
   useLayoutEffect(() => {
     if (rollCount > 0) setFreshId(latestId ?? null);
-    // Only a new roll marks an entry; `latestId` is read as of that roll.
-    // biome-ignore lint/correctness/useExhaustiveDependencies: see above
   }, [rollCount]);
 
-  // A roll made here shows its result at once.
   useEffect(() => {
     if (rollCount === 0) return;
     stuck.current = true;

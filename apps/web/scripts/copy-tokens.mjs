@@ -1,7 +1,3 @@
-// Copies generated and vendored assets into the web app before dev and build,
-// so each has one source of truth (never hand-edit the copies; they're gitignored):
-// - ui/tokens.css (rollin's sizes) into src/generated/
-// - the rollin marks from the sm-core copy (vendor/sm-core/logos) into public/
 import { copyFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

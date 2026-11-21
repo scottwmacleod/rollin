@@ -99,7 +99,6 @@ describe("preset name properties (from the former Rust property tests)", () => {
         if (!("name" in checked)) return;
         expect(checked.name).toBe(checked.name.toLowerCase());
         const report = roll(raw, () => 1, { globalPresets: { [checked.name]: "2d6+1" } });
-        // A name that is also a bare formula rolls as that formula, never as a preset.
         if ("ok" in report) expect(report.ok.preset).toEqual([checked.name, "2d6+1"]);
       }),
     );

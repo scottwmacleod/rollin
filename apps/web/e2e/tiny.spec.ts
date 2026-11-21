@@ -2,9 +2,6 @@ import { expect, test } from "@playwright/test";
 import { axe } from "./axe";
 import { expectNewestAboveFormulaBar, expectNoPageScroll, rollMany } from "./layout";
 
-// A very narrow desktop window: 400px wide, mouse, no touch. It gets the phone arrangement
-// without the keypad.
-
 test("the header fits: the character name shows and no shortcut hints crowd it", async ({
   page,
 }) => {

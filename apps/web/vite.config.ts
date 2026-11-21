@@ -4,11 +4,8 @@ import type { Plugin } from "vite";
 import { defineConfig } from "vitest/config";
 import { offlineWorker } from "./scripts/pwa.ts";
 
-// The build's commit on Vercel, so an error report says which deploy it came from.
 const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev";
 
-// Preload the Geist file so text paints in Geist without waiting for the CSS to
-// name it. The file name carries a content hash, so this runs after the build.
 function preloadGeist(): Plugin {
   return {
     name: "rollin-preload-geist",
@@ -40,7 +37,6 @@ function preloadGeist(): Plugin {
 
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
-  // Public source maps (the repo is public), so PostHog shows readable stack traces. The offline worker skips .map files.
   build: { sourcemap: true },
   plugins: [react(), tailwindcss(), offlineWorker(), preloadGeist()],
   test: { include: ["src/**/*.test.{ts,tsx}"], sequence: { shuffle: true } },

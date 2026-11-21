@@ -10,7 +10,6 @@ function firstRoll(line: string, faces: { sides: number; face: number }[]) {
   return first;
 }
 
-/** The line as text, each die as its face and status, for comparing whole lines. */
 function read(cells: Cell[]): string[] {
   return cells.map((cell) =>
     cell.type === "text"

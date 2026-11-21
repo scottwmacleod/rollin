@@ -4,16 +4,13 @@ import type { Storage } from "./storage";
 
 export const PRESETS_KEY = "globalPresets";
 
-/** Saved presets: stored (lowercase) name to formula. */
 export type PresetMap = Record<string, string>;
 
-/** Keeps only name-to-text pairs, so a hand-edited or old save can't break the sidebar. */
 export function cleanPresets(value: unknown, tally?: Tally): PresetMap {
   const out: PresetMap = {};
   if (typeof value !== "object" || value === null || Array.isArray(value)) return out;
   for (const [name, formula] of Object.entries(value)) {
     if (typeof formula !== "string") continue;
-    // Same rules as a name typed into the app: lowercased, or dropped and counted.
     const checked = validatePresetName(name);
     if (!("name" in checked)) {
       if (tally) tally.skipped += 1;
@@ -22,12 +19,10 @@ export function cleanPresets(value: unknown, tally?: Tally): PresetMap {
   return out;
 }
 
-/** The presets in name order, as the Rust engine lists them. */
 export function sortedPresets(presets: PresetMap): [name: string, formula: string][] {
   return Object.entries(presets).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
-/** Where a preset lives: on the active character, or shared by every character. */
 export type PresetScope = "character" | "global";
 
 export interface PresetEntry {
@@ -36,10 +31,6 @@ export interface PresetEntry {
   scope: PresetScope;
 }
 
-/**
- * The presets the active character can roll, by name order. A character's own
- * preset shadows a global one of the same name, so the global one is left out.
- */
 export function effectivePresets(global: PresetMap, own: PresetMap): PresetEntry[] {
   const entries: PresetEntry[] = [
     ...sortedPresets(own).map(
@@ -56,11 +47,6 @@ export async function loadPresets(storage: Storage): Promise<PresetMap> {
   return cleanPresets(await storage.get<PresetMap>(PRESETS_KEY));
 }
 
-/**
- * Changes the saved presets. It reads what is saved just before writing, so a
- * preset another tab saved a moment ago is kept, not overwritten. Returns what
- * was saved.
- */
 export async function updatePresets(
   storage: Storage,
   change: (presets: PresetMap) => PresetMap,

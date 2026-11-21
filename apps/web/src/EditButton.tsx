@@ -1,10 +1,5 @@
 import { Button } from "./ui";
 
-/**
- * The per-row edit control in the sidebars: a small borderless pencil, so a
- * long list of characters, variables or presets isn't a column of bordered
- * buttons. `label` is its accessible name, such as "Edit attack".
- */
 export function EditButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <Button

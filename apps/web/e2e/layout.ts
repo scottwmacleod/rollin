@@ -2,7 +2,6 @@ import { expect, type Page } from "@playwright/test";
 
 export const log = (page: Page) => page.getByRole("tree", { name: "Roll log" });
 
-/** Rolls `d20+<n>` one after another, so the log fills with distinct, findable entries. */
 export async function rollMany(page: Page, count: number) {
   const field = page.getByLabel("Formula");
   for (let n = 1; n <= count; n++) {
@@ -11,7 +10,6 @@ export async function rollMany(page: Page, count: number) {
   }
 }
 
-/** Saves `count` global presets straight into storage, then reloads so the app reads them. */
 export async function seedPresets(page: Page, count: number) {
   await page.evaluate(
     (n) =>
@@ -34,7 +32,6 @@ export async function seedPresets(page: Page, count: number) {
   await page.reload();
 }
 
-/** The page itself never scrolls, in either direction. */
 export async function expectNoPageScroll(page: Page) {
   const overflow = await page.evaluate(() => ({
     x: document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -46,7 +43,6 @@ export async function expectNoPageScroll(page: Page) {
   expect(overflow.top).toBe(0);
 }
 
-/** The newest roll (found by its formula) is fully visible and clear of the formula bar. */
 export async function expectNewestAboveFormulaBar(page: Page, formula: string) {
   const entry = log(page).getByText(formula, { exact: true }).last();
   await expect(entry).toBeVisible();

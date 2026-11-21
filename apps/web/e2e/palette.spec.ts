@@ -11,7 +11,6 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   const formula = page.getByRole("combobox", { name: "Formula" });
   await expect(formula).toBeFocused();
 
-  // Ctrl+K opens the palette from the formula box; Esc closes it and gives focus back.
   await page.keyboard.press("Control+k");
   const palette = page.getByRole("dialog", { name: "Command palette" });
   await expect(palette).toBeVisible();
@@ -23,7 +22,6 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await expect(palette).toBeHidden();
   await expect(formula).toBeFocused();
 
-  // Make a character with a variable, then a preset that uses it, all from the palette.
   await page.keyboard.press("Control+k");
   await search.fill("new char");
   await page.keyboard.press("Enter");
@@ -57,7 +55,6 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await page.keyboard.press("Enter");
   await expect(dialog).toBeHidden();
 
-  // The preset completes by name, and rolls from the palette too.
   await formula.fill("att");
   await expect(list.getByRole("option")).toHaveText(["attack"]);
   await page.keyboard.press("Escape");
@@ -71,7 +68,6 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await expect(log(page)).toContainText("total 13");
   await expect(formula).toBeFocused();
 
-  // Switching character, settings, and clearing the log are all in the palette.
   await page.keyboard.press("Control+k");
   await search.fill("@def");
   await page.keyboard.press("Enter");
@@ -87,7 +83,6 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toBeHidden();
 
-  // Export downloads a file; import opens Settings, where the file is chosen.
   await page.keyboard.press("Control+k");
   await search.fill("export");
   const download = page.waitForEvent("download");
@@ -111,7 +106,6 @@ test("a whole session runs from the keyboard, with the palette and completion", 
 
 test("the palette is fuzzy, scoped by @ and >, and says when nothing matches", async ({ page }) => {
   await page.goto("/");
-  // The app has mounted once the formula box has focus; the shortcut is live from then.
   await expect(page.getByRole("combobox", { name: "Formula" })).toBeFocused();
   await page.keyboard.press("Control+k");
   const palette = page.getByRole("dialog", { name: "Command palette" });

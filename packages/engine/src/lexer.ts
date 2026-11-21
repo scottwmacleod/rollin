@@ -1,8 +1,3 @@
-/**
- * Tokenizer: turns formula text into spanned tokens. Whitespace is skipped and
- * letters are lowercased, so `4D6 DL1` lexes like `4d6dl1`. A port of the Rust
- * lexer; spans are UTF-8 byte offsets.
- */
 import { syntax } from "./errors";
 import { MAX_INT } from "./limits";
 import { type Source, utf8Length } from "./source";
@@ -56,7 +51,6 @@ const isAlpha = (c: string) => (c >= "a" && c <= "z") || (c >= "A" && c <= "Z");
 const isNameChar = (c: string) => isAlpha(c) || isDigit(c) || c === "_";
 
 export function tokenize(source: Source): Spanned[] {
-  // Work in code points, keeping each one's byte offset for the spans.
   const chars = Array.from(source.text);
   const at: number[] = [];
   let offset = 0;
@@ -121,8 +115,6 @@ export function tokenize(source: Source): Spanned[] {
       push({ kind: "var", name }, i, end);
       i = end;
     } else if (isAlpha(c)) {
-      // A `p` right after `!` is the penetrating marker on its own, so `!pkh2`
-      // lexes as `!`, `p`, `kh`, `2`.
       const penetrating = (c === "p" || c === "P") && out.at(-1)?.token.kind === "bang";
       let end = i;
       while (end < chars.length && isAlpha(chars[end] as string) && !(penetrating && end > i)) {
@@ -130,8 +122,6 @@ export function tokenize(source: Source): Spanned[] {
       }
       const word = chars.slice(i, end).join("").toLowerCase();
       const start = at[i] ?? 0;
-      // `adv`, `dis` and a repeat's `x` end a run early, so `d20advdl1` lexes
-      // as `adv`, `dl`, `1`.
       const last = out.at(-1);
       let split = word.length;
       if (word.startsWith("adv") || word.startsWith("dis")) {

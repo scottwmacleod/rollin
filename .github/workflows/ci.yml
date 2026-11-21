@@ -1,10 +1,5 @@
 name: ci
 
-# rollin's gates, from sm-core's shared workflows. `ci` is the only required
-# check: it passes when every web-ci job and the budgets passed. The daily run
-# on main seeds the node_modules cache and main's bundle sizes, because PRs
-# merged without SM_MERGE_TOKEN start no push runs on main.
-
 on:
   pull_request:
     branches: [main]
@@ -16,11 +11,11 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read # web-ci lists a PR's files for skip-paths
+  pull-requests: read
 
 jobs:
   web:
-    uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@v26.11.13
+    uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@v26.11.15
     with:
       package-manager: bun
       checks: bun run tokens:check
@@ -29,17 +24,16 @@ jobs:
       skip-paths: '^(docs/|\.claude/|\.github/workflows/(auto-merge|audit|behind|dependabot-automerge|tsc)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
 
   budgets:
-    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.13
+    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.15
     permissions:
       contents: read
-      pull-requests: write # one bundle-size comment per PR
+      pull-requests: write
     with:
       package-manager: bun
       dist-dir: apps/web/dist
       js-kb: 190
       css-kb: 55
 
-  # The check branch protection requires.
   ci:
     needs: [web, budgets]
     if: always()

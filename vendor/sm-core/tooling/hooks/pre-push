@@ -1,3 +1,2 @@
 #!/bin/sh
-# sm_ pre-push hook, synced from sm-core. The work is in pre-push.mjs.
 exec node "$(dirname "$0")/pre-push.mjs" "$@"

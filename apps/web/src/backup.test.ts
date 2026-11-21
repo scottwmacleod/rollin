@@ -81,7 +81,6 @@ describe("parseBackup", () => {
   });
 
   it("walks the upgrade steps from an older version, using a made-up format", () => {
-    // A pretend version 1 kept presets under `presets` and had no `data` envelope.
     const old = JSON.stringify({
       format: "rollin-backup",
       version: 1,

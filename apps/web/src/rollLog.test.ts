@@ -85,7 +85,6 @@ describe("adding rolls to the log", () => {
   const report = entry(0).report;
 
   it("gives every roll in one batch its own id, none lost", () => {
-    // React applies queued updaters in order, each to the result of the last.
     const updaters = [
       (log: Entry[]) => addEntry(log, "d20", report),
       (log: Entry[]) => addEntry(log, "d6", report),

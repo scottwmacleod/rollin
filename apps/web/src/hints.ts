@@ -1,6 +1,5 @@
 import type { Hint } from "@rollin/engine";
 
-/** The web wording of a hint. Hints are data from the engine; each front end words them. */
 export function hintText(hint: Hint): string {
   switch (hint.kind) {
     case "did_you_mean":

@@ -5,11 +5,6 @@ import { Button } from "./ui";
 const BUTTON =
   "whitespace-nowrap rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
-/**
- * The character switcher (#86, option A) and the active character's variables.
- * The list holds eight rows, then scrolls. `roster` is `null` until storage has
- * been read, so the list never flashes empty.
- */
 export function CharacterPanel({
   roster,
   active,
@@ -45,8 +40,6 @@ export function CharacterPanel({
             New character
           </Button>
         </div>
-        {/* Until storage is read, hold one row's height (every roster has a character),
-            so the panels below don't jump when it arrives. Modern Web Guidance: performance. */}
         {roster === null && <div aria-hidden="true" className="min-h-11" />}
         {list.length > 0 && (
           <ul className="m-0 flex max-h-56 list-none flex-col gap-1 overflow-y-auto p-0">

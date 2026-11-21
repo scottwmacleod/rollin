@@ -94,10 +94,8 @@ import { VariableDialog, type VariableDialogMode } from "./VariableDialog";
 export function App() {
   const [formula, setFormula] = useState("");
   const [historyNav, setHistoryNav] = useState<HistoryNav>(null);
-  /** The formula in the box was just rolled; the keypad's next digit or die replaces it. */
   const [fresh, setFresh] = useState(false);
   const [entries, setEntries] = useState<Entry[]>([]);
-  /** Set when the log changed here and still needs saving; the effect below saves what is on screen. */
   const saveLogSoon = useRef(false);
   const [announcement, setAnnouncement] = useState("");
   const [kept, setKept] = useState(true);
@@ -111,22 +109,16 @@ export function App() {
   const [variableDialog, setVariableDialog] = useState<VariableDialogMode | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  /** The slide-over that holds characters, variables and presets where there is no sidebar. */
   const [sideOpen, setSideOpen] = useState(false);
-  // Swipe the slide-over left to close it on touch screens (#330).
   const swipe = useSwipeClose(() => setSideOpen(false));
-  /** Rolls made on this page; the roll log scrolls to the newest when it goes up. */
   const [rollCount, setRollCount] = useState(0);
   const [caret, setCaret] = useState<number | null>(null);
   const [focused, setFocused] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
-  // Whether an arrow key has chosen a completion; only then does Enter accept it.
   const [armed, setArmed] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const opener = useRef<HTMLElement | null>(null);
-  /** What had focus when the palette opened, which it gives back when it closes. */
   const paletteFrom = useRef<HTMLElement | null>(null);
-  /** Set when a palette command opens something that takes focus itself. */
   const handoff = useRef(false);
   const confirmYes = useRef<HTMLButtonElement>(null);
   const confirmFocus = useRef(false);
@@ -140,9 +132,7 @@ export function App() {
   useScrollEdges(sidebar, wide);
   const touch = useMedia(TOUCH);
   const small = useMedia(SMALL);
-  /** Auto shows the keypad on touch screens, whatever their width. */
   const keypadOn = settings.keypad === "on" || (settings.keypad === "auto" && touch);
-  /** The character formulas roll for; `null` until storage has been read. */
   const acting = roster === null ? null : activeCharacter(roster);
   const available = useMemo(
     () => (presets === null || acting === null ? null : effectivePresets(presets, acting.presets)),
@@ -171,16 +161,12 @@ export function App() {
   const suggesting = focused && !dismissed && completion.candidates.length > 0;
   const current = Math.min(highlighted, Math.max(completion.candidates.length - 1, 0));
 
-  // Save the log after a roll or the first load, from the state that was committed, so rolls
-  // handled in one batch are all saved. Waits for storage to open if a roll came first.
   useEffect(() => {
     if (!saveLogSoon.current || !storage.current) return;
     saveLogSoon.current = false;
     void saveLog(storage.current, entries).catch(() => setKept(false));
   }, [entries]);
 
-  // Open storage, load the saved log, and follow other tabs. Rolls made before
-  // the load finishes are kept after the saved ones.
   useEffect(() => {
     let cancelled = false;
     let unsubscribe = () => {};
@@ -210,7 +196,6 @@ export function App() {
       setPresets((current) => ({ ...savedPresets, ...current }));
       setRoster((current) => current ?? savedRoster);
       setEntries((current) => {
-        // Only sets a flag, so running twice is harmless; the save happens once, after the commit.
         if (current.length > 0) saveLogSoon.current = true;
         return mergeLoaded(saved, current);
       });
@@ -249,7 +234,6 @@ export function App() {
     if (storage.current) void storage.current.set(BACKUP_STATE_KEY, next).catch(() => {});
   }
 
-  /** A file now holds this data, so the reminder has nothing to nag about. */
   function markBackedUp(backup: Backup) {
     changeBackupState({ exported: fingerprint(backup.data) });
   }
@@ -265,7 +249,6 @@ export function App() {
     }
   }
 
-  /** Replaces what is saved with the backup's, then shows it. Throws if it can't be saved, leaving the page as it was. */
   async function importBackup(backup: Backup) {
     if (!storage.current) throw new Error("no storage");
     await applyBackup(storage.current, backup);
@@ -276,7 +259,6 @@ export function App() {
     markBackedUp(backup);
   }
 
-  /** Adds a file's characters and global presets to what is saved, then shows them. Settings, the roll log and the active character stay. Throws if it can't be saved. */
   async function addToData(incoming: Incoming, choices: Choices) {
     if (!storage.current) throw new Error("no storage");
     try {
@@ -285,7 +267,6 @@ export function App() {
       setPresets(result.globalPresets);
       return result;
     } catch (failure) {
-      // It may have saved one of the two, so show what is really saved.
       const current = storage.current;
       setRoster(await loadRoster(current).catch(() => cleanRoster(undefined)));
       setPresets(await loadPresets(current).catch(() => ({})));
@@ -293,7 +274,6 @@ export function App() {
     }
   }
 
-  /** Remembers what had focus, so closing the dialog can give it back. */
   function remember() {
     opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   }
@@ -316,8 +296,6 @@ export function App() {
     setVariableDialog(mode);
   }
 
-  // When a dialog closes, focus goes back to what opened it, or to the formula box
-  // if that is gone (a renamed or deleted preset's Edit button).
   useEffect(() => {
     if (dialog !== null || characterDialog !== null || variableDialog !== null) return;
     const back = opener.current;
@@ -326,14 +304,12 @@ export function App() {
     (back.isConnected ? back : input.current)?.focus();
   }, [dialog, characterDialog, variableDialog]);
 
-  // After a completion is accepted, the caret goes to the end of what was inserted.
   useEffect(() => {
     const at = pendingCaret.current;
     pendingCaret.current = null;
     if (at !== null) input.current?.setSelectionRange(at, at);
   }, [formula]);
 
-  // The caret moves with the arrow keys and the pointer as well as with typing.
   useEffect(() => {
     if (!focused) return;
     const follow = () => {
@@ -343,7 +319,6 @@ export function App() {
     return () => document.removeEventListener("selectionchange", follow);
   }, [focused]);
 
-  // "Clear roll log" in the palette asks inline, so focus moves to the answer.
   useEffect(() => {
     if (confirming && confirmFocus.current) {
       confirmFocus.current = false;
@@ -377,7 +352,6 @@ export function App() {
     setPaletteOpen(next);
   }
 
-  /** Where focus goes when the palette closes: where it was, or the formula box. */
   function paletteFocus(): HTMLElement | null {
     if (handoff.current && document.activeElement instanceof HTMLElement) {
       return document.activeElement;
@@ -386,7 +360,6 @@ export function App() {
     return back?.isConnected ? back : input.current;
   }
 
-  /** Runs what a palette row says. Anything that opens a dialog gives focus back to where the palette began. */
   function runPalette(row: PaletteRow) {
     const action = row.action;
     setPaletteOpen(false);
@@ -427,7 +400,6 @@ export function App() {
             return;
           case "settings":
           case "import":
-            // Choosing a file and confirming the replace happen in Settings.
             handoff.current = true;
             setSettingsOpen(true);
             return;
@@ -440,7 +412,6 @@ export function App() {
     }
   }
 
-  /** Asks whether to clear the log, and moves focus to the answer. */
   function startClear() {
     confirmFocus.current = true;
     setConfirming(true);
@@ -453,7 +424,6 @@ export function App() {
     input.current?.focus();
   }
 
-  /** Rolls what was typed, or a preset's name, and puts the result in the log. */
   function rollLine(text: string, from: RollSource = "preset") {
     const report = roll(text, dieSource(), {
       globalPresets: presets ?? {},
@@ -482,7 +452,6 @@ export function App() {
     setFresh(true);
   }
 
-  /** Up and Down in the formula box step through past rolls, like a shell. Returns whether it acted. */
   function stepThroughHistory(event: KeyboardEvent): boolean {
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return false;
     if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return false;
@@ -502,10 +471,6 @@ export function App() {
     return true;
   }
 
-  /**
-   * Saves a preset in `scope`, dropping the one it replaces when it was renamed
-   * or moved. Waits for the write.
-   */
   async function savePreset(
     name: string,
     text: string,
@@ -540,7 +505,6 @@ export function App() {
     }
   }
 
-  /** Changes the roster, reading what is saved just before writing, so another tab's edit is kept. */
   async function changeRoster(apply: (roster: Roster) => Roster) {
     if (storage.current) {
       try {
@@ -565,13 +529,6 @@ export function App() {
     setPresets((current) => apply(current ?? {}));
   }
 
-  /**
-   * Keys in the formula box. With suggestions open, the arrows move through
-   * them, Tab accepts the highlighted one, Enter accepts it only after an arrow
-   * chose it (otherwise Enter rolls), and Esc closes them. Otherwise Up and Down
-   * step through past rolls, and Esc moves to the newest log entry (the log is
-   * above the box).
-   */
   function formulaKeys(event: KeyboardEvent) {
     if (event.nativeEvent.isComposing) return;
     if (suggesting) {
@@ -601,7 +558,6 @@ export function App() {
     focusLog(event);
   }
 
-  /** Esc in the formula box moves to the newest log entry. */
   function focusLog(event: KeyboardEvent) {
     if (event.key !== "Escape") return;
     const items = log.current?.querySelectorAll<HTMLElement>('[role="treeitem"]');
@@ -633,7 +589,6 @@ export function App() {
       />
     </>
   );
-  // Save as preset gets its own button except where the keypad leaves no room for one.
   const saveInMenu = !wide && (keypadOn || touch || small);
   const saveDisabled = presets === null || acting === null;
   const barButton =
@@ -833,7 +788,6 @@ export function App() {
                 autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
-                // On a touch screen, focus on load can raise the system keyboard over the keypad.
                 autoFocus={!touch}
                 ref={input}
                 onKeyDown={formulaKeys}

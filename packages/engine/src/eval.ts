@@ -1,4 +1,3 @@
-/** Evaluator: walks the syntax tree, drawing dice from the injected source. */
 import {
   type Arith,
   fails,
@@ -25,10 +24,6 @@ function nodeTotal(node: Exclude<Node, { type: "number" }>): number {
   return node.type === "dice" ? node.subtotal : node.total;
 }
 
-/**
- * Evaluates one roll. With `double`, every dice group rolls twice as many dice
- * (flat numbers are untouched), as a critical hit's damage does.
- */
 export function evaluate(roll: RollAst, dice: DieSource, double = false): Roll {
   let rolled = 0;
   let doubled = 0;
@@ -39,7 +34,6 @@ export function evaluate(roll: RollAst, dice: DieSource, double = false): Roll {
         return { type: "number", value: kind.value };
       case "dice": {
         const term = kind.dice;
-        // Rolls one die, counting it toward the per-roll cap.
         const draw = (): number => {
           rolled += 1;
           if (rolled > MAX_DICE_PER_ROLL)
@@ -56,7 +50,6 @@ export function evaluate(roll: RollAst, dice: DieSource, double = false): Roll {
         if (double) doubled += 1;
         for (let i = 0; i < count; i += 1) {
           let raw = draw();
-          // The index of the last die this one's reroll replaced.
           let replaced: number | undefined;
           if (reroll) {
             let rerolls = 0;
@@ -96,8 +89,6 @@ export function evaluate(roll: RollAst, dice: DieSource, double = false): Roll {
           if (explode?.mode === "compound" && extras.length > 0) {
             die.parts = [die.value, ...extras];
             die.value = die.parts.reduce((a, b) => a + b, 0);
-            // A reroll replacement keeps its reroll reason (so the link back
-            // survives) and records the compound clause as `also`.
             if (die.reason) {
               if (clauses.explode !== undefined) die.reason.also = clauses.explode;
             } else if (clauses.explode !== undefined) {
@@ -106,13 +97,11 @@ export function evaluate(roll: RollAst, dice: DieSource, double = false): Roll {
             faces.push(die);
           } else {
             faces.push(die);
-            // A penetrating extra die counts one less, with no floor.
             const shift = explode?.mode === "penetrate" ? 1 : 0;
             extras.forEach((face, n) => {
               faces.push({
                 value: face - shift,
                 status: "exploded",
-                // Each extra die exploded from the die just before it.
                 ...(clauses.explode === undefined
                   ? {}
                   : { reason: reason(clauses.explode, dieIndex + n) }),
@@ -121,7 +110,6 @@ export function evaluate(roll: RollAst, dice: DieSource, double = false): Roll {
           }
         }
         if (term.select) applyDrops(faces, term.select, term.clauses.select ?? "");
-        // Dice a reroll replaced or a keep/drop clause removed never count.
         const kept = faces.filter((die) => die.status === "kept" || die.status === "exploded");
         const modifiers = term.modifiers.length > 0 ? { modifiers: term.modifiers } : {};
         const success = term.success;
@@ -162,7 +150,6 @@ export function evaluate(roll: RollAst, dice: DieSource, double = false): Roll {
       }
       case "neg": {
         const operand = walk(kind.operand);
-        // `0 - x`, so zero stays 0 and never becomes -0.
         return { type: "neg", operand, total: 0 - total(operand) };
       }
       case "group": {
@@ -201,11 +188,6 @@ export function evaluate(roll: RollAst, dice: DieSource, double = false): Roll {
   };
 }
 
-/**
- * Applies one operator with checked integer arithmetic. `span` covers the whole
- * operation (for overflow); `rhsSpan` is the right operand (for division by zero).
- * A result outside the safe integers is an overflow, so no total ever loses precision.
- */
 function apply(op: BinOp, lhs: number, rhs: number, span: Span, rhsSpan: Span): number {
   if (op === "/" && rhs === 0) throw divisionByZero(rhsSpan);
   let result: number;
@@ -220,21 +202,14 @@ function apply(op: BinOp, lhs: number, rhs: number, span: Span, rhsSpan: Span): 
       result = lhs * rhs;
       break;
     case "/":
-      // Integer division truncates toward zero. BigInt keeps it exact.
       result = Number(BigInt(lhs) / BigInt(rhs));
       break;
   }
   if (Math.abs(result) > MAX_INT) throw overflow(span);
-  // Normalise -0 (`0 * -5`) to 0.
   return result === 0 ? 0 : result;
 }
 
-/**
- * Marks the dice a keep/drop clause removes. Keeping `n` of a pool drops the
- * rest from the other end; ties fall by roll order, as in the Rust engine.
- */
 function applyDrops(dice: Die[], { kind, n }: Select, clause: string): void {
-  // A die a reroll replaced is out of the pool before anything is dropped.
   const live = dice.flatMap((die, i) => (die.status === "rerolled" ? [] : [i]));
   const pool = live.length;
   const [lowest, highest] =
@@ -245,7 +220,6 @@ function applyDrops(dice: Die[], { kind, n }: Select, clause: string): void {
         : kind === "keep_highest"
           ? [pool - n, 0]
           : [0, pool - n];
-  // Array.prototype.sort is stable, so equal faces keep their roll order.
   const order = live.sort((a, b) => (dice[a]?.value ?? 0) - (dice[b]?.value ?? 0));
   for (const i of [...order.slice(0, lowest), ...order.slice(pool - highest)]) {
     const die = dice[i];
@@ -256,11 +230,6 @@ function applyDrops(dice: Die[], { kind, n }: Select, clause: string): void {
   }
 }
 
-/**
- * The kept die of a d20 check's evaluated tree: its single d20 group and the
- * one die left standing in it. Rerolled and dropped dice are out, so `d20adv`
- * and `2d20kh1` read the kept die. A compounded explosion is a sum, not a face.
- */
 export function checkDie(root: Node): Die | undefined {
   const groups: Extract<Node, { type: "dice" }>[] = [];
   const collect = (node: Node): void => {

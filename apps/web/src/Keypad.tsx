@@ -4,10 +4,6 @@ import { Button } from "./ui";
 const KEY =
   "press inline-flex min-h-11 min-w-11 items-center justify-center rounded-1 border border-control-line bg-surface font-mono text-base text-ink active:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
-/**
- * A tap-to-build keypad for phones: dice, digits, + and −, backspace and clear.
- * Roll is the form's own submit button, so the keypad only edits the formula.
- */
 export function Keypad({
   formula,
   fresh,
@@ -15,7 +11,6 @@ export function Keypad({
   onRoll,
 }: {
   formula: string;
-  /** The formula was just rolled, so the next digit or die starts a new one. */
   fresh: boolean;
   onChange: (formula: string) => void;
   onRoll: () => void;

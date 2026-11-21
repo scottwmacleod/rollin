@@ -14,12 +14,9 @@ import { cleanLog, loadLog, ROLL_LOG_KEY } from "./rollLog";
 import { parseSettings, SETTINGS_KEY, type Settings } from "./settings";
 import type { Storage } from "./storage";
 
-/** Marks a file as a rollin backup, so a stray JSON file is refused with a clear reason. */
 export const BACKUP_FORMAT = "rollin-backup";
-/** The newest format this build writes and reads. Bump it with an entry in `UPGRADES`. */
 export const CURRENT_VERSION = 2;
 
-/** Everything a backup holds. The roll log is optional. */
 export interface BackupData {
   characters: Roster;
   globalPresets: PresetMap;
@@ -27,36 +24,29 @@ export interface BackupData {
   rollLog?: Entry[];
 }
 
-/** What a partial file holds. Every section is optional, but one must have something in it. */
 export interface PartialData {
-  /** Characters only: a partial file has no active character. */
   characters?: Character[];
   globalPresets?: PresetMap;
 }
 
-/** A full backup: everything, with an active character. Replace works only with this kind. */
 export interface Backup {
   format: typeof BACKUP_FORMAT;
   version: number;
   kind: "full";
   exportedAt: string;
   data: BackupData;
-  /** Names dropped while reading the file because the app couldn't have created them. */
   skipped?: number;
 }
 
-/** A partial file: only some characters and global presets. */
 export interface PartialFile {
   format: typeof BACKUP_FORMAT;
   version: number;
   kind: "partial";
   exportedAt: string;
   data: PartialData;
-  /** Names dropped while reading the file because the app couldn't have created them. */
   skipped?: number;
 }
 
-/** A partial file as written to disk, where the characters sit in a list inside `characters`, as in a full backup. */
 export interface PartialFileJson {
   format: typeof BACKUP_FORMAT;
   version: number;
@@ -65,7 +55,6 @@ export interface PartialFileJson {
   data: { characters?: { characters: Character[] }; globalPresets?: PresetMap };
 }
 
-/** What `parseBackup` returns; `kind` tells the two apart. */
 export type ParsedFile = Backup | PartialFile;
 
 type Json = Record<string, unknown>;
@@ -75,13 +64,7 @@ const isRecord = (value: unknown): value is Json =>
 
 export type Upgrades = Record<number, (file: Json) => Json>;
 
-/**
- * One step per past version: `UPGRADES[n]` turns a version `n` file into a
- * version `n + 1` file. Importing walks the steps from the file's version to
- * the current one, so a file from any past version still opens.
- */
 const UPGRADES: Upgrades = {
-  // Version 1 files were always full backups, so only the kind marker is new.
   1: (file) => ({ ...file, version: 2, kind: "full" }),
 };
 
@@ -89,7 +72,6 @@ export type ParseResult = { ok: true; backup: ParsedFile } | { ok: false; error:
 
 const fail = (error: string): ParseResult => ({ ok: false, error });
 
-/** Reads the text of a backup file: validates it, upgrades it, and cleans what it holds. */
 export function parseBackup(
   text: string,
   current: number = CURRENT_VERSION,
@@ -148,7 +130,6 @@ export function parseBackup(
     };
   }
   if (upgraded.kind === "partial") {
-    // Settings, the roll log and the active character only mean something in a full backup.
     const tally: Tally = { skipped: 0 };
     const partial = cleanPartial(data, tally);
     if (partial === null) {
@@ -171,7 +152,6 @@ export function parseBackup(
   return fail('That backup\'s kind must be "full" or "partial".');
 }
 
-/** Cleans a partial file's data; null when it holds no characters and no global presets. */
 function cleanPartial(data: unknown, tally: Tally): PartialData | null {
   if (!isRecord(data)) return null;
   const partial: PartialData = {};
@@ -185,7 +165,6 @@ function cleanPartial(data: unknown, tally: Tally): PartialData | null {
   return partial.characters || partial.globalPresets ? partial : null;
 }
 
-/** Reads everything saved into a backup. The roll log goes in only when asked for. */
 export async function buildBackup(
   storage: Storage,
   options: { rollLog: boolean; now?: Date },
@@ -205,7 +184,6 @@ export async function buildBackup(
   };
 }
 
-/** Writes a version 2 partial file from what the caller picked. An empty pick has nothing to write, so it is a mistake. */
 export function buildPartial(data: PartialData, now: Date = new Date()): PartialFileJson {
   const characters = data.characters ?? [];
   const globalPresets = data.globalPresets ?? {};
@@ -224,7 +202,6 @@ export function buildPartial(data: PartialData, now: Date = new Date()): Partial
   };
 }
 
-/** Replaces saved data with the backup's. A roll log the file doesn't carry is left as it is. */
 export async function applyBackup(storage: Storage, backup: Backup): Promise<void> {
   const { data } = backup;
   await storage.set(CHARACTERS_KEY, data.characters);
@@ -233,38 +210,29 @@ export async function applyBackup(storage: Storage, backup: Backup): Promise<voi
   if (data.rollLog !== undefined) await storage.set(ROLL_LOG_KEY, data.rollLog);
 }
 
-// --- Add -------------------------------------------------------------------
-
-/** What Add brings in: characters and global presets, from a full or a partial file. */
 export interface Incoming {
   characters: Character[];
   globalPresets: PresetMap;
-  /** How many items had a name rollin can't use, so were left out. */
   skipped?: number;
 }
 
-/** What Add compares the file against. */
 export interface Saved {
   roster: Roster;
   globalPresets: PresetMap;
 }
 
-/** What to do with an item whose name is already saved with different content. */
 export type Choice = "keep-mine" | "take-theirs" | "keep-both";
 
-/** A character or global preset in the file that has the same name as a saved one but different content. */
 export interface Clash {
   kind: "character" | "preset";
   name: string;
 }
 
-/** One choice per clash, by name. Characters and global presets are separate. */
 export interface Choices {
   characters: Record<string, Choice>;
   presets: Record<string, Choice>;
 }
 
-/** What Add did, for the summary. A "kept both" copy counts as added and as renamed. */
 export interface AddCounts {
   charactersAdded: number;
   presetsAdded: number;
@@ -274,7 +242,6 @@ export interface AddCounts {
   presetsReplaced: number;
   charactersKept: number;
   presetsKept: number;
-  /** Items left out because their names can't be used. */
   skipped: number;
 }
 
@@ -284,12 +251,6 @@ export interface AddResult {
   counts: AddCounts;
 }
 
-/**
- * The characters and global presets a file contributes to Add; settings, the
- * roll log and the active character are left behind. Names go through the same
- * rules as names typed into the app: they are lowercased, a name that can't be
- * made valid is left out (and counted), and a repeat after lowercasing is dropped.
- */
 export function incomingOf(file: ParsedFile): Incoming {
   const raw =
     file.kind === "full"
@@ -321,15 +282,10 @@ const choiceFor = (map: Record<string, Choice>, name: string): Choice | undefine
 const mapFor = (choices: Choices, clash: Clash) =>
   clash.kind === "character" ? choices.characters : choices.presets;
 
-/** The position of the first clash with no answer yet, or -1 when every clash has one. */
 export function firstUndecided(clashes: Clash[], choices: Choices): number {
   return clashes.findIndex((c) => choiceFor(mapFor(choices, c), c.name) === undefined);
 }
 
-/**
- * Records an answer. With `forRest`, it also answers the clashes of the same
- * kind that have no answer yet; answers already given are kept.
- */
 export function answerClash(
   clashes: Clash[],
   choices: Choices,
@@ -350,7 +306,6 @@ export function answerClash(
   return next;
 }
 
-/** Deep equality for cleaned JSON values. Object key order doesn't matter; a missing key equals `undefined`. */
 function sameContent(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (Array.isArray(a) || Array.isArray(b)) {
@@ -368,7 +323,6 @@ function sameContent(a: unknown, b: unknown): boolean {
   return false;
 }
 
-/** The clashes Add has to ask about, characters first, in the file's order. Same name with the same content is skipped silently. */
 export function listClashes(saved: Saved, incoming: Incoming): Clash[] {
   const clashes: Clash[] = [];
   for (const character of incoming.characters) {
@@ -385,11 +339,6 @@ export function listClashes(saved: Saved, incoming: Incoming): Clash[] {
   return clashes;
 }
 
-/**
- * The first free `name-2`, `name-3`, ... that passes the engine's name rules.
- * A name that can't take a suffix as it is (spaces, a long name) is tidied
- * first: lowercased, and other characters turned into `-`.
- */
 export function freeName(
   name: string,
   taken: ReadonlySet<string>,
@@ -413,11 +362,6 @@ export function freeName(
   throw new Error("No free name found.");
 }
 
-/**
- * Adds the file's characters and global presets to saved ones. New names come
- * in; a clash follows its choice (a clash with no choice keeps yours); an
- * identical item is skipped. The active character is never changed.
- */
 export function addToSaved(saved: Saved, incoming: Incoming, choices: Choices): AddResult {
   const counts: AddCounts = {
     charactersAdded: 0,
@@ -481,11 +425,6 @@ export function addToSaved(saved: Saved, incoming: Incoming, choices: Choices): 
   return { roster: { active: saved.roster.active, characters }, globalPresets, counts };
 }
 
-/**
- * Adds the file's items to what is saved. It reads what is saved just before
- * writing, so a change another tab made a moment ago is kept. Returns what is
- * now saved, with the counts.
- */
 export async function applyAdd(
   storage: Storage,
   incoming: Incoming,
@@ -497,14 +436,12 @@ export async function applyAdd(
   };
   const result = addToSaved(saved, incoming, choices);
   const c = result.counts;
-  // Presets first and characters last, so a failure part way leaves the larger piece untouched.
   if (c.presetsAdded + c.presetsReplaced > 0) await storage.set(PRESETS_KEY, result.globalPresets);
   if (c.charactersAdded + c.charactersReplaced > 0)
     await storage.set(CHARACTERS_KEY, result.roster);
   return result;
 }
 
-/** Counts a person can read after Add, e.g. "Added 2 characters and 1 global preset; kept 1 of yours." */
 export function describeAdd(c: AddCounts): string {
   const list = (characters: number, presets: number) =>
     [
@@ -533,7 +470,6 @@ export function describeAdd(c: AddCounts): string {
   return `${text.charAt(0).toUpperCase()}${text.slice(1)}.`;
 }
 
-/** The note for names a file held that rollin can't use; empty when none were dropped. */
 export function describeSkipped(n: number): string {
   return n > 0 ? ` ${plural(n, "name")} rollin can't use ${n === 1 ? "was" : "were"} skipped.` : "";
 }
@@ -556,7 +492,6 @@ function count(characters: Character[], globalPresets: PresetMap, rollLog: numbe
   };
 }
 
-/** Counts, for the "this will replace your data" prompt. */
 export function summarise(data: BackupData): Summary {
   return count(
     data.characters.characters,
@@ -567,7 +502,6 @@ export function summarise(data: BackupData): Summary {
 
 export const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
-/** Counts for a partial file; a section it leaves out counts as none. */
 export function describePartialSummary(data: PartialData): string {
   return describeSummary(count(data.characters ?? [], data.globalPresets ?? {}, null));
 }
@@ -587,7 +521,6 @@ export function backupFilename(now: Date = new Date()): string {
   return `rollin-backup-${now.toISOString().slice(0, 10)}.json`;
 }
 
-/** The file name for one exported character: `rollin-character-grog-2026-11-15.json`. Anything a file system may refuse becomes a hyphen. */
 export function characterFilename(name: string, now: Date = new Date()): string {
   const safe =
     name
@@ -597,36 +530,26 @@ export function characterFilename(name: string, now: Date = new Date()): string 
   return `rollin-character-${safe}-${now.toISOString().slice(0, 10)}.json`;
 }
 
-// --- Backup reminder -------------------------------------------------------
-
 export const BACKUP_STATE_KEY = "backupState";
 const DAY = 86_400_000;
-/** How long unsaved data sits before the first nudge. */
 export const REMIND_AFTER_MS = 3 * DAY;
-/** How long a dismissed nudge stays away. */
 export const SNOOZE_MS = 14 * DAY;
 
-/** Remembered on this device only; never part of a backup. */
 export interface BackupState {
-  /** The data (as `fingerprint` text) as of the last export. */
   exported?: string;
-  /** When the data first differed from the last export. */
   unsavedSince?: number;
   dismissedAt?: number;
 }
 
-/** The part of the data a backup protects, as text to compare with the last export. */
 export function fingerprint(data: BackupData): string {
   return JSON.stringify([data.characters, data.globalPresets, data.settings]);
 }
 
-/** There is something worth backing up: a variable or a preset. Theme alone isn't. */
 export function hasContent(data: BackupData): boolean {
   const s = summarise(data);
   return s.variables + s.presets + s.globalPresets > 0 || s.characters > 1;
 }
 
-/** Updates the clock on unsaved data: starts it when data first differs from the last export, stops it when it matches. */
 export function trackState(state: BackupState, data: BackupData, now: number): BackupState {
   const unsaved = hasContent(data) && state.exported !== fingerprint(data);
   if (!unsaved)
@@ -639,7 +562,6 @@ export function reminderDue(state: BackupState, now: number): boolean {
   return state.dismissedAt === undefined || now - state.dismissedAt >= SNOOZE_MS;
 }
 
-/** Hands the browser a JSON file to save, named `filename` or, by default, for a full backup. */
 export function downloadBackup(
   backup: Backup | PartialFileJson,
   filename: string = backupFilename(),
