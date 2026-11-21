@@ -7,6 +7,7 @@ const launchOptions = process.env.PW_CHROMIUM_PATH
 export default defineConfig({
   testDir: "e2e",
   fullyParallel: true,
+  workers: "100%",
   forbidOnly: !!process.env.CI,
   retries: 0,
   reporter: process.env.CI ? "github" : "list",

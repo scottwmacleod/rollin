@@ -150,21 +150,48 @@ test.describe("popup motion", () => {
     expect(timing).toBe("translate 0.2s");
 
     await page.keyboard.press("Escape");
+    await expect(sheet).toHaveCount(0);
+    await page.evaluate(() => {
+      const seen: number[] = [];
+      Object.assign(window, { __slideOver: seen });
+      document.addEventListener("transitionrun", function freeze(event) {
+        const el = event.target;
+        if (!(el instanceof HTMLElement) || !el.classList.contains("slide-over")) return;
+        const slide = el
+          .getAnimations()
+          .find((a) => a instanceof CSSTransition && a.transitionProperty === "translate");
+        if (!slide) return;
+        if (seen.length === 0) {
+          slide.pause();
+          slide.currentTime = 100;
+          seen.push(el.getBoundingClientRect().left);
+        } else {
+          slide.pause();
+          slide.currentTime = 0;
+          seen.push(el.getBoundingClientRect().left, el.getBoundingClientRect().width);
+          document.removeEventListener("transitionrun", freeze);
+          slide.play();
+        }
+      });
+    });
     await page.getByRole("button", { name: "Character: default" }).click();
-    await expect(sheet).toBeAttached();
-    await page.waitForTimeout(60);
-    const before = await sheet.evaluate((el) => el.getBoundingClientRect().left);
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as unknown as { __slideOver: number[] }).__slideOver.length),
+      )
+      .toBe(1);
     await page.keyboard.press("Escape");
-    const after = await sheet.evaluate(
-      (el) =>
-        new Promise<number>((done) =>
-          requestAnimationFrame(() => done(el.getBoundingClientRect().left)),
-        ),
+    await expect
+      .poll(() =>
+        page.evaluate(() => (window as unknown as { __slideOver: number[] }).__slideOver.length),
+      )
+      .toBe(3);
+    const [before = 0, after = 0, width = 0] = await page.evaluate(
+      () => (window as unknown as { __slideOver: number[] }).__slideOver,
     );
-    const width = await sheet.evaluate((el) => el.getBoundingClientRect().width);
     expect(before).toBeLessThan(0);
-    expect(after).toBeLessThanOrEqual(before);
-    expect(after).toBeGreaterThan(-width + 10);
+    expect(before).toBeGreaterThan(-width + 10);
+    expect(Math.abs(after - before)).toBeLessThan(1);
     await expect(sheet).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Character: default" })).toBeFocused();
   });
