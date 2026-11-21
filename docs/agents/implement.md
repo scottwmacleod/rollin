@@ -25,7 +25,7 @@ Each issue may carry one line in its body: `**Touches:** ` followed by comma-sep
 1. **Branch.** `agent/<n>-<slug>` from fresh `origin/main`, in its own checkout. In T3, start builders with `delegate_task` (call `orchestrator_capabilities` once per thread first), which gives each its own checkout; do not run `git worktree add` there. Outside T3, use the `Agent` tool with `isolation: "worktree"`.
 2. **Build.** Builder subagent (model `sonnet`) implements with `/tdd`, runs single tests as it goes, commits on the branch. It never opens a PR and never touches the issue labels.
 3. **Verify (main thread, independent).** The main thread itself runs these and reads the output; a builder saying "tests pass" is not evidence:
-   - `just web-check` (token drift, typecheck, Biome, Vitest, Playwright with axe, and the sm-core copy check)
+   - `just web-check` (token drift, typecheck, Biome, bun test, Playwright with axe, and the sm-core copy check)
    - then reads the diff against every acceptance criterion. If anything fails or is missing, spawn a fix subagent (`sonnet`) and verify again.
 4. **Review.** Reviewer subagent (model `opus`) runs `/code-review` on the branch and returns findings only; it never edits.
    - **Clear** means no correctness, standards or spec findings. Nits do not block; ignore them, or file `needs-triage` issues if they matter.

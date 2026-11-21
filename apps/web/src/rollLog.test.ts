@@ -9,7 +9,7 @@ import {
   mergeLoaded,
   nextEntryId,
   saveLog,
-} from "./rollLog";
+} from "./rollLog.ts";
 import { memoryStorage } from "./storage";
 
 const entry = (id: number): Entry => ({
@@ -70,14 +70,14 @@ describe("roll log entry check", () => {
   });
 
   it("cleanLog keeps the valid entries and tolerates non-arrays", () => {
-    expect(cleanLog([{ id: 1, input: "d20" }, ok, 7])).toEqual([ok]);
+    expect(cleanLog([{ id: 1, input: "d20" }, ok, 7])).toEqual<unknown>([ok]);
     expect(cleanLog(undefined)).toEqual([]);
   });
 
   it("loadLog drops a saved bad entry", async () => {
     const storage = memoryStorage();
     await storage.set("rollLog", [{ id: 1, input: "d20" }, ok, "junk"]);
-    expect(await loadLog(storage)).toEqual([ok]);
+    expect(await loadLog(storage)).toEqual<unknown>([ok]);
   });
 });
 

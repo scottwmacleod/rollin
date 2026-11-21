@@ -1,4 +1,4 @@
-import { KEYPAD_DICE, type Key, press } from "./keypad";
+import { KEYPAD_DICE, type Key, press } from "./keypad.ts";
 import { Button } from "./ui";
 
 const KEY =
