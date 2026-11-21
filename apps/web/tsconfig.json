@@ -6,5 +6,12 @@
     "allowImportingTsExtensions": true,
     "types": ["vite/client", "node"]
   },
-  "include": ["src", "e2e", "scripts/pwa.ts", "vite.config.ts", "playwright.config.ts"]
+  "include": [
+    "src",
+    "../../test",
+    "e2e",
+    "scripts/pwa.ts",
+    "vite.config.ts",
+    "playwright.config.ts"
+  ]
 }

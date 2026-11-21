@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Key, press } from "./keypad";
+import { type Key, press } from "./keypad.ts";
 
 const run = (keys: Key[]) => keys.reduce((formula, key) => press(formula, key), "");
 const die = (sides: number): Key => ({ kind: "die", sides });

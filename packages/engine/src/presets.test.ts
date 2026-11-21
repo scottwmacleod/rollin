@@ -32,7 +32,7 @@ describe("preset names follow the Rust rules", () => {
     ["d0", "looks_like_dice"],
   ])("%s breaks the %s rule", (raw, rule) => {
     const result = validatePresetName(raw);
-    expect("error" in result && result.error.rule).toBe(rule);
+    expect("error" in result && result.error.rule).toBe<string | false>(rule);
   });
 
   test.each(["save", "help", "history", "char", "new", "rename"])(

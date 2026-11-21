@@ -15,13 +15,13 @@
     "typecheck:tsc": "bun run --workspaces typecheck:tsc",
     "lint": "biome check . && bun vendor/sm-core/tooling/lint/no-comments.mjs",
     "format": "biome format --write .",
-    "test": "bun run --workspaces test",
+    "test": "bun test --parallel",
     "build": "bun run --filter rollin-web build",
     "e2e": "bun run --filter rollin-web e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
     "typescript": "7.0.2",
-    "vitest": "5.1.0"
+    "@types/bun": "1.4.5"
   }
 }
