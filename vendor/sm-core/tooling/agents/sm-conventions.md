@@ -7,7 +7,7 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 ## Definition of done
 
 - The `check` script passes: `bun run check` in a Bun product (rollin, planning-poker), `npm run check` otherwise, on the Node version in `.nvmrc` (the latest LTS). It runs the same gates as CI.
-- A Bun product names its Bun in `package.json`'s `packageManager` (`"bun@1.4.5"`), and CI reads it from there. `vercel.json`'s install command repeats the version until Vercel ships Bun 1.4 (see sm-core's README). Commit `bun.lock`, not `package-lock.json`. Scripts call `bun` and `bun --bun x <tool>`, not `npm run`, `npx` or `node`. Vitest (on Bun's runtime) stays; `bun test` doesn't replace it.
+- A Bun product names its Bun in `package.json`'s `packageManager` (`"bun@1.4.5"`), and CI reads it from there. `vercel.json`'s install command repeats the version until Vercel ships Bun 1.4 (see sm-core's README). Commit `bun.lock`, not `package-lock.json`. Scripts call `bun` and `bun --bun x <tool>`, not `npm run`, `npx` or `node`. Unit tests run on `bun test --parallel`, and test files keep their `vitest` imports (Bun maps them to `bun:test`); a product's `test/` setup adds the `vi` and `expect` helpers Bun lacks.
 - Every app uses the same script names: `dev`, `build`, `check`, `test`, `e2e`, plus `typecheck`, `lint` and `format`. A repo without one of these leaves it out rather than renaming another.
 - TypeScript is the latest stable 7.x and extends `vendor/sm-core/tooling/tsconfig.base.json`. Typecheck runs `bun check --no-script` (without `--no-script`, bun runs a `check` script instead of typechecking), with `tsc --noEmit` as the fallback.
 - `bun lint` lints JavaScript and TypeScript. A product's `.oxlintrc.json` extends `vendor/sm-core/tooling/oxlintrc.base.json`, which turns on every rule except those sm-core's ADR-0010 gives a reason for. `bun lint` is only in Bun's canary: run it as `bun x bun@1.4.5-canary.20261120.1 lint --no-script` until a stable Bun has it. Findings that predate a rule sit in `oxlint-suppressions.json`, which may only shrink; fix the code rather than adding to it (`--suppress-all` is for turning a new rule on, never for new code). Turn a rule off in the product's own `.oxlintrc.json` only with an ADR that says why.
@@ -48,7 +48,7 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 
 ## Tests
 
-- Vitest runs in random order (`sequence.shuffle: true`), so no test may depend on another running first.
+- Tests run in random order (`randomize = true` in `bunfig.toml`, or `sequence.shuffle: true` where Vitest remains), and each file gets a fresh global (`bun test --parallel`), so no test may depend on another running first.
 - Each test file cleans up after itself: restore mocks (`vi.restoreAllMocks()`), switch fake timers back to real ones, unstub globals and environment variables (`vi.unstubAllGlobals()`, `vi.unstubAllEnvs()`), unmount what it rendered, and clear storage it wrote. Put the cleanup in `afterEach`, not at the end of a test, so it runs when the test fails.
 - No module-level state that one test changes and another reads.
 - Never commit `.only` or `.skip`.
