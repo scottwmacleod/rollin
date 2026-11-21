@@ -1,11 +1,11 @@
 {
   "name": "sm-core",
-  "version": "26.11.30",
+  "version": "26.11.31",
   "root": "../..",
   "files": {
-    "tokens.json": "5583763a434d7e28948e66b7367191d7f553afa47f0edc561753eef9e88c5801",
-    "sm-core.css": "1465ae9619ef13d47afc322ba82467b5a12f5512fd2627e5a312110baf50a827",
-    "sm-tailwind.css": "0b24985084a775ab3d2deb24dd085628780a7ba9503f857aebb1b4786190cce7",
+    "tokens.json": "653e5aef29d54eedc16f6bad94b333b769aeadd30004ee197e6c81af872019cf",
+    "sm-core.css": "62ce57cd3a668b3eb94b6d0fcfbcbe4e76944ced22d7eb936ef55b8d786d4ae3",
+    "sm-tailwind.css": "eb757b24aaf6b0e73054b637ed612a7f6040c75f6921d1c0673630c72e5169e9",
     "logos/planning-poker-apple-touch-icon.png": "639ca34dcdcfb1349907388f938f4ffa52b5eeecd40070adf38cce54b00fe2a2",
     "logos/planning-poker-favicon-16.png": "457aaaf59a609ca686329220b5422ac4aff2417e550e1a68d8c2581be4ea4684",
     "logos/planning-poker-favicon-32.png": "df34a7fe7b10cf3e2823849b9e379c2589b842242dbb85f883986d3505cdadd3",
