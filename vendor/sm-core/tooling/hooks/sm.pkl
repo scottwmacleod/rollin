@@ -1,0 +1,24 @@
+amends "hk/Config.pkl"
+
+hooks {
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    steps {
+      ["format"] {
+        fix = "bun run --silent format {{files}}"
+      }
+      ["lint"] {
+        depends = "format"
+        check = "bun run --silent lint {{files}}"
+      }
+    }
+  }
+  ["pre-push"] {
+    steps {
+      ["check"] {
+        check = "bun run --silent check"
+      }
+    }
+  }
+}

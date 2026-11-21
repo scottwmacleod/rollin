@@ -2,9 +2,14 @@
   "name": "rollin-workspace",
   "private": true,
   "description": "Bun workspace: the dice engine (packages/engine) and the web app (apps/web).",
-  "workspaces": ["packages/engine", "apps/web"],
+  "workspaces": [
+    "packages/engine",
+    "apps/web"
+  ],
   "packageManager": "bun@1.4.5",
-  "engines": { "bun": ">=1.4.5" },
+  "engines": {
+    "bun": ">=1.4.5"
+  },
   "scripts": {
     "prepare": "bun vendor/sm-core/tooling/hooks/install.mjs",
     "dev": "bun run --filter rollin-web dev",
@@ -14,10 +19,11 @@
     "typecheck": "bun run --workspaces typecheck",
     "typecheck:tsc": "bun run --workspaces typecheck:tsc",
     "lint": "biome check . && bun vendor/sm-core/tooling/lint/no-comments.mjs",
-    "format": "biome format --write .",
+    "format": "biome format --write --no-errors-on-unmatched --files-ignore-unknown=true",
     "test": "bun test --parallel",
     "build": "bun run --filter rollin-web build",
-    "e2e": "bun run --filter rollin-web e2e"
+    "e2e": "bun run --filter rollin-web e2e",
+    "pre-push": "bun run tokens:check && bun run typecheck && bun run lint && bun run test && node vendor/sm-core/verify.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",

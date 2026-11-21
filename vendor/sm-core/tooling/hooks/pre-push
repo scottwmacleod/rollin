@@ -1,2 +1,4 @@
 #!/bin/sh
-exec node "$(dirname "$0")/pre-push.mjs" "$@"
+if command -v hk >/dev/null 2>&1; then exec hk run pre-push "$@"; fi
+if command -v node >/dev/null 2>&1; then exec node "$(dirname "$0")/fallback.mjs" pre-push "$@"; fi
+exec bun "$(dirname "$0")/fallback.mjs" pre-push "$@"
