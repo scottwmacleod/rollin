@@ -598,7 +598,7 @@ export function App() {
   return (
     <main className="flex h-dvh flex-col overflow-hidden">
       <header className="mx-auto flex w-full max-w-5xl shrink-0 items-center gap-2 px-4 py-1 md:py-4">
-        <span className="wordmark shrink-0">
+        <span className="shrink-0">
           <img
             className="wordmark-light h-5 w-auto md:h-10"
             src="/rollin-wordmark-light.svg"
