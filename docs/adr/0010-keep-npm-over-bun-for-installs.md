@@ -6,12 +6,12 @@ rollin keeps npm as its package manager. bun was trialled side by side on the sa
 
 **Numbers.** rollin's two workspaces, 78 packages, Node 26.13.1, bun 1.4.4, npm 10.9.9. CI is ten jobs per tool on `ubuntu-latest` in one run; GitHub reports step times in whole seconds. Cold means an empty package cache; warm means the package cache restored from `actions/cache` (restore plus install).
 
-| | npm p50 | npm p95 | bun p50 | bun p95 |
-| --- | --- | --- | --- | --- |
-| CI cold | 3.5 s | 4.0 s | 1.0 s | 1.0 s |
-| CI warm (restore + install) | 4.0 s | 4.5 s | 2.0 s | 3.5 s |
-| Local cold (3 runs) | 4.8 s | 4.9 s | 3.8 s | 9.1 s |
-| Local warm (3 runs) | 3.3 s | 3.4 s | 0.02 s | 0.02 s |
+|                             | npm p50 | npm p95 | bun p50 | bun p95 |
+| --------------------------- | ------- | ------- | ------- | ------- |
+| CI cold                     | 3.5 s   | 4.0 s   | 1.0 s   | 1.0 s   |
+| CI warm (restore + install) | 4.0 s   | 4.5 s   | 2.0 s   | 3.5 s   |
+| Local cold (3 runs)         | 4.8 s   | 4.9 s   | 3.8 s   | 9.1 s   |
+| Local warm (3 runs)         | 3.3 s   | 3.4 s   | 0.02 s  | 0.02 s  |
 
 `bun install --frozen-lockfile` left `bun.lock` unchanged in all 20 CI runs, and every gate passed on a bun-installed tree (token check, typecheck, Biome, Vitest 391 + 124, Playwright with axe 101).
 

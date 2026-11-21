@@ -1,5 +1,6 @@
 import { MAX_INT, validateVariableName } from "@rollin/engine";
 import { type FormEvent, useState } from "react";
+
 import type { Character } from "./characters";
 import { CONFIRM_NO, CONFIRM_YES, FIELD, OVERLAY, PRIMARY, SECONDARY } from "./dialogStyles";
 import {

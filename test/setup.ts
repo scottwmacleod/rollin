@@ -9,7 +9,12 @@ Object.assign(vi, {
     if (!stubbedGlobals.has(name)) {
       stubbedGlobals.set(name, Object.getOwnPropertyDescriptor(globalThis, name));
     }
-    Object.defineProperty(globalThis, name, { value, writable: true, configurable: true, enumerable: true });
+    Object.defineProperty(globalThis, name, {
+      value,
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
     return vi;
   },
   unstubAllGlobals() {
@@ -40,8 +45,12 @@ Object.assign(vi, {
   mocked<T>(item: T): T {
     return item;
   },
-  async waitFor<T>(callback: () => T | Promise<T>, options: number | { timeout?: number; interval?: number } = {}) {
-    const { timeout = 1000, interval = 50 } = typeof options === "number" ? { timeout: options } : options;
+  async waitFor<T>(
+    callback: () => T | Promise<T>,
+    options: number | { timeout?: number; interval?: number } = {},
+  ) {
+    const { timeout = 1000, interval = 50 } =
+      typeof options === "number" ? { timeout: options } : options;
     const deadline = Date.now() + timeout;
     for (;;) {
       try {

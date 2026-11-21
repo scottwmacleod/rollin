@@ -6,9 +6,9 @@ The rules every sm_ repo shares are in [`docs/agents/sm-conventions.md`](docs/ag
 
 ## Definition of done
 
-`just check` passes (it runs `bun run check` plus the sm-core copy check, the same gates as the required `ci` check): the design-token drift check, typecheck, Biome, `bun test` and Playwright with axe. Only `apps/web/src/ui` may import `@ui-sdk/*`. The parity fixtures in `packages/engine/fixtures/parity` are frozen; a change that alters one is a change to the engine's behaviour.
+`just check` passes (it runs `bun run check` plus the sm-core copy check, the same gates as the required `ci` check): the design-token drift check, typecheck, `bun lint`, Biome (CSS), `bun fmt`, `bun test` and Playwright with axe. Only `apps/web/src/ui` may import `@ui-sdk/*`. The parity fixtures in `packages/engine/fixtures/parity` are frozen; a change that alters one is a change to the engine's behaviour.
 
-Bun 1.4.5 is the package manager and the runtime (ADR-0012): `bun install`, `bun run <script>` and `bun --bun x <tool>`, never npm, npx or node. The version lives only in `packageManager` in `package.json`. Biome stays.
+Bun 1.4.5 is the package manager and the runtime (ADR-0012): `bun install`, `bun run <script>` and `bun --bun x <tool>`, never npm, npx or node. The version lives only in `packageManager` in `package.json`. Lint is `bun lint` from the pinned canary and format is `bun fmt` (ADR-0023); Biome lints only CSS and the few JavaScript rules `bun lint` lacks. Existing findings sit in `oxlint-suppressions.json`, which may only shrink.
 
 Unit tests run on `bun test --parallel` (ADR-0022): random order, each file in a fresh global, one worker per core. Test files import from `vitest`; Bun maps that to `bun:test`, and `test/setup.ts` adds the `vi` and `expect` helpers Bun lacks (`test/vitest.d.ts` types them). Bun resolves `./foo` to `foo.tsx` when `Foo.tsx` sits beside `foo.ts`, so import such a module with its `.ts` extension.
 

@@ -8,6 +8,7 @@ import {
   validatePresetName,
   validateVariableName,
 } from "@rollin/engine";
+
 import type { Storage } from "./storage";
 
 export const CHARACTERS_KEY = "characters";

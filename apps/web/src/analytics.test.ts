@@ -1,5 +1,6 @@
 import { roll } from "@rollin/engine";
 import { expect, test } from "vitest";
+
 import { diceStats } from "./analytics";
 
 const stats = (formula: string) => {

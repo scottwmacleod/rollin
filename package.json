@@ -6,10 +6,6 @@
     "packages/engine",
     "apps/web"
   ],
-  "packageManager": "bun@1.4.5",
-  "engines": {
-    "bun": ">=1.4.5"
-  },
   "scripts": {
     "prepare": "bun vendor/sm-core/tooling/hooks/install.mjs",
     "dev": "bun run --filter rollin-web dev",
@@ -18,8 +14,8 @@
     "tokens:check": "bun ui/generate-tokens.mjs --check",
     "typecheck": "bun run --workspaces typecheck",
     "typecheck:tsc": "bun run --workspaces typecheck:tsc",
-    "lint": "biome check . && bun vendor/sm-core/tooling/lint/no-comments.mjs",
-    "format": "biome format --write --no-errors-on-unmatched --files-ignore-unknown=true",
+    "lint": "bun x bun@1.4.5-canary.20261120.1 lint --no-script && biome lint . && bun fmt --no-script --check . && bun vendor/sm-core/tooling/lint/no-comments.mjs",
+    "format": "bun fmt --no-script .",
     "test": "bun test --parallel",
     "build": "bun run --filter rollin-web build",
     "e2e": "bun run --filter rollin-web e2e",
@@ -27,7 +23,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
-    "typescript": "7.0.2",
-    "@types/bun": "1.4.5"
-  }
+    "@types/bun": "1.4.5",
+    "typescript": "7.0.2"
+  },
+  "engines": {
+    "bun": ">=1.4.5"
+  },
+  "packageManager": "bun@1.4.5"
 }

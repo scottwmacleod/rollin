@@ -4,13 +4,13 @@ The web app's **Export** produces one JSON file, and **Import** reads it back. T
 
 Every file has the same envelope:
 
-| Field | Meaning |
-| --- | --- |
-| `format` | Always `"rollin-backup"`. A file without it is refused. |
-| `version` | A whole number, 1 or more. A file newer than the app is refused. An older one is upgraded on import. |
-| `kind` | `"full"` or `"partial"`. Required from version 2. |
-| `exportedAt` | An ISO timestamp. Optional in practice. |
-| `data` | What the file holds. Its shape depends on `kind`. |
+| Field        | Meaning                                                                                              |
+| ------------ | ---------------------------------------------------------------------------------------------------- |
+| `format`     | Always `"rollin-backup"`. A file without it is refused.                                              |
+| `version`    | A whole number, 1 or more. A file newer than the app is refused. An older one is upgraded on import. |
+| `kind`       | `"full"` or `"partial"`. Required from version 2.                                                    |
+| `exportedAt` | An ISO timestamp. Optional in practice.                                                              |
+| `data`       | What the file holds. Its shape depends on `kind`.                                                    |
 
 ## Full backup
 
@@ -47,23 +47,23 @@ A **backup** with `"kind": "full"` holds everything. It is what Export writes, a
 }
 ```
 
-| Field | Meaning |
-| --- | --- |
-| `data.characters.active` | The name of the active character. Falls back to the first character if it names none. |
+| Field                        | Meaning                                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `data.characters.active`     | The name of the active character. Falls back to the first character if it names none.                        |
 | `data.characters.characters` | Every character. At least one is needed; a `default` character is conventional. Duplicate names are dropped. |
-| `data.globalPresets` | Preset name to formula, available to every character. |
-| `data.settings.theme` | `"system"`, `"light"` or `"dark"`. |
-| `data.rollLog` | Optional. Leave it out to keep the roll log already in the browser. An empty list clears it. |
+| `data.globalPresets`         | Preset name to formula, available to every character.                                                        |
+| `data.settings.theme`        | `"system"`, `"light"` or `"dark"`.                                                                           |
+| `data.rollLog`               | Optional. Leave it out to keep the roll log already in the browser. An empty list clears it.                 |
 
 Each character has these fields:
 
-| Field | Meaning |
-| --- | --- |
-| `name` | The character's name. |
-| `vars` | Variable name to whole number. Use lowercase names matching `[a-z][a-z0-9_]*`, as the app does. |
-| `presets` | Preset name to formula. Use lowercase names matching `[a-z][a-z0-9_-]*`, as the app does. |
-| `system` | Optional. `"dnd5e"` is the only game system. |
-| `critRange` | Optional. 2 to 20; the lowest kept d20 that is a critical hit. Left out for the default, 20. |
+| Field       | Meaning                                                                                         |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| `name`      | The character's name.                                                                           |
+| `vars`      | Variable name to whole number. Use lowercase names matching `[a-z][a-z0-9_]*`, as the app does. |
+| `presets`   | Preset name to formula. Use lowercase names matching `[a-z][a-z0-9_-]*`, as the app does.       |
+| `system`    | Optional. `"dnd5e"` is the only game system.                                                    |
+| `critRange` | Optional. 2 to 20; the lowest kept d20 that is a critical hit. Left out for the default, 20.    |
 
 After choosing a full backup, the app offers **Add** or **Replace**.
 

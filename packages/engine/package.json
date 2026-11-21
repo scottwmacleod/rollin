@@ -2,8 +2,8 @@
   "name": "@rollin/engine",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "description": "rollin dice engine: no UI, no browser APIs. Parity with the Rust engine for everything but presets, characters and 5e (#216).",
+  "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },

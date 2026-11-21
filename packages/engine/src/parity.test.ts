@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+
 import { describe, expect, test } from "vitest";
+
 import { type Draw, roll, scriptedDice } from "./index";
 
 interface Context {

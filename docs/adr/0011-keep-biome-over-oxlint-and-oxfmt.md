@@ -1,14 +1,16 @@
 # Keep Biome over oxlint and oxfmt
 
+Superseded by ADR-0023 on 2026-11-21.
+
 rollin keeps Biome for formatting and linting. oxlint 1.94.0 and oxfmt 0.79.0 were run beside Biome 2.6.7 on the same commit (#300). Decided on 2026-11-18.
 
 **Speed.** Every tool finishes the whole repo in about a tenth of a second, so none is clearly faster in practice. Median of five warm runs, first run on a fresh clone in brackets:
 
-| Tool | Does | Warm | First run |
-| --- | --- | --- | --- |
-| `biome check .` | format and lint | 99 ms | 105 ms |
-| `oxlint` | lint | 54 ms | 55 ms |
-| `oxfmt --check` | format | 72 ms | 124 ms |
+| Tool            | Does            | Warm  | First run |
+| --------------- | --------------- | ----- | --------- |
+| `biome check .` | format and lint | 99 ms | 105 ms    |
+| `oxlint`        | lint            | 54 ms | 55 ms     |
+| `oxfmt --check` | format          | 72 ms | 124 ms    |
 
 oxlint plus oxfmt (about 125 ms) is no faster than Biome doing both (about 100 ms).
 

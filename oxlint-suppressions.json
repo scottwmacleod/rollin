@@ -1,0 +1,2295 @@
+{
+  "apps/web/e2e/a11y.spec.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 9
+    },
+    "no-continue": {
+      "count": 4
+    },
+    "prefer-destructuring": {
+      "count": 1
+    },
+    "prefer-named-capture-group": {
+      "count": 1
+    },
+    "require-unicode-regexp": {
+      "count": 5
+    },
+    "typescript/no-unnecessary-condition": {
+      "count": 4
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 2
+    },
+    "typescript/promise-function-async": {
+      "count": 10
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 1
+    },
+    "unicorn/no-array-reduce": {
+      "count": 1
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 1
+    },
+    "unicorn/prefer-global-this": {
+      "count": 3
+    },
+    "unicorn/prefer-number-coercion": {
+      "count": 3
+    },
+    "unicorn/prefer-spread": {
+      "count": 1
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 8
+    },
+    "vitest/prefer-each": {
+      "count": 1
+    }
+  },
+  "apps/web/e2e/analytics.spec.ts": {
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "typescript/promise-function-async": {
+      "count": 2
+    },
+    "unicorn/prefer-global-this": {
+      "count": 3
+    }
+  },
+  "apps/web/e2e/axe.ts": {
+    "import/no-named-as-default": {
+      "count": 1
+    },
+    "no-empty-function": {
+      "count": 1
+    },
+    "typescript/promise-function-async": {
+      "count": 2
+    }
+  },
+  "apps/web/e2e/backup.spec.ts": {
+    "bun/no-useless-spread-fallback": {
+      "count": 2
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 2
+    },
+    "import/no-nodejs-modules": {
+      "count": 1
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 1
+    },
+    "node/no-sync": {
+      "count": 7
+    },
+    "require-unicode-regexp": {
+      "count": 22
+    },
+    "typescript/no-unsafe-assignment": {
+      "count": 2
+    },
+    "typescript/no-unsafe-member-access": {
+      "count": 4
+    },
+    "typescript/promise-function-async": {
+      "count": 4
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 12
+    },
+    "unicorn/prefer-global-this": {
+      "count": 1
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 2
+    },
+    "vitest/prefer-each": {
+      "count": 1
+    }
+  },
+  "apps/web/e2e/crits.spec.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    },
+    "typescript/promise-function-async": {
+      "count": 1
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 2
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 1
+    },
+    "unicorn/prefer-global-this": {
+      "count": 1
+    }
+  },
+  "apps/web/e2e/helpers.ts": {
+    "typescript/no-confusing-void-expression": {
+      "count": 2
+    },
+    "typescript/prefer-promise-reject-errors": {
+      "count": 2
+    },
+    "typescript/promise-function-async": {
+      "count": 2
+    },
+    "unicorn/no-useless-undefined": {
+      "count": 1
+    },
+    "unicorn/prefer-add-event-listener": {
+      "count": 2
+    }
+  },
+  "apps/web/e2e/insights.spec.ts": {
+    "vitest/prefer-each": {
+      "count": 1
+    }
+  },
+  "apps/web/e2e/layout.spec.ts": {
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "no-continue": {
+      "count": 2
+    },
+    "require-unicode-regexp": {
+      "count": 4
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "typescript/no-unnecessary-condition": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 2
+    },
+    "typescript/promise-function-async": {
+      "count": 1
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 1
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 7
+    },
+    "unicorn/prefer-global-this": {
+      "count": 1
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 7
+    }
+  },
+  "apps/web/e2e/layout.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 5
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "typescript/prefer-promise-reject-errors": {
+      "count": 1
+    },
+    "typescript/promise-function-async": {
+      "count": 1
+    },
+    "unicorn/prefer-add-event-listener": {
+      "count": 1
+    }
+  },
+  "apps/web/e2e/narrow.spec.ts": {
+    "no-await-in-loop": {
+      "count": 1
+    },
+    "no-implicit-coercion": {
+      "count": 1
+    },
+    "no-underscore-dangle": {
+      "count": 3
+    },
+    "oxc/branches-sharing-code": {
+      "count": 1
+    },
+    "require-unicode-regexp": {
+      "count": 3
+    },
+    "typescript/consistent-type-imports": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 3
+    },
+    "typescript/promise-function-async": {
+      "count": 3
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 2
+    },
+    "unicorn/no-array-sort": {
+      "count": 1
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 6
+    },
+    "unicorn/prefer-global-this": {
+      "count": 4
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 8
+    }
+  },
+  "apps/web/e2e/offline.spec.ts": {
+    "no-await-in-loop": {
+      "count": 1
+    },
+    "no-implicit-coercion": {
+      "count": 1
+    },
+    "typescript/no-unsafe-argument": {
+      "count": 1
+    },
+    "typescript/no-unsafe-assignment": {
+      "count": 2
+    },
+    "typescript/no-unsafe-call": {
+      "count": 2
+    },
+    "typescript/no-unsafe-member-access": {
+      "count": 4
+    },
+    "typescript/promise-function-async": {
+      "count": 6
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 2
+    },
+    "unicorn/prefer-global-this": {
+      "count": 3
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 1
+    }
+  },
+  "apps/web/e2e/palette.spec.ts": {
+    "prefer-named-capture-group": {
+      "count": 1
+    },
+    "require-unicode-regexp": {
+      "count": 4
+    },
+    "typescript/await-thenable": {
+      "count": 1
+    },
+    "typescript/consistent-type-imports": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 3
+    },
+    "unicorn/prefer-global-this": {
+      "count": 1
+    }
+  },
+  "apps/web/e2e/phone.spec.ts": {
+    "max-lines": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 4
+    },
+    "require-unicode-regexp": {
+      "count": 5
+    },
+    "typescript/consistent-type-imports": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "typescript/prefer-promise-reject-errors": {
+      "count": 1
+    },
+    "typescript/promise-function-async": {
+      "count": 3
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 6
+    },
+    "unicorn/prefer-add-event-listener": {
+      "count": 1
+    },
+    "unicorn/prefer-global-this": {
+      "count": 4
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 8
+    }
+  },
+  "apps/web/e2e/roll.spec.ts": {
+    "max-lines": {
+      "count": 1
+    },
+    "require-unicode-regexp": {
+      "count": 21
+    },
+    "typescript/consistent-type-imports": {
+      "count": 7
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "typescript/promise-function-async": {
+      "count": 4
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 3
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 18
+    },
+    "unicorn/prefer-global-this": {
+      "count": 10
+    },
+    "vitest/prefer-each": {
+      "count": 2
+    }
+  },
+  "apps/web/e2e/tiny.spec.ts": {
+    "require-unicode-regexp": {
+      "count": 3
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 2
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 2
+    }
+  },
+  "apps/web/playwright.config.ts": {
+    "bun/no-env-at-module-scope": {
+      "count": 5
+    },
+    "no-implicit-coercion": {
+      "count": 1
+    },
+    "node/no-process-env": {
+      "count": 5
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 4
+    }
+  },
+  "apps/web/scripts/check-no-test-hooks.mjs": {
+    "bun/no-side-effects-on-import": {
+      "count": 3
+    },
+    "bun/prefer-url-for-sibling-files": {
+      "count": 1
+    },
+    "prefer-named-capture-group": {
+      "count": 1
+    },
+    "require-unicode-regexp": {
+      "count": 1
+    },
+    "unicorn/import-style": {
+      "count": 1
+    },
+    "unicorn/prefer-import-meta-properties": {
+      "count": 1
+    },
+    "vitest/require-hook": {
+      "count": 1
+    }
+  },
+  "apps/web/scripts/copy-tokens.mjs": {
+    "bun/no-side-effects-on-import": {
+      "count": 3
+    },
+    "bun/prefer-url-for-sibling-files": {
+      "count": 2
+    },
+    "unicorn/import-style": {
+      "count": 1
+    },
+    "unicorn/prefer-import-meta-properties": {
+      "count": 1
+    },
+    "vitest/require-hook": {
+      "count": 1
+    }
+  },
+  "apps/web/scripts/pwa.ts": {
+    "unicorn/import-style": {
+      "count": 1
+    },
+    "unicorn/no-array-sort": {
+      "count": 1
+    },
+    "unicorn/relative-url-style": {
+      "count": 1
+    }
+  },
+  "apps/web/scripts/sw.template.js": {
+    "bun/no-side-effects-on-import": {
+      "count": 4
+    },
+    "import/unambiguous": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 1
+    },
+    "prefer-destructuring": {
+      "count": 1
+    },
+    "promise/prefer-await-to-then": {
+      "count": 1
+    },
+    "typescript/no-unsafe-argument": {
+      "count": 4
+    },
+    "typescript/no-unsafe-assignment": {
+      "count": 2
+    },
+    "typescript/no-unsafe-call": {
+      "count": 5
+    },
+    "typescript/no-unsafe-member-access": {
+      "count": 6
+    },
+    "typescript/promise-function-async": {
+      "count": 1
+    },
+    "unicorn/prefer-global-this": {
+      "count": 2
+    },
+    "vitest/require-hook": {
+      "count": 4
+    }
+  },
+  "apps/web/src/App.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 20
+    },
+    "import/max-dependencies": {
+      "count": 1
+    },
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-empty-function": {
+      "count": 3
+    },
+    "no-shadow": {
+      "count": 9
+    },
+    "no-use-before-define": {
+      "count": 8
+    },
+    "no-useless-return": {
+      "count": 1
+    },
+    "no-void": {
+      "count": 2
+    },
+    "prefer-destructuring": {
+      "count": 2
+    },
+    "promise/always-return": {
+      "count": 1
+    },
+    "promise/no-nesting": {
+      "count": 6
+    },
+    "promise/prefer-await-to-then": {
+      "count": 6
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/jsx-handler-names": {
+      "count": 1
+    },
+    "react/jsx-props-no-spreading": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 1
+    },
+    "react/todo": {
+      "count": 1
+    },
+    "require-await": {
+      "count": 4
+    },
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 29
+    },
+    "typescript/no-deprecated": {
+      "count": 1
+    },
+    "typescript/no-dynamic-delete": {
+      "count": 1
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 1
+    },
+    "unicorn/catch-error-name": {
+      "count": 1
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 1
+    },
+    "unicorn/no-useless-undefined": {
+      "count": 4
+    },
+    "unicorn/prefer-at": {
+      "count": 1
+    },
+    "unicorn/switch-case-braces": {
+      "count": 12
+    }
+  },
+  "apps/web/src/BackupSection.tsx": {
+    "bun/react-prefer-updater-function": {
+      "count": 1
+    },
+    "curly": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 10
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "no-negated-condition": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 1
+    },
+    "no-void": {
+      "count": 7
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 3
+    },
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 9
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "unicorn/no-negated-condition": {
+      "count": 1
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 2
+    }
+  },
+  "apps/web/src/CharacterDialog.tsx": {
+    "bun/no-useless-spread-fallback": {
+      "count": 2
+    },
+    "complexity": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 4
+    },
+    "jsx-a11y/no-autofocus": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 2
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/todo": {
+      "count": 2
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 3
+    },
+    "typescript/no-deprecated": {
+      "count": 1
+    },
+    "typescript/no-misused-promises": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 1
+    },
+    "typescript/strict-void-return": {
+      "count": 2
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "apps/web/src/CharacterPanel.tsx": {
+    "import/consistent-type-specifier-style": {
+      "count": 2
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 3
+    }
+  },
+  "apps/web/src/CommandPalette.tsx": {
+    "import/consistent-type-specifier-style": {
+      "count": 2
+    },
+    "no-nested-ternary": {
+      "count": 1
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "apps/web/src/EditButton.tsx": {
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    }
+  },
+  "apps/web/src/ErrorBoundary.tsx": {
+    "import/consistent-type-specifier-style": {
+      "count": 2
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/no-multi-comp": {
+      "count": 1
+    },
+    "react/no-set-state": {
+      "count": 1
+    },
+    "react/state-in-constructor": {
+      "count": 1
+    },
+    "typescript/explicit-member-accessibility": {
+      "count": 4
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 4
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "typescript/promise-function-async": {
+      "count": 1
+    },
+    "unicorn/prefer-global-this": {
+      "count": 4
+    }
+  },
+  "apps/web/src/ErrorNotice.tsx": {
+    "no-void": {
+      "count": 1
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 2
+    }
+  },
+  "apps/web/src/FormulaCompletion.tsx": {
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 2
+    }
+  },
+  "apps/web/src/HeaderLabel.tsx": {
+    "react/function-component-definition": {
+      "count": 2
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/jsx-props-no-spreading": {
+      "count": 2
+    },
+    "react/no-multi-comp": {
+      "count": 2
+    },
+    "react/only-export-components": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 3
+    }
+  },
+  "apps/web/src/Keypad.tsx": {
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 7
+    },
+    "unicorn/no-array-callback-reference": {
+      "count": 3
+    }
+  },
+  "apps/web/src/PresetChips.tsx": {
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    }
+  },
+  "apps/web/src/PresetDialog.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "jsx-a11y/no-autofocus": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 1
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 5
+    },
+    "react/todo": {
+      "count": 2
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 5
+    },
+    "typescript/no-deprecated": {
+      "count": 1
+    },
+    "typescript/no-misused-promises": {
+      "count": 1
+    },
+    "typescript/strict-void-return": {
+      "count": 2
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "apps/web/src/PresetSidebar.tsx": {
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 2
+    }
+  },
+  "apps/web/src/Result.tsx": {
+    "import/consistent-type-specifier-style": {
+      "count": 4
+    },
+    "no-nested-ternary": {
+      "count": 1
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/no-multi-comp": {
+      "count": 4
+    },
+    "react/only-export-components": {
+      "count": 2
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 4
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 3
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "apps/web/src/RollLog.tsx": {
+    "import/consistent-type-specifier-style": {
+      "count": 4
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/no-multi-comp": {
+      "count": 1
+    },
+    "react/set-state-in-effect": {
+      "count": 2
+    },
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 2
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 2
+    },
+    "unicorn/prefer-at": {
+      "count": 1
+    }
+  },
+  "apps/web/src/SettingsDialog.tsx": {
+    "import/consistent-type-specifier-style": {
+      "count": 2
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    }
+  },
+  "apps/web/src/VariableDialog.tsx": {
+    "complexity": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "jsx-a11y/no-autofocus": {
+      "count": 2
+    },
+    "no-nested-ternary": {
+      "count": 2
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/only-export-components": {
+      "count": 1
+    },
+    "react/todo": {
+      "count": 2
+    },
+    "require-unicode-regexp": {
+      "count": 2
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 3
+    },
+    "typescript/no-deprecated": {
+      "count": 1
+    },
+    "typescript/no-misused-promises": {
+      "count": 1
+    },
+    "typescript/strict-void-return": {
+      "count": 2
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "apps/web/src/analytics.test.ts": {
+    "vitest/prefer-strict-equal": {
+      "count": 3
+    },
+    "vitest/require-top-level-describe": {
+      "count": 3
+    }
+  },
+  "apps/web/src/analytics.ts": {
+    "no-useless-return": {
+      "count": 2
+    },
+    "unicorn/no-array-sort": {
+      "count": 1
+    },
+    "unicorn/switch-case-braces": {
+      "count": 5
+    }
+  },
+  "apps/web/src/backup.test.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 3
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "no-shadow": {
+      "count": 1
+    },
+    "require-await": {
+      "count": 1
+    },
+    "require-unicode-regexp": {
+      "count": 1
+    },
+    "typescript/consistent-return": {
+      "count": 8
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 4
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 2
+    },
+    "vitest/no-conditional-expect": {
+      "count": 8
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 34
+    },
+    "vitest/prefer-describe-function-title": {
+      "count": 1
+    },
+    "vitest/prefer-expect-assertions": {
+      "count": 7
+    },
+    "vitest/prefer-expect-resolves": {
+      "count": 7
+    },
+    "vitest/prefer-lowercase-title": {
+      "count": 1
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 47
+    },
+    "vitest/require-to-throw-message": {
+      "count": 2
+    }
+  },
+  "apps/web/src/backup.ts": {
+    "bun/no-useless-spread-fallback": {
+      "count": 2
+    },
+    "curly": {
+      "count": 2
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 5
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-use-before-define": {
+      "count": 5
+    },
+    "prefer-destructuring": {
+      "count": 2
+    },
+    "require-unicode-regexp": {
+      "count": 5
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 1
+    },
+    "unicorn/prefer-string-replace-all": {
+      "count": 3
+    }
+  },
+  "apps/web/src/breakdown.test.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "prefer-destructuring": {
+      "count": 1
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 7
+    },
+    "vitest/require-top-level-describe": {
+      "count": 3
+    }
+  },
+  "apps/web/src/breakdown.ts": {
+    "bun/no-useless-spread-fallback": {
+      "count": 2
+    },
+    "no-nested-ternary": {
+      "count": 1
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 1
+    },
+    "unicorn/switch-case-braces": {
+      "count": 5
+    }
+  },
+  "apps/web/src/caret.ts": {
+    "unicorn/escape-case": {
+      "count": 1
+    },
+    "unicorn/prefer-spread": {
+      "count": 2
+    }
+  },
+  "apps/web/src/characters.test.ts": {
+    "unicorn/no-useless-undefined": {
+      "count": 1
+    },
+    "unicorn/prefer-structured-clone": {
+      "count": 1
+    },
+    "vitest/prefer-expect-assertions": {
+      "count": 1
+    },
+    "vitest/prefer-expect-resolves": {
+      "count": 1
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 14
+    },
+    "vitest/require-top-level-describe": {
+      "count": 7
+    }
+  },
+  "apps/web/src/characters.ts": {
+    "bun/no-useless-spread-fallback": {
+      "count": 4
+    },
+    "complexity": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 2
+    },
+    "no-continue": {
+      "count": 3
+    },
+    "no-nested-ternary": {
+      "count": 2
+    },
+    "typescript/no-dynamic-delete": {
+      "count": 4
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 3
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 1
+    },
+    "unicorn/no-array-sort": {
+      "count": 2
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 2
+    }
+  },
+  "apps/web/src/completion.test.ts": {
+    "vitest/prefer-strict-equal": {
+      "count": 11
+    },
+    "vitest/require-top-level-describe": {
+      "count": 8
+    }
+  },
+  "apps/web/src/completion.ts": {
+    "max-params": {
+      "count": 1
+    },
+    "new-cap": {
+      "count": 2
+    },
+    "no-nested-ternary": {
+      "count": 1
+    },
+    "unicorn/consistent-existence-index-check": {
+      "count": 1
+    },
+    "unicorn/no-array-sort": {
+      "count": 1
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "apps/web/src/contrast.test.ts": {
+    "bun/prefer-url-for-sibling-files": {
+      "count": 1
+    },
+    "import/no-nodejs-modules": {
+      "count": 2
+    },
+    "no-bitwise": {
+      "count": 5
+    },
+    "node/no-sync": {
+      "count": 1
+    },
+    "prefer-named-capture-group": {
+      "count": 7
+    },
+    "require-unicode-regexp": {
+      "count": 4
+    },
+    "typescript/no-unsafe-return": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "typescript/prefer-regexp-exec": {
+      "count": 2
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 2
+    },
+    "unicorn/consistent-existence-index-check": {
+      "count": 1
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 1
+    },
+    "unicorn/import-style": {
+      "count": 1
+    },
+    "unicorn/no-array-sort": {
+      "count": 1
+    },
+    "unicorn/prefer-module": {
+      "count": 1
+    },
+    "unicorn/prefer-string-replace-all": {
+      "count": 1
+    }
+  },
+  "apps/web/src/dice.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 2
+    },
+    "no-underscore-dangle": {
+      "count": 2
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "unicorn/prefer-global-this": {
+      "count": 2
+    }
+  },
+  "apps/web/src/env.d.ts": {
+    "import/unambiguous": {
+      "count": 1
+    },
+    "no-underscore-dangle": {
+      "count": 1
+    },
+    "promise/prefer-await-to-callbacks": {
+      "count": 1
+    }
+  },
+  "apps/web/src/errorReport.test.ts": {
+    "vitest/prefer-strict-equal": {
+      "count": 4
+    },
+    "vitest/require-top-level-describe": {
+      "count": 5
+    }
+  },
+  "apps/web/src/errorReport.ts": {
+    "no-continue": {
+      "count": 1
+    },
+    "prefer-named-capture-group": {
+      "count": 4
+    },
+    "require-unicode-regexp": {
+      "count": 5
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 2
+    }
+  },
+  "apps/web/src/flat.test.ts": {
+    "import/no-nodejs-modules": {
+      "count": 2
+    },
+    "node/no-sync": {
+      "count": 2
+    },
+    "prefer-named-capture-group": {
+      "count": 4
+    },
+    "require-unicode-regexp": {
+      "count": 3
+    },
+    "unicorn/import-style": {
+      "count": 1
+    },
+    "unicorn/prefer-module": {
+      "count": 2
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 1
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 1
+    },
+    "vitest/require-top-level-describe": {
+      "count": 1
+    }
+  },
+  "apps/web/src/hints.ts": {
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "unicorn/switch-case-braces": {
+      "count": 11
+    }
+  },
+  "apps/web/src/history.test.ts": {
+    "vitest/no-conditional-in-test": {
+      "count": 6
+    },
+    "vitest/prefer-lowercase-title": {
+      "count": 1
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 4
+    },
+    "vitest/require-top-level-describe": {
+      "count": 3
+    }
+  },
+  "apps/web/src/history.ts": {
+    "max-params": {
+      "count": 1
+    },
+    "unicorn/prefer-at": {
+      "count": 1
+    }
+  },
+  "apps/web/src/keypad.test.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "unicorn/no-array-reduce": {
+      "count": 1
+    }
+  },
+  "apps/web/src/keypad.ts": {
+    "require-unicode-regexp": {
+      "count": 4
+    },
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "unicorn/switch-case-braces": {
+      "count": 4
+    }
+  },
+  "apps/web/src/main.tsx": {
+    "bun/no-side-effects-on-import": {
+      "count": 3
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "unicorn/prefer-query-selector": {
+      "count": 1
+    },
+    "vitest/require-hook": {
+      "count": 3
+    }
+  },
+  "apps/web/src/palette.test.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 9
+    },
+    "vitest/require-top-level-describe": {
+      "count": 7
+    }
+  },
+  "apps/web/src/palette.ts": {
+    "no-duplicate-imports": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 1
+    },
+    "unicorn/consistent-existence-index-check": {
+      "count": 1
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 1
+    }
+  },
+  "apps/web/src/presets.test.ts": {
+    "unicorn/no-useless-undefined": {
+      "count": 1
+    },
+    "vitest/prefer-expect-assertions": {
+      "count": 1
+    },
+    "vitest/prefer-expect-resolves": {
+      "count": 1
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 6
+    },
+    "vitest/require-top-level-describe": {
+      "count": 3
+    }
+  },
+  "apps/web/src/presets.ts": {
+    "no-continue": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 2
+    },
+    "unicorn/no-array-sort": {
+      "count": 2
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 2
+    }
+  },
+  "apps/web/src/pwa.ts": {
+    "no-empty-function": {
+      "count": 2
+    },
+    "no-void": {
+      "count": 1
+    },
+    "prefer-destructuring": {
+      "count": 1
+    },
+    "promise/always-return": {
+      "count": 1
+    },
+    "promise/prefer-await-to-then": {
+      "count": 3
+    },
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "unicorn/require-post-message-target-origin": {
+      "count": 1
+    }
+  },
+  "apps/web/src/rollLog.test.ts": {
+    "prefer-destructuring": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "unicorn/no-array-reduce": {
+      "count": 1
+    },
+    "unicorn/no-await-expression-member": {
+      "count": 1
+    },
+    "unicorn/no-useless-undefined": {
+      "count": 1
+    },
+    "vitest/prefer-expect-assertions": {
+      "count": 3
+    },
+    "vitest/prefer-expect-resolves": {
+      "count": 2
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 8
+    }
+  },
+  "apps/web/src/rollLog.ts": {
+    "no-use-before-define": {
+      "count": 1
+    },
+    "prefer-destructuring": {
+      "count": 1
+    },
+    "typescript/promise-function-async": {
+      "count": 1
+    },
+    "unicorn/no-array-callback-reference": {
+      "count": 1
+    },
+    "unicorn/no-array-reduce": {
+      "count": 1
+    }
+  },
+  "apps/web/src/settings.test.ts": {
+    "vitest/prefer-describe-function-title": {
+      "count": 1
+    },
+    "vitest/prefer-expect-assertions": {
+      "count": 1
+    },
+    "vitest/prefer-expect-resolves": {
+      "count": 2
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 6
+    }
+  },
+  "apps/web/src/settings.ts": {
+    "no-empty": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 3
+    },
+    "typescript/promise-function-async": {
+      "count": 1
+    }
+  },
+  "apps/web/src/shortcuts.ts": {
+    "require-unicode-regexp": {
+      "count": 1
+    },
+    "typescript/no-unnecessary-condition": {
+      "count": 1
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 1
+    }
+  },
+  "apps/web/src/storage/indexeddb.test.ts": {
+    "no-empty-function": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 2
+    },
+    "unicorn/no-useless-undefined": {
+      "count": 1
+    },
+    "vitest/prefer-describe-function-title": {
+      "count": 1
+    },
+    "vitest/prefer-expect-assertions": {
+      "count": 2
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 2
+    }
+  },
+  "apps/web/src/storage/indexeddb.ts": {
+    "no-empty-function": {
+      "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 6
+    },
+    "typescript/no-unnecessary-type-parameters": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "typescript/promise-function-async": {
+      "count": 2
+    },
+    "typescript/strict-void-return": {
+      "count": 2
+    },
+    "unicorn/prefer-add-event-listener": {
+      "count": 3
+    },
+    "unicorn/require-post-message-target-origin": {
+      "count": 2
+    }
+  },
+  "apps/web/src/storage/memory.ts": {
+    "no-empty-function": {
+      "count": 1
+    },
+    "no-void": {
+      "count": 2
+    },
+    "require-await": {
+      "count": 3
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "typescript/require-await": {
+      "count": 3
+    }
+  },
+  "apps/web/src/storage/types.ts": {
+    "typescript/method-signature-style": {
+      "count": 4
+    },
+    "typescript/no-unnecessary-type-parameters": {
+      "count": 2
+    }
+  },
+  "apps/web/src/swipeClose.test.ts": {
+    "vitest/prefer-describe-function-title": {
+      "count": 1
+    }
+  },
+  "apps/web/src/swipeClose.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "prefer-destructuring": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 5
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 1
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 1
+    },
+    "unicorn/prefer-at": {
+      "count": 1
+    }
+  },
+  "apps/web/src/ui/ui.test.tsx": {
+    "import/no-nodejs-modules": {
+      "count": 2
+    },
+    "jsx-a11y/control-has-associated-label": {
+      "count": 1
+    },
+    "node/no-sync": {
+      "count": 3
+    },
+    "prefer-named-capture-group": {
+      "count": 1
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "require-unicode-regexp": {
+      "count": 1
+    },
+    "unicorn/import-style": {
+      "count": 1
+    },
+    "unicorn/prefer-module": {
+      "count": 1
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 1
+    },
+    "vitest/prefer-lowercase-title": {
+      "count": 1
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 1
+    },
+    "vitest/require-top-level-describe": {
+      "count": 2
+    }
+  },
+  "apps/web/src/useMedia.ts": {
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "unicorn/prefer-global-this": {
+      "count": 2
+    }
+  },
+  "apps/web/src/useScrollEdges.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    }
+  },
+  "apps/web/vite.config.ts": {
+    "bun/no-env-at-module-scope": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "node/no-process-env": {
+      "count": 1
+    },
+    "require-unicode-regexp": {
+      "count": 1
+    }
+  },
+  "packages/engine/src/ast.ts": {
+    "no-use-before-define": {
+      "count": 1
+    },
+    "prefer-destructuring": {
+      "count": 4
+    },
+    "typescript/consistent-return": {
+      "count": 3
+    },
+    "typescript/switch-exhaustiveness-check": {
+      "count": 1
+    },
+    "unicorn/switch-case-braces": {
+      "count": 20
+    }
+  },
+  "packages/engine/src/dice.ts": {
+    "curly": {
+      "count": 1
+    },
+    "typescript/method-signature-style": {
+      "count": 1
+    }
+  },
+  "packages/engine/src/errors.ts": {
+    "no-use-before-define": {
+      "count": 1
+    },
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "typescript/explicit-member-accessibility": {
+      "count": 2
+    },
+    "unicorn/custom-error-definition": {
+      "count": 2
+    },
+    "unicorn/switch-case-braces": {
+      "count": 9
+    }
+  },
+  "packages/engine/src/eval.ts": {
+    "bun/no-useless-spread-fallback": {
+      "count": 9
+    },
+    "complexity": {
+      "count": 1
+    },
+    "curly": {
+      "count": 3
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 3
+    },
+    "max-depth": {
+      "count": 3
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-negated-condition": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 2
+    },
+    "no-unmodified-loop-condition": {
+      "count": 1
+    },
+    "no-use-before-define": {
+      "count": 4
+    },
+    "prefer-destructuring": {
+      "count": 2
+    },
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "unicorn/no-array-for-each": {
+      "count": 1
+    },
+    "unicorn/no-array-sort": {
+      "count": 1
+    },
+    "unicorn/no-negated-condition": {
+      "count": 1
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 1
+    },
+    "unicorn/no-useless-undefined": {
+      "count": 1
+    },
+    "unicorn/switch-case-braces": {
+      "count": 10
+    },
+    "vitest/prefer-each": {
+      "count": 1
+    }
+  },
+  "packages/engine/src/index.ts": {
+    "curly": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-use-before-define": {
+      "count": 4
+    },
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "unicorn/catch-error-name": {
+      "count": 2
+    },
+    "unicorn/escape-case": {
+      "count": 1
+    },
+    "unicorn/no-array-sort": {
+      "count": 3
+    },
+    "unicorn/switch-case-braces": {
+      "count": 5
+    }
+  },
+  "packages/engine/src/lexer.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "no-continue": {
+      "count": 2
+    },
+    "no-unmodified-loop-condition": {
+      "count": 1
+    },
+    "require-unicode-regexp": {
+      "count": 1
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 4
+    },
+    "unicorn/prefer-spread": {
+      "count": 1
+    }
+  },
+  "packages/engine/src/limits.ts": {
+    "unicorn/numeric-separators-style": {
+      "count": 2
+    }
+  },
+  "packages/engine/src/names.ts": {
+    "require-unicode-regexp": {
+      "count": 2
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 4
+    },
+    "typescript/switch-exhaustiveness-check": {
+      "count": 1
+    },
+    "unicorn/catch-error-name": {
+      "count": 2
+    },
+    "unicorn/prefer-set-has": {
+      "count": 1
+    },
+    "unicorn/prefer-spread": {
+      "count": 1
+    },
+    "unicorn/switch-case-braces": {
+      "count": 2
+    }
+  },
+  "packages/engine/src/parity.test.ts": {
+    "bun/prefer-url-for-sibling-files": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "import/no-nodejs-modules": {
+      "count": 2
+    },
+    "node/no-sync": {
+      "count": 2
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "unicorn/import-style": {
+      "count": 1
+    },
+    "unicorn/no-array-sort": {
+      "count": 1
+    },
+    "unicorn/prefer-module": {
+      "count": 1
+    },
+    "unicorn/prefer-structured-clone": {
+      "count": 1
+    },
+    "vitest/consistent-test-it": {
+      "count": 4
+    },
+    "vitest/no-conditional-expect": {
+      "count": 1
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 3
+    },
+    "vitest/prefer-each": {
+      "count": 2
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 1
+    },
+    "vitest/valid-expect": {
+      "count": 1
+    },
+    "vitest/valid-title": {
+      "count": 1
+    }
+  },
+  "packages/engine/src/parser.ts": {
+    "bun/no-useless-spread-fallback": {
+      "count": 11
+    },
+    "complexity": {
+      "count": 2
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 12
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "no-negated-condition": {
+      "count": 2
+    },
+    "no-use-before-define": {
+      "count": 3
+    },
+    "prefer-destructuring": {
+      "count": 2
+    },
+    "typescript/consistent-return": {
+      "count": 1
+    },
+    "typescript/explicit-member-accessibility": {
+      "count": 2
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 7
+    },
+    "typescript/parameter-properties": {
+      "count": 2
+    },
+    "typescript/prefer-nullish-coalescing": {
+      "count": 1
+    },
+    "unicorn/catch-error-name": {
+      "count": 1
+    },
+    "unicorn/no-length-as-slice-end": {
+      "count": 1
+    },
+    "unicorn/no-negated-condition": {
+      "count": 2
+    },
+    "unicorn/no-unnecessary-slice-end": {
+      "count": 1
+    },
+    "unicorn/no-useless-undefined": {
+      "count": 1
+    },
+    "unicorn/prefer-spread": {
+      "count": 1
+    },
+    "unicorn/switch-case-braces": {
+      "count": 18
+    }
+  },
+  "packages/engine/src/presets.test.ts": {
+    "import/no-named-as-default-member": {
+      "count": 6
+    },
+    "require-unicode-regexp": {
+      "count": 1
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 1
+    },
+    "vitest/consistent-test-it": {
+      "count": 12
+    },
+    "vitest/expect-expect": {
+      "count": 1
+    },
+    "vitest/no-conditional-expect": {
+      "count": 2
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 10
+    },
+    "vitest/prefer-describe-function-title": {
+      "count": 1
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 6
+    }
+  },
+  "packages/engine/src/properties.test.ts": {
+    "curly": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
+      "count": 3
+    },
+    "import/no-named-as-default-member": {
+      "count": 104
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 4
+    },
+    "no-bitwise": {
+      "count": 1
+    },
+    "no-negated-condition": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 4
+    },
+    "require-unicode-regexp": {
+      "count": 5
+    },
+    "typescript/consistent-return": {
+      "count": 4
+    },
+    "typescript/no-misused-spread": {
+      "count": 4
+    },
+    "typescript/no-unnecessary-type-assertion": {
+      "count": 1
+    },
+    "typescript/no-unsafe-assignment": {
+      "count": 3
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 4
+    },
+    "typescript/restrict-plus-operands": {
+      "count": 1
+    },
+    "typescript/restrict-template-expressions": {
+      "count": 3
+    },
+    "typescript/switch-exhaustiveness-check": {
+      "count": 1
+    },
+    "unicorn/no-array-for-each": {
+      "count": 2
+    },
+    "unicorn/no-negated-condition": {
+      "count": 1
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 2
+    },
+    "unicorn/numeric-separators-style": {
+      "count": 1
+    },
+    "unicorn/prefer-string-raw": {
+      "count": 1
+    },
+    "unicorn/prefer-string-replace-all": {
+      "count": 1
+    },
+    "unicorn/switch-case-braces": {
+      "count": 24
+    },
+    "vitest/expect-expect": {
+      "count": 2
+    },
+    "vitest/no-conditional-expect": {
+      "count": 22
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 38
+    },
+    "vitest/prefer-each": {
+      "count": 1
+    },
+    "vitest/prefer-lowercase-title": {
+      "count": 1
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 3
+    },
+    "vitest/prefer-to-have-length": {
+      "count": 1
+    },
+    "vitest/require-top-level-describe": {
+      "count": 15
+    }
+  },
+  "packages/engine/src/roll.test.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 2
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "no-plusplus": {
+      "count": 1
+    },
+    "no-shadow": {
+      "count": 1
+    },
+    "prefer-destructuring": {
+      "count": 1
+    },
+    "require-unicode-regexp": {
+      "count": 3
+    },
+    "unicorn/consistent-function-scoping": {
+      "count": 4
+    },
+    "unicorn/numeric-separators-style": {
+      "count": 1
+    },
+    "vitest/consistent-test-it": {
+      "count": 36
+    },
+    "vitest/no-conditional-in-test": {
+      "count": 6
+    },
+    "vitest/prefer-strict-equal": {
+      "count": 4
+    },
+    "vitest/valid-expect": {
+      "count": 3
+    }
+  },
+  "packages/engine/src/source.ts": {
+    "typescript/explicit-member-accessibility": {
+      "count": 4
+    },
+    "unicorn/numeric-separators-style": {
+      "count": 2
+    }
+  },
+  "test/setup.ts": {
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "no-promise-executor-return": {
+      "count": 1
+    },
+    "node/no-process-env": {
+      "count": 5
+    },
+    "promise/prefer-await-to-callbacks": {
+      "count": 1
+    },
+    "typescript/no-dynamic-delete": {
+      "count": 2
+    },
+    "typescript/strict-void-return": {
+      "count": 1
+    }
+  },
+  "test/vitest.d.ts": {
+    "import/unambiguous": {
+      "count": 1
+    },
+    "typescript/method-signature-style": {
+      "count": 8
+    }
+  },
+  "ui/generate-tokens.mjs": {
+    "bun/no-side-effects-on-import": {
+      "count": 4
+    },
+    "bun/prefer-url-for-sibling-files": {
+      "count": 2
+    },
+    "curly": {
+      "count": 1
+    },
+    "import/no-nodejs-modules": {
+      "count": 3
+    },
+    "no-console": {
+      "count": 2
+    },
+    "node/no-sync": {
+      "count": 3
+    },
+    "require-unicode-regexp": {
+      "count": 1
+    },
+    "typescript/no-unsafe-argument": {
+      "count": 2
+    },
+    "typescript/no-unsafe-assignment": {
+      "count": 1
+    },
+    "typescript/no-unsafe-member-access": {
+      "count": 8
+    },
+    "unicorn/import-style": {
+      "count": 1
+    },
+    "unicorn/no-process-exit": {
+      "count": 1
+    },
+    "unicorn/prefer-import-meta-properties": {
+      "count": 2
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+
 import { axe } from "./axe";
 
 for (const scheme of ["light", "dark"] as const) {

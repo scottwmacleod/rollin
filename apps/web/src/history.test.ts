@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+
 import { pastFormulas, stepHistory } from "./history";
 
 test("past formulas run newest first and drop immediate repeats", () => {

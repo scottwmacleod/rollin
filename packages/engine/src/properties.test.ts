@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { expect, test } from "vitest";
+
 import { type DieSource, type Node, type RollReport, roll, spanOf } from "./index";
 
 function fromSeeds(seeds: readonly number[]): DieSource {

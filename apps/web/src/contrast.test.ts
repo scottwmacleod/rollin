@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 const css = readFileSync(resolve(__dirname, "../../../vendor/sm-core/sm-core.css"), "utf8").replace(

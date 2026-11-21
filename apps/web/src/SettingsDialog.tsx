@@ -1,5 +1,5 @@
-import { BackupSection } from "./BackupSection";
 import type { AddResult, Backup, Choices, Incoming } from "./backup";
+import { BackupSection } from "./BackupSection";
 import { HEADER_ICON_BUTTON, HeaderLabel, SettingsIcon } from "./HeaderLabel";
 import { KEYPAD_SETTINGS, type KeypadSetting, type Settings } from "./settings";
 import { useShortcutHint } from "./shortcuts";

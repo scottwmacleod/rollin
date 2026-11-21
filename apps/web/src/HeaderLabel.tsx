@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+
 import { SMALL, useMedia } from "./useMedia";
 
 export const HEADER_ICON_BUTTON = "max-[600px]:w-11 max-[600px]:justify-center max-[600px]:px-0";

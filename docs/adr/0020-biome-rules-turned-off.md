@@ -1,9 +1,11 @@
-# Biome rules turned off, and why
+# Lint rules turned off, and why
 
-The sm_ conventions ask for a reason for every Biome rule a product turns off, recorded in an ADR. These are rollin's, from `biome.jsonc`. Recorded on 2026-11-21 from the config comments they replace.
+The sm_ conventions ask for a reason for every lint rule a product turns off, recorded in an ADR. These are rollin's. Recorded on 2026-11-21 from the config comments they replace, and moved to `bun lint` names when it replaced Biome for JavaScript (ADR-0023). The first is a CSS rule and stays in `biome.jsonc`; the rest are in `.oxlintrc.json`.
 
 - **`complexity/noImportantStyles`**: the reduced-motion reset in `apps/web/src/index.css` must beat every component's own animation and transition values.
-- **`suspicious/noArrayIndexKey`**: every keyed list is a fixed, ordered rendering of one roll or one tree level, so the index is the identity. A content key would collide on repeated dice or terms.
-- **`correctness/useExhaustiveDependencies`**: some effects are triggered on purpose by refs, stable callbacks and a roll counter, and adding the suggested dependencies would change when they run. #360 tracks driving those from events instead and turning the rule back on.
-- **`a11y/useSemanticElements`**: `role="group"` divs avoid `fieldset`'s default border, padding and legend layout. #362 tracks switching to `fieldset` with those defaults reset.
-- **`a11y/noNoninteractiveElementToInteractiveRole`, `a11y/useFocusableInteractive`, `a11y/useKeyWithClickEvents`**: the formula completion list is a combobox listbox driven by `aria-activedescendant` from the input. Focus stays in the input, so the options must not be focusable or take keys. #363 tracks scoping these to that one component.
+- **`react/no-array-index-key`** (was Biome's `suspicious/noArrayIndexKey`): every keyed list is a fixed, ordered rendering of one roll or one tree level, so the index is the identity. A content key would collide on repeated dice or terms.
+- **`react-hooks/exhaustive-deps` and `react/exhaustive-effect-dependencies`** (was `correctness/useExhaustiveDependencies`): some effects are triggered on purpose by refs, stable callbacks and a roll counter, and adding the suggested dependencies would change when they run. #360 tracks driving those from events instead and turning the rule back on.
+- **`jsx-a11y/prefer-tag-over-role`** (was `a11y/useSemanticElements`): `role="group"` divs avoid `fieldset`'s default border, padding and legend layout. #362 tracks switching to `fieldset` with those defaults reset.
+- **`jsx-a11y/no-noninteractive-element-to-interactive-role`, `jsx-a11y/interactive-supports-focus`, `jsx-a11y/click-events-have-key-events`** (were `a11y/noNoninteractiveElementToInteractiveRole`, `a11y/useFocusableInteractive`, `a11y/useKeyWithClickEvents`): the formula completion list is a combobox listbox driven by `aria-activedescendant` from the input. Focus stays in the input, so the options must not be focusable or take keys. #363 tracks scoping these to that one component.
+- **`vitest/consistent-test-filename` and `vitest/prefer-importing-vitest-globals` in `apps/web/e2e`**: those are Playwright tests. They end in `.spec.ts` and import `test` and `expect` from `@playwright/test`.
+- **`bun/no-side-effects-on-import`, `vitest/require-hook` and `vitest/require-top-level-describe` in `test/setup.ts`**: it is `bun test`'s preload (ADR-0022), so its whole job is to run code on import, at the top level, outside any `describe`.

@@ -1,0 +1,13 @@
+{
+  "printWidth": 100,
+  "sortImports": true,
+  "ignorePatterns": [
+    "vendor/",
+    ".claude/skills/",
+    "docs/agents/",
+    ".github/pull_request_template.md",
+    ".github/ISSUE_TEMPLATE/",
+    "comments-baseline.json",
+    "oxlint-suppressions.json"
+  ]
+}

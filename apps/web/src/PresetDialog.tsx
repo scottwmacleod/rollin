@@ -1,5 +1,6 @@
 import { checkFormula, spanOf, validatePresetName } from "@rollin/engine";
 import { type FormEvent, useState } from "react";
+
 import { caretLines } from "./caret";
 import type { Character } from "./characters";
 import { CONFIRM_NO, CONFIRM_YES, FIELD, OVERLAY, PRIMARY, SECONDARY } from "./dialogStyles";

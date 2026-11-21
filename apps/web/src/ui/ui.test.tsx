@@ -1,7 +1,9 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
+
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
+
 import { Button } from "./index";
 
 test("Button renders a link with its href", () => {

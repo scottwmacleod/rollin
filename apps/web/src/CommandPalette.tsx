@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+
 import { HEADER_ICON_BUTTON, HeaderLabel, SearchIcon } from "./HeaderLabel";
 import { type PaletteGroup, type PaletteRow, paletteView } from "./palette";
 import { useShortcutHint } from "./shortcuts";

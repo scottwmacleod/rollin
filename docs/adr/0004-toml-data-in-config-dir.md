@@ -6,6 +6,6 @@ Data lives in `$XDG_CONFIG_HOME/rollin` (default `~/.config/rollin`), not next t
 
 On Windows there is no `HOME` or XDG variable, so data lives in `%APPDATA%\rollin` (Roaming). The CLI is not released for Windows, so matching its `~/.config` layout there is not a goal. macOS and Linux are unchanged. The rule is `rollin::config_dir_from_env`, with the Windows branch unit-tested through `windows_config_dir`.
 
-*Will be superseded by [ADR-0008](0008-all-typescript-web-first-rebuild.md) when the desktop swap lands: data moves to browser storage, and existing TOML files are imported once on first launch of the new desktop app.*
+_Will be superseded by [ADR-0008](0008-all-typescript-web-first-rebuild.md) when the desktop swap lands: data moves to browser storage, and existing TOML files are imported once on first launch of the new desktop app._
 
-*Superseded by [ADR-0009](0009-retire-the-desktop-app-and-delete-the-rust.md): the CLI and desktop app that read these TOML files are gone. Data now lives in the browser and moves as one versioned JSON file (see `docs/export-format.md`).*
+_Superseded by [ADR-0009](0009-retire-the-desktop-app-and-delete-the-rust.md): the CLI and desktop app that read these TOML files are gone. Data now lives in the browser and moves as one versioned JSON file (see `docs/export-format.md`)._

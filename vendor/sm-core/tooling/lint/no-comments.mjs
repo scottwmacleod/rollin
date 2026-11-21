@@ -7,7 +7,7 @@ const NEVER_SCANNED = ["vendor/sm-core/", "node_modules/"];
 const GENERATED = /(^|\/)(worker-configuration\.d\.ts|[^/]+\.gen\.[cm]?[jt]sx?)$/;
 
 const JS_DIRECTIVE =
-  /^[*!\s]*(biome-ignore|@ts-expect-error|@ts-ignore|@ts-nocheck|@ts-check|eslint-|@vitest-environment|@jsxImportSource|@jsx |[cv]8 ignore|istanbul ignore|@vite-ignore|[#@]__PURE__|prettier-ignore|webpack[A-Z]|\/ <reference )/;
+  /^[*!\s]*(biome-ignore|@ts-expect-error|@ts-ignore|@ts-nocheck|@ts-check|eslint-|oxlint-|@vitest-environment|@jsxImportSource|@jsx |[cv]8 ignore|istanbul ignore|@vite-ignore|[#@]__PURE__|prettier-ignore|webpack[A-Z]|\/ <reference )/;
 const HASH_DIRECTIVE = /^#\s*(yaml-language-server:|shellcheck |v?\d+(\.\d+)*\s*$)/;
 const ACTION_PIN = /@[0-9a-f]{40}\s+#/;
 

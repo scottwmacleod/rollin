@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+
 import { accept, complete } from "./completion";
 
 const data = { presets: ["attack", "arcana", "stealth"], variables: ["str", "dex", "prof"] };

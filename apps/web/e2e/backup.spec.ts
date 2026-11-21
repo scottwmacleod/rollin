@@ -1,5 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
+
 import { expect, type Page, type TestInfo, test } from "@playwright/test";
+
 import { axe } from "./axe";
 import { stored } from "./helpers";
 

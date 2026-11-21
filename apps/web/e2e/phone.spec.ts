@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { axe } from "./axe";
 
+import { axe } from "./axe";
 import {
   expectNewestAboveFormulaBar,
   expectNoPageScroll,

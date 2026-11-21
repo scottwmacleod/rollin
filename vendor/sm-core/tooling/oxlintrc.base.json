@@ -1,0 +1,182 @@
+{
+  "plugins": [
+    "eslint",
+    "typescript",
+    "unicorn",
+    "react",
+    "react-perf",
+    "jsx-a11y",
+    "import",
+    "vitest",
+    "oxc",
+    "promise",
+    "node"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "error",
+    "perf": "error",
+    "style": "error",
+    "restriction": "error",
+    "nursery": "error"
+  },
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "bun/axios-no-unbounded-requests": "error",
+    "bun/consistent-directive-prefix": "error",
+    "bun/fast-check-no-unseeded-random": "error",
+    "bun/jsx-no-forbidden-nesting": "error",
+    "bun/no-array-just-to-count": "error",
+    "bun/no-cast-to-brand": "error",
+    "bun/no-console-window-flash": "error",
+    "bun/no-cwd-dependent-path": "error",
+    "bun/no-eager-dynamic-import": "error",
+    "bun/no-eager-native-addon": "error",
+    "bun/no-env-at-module-scope": "error",
+    "bun/no-literal-temp-dir": "error",
+    "bun/no-negative-repeat-count": "error",
+    "bun/no-redundant-catch-type": "error",
+    "bun/no-side-effects-on-import": "error",
+    "bun/no-unhandled-emitter-errors": "error",
+    "bun/no-unportable-commands": "error",
+    "bun/no-useless-spread-fallback": "error",
+    "bun/prefer-timeout-signal": "error",
+    "bun/prefer-url-for-sibling-files": "error",
+    "bun/react-no-latest-value-ref": "error",
+    "bun/react-no-local-render-helpers": "error",
+    "bun/react-no-namespace-hooks": "error",
+    "bun/react-prefer-updater-function": "error",
+    "bun/zod-prefer-lazy-schema": "error",
+    "curly": [
+      "error",
+      "multi-line"
+    ],
+    "eslint/no-plusplus": [
+      "error",
+      {
+        "allowForLoopAfterthoughts": true
+      }
+    ],
+    "eslint/no-void": [
+      "error",
+      {
+        "allowAsStatement": true
+      }
+    ],
+    "eslint/one-var": [
+      "error",
+      "never"
+    ],
+    "func-style": [
+      "error",
+      "declaration",
+      {
+        "allowArrowFunctions": true
+      }
+    ],
+    "import/no-unassigned-import": [
+      "error",
+      {
+        "allow": [
+          "**/*.css"
+        ]
+      }
+    ],
+    "typescript/no-unused-vars": [
+      "error",
+      {
+        "args": "all",
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrors": "all"
+      }
+    ],
+    "unicorn/filename-case": [
+      "error",
+      {
+        "cases": {
+          "kebabCase": true,
+          "pascalCase": true,
+          "camelCase": true
+        }
+      }
+    ],
+    "vitest/prefer-expect-assertions": [
+      "error",
+      {
+        "onlyFunctionsWithAsyncKeyword": true
+      }
+    ],
+    "eslint/no-undef": "off",
+    "react/react-in-jsx-scope": "off",
+    "typescript/prefer-readonly-parameter-types": "off",
+    "eslint/sort-imports": "off",
+    "eslint/sort-keys": "off",
+    "eslint/no-magic-numbers": "off",
+    "eslint/id-length": "off",
+    "eslint/no-ternary": "off",
+    "eslint/no-undefined": "off",
+    "eslint/init-declarations": "off",
+    "eslint/default-case": "off",
+    "eslint/max-statements": "off",
+    "eslint/max-lines-per-function": "off",
+    "react/jsx-max-depth": "off",
+    "unicorn/max-nested-calls": "off",
+    "vitest/max-expects": "off",
+    "oxc/no-async-await": "off",
+    "oxc/no-optional-chaining": "off",
+    "oxc/no-rest-spread-properties": "off",
+    "unicorn/no-null": "off",
+    "import/no-named-export": "off",
+    "import/prefer-default-export": "off",
+    "import/group-exports": "off",
+    "import/exports-last": "off",
+    "import/no-relative-parent-imports": "off",
+    "typescript/explicit-function-return-type": "off",
+    "typescript/non-nullable-type-assertion-style": "off",
+    "react/jsx-no-literals": "off",
+    "react/forbid-component-props": "off",
+    "react-perf/jsx-no-new-function-as-prop": "off",
+    "react-perf/jsx-no-new-object-as-prop": "off",
+    "react-perf/jsx-no-new-array-as-prop": "off",
+    "react-perf/jsx-no-jsx-as-prop": "off",
+    "promise/avoid-new": "off",
+    "node/no-top-level-await": "off",
+    "vitest/no-importing-vitest-globals": "off",
+    "vitest/require-test-timeout": "off",
+    "vitest/no-hooks": "off",
+    "vitest/prefer-to-be-truthy": "off",
+    "vitest/prefer-to-be-falsy": "off",
+    "vitest/padding-around-test-blocks": "off",
+    "vitest/padding-around-after-all-blocks": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.config.ts",
+        "**/*.config.mts",
+        "**/*.config.js",
+        "**/*.config.mjs"
+      ],
+      "rules": {
+        "import/no-default-export": "off",
+        "import/no-nodejs-modules": "off"
+      }
+    },
+    {
+      "files": [
+        "scripts/**",
+        "**/scripts/**"
+      ],
+      "rules": {
+        "eslint/no-console": "off",
+        "unicorn/no-process-exit": "off",
+        "node/no-sync": "off",
+        "import/no-nodejs-modules": "off"
+      }
+    }
+  ]
+}
