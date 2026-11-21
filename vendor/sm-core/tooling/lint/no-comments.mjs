@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const BASELINE = "comments-baseline.json";
 const NEVER_SCANNED = ["vendor/sm-core/", "node_modules/"];
+const GENERATED = /(^|\/)(worker-configuration\.d\.ts|[^/]+\.gen\.[cm]?[jt]sx?)$/;
 
 const JS_DIRECTIVE =
   /^[*!\s]*(biome-ignore|@ts-expect-error|@ts-ignore|@ts-nocheck|@ts-check|eslint-|@vitest-environment|@jsxImportSource|@jsx |[cv]8 ignore|istanbul ignore|@vite-ignore|[#@]__PURE__|prettier-ignore|webpack[A-Z]|\/ <reference )/;
@@ -167,11 +168,22 @@ function scan(ignore) {
   const skip = [...NEVER_SCANNED, ...ignore];
   const results = {};
   for (const path of listed.split("\n")) {
-    if (!path || skip.some((p) => path.startsWith(p)) || !existsSync(path)) continue;
+    if (!path || skip.some((p) => path.startsWith(p)) || GENERATED.test(path) || !existsSync(path)) continue;
     const found = findComments(path, readFileSync(path, "utf8"));
     if (found?.lines) results[path] = found;
   }
   return results;
+}
+
+function biomeJson(ignore, files) {
+  const inline = `  "ignore": [${ignore.map((p) => JSON.stringify(p)).join(", ")}],`;
+  const ignoreLines =
+    inline.length <= 100 ? [inline] : ['  "ignore": [', ...ignore.map((p, i) => `    ${JSON.stringify(p)}${i < ignore.length - 1 ? "," : ""}`), "  ],"];
+  const entries = Object.entries(files).sort(([a], [b]) => (a < b ? -1 : 1));
+  const fileLines = entries.length
+    ? ['  "files": {', ...entries.map(([p, n], i) => `    ${JSON.stringify(p)}: ${n}${i < entries.length - 1 ? "," : ""}`), "  }"]
+    : ['  "files": {}'];
+  return `${["{", ...ignoreLines, ...fileLines, "}"].join("\n")}\n`;
 }
 
 function main(args) {
@@ -183,8 +195,7 @@ function main(args) {
   );
   const results = scan(ignore);
   const counts = Object.fromEntries(Object.entries(results).map(([p, r]) => [p, r.lines]));
-  const save = (files) =>
-    writeFileSync(BASELINE, `${JSON.stringify({ ignore, files: Object.fromEntries(Object.entries(files).sort()) }, null, 2)}\n`);
+  const save = (files) => writeFileSync(BASELINE, biomeJson(ignore, files));
 
   if (args.includes("--report")) {
     const total = Object.values(results).reduce((n, r) => n + r.lines, 0);

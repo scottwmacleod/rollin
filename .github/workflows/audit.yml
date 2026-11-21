@@ -13,6 +13,6 @@ permissions:
 
 jobs:
   audit:
-    uses: scottwmacleod/sm-core/.github/workflows/audit.yml@v26.11.14
+    uses: scottwmacleod/sm-core/.github/workflows/audit.yml@v26.11.15
     with:
       package-manager: bun
