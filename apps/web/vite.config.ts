@@ -1,7 +1,6 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import type { Plugin } from "vite";
-import { defineConfig } from "vitest/config";
+import { defineConfig, type Plugin } from "vite";
 
 import { offlineWorker } from "./scripts/pwa.ts";
 
@@ -40,5 +39,4 @@ export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
   build: { sourcemap: true },
   plugins: [react(), tailwindcss(), offlineWorker(), preloadGeist()],
-  test: { include: ["src/**/*.test.{ts,tsx}"], sequence: { shuffle: true } },
 });

@@ -225,10 +225,10 @@
     "no-implicit-coercion": {
       "count": 1
     },
-    "no-promise-executor-return": {
-      "count": 1
+    "no-underscore-dangle": {
+      "count": 3
     },
-    "promise/param-names": {
+    "oxc/branches-sharing-code": {
       "count": 1
     },
     "require-unicode-regexp": {
@@ -237,14 +237,11 @@
     "typescript/consistent-type-imports": {
       "count": 1
     },
-    "typescript/no-confusing-void-expression": {
-      "count": 1
+    "typescript/no-unsafe-type-assertion": {
+      "count": 3
     },
     "typescript/promise-function-async": {
-      "count": 2
-    },
-    "typescript/strict-void-return": {
-      "count": 1
+      "count": 3
     },
     "unicorn/consistent-function-scoping": {
       "count": 2
@@ -255,8 +252,11 @@
     "unicorn/no-await-expression-member": {
       "count": 6
     },
+    "unicorn/prefer-global-this": {
+      "count": 4
+    },
     "vitest/no-conditional-in-test": {
-      "count": 3
+      "count": 8
     }
   },
   "apps/web/e2e/offline.spec.ts": {
@@ -292,8 +292,11 @@
     }
   },
   "apps/web/e2e/palette.spec.ts": {
+    "prefer-named-capture-group": {
+      "count": 1
+    },
     "require-unicode-regexp": {
-      "count": 3
+      "count": 4
     },
     "typescript/await-thenable": {
       "count": 1
@@ -419,21 +422,6 @@
     "require-unicode-regexp": {
       "count": 1
     },
-    "typescript/no-unsafe-argument": {
-      "count": 1
-    },
-    "typescript/no-unsafe-assignment": {
-      "count": 3
-    },
-    "typescript/no-unsafe-call": {
-      "count": 11
-    },
-    "typescript/no-unsafe-member-access": {
-      "count": 7
-    },
-    "typescript/no-unsafe-return": {
-      "count": 1
-    },
     "unicorn/import-style": {
       "count": 1
     },
@@ -450,12 +438,6 @@
     },
     "bun/prefer-url-for-sibling-files": {
       "count": 2
-    },
-    "typescript/no-unsafe-assignment": {
-      "count": 4
-    },
-    "typescript/no-unsafe-call": {
-      "count": 10
     },
     "unicorn/import-style": {
       "count": 1
@@ -1064,6 +1046,9 @@
     "typescript/consistent-return": {
       "count": 8
     },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
     "typescript/no-unsafe-type-assertion": {
       "count": 4
     },
@@ -1598,7 +1583,7 @@
     "require-unicode-regexp": {
       "count": 1
     },
-    "typescript/prefer-nullish-coalescing": {
+    "typescript/no-unnecessary-condition": {
       "count": 1
     },
     "typescript/strict-boolean-expressions": {
@@ -1608,6 +1593,9 @@
   "apps/web/src/storage/indexeddb.test.ts": {
     "no-empty-function": {
       "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 2
     },
     "unicorn/no-useless-undefined": {
       "count": 1
@@ -1757,6 +1745,9 @@
   },
   "apps/web/vite.config.ts": {
     "bun/no-env-at-module-scope": {
+      "count": 1
+    },
+    "import/consistent-type-specifier-style": {
       "count": 1
     },
     "node/no-process-env": {
@@ -2232,6 +2223,43 @@
       "count": 2
     }
   },
+  "test/setup.ts": {
+    "bun/no-side-effects-on-import": {
+      "count": 2
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "no-promise-executor-return": {
+      "count": 1
+    },
+    "node/no-process-env": {
+      "count": 5
+    },
+    "promise/prefer-await-to-callbacks": {
+      "count": 1
+    },
+    "typescript/no-dynamic-delete": {
+      "count": 2
+    },
+    "typescript/strict-void-return": {
+      "count": 1
+    },
+    "vitest/require-hook": {
+      "count": 2
+    },
+    "vitest/require-top-level-describe": {
+      "count": 1
+    }
+  },
+  "test/vitest.d.ts": {
+    "import/unambiguous": {
+      "count": 1
+    },
+    "typescript/method-signature-style": {
+      "count": 8
+    }
+  },
   "ui/generate-tokens.mjs": {
     "bun/no-side-effects-on-import": {
       "count": 4
@@ -2258,16 +2286,10 @@
       "count": 2
     },
     "typescript/no-unsafe-assignment": {
-      "count": 5
-    },
-    "typescript/no-unsafe-call": {
-      "count": 10
+      "count": 1
     },
     "typescript/no-unsafe-member-access": {
-      "count": 11
-    },
-    "typescript/strict-boolean-expressions": {
-      "count": 1
+      "count": 8
     },
     "unicorn/import-style": {
       "count": 1

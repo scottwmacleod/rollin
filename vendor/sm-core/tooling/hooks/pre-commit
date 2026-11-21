@@ -1,0 +1,4 @@
+#!/bin/sh
+if command -v hk >/dev/null 2>&1; then exec hk run pre-commit "$@"; fi
+if command -v node >/dev/null 2>&1; then exec node "$(dirname "$0")/fallback.mjs" pre-commit "$@"; fi
+exec bun "$(dirname "$0")/fallback.mjs" pre-commit "$@"

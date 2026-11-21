@@ -26,7 +26,7 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await page.keyboard.press("Control+k");
   await search.fill("new char");
   await page.keyboard.press("Enter");
-  const dialog = page.getByRole("dialog");
+  const dialog = page.getByRole("dialog", { name: /^New (character|variable|preset)$/ });
   await dialog.getByLabel("Name").fill("mira");
   await page.keyboard.press("Enter");
   await expect(dialog).toBeHidden();
@@ -82,7 +82,7 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await page.keyboard.press("Enter");
   await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 
   await page.keyboard.press("Control+k");
   await search.fill("export");
@@ -95,7 +95,7 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await page.keyboard.press("Enter");
   await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 
   await page.keyboard.press("Control+k");
   await search.fill("clear roll");

@@ -69,7 +69,7 @@ describe("parseBackup", () => {
       }),
     );
     if (!parsed.ok || parsed.backup.kind !== "full") return expect.fail("expected a full backup");
-    expect(parsed.backup.data.rollLog).toEqual([good]);
+    expect(parsed.backup.data.rollLog).toEqual<unknown>([good]);
   });
 
   it("carries the roll log when asked", async () => {

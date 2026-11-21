@@ -10,7 +10,7 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 - A Bun product names its Bun in `package.json`'s `packageManager` (`"bun@1.4.5"`), and CI reads it from there. `vercel.json`'s install command repeats the version until Vercel ships Bun 1.4 (see sm-core's README). Commit `bun.lock`, not `package-lock.json`. Scripts call `bun` and `bun --bun x <tool>`, not `npm run`, `npx` or `node`. Vitest (on Bun's runtime) stays; `bun test` doesn't replace it.
 - Every app uses the same script names: `dev`, `build`, `check`, `test`, `e2e`, plus `typecheck`, `lint` and `format`. A repo without one of these leaves it out rather than renaming another.
 - TypeScript is the latest stable 7.x and extends `vendor/sm-core/tooling/tsconfig.base.json`. Typecheck runs `bun check --no-script` (without `--no-script`, bun runs a `check` script instead of typechecking), with `tsc --noEmit` as the fallback.
-- `bun lint` lints JavaScript and TypeScript. A product's `.oxlintrc.json` extends `vendor/sm-core/tooling/oxlintrc.base.json`, which turns on every rule except those sm-core's ADR-0009 gives a reason for. `bun lint` is only in Bun's canary: run it as `bun x bun@1.4.5-canary.20261120.1 lint --no-script` until a stable Bun has it. Findings that predate a rule sit in `oxlint-suppressions.json`, which may only shrink; fix the code rather than adding to it (`--suppress-all` is for turning a new rule on, never for new code). Turn a rule off in the product's own `.oxlintrc.json` only with an ADR that says why.
+- `bun lint` lints JavaScript and TypeScript. A product's `.oxlintrc.json` extends `vendor/sm-core/tooling/oxlintrc.base.json`, which turns on every rule except those sm-core's ADR-0010 gives a reason for. `bun lint` is only in Bun's canary: run it as `bun x bun@1.4.5-canary.20261120.1 lint --no-script` until a stable Bun has it. Findings that predate a rule sit in `oxlint-suppressions.json`, which may only shrink; fix the code rather than adding to it (`--suppress-all` is for turning a new rule on, never for new code). Turn a rule off in the product's own `.oxlintrc.json` only with an ADR that says why.
 - `bun fmt` formats everything, with the `.oxfmtrc.json` sync installs. Biome runs `biome lint` for CSS and the few JavaScript rules `bun lint` lacks, from `vendor/sm-core/tooling/biome.base.json`.
 
 ## Workflow
@@ -21,7 +21,7 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 - To stop a PR merging on its own, label it `hold`. Auto-merge stays off while the label is on, and comes back when it is removed.
 - One small PR per change.
 - Every behaviour change uses `/tdd`: a failing test comes first.
-- The pre-push hook (`vendor/sm-core/tooling/hooks`, installed by the `prepare` script) runs format, lint and typecheck on the changed files. Don't bypass it with `--no-verify`; if it fails, fix the cause.
+- Git hooks run through hk (`hk.pkl`, installed by the `prepare` script): pre-commit formats and lints the staged files, pre-push runs `check`, the same command as CI. Don't bypass them with `--no-verify`; if one fails, fix the cause. Keep the `format` and `lint` scripts accepting file paths.
 
 ## Ask Scott first
 

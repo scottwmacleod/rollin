@@ -25,6 +25,6 @@ if (current && current !== want) {
   console.warn(`sm_ hooks not installed: core.hooksPath is already "${current}".`);
   process.exit(0);
 }
-chmodSync(join(here, "pre-push"), 0o755);
+for (const hook of ["pre-commit", "pre-push"]) chmodSync(join(here, hook), 0o755);
 if (current !== want) git("config", "core.hooksPath", want);
 console.log(`sm_ hooks installed (core.hooksPath = ${want})`);

@@ -29,7 +29,7 @@ rollin is a TypeScript monorepo (Bun 1.4.5 workspaces): the dice engine in `pack
 ```sh
 bun install
 just web-dev    # run the app locally
-just check      # the gates CI runs: token drift, typecheck, bun lint, Biome (CSS), bun fmt, Vitest, Playwright with axe
+just check      # the gates CI runs: token drift, typecheck, bun lint, Biome (CSS), bun fmt, bun test, Playwright with axe
 ```
 
 The engine takes its dice from an injected source, so tests script exact rolls. `packages/engine/fixtures/parity` holds frozen cases, recorded from the Rust engine this project used to have, that the engine must keep matching. See [CONTRIBUTING.md](CONTRIBUTING.md) before sending a change.

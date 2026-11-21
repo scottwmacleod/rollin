@@ -1,6 +1,6 @@
 # Keep Biome over oxlint and oxfmt
 
-Superseded by ADR-0022 on 2026-11-21.
+Superseded by ADR-0023 on 2026-11-21.
 
 rollin keeps Biome for formatting and linting. oxlint 1.94.0 and oxfmt 0.79.0 were run beside Biome 2.6.7 on the same commit (#300). Decided on 2026-11-18.
 

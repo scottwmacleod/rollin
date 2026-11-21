@@ -59,7 +59,7 @@ import { PresetSidebar } from "./PresetSidebar";
 import { useUpdate } from "./pwa";
 import { type Entry, spoken } from "./Result";
 import { RollLog } from "./RollLog";
-import { addEntry, cleanLog, loadLog, mergeLoaded, ROLL_LOG_KEY, saveLog } from "./rollLog";
+import { addEntry, cleanLog, loadLog, mergeLoaded, ROLL_LOG_KEY, saveLog } from "./rollLog.ts";
 import {
   DEFAULT_SETTINGS,
   loadSettings,

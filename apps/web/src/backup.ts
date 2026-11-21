@@ -11,7 +11,7 @@ import {
 } from "./characters";
 import { cleanPresets, loadPresets, PRESETS_KEY, type PresetMap } from "./presets";
 import type { Entry } from "./Result";
-import { cleanLog, loadLog, ROLL_LOG_KEY } from "./rollLog";
+import { cleanLog, loadLog, ROLL_LOG_KEY } from "./rollLog.ts";
 import { parseSettings, SETTINGS_KEY, type Settings } from "./settings";
 import type { Storage } from "./storage";
 

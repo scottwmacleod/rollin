@@ -16,14 +16,14 @@
     "typecheck:tsc": "bun run --workspaces typecheck:tsc",
     "lint": "bun x bun@1.4.5-canary.20261120.1 lint --no-script && biome lint . && bun fmt --no-script --check . && bun vendor/sm-core/tooling/lint/no-comments.mjs",
     "format": "bun fmt --no-script .",
-    "test": "bun run --workspaces test",
+    "test": "bun test --parallel",
     "build": "bun run --filter rollin-web build",
     "e2e": "bun run --filter rollin-web e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.8",
-    "typescript": "7.0.2",
-    "vitest": "5.1.0"
+    "@types/bun": "1.4.5",
+    "typescript": "7.0.2"
   },
   "engines": {
     "bun": ">=1.4.5"

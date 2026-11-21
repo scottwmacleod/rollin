@@ -1,0 +1,7 @@
+[define]
+__APP_VERSION__ = "\"dev\""
+
+[test]
+preload = ["./test/setup.ts"]
+randomize = true
+pathIgnorePatterns = ["apps/web/e2e/**"]

@@ -9,8 +9,7 @@
   },
   "scripts": {
     "typecheck": "bun check --no-script",
-    "typecheck:tsc": "tsc --noEmit",
-    "test": "bun --bun vitest run"
+    "typecheck:tsc": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
