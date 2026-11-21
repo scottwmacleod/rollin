@@ -15,16 +15,17 @@ permissions:
 
 jobs:
   web:
-    uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@v26.11.20
+    uses: scottwmacleod/sm-core/.github/workflows/web-ci.yml@v26.11.24
     with:
       package-manager: bun
       checks: bun run tokens:check
       typecheck-command: bun run typecheck
       e2e: true
+      e2e-shards: 2
       skip-paths: '^(docs/|\.claude/|\.github/workflows/(auto-merge|audit|behind|dependabot-automerge|tsc)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
 
   budgets:
-    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.22
+    uses: scottwmacleod/sm-core/.github/workflows/budgets.yml@v26.11.24
     permissions:
       contents: read
       pull-requests: write
