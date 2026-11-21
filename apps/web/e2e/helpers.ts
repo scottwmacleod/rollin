@@ -1,6 +1,5 @@
 import type { Page } from "@playwright/test";
 
-/** A value the app saved, read straight from its IndexedDB store; undefined when nothing is saved. */
 export function stored(page: Page, key: string): Promise<unknown> {
   return page.evaluate(
     (k) =>

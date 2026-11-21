@@ -18,24 +18,15 @@ import {
   Input,
 } from "./ui";
 
-/** What the dialog is doing: making a preset (maybe from a typed formula) or editing a saved one. */
 export type PresetDialogMode =
   | { kind: "new"; formula: string }
   | { kind: "edit"; name: string; scope: PresetScope };
 
-/** A preset's place in the saved data: its name and where it lives. */
 export interface PresetRef {
   name: string;
   scope: PresetScope;
 }
 
-/**
- * The edit-preset dialog (#86, option A): name, formula with a live check,
- * scope (this character or every character), Delete, Cancel and Save. The same
- * dialog makes a new preset. The button says Replace when the name is already
- * taken in that scope. A rename or a change of scope saves the new preset and
- * removes the old one.
- */
 export function PresetDialog({
   mode,
   presets,
@@ -45,11 +36,8 @@ export function PresetDialog({
   onClose,
 }: {
   mode: PresetDialogMode;
-  /** The global presets. */
   presets: PresetMap;
-  /** The active character, whose own presets shadow the global ones. */
   character: Character;
-  /** `from` is the preset being edited, if any. Resolves when the save has been stored. */
   onSave: (
     name: string,
     formula: string,

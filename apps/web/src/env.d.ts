@@ -1,7 +1,5 @@
-/** Set at build time in vite.config.ts. */
 declare const __APP_VERSION__: string;
 
-/** The sm-core PostHog loader is plain JavaScript; this is its public surface. */
 declare module "*/sm-posthog.js" {
   export function startPostHog(config: {
     token: string;

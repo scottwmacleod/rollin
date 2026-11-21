@@ -16,10 +16,8 @@ import {
   Input,
 } from "./ui";
 
-/** What the dialog is doing: adding a variable, or changing or removing one. */
 export type VariableDialogMode = { kind: "new" } | { kind: "edit"; name: string };
 
-/** The integer in `text`, or `null` if it is not a whole number the engine can hold. */
 export function parseValue(text: string): number | null {
   const trimmed = text.trim();
   if (!/^[-+]?\d+$/.test(trimmed)) return null;
@@ -27,7 +25,6 @@ export function parseValue(text: string): number | null {
   return Number.isSafeInteger(n) && Math.abs(n) <= MAX_INT ? (n === 0 ? 0 : n) : null;
 }
 
-/** Adds, changes, renames or removes one named integer variable of a character. */
 export function VariableDialog({
   mode,
   character,
@@ -37,7 +34,6 @@ export function VariableDialog({
 }: {
   mode: VariableDialogMode;
   character: Character;
-  /** `from` is the name being edited, if any. Resolves when the change has been stored. */
   onSave: (name: string, value: number, from: string | null) => Promise<void>;
   onDelete: (name: string) => Promise<void>;
   onClose: () => void;

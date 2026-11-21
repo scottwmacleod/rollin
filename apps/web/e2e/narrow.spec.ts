@@ -8,8 +8,6 @@ import {
   seedPresets,
 } from "./layout";
 
-// A narrow desktop window: 700px wide, mouse, no touch.
-
 test("the page never scrolls and the newest roll sits above the formula bar", async ({ page }) => {
   await page.goto("/");
   await rollMany(page, 40);
@@ -40,7 +38,6 @@ test("the character button opens a slide-over that traps focus and closes three 
   await expect(sheet.getByRole("complementary", { name: "Characters" })).toBeVisible();
   expect((await (await axe(page)).analyze()).violations).toEqual([]);
 
-  // Focus stays inside while it is open.
   for (let i = 0; i < 12; i++) await page.keyboard.press("Tab");
   expect(await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'))).toBe(
     true,
@@ -93,7 +90,6 @@ test("chips follow the character, and a character's preset hides the global one"
   await page.getByRole("button", { name: /^Character:/ }).click();
   const sheet = page.getByRole("dialog", { name: "Characters and presets" });
   await sheet.getByRole("button", { name: "New preset" }).click();
-  // The slide-over is still sliding out for 150ms, so name the dialog.
   const dialog = page.getByRole("dialog", { name: "New preset" });
   await dialog.getByLabel("Name").fill("preset01");
   await dialog.getByLabel("Formula").fill("9d6");
@@ -153,7 +149,6 @@ test.describe("popup motion", () => {
     });
     expect(timing).toBe("translate 0.2s");
 
-    // Close part-way through the 200ms open: it turns back from where it was.
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Character: default" }).click();
     await expect(sheet).toBeAttached();
@@ -167,8 +162,7 @@ test.describe("popup motion", () => {
         ),
     );
     const width = await sheet.evaluate((el) => el.getBoundingClientRect().width);
-    expect(before).toBeLessThan(0); // still sliding in
-    // It turns back from where it was: heading out, but not snapped shut or open.
+    expect(before).toBeLessThan(0);
     expect(after).toBeLessThanOrEqual(before);
     expect(after).toBeGreaterThan(-width + 10);
     await expect(sheet).toHaveCount(0);
@@ -189,7 +183,6 @@ test.describe("popup motion", () => {
     });
     expect(style.property).toBe("opacity, scale");
     expect(style.scale).toBe("none");
-    // The origin is on the button's side, not the menu's centre.
     const box = await menu.boundingBox();
     expect(style.origin).not.toBe(`${(box?.width ?? 0) / 2}px ${(box?.height ?? 0) / 2}px`);
     await page.keyboard.press("Escape");

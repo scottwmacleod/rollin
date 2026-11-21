@@ -16,7 +16,6 @@ test("after one visit the app reloads and rolls with the network off, log includ
   await page.getByLabel("Formula").press("Enter");
   const log = page.getByRole("tree", { name: "Roll log" });
   await expect(log).toContainText("total 9");
-  // The log is saved in the background; wait for it, as a person would, before going offline.
   await expect
     .poll(() =>
       page.evaluate(
@@ -41,7 +40,6 @@ test("after one visit the app reloads and rolls with the network off, log includ
 
   await page.getByLabel("Formula").fill("2d6");
   await page.getByLabel("Formula").press("Enter");
-  // (The scripted dice start over on reload, so the new roll is another 4 + 5.)
   await expect(log.getByRole("treeitem")).toHaveCount(2);
 });
 
@@ -64,8 +62,6 @@ test("a new deploy shows an update prompt, and reloading picks it up", async ({ 
   await expect(page.getByText("A new version of rollin is ready.")).toHaveCount(0);
   await page.evaluate(() => Object.assign(window, { sameLoad: true }));
 
-  // Stand in for a deploy: a worker script at a new URL for the same scope is an update,
-  // which the browser installs and holds until the page asks for it to take over.
   await page.evaluate(() => navigator.serviceWorker.register("/sw.js?next"));
 
   await expect(page.getByText("A new version of rollin is ready.")).toBeVisible();

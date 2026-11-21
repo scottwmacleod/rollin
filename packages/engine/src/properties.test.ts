@@ -2,7 +2,6 @@ import fc from "fast-check";
 import { expect, test } from "vitest";
 import { type DieSource, type Node, type RollReport, roll, spanOf } from "./index";
 
-/** A die source driven by a list of random numbers: each is mapped onto the die's faces. */
 function fromSeeds(seeds: readonly number[]): DieSource {
   let next = 0;
   return (sides) => {
@@ -19,7 +18,6 @@ function ok(report: RollReport) {
   return report.ok.rolls;
 }
 
-/** Every die in a node tree. */
 function diceIn(node: Node): { sides: number; values: number[] }[] {
   switch (node.type) {
     case "number":
@@ -108,7 +106,6 @@ test("any typed text gives a roll or a located error, never a throw or an unsafe
   );
 });
 
-/** Formulas built from the grammar, so most of them roll. */
 const formula: fc.Arbitrary<string> = fc.letrec((tie) => ({
   term: fc.oneof(
     fc.integer({ min: 0, max: 99 }).map(String),
@@ -129,7 +126,6 @@ const formula: fc.Arbitrary<string> = fc.letrec((tie) => ({
     .map(([first, rest]) => first + rest.map(([op, t]) => `${op}${t}`).join("")),
 })).expr as fc.Arbitrary<string>;
 
-/** Recomputes a total from the node tree, as an independent check on the evaluator. */
 function total(node: Node): number {
   switch (node.type) {
     case "number":
@@ -163,12 +159,10 @@ test("generated formulas: the total is what the tree adds up to", () => {
     fc.property(formula, seeds, (text, s) => {
       const report = roll(text, fromSeeds(s));
       if (!("ok" in report)) {
-        // The only way a well-formed formula here fails is by its arithmetic.
         expect(report.error.kind).toBe("formula");
         return;
       }
       for (const r of report.ok.rolls) {
-        // Floating point is exact for these small totals, so the sums must agree.
         if (Math.abs(r.total) < 2 ** 40) expect(r.total + 0).toBe(total(r.expr) + 0);
       }
     }),
@@ -186,7 +180,6 @@ test("exploding dice and rerolls never pass either cap, and the totals add up", 
       (count, sides, clause, s) => {
         const report = roll(`${count}d${sides}${clause}`, fromSeeds(s));
         if ("error" in report) {
-          // The only way a valid formula fails is by hitting a cap.
           expect(report.error).toMatchObject({ error: { kind: "limit_exceeded" } });
           return;
         }
@@ -195,7 +188,6 @@ test("exploding dice and rerolls never pass either cap, and the totals add up", 
         if (node?.type !== "dice") throw new Error("expected a dice term");
         const rerolled = node.dice.filter((d) => d.status === "rerolled").length;
         const exploded = node.dice.filter((d) => d.status === "exploded").length;
-        // Each original die stands once, so only extras and rerolls add to the count.
         expect(node.dice.length).toBe(count + rerolled + exploded);
         expect(rerolled).toBeLessThanOrEqual(count * 100);
         expect(exploded).toBeLessThanOrEqual(count * 100);
@@ -224,7 +216,6 @@ test("keep and drop always leave the right number of dice, and the total is the 
         expect(kept).toHaveLength(kind.startsWith("k") ? n : count - n);
         expect(node.dice.filter((d) => d.status === "dropped")).toHaveLength(count - kept.length);
         expect(result?.total).toBe(kept.reduce((a, d) => a + d.value, 0));
-        // Every kept die is at least as good as every dropped one.
         const high = kind === "kh" || kind === "dl";
         const dropped = node.dice.filter((d) => d.status === "dropped");
         for (const k of kept) {
@@ -236,8 +227,6 @@ test("keep and drop always leave the right number of dice, and the total is the 
     ),
   );
 });
-
-// ---- Ports of the remaining Rust proptest suite (the former Rust tests/properties.rs) ----
 
 const CMP = [">", ">=", "<", "<=", "="] as const;
 
@@ -256,25 +245,21 @@ function condMatches(cmp: number, v: number, face: number): boolean {
   }
 }
 
-/** Index 5 is the bare-number form, which means equals. */
 function condText(cmp: number, v: number): string {
   return cmp === 5 ? String(v) : `${CMP[cmp]}${v}`;
 }
 
-/** Every error span lies inside the text and on a character boundary. */
 function expectSpanInside(text: string, report: RollReport): void {
   if (!("error" in report) || report.error.kind !== "formula") return;
   const bytes = new TextEncoder().encode(text);
   const span = spanOf(report.error.error);
   expect(span.start).toBeLessThanOrEqual(span.end);
   expect(span.end).toBeLessThanOrEqual(bytes.length);
-  // A byte offset is on a boundary unless it lands on a UTF-8 continuation byte.
   for (const at of [span.start, span.end]) {
     if (at < bytes.length) expect((bytes[at] ?? 0) & 0b1100_0000).not.toBe(0b1000_0000);
   }
 }
 
-/** Text drawn from an alphabet of tokens, so many strings are almost valid. */
 const fromTokens = (tokens: readonly string[], max: number) =>
   fc.array(fc.constantFrom(...tokens), { maxLength: max }).map((parts) => parts.join(""));
 
@@ -341,7 +326,6 @@ test("arbitrary text never throws", () => {
   );
 });
 
-/** A dice-free expression, rendered and also evaluated by an independent oracle (BigInt, checked to the safe range). */
 type Gen =
   | { t: "num"; n: number }
   | { t: "neg"; e: Gen }
@@ -382,7 +366,6 @@ const gen: fc.Arbitrary<Gen> = fc.letrec<{ e: Gen; leaf: Gen }>((tie) => ({
   ),
 })).e;
 
-/** The oracle: exact integers, with the engine's rule that no result leaves the safe range. */
 function oracle(g: Gen): bigint | "zero" | "overflow" {
   const LIMIT = BigInt(Number.MAX_SAFE_INTEGER);
   const fit = (v: bigint) => (v > LIMIT || v < -LIMIT ? "overflow" : v);
@@ -421,7 +404,6 @@ test("dice-free expressions match an independent exact-integer oracle", () => {
       const want = oracle(g);
       const got = roll(text, fromSeeds([0]));
       if (typeof want === "bigint") {
-        // Numbers beyond the safe range are refused as too large, which the Rust engine's wider integers allow.
         if ("ok" in got) expect(BigInt(got.ok.rolls[0]?.total ?? 0)).toBe(want);
         else
           expect(got.error).toMatchObject({
@@ -490,7 +472,6 @@ test("a success count totals the matching counting dice minus the failures", () 
     fc.property(formulaOf, seeds, ({ text, success, failure, sides }, s) => {
       const report = roll(text, fromSeeds(s));
       if ("error" in report) {
-        // Only the caps may fail a roll.
         expect(report.error).toMatchObject({
           error: { kind: expect.stringMatching(/limit_exceeded|infinite_explosion/) },
         });
@@ -600,7 +581,6 @@ test("a label never changes the dice, totals or formula", () => {
           expect(y?.total).toBe(x.total);
           expect(y?.expr).toEqual(x.expr);
           expect(y?.formula).toBe(x.formula);
-          // A typed line has its runs of spaces collapsed before it is parsed.
           expect(y?.label).toBe(label.split(/ +/u).join(" ").trim());
           expect(y?.iteration).toBe(x.iteration);
         });
@@ -609,7 +589,6 @@ test("a label never changes the dice, totals or formula", () => {
   );
 });
 
-/** Every dice feature in one generator: random valid formulas, to be fuzzed. */
 const featureFormula = fc
   .tuple(
     fc.integer({ min: 1, max: 12 }),
@@ -643,7 +622,6 @@ test("fuzzing random valid formulas never crashes or hangs", () => {
       const report = roll(text, fromSeeds(s));
       expect(performance.now() - started).toBeLessThan(2000);
       if ("error" in report) {
-        // Valid syntax can still fail on a rule (keeping more than rolled, say), but always with a located error.
         expect(report.error.kind).toBe("formula");
         expectSpanInside(text, report);
       } else {

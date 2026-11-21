@@ -1,6 +1,5 @@
 import type { Storage } from "./types";
 
-/** Keeps data for this page load only. The fallback when real storage is blocked, and the test double. */
 export function memoryStorage(): Storage {
   const data = new Map<string, unknown>();
   return {

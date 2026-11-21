@@ -6,7 +6,6 @@ for (const scheme of ["light", "dark"] as const) {
     page,
   }) => {
     await page.emulateMedia({ colorScheme: scheme });
-    // The test build reads its dice from here; the production build has no such hook.
     await page.addInitScript(() =>
       Object.assign(window, {
         __rollinDice: [
@@ -45,11 +44,9 @@ test("a dropped die is marked on the roll's line, accessibly", async ({ page }) 
   await expect(result).toContainText("total 12");
   const dropped = result.locator(".line-through");
   await expect(dropped).toHaveCount(1);
-  // Quiet to the eye (faded and struck through, no word), still announced as dropped.
   await expect(dropped).toHaveText("1");
   await expect(dropped).toHaveCSS("opacity", "0.6");
   await expect(page.getByText("dropped", { exact: false })).toHaveCount(0);
-  // The accessible name of the roll still says which die was dropped.
   await expect(result.getByRole("treeitem", { name: /1 dropped/ }).first()).toBeAttached();
 
   const results = await (await axe(page)).analyze();
@@ -72,21 +69,18 @@ test("rerolled and exploded dice are marked on the roll's line, accessibly", asy
   const entries = page.getByRole("tree", { name: "Roll log" }).getByRole("treeitem");
   await expect(entries).toHaveCount(2);
 
-  // The rerolled 1 is struck, so the dice that count add up to the total.
   const rerolled = entries.first().locator("[data-mark=rerolled]");
   await expect(rerolled).toHaveText("1");
   await expect(rerolled).toHaveCSS("text-decoration-line", "line-through");
   await expect(entries.first()).toContainText("total 9");
   await expect(page.getByRole("treeitem", { name: /2d6r1 1 rerolled 4 5 total 9/ })).toBeAttached();
 
-  // The 6 that exploded has the lime edge; the 3 it added counts like any other die.
   const exploded = entries.nth(1).locator("[data-mark]");
   await expect(exploded).toHaveCount(1);
   await expect(exploded).toHaveText("6");
   await expect(entries.nth(1)).toContainText("total 11");
   await expect(page.getByRole("treeitem", { name: /2d6! 6 exploded 3 2 total 11/ })).toBeAttached();
 
-  // The words are for screen readers only.
   await expect(page.getByText(/rerolled|exploded/)).toHaveCount(0);
 
   const results = await (await axe(page)).analyze();
@@ -146,19 +140,15 @@ for (const scheme of ["light", "dark"] as const) {
 
     const log = page.getByRole("tree", { name: "Roll log" });
     await expect(log.getByRole("treeitem")).toHaveCount(2);
-    // Newest at the bottom, and the page follows it.
     await expect(log.getByRole("treeitem").nth(1)).toContainText("d20");
     await expect(log.getByRole("treeitem").nth(1)).toBeInViewport();
 
-    // Esc leaves the formula box for the log; the log is one tab stop.
     await formula.press("Escape");
     await expect(log.getByRole("treeitem").first()).toBeFocused();
 
-    // A flat list: every die is on the entry's own line, nothing opens.
     await expect(log.getByRole("treeitem").first()).not.toHaveAttribute("aria-expanded");
     await expect(log.getByRole("treeitem").first()).toContainText("2d6 4 5 + 3");
 
-    // Down and Up move between entries; focus is never lost.
     await page.keyboard.press("ArrowDown");
     await expect(log.getByRole("treeitem").nth(1)).toBeFocused();
     await page.keyboard.press("ArrowDown");
@@ -169,7 +159,6 @@ for (const scheme of ["light", "dark"] as const) {
     const results = await (await axe(page)).analyze();
     expect(results.violations).toEqual([]);
 
-    // Esc returns to the formula box.
     await page.keyboard.press("Escape");
     await expect(formula).toBeFocused();
   });
@@ -192,7 +181,6 @@ test("a labelled, repeated formula shows each roll with its label and repeat num
   await page.getByLabel("Formula").fill("2x d20+5 # attack, d8+3 # damage");
   await page.getByLabel("Formula").press("Enter");
 
-  // One entry holds all four rolls.
   const log = page.getByRole("tree", { name: "Roll log" });
   await expect(log.getByRole("treeitem")).toHaveCount(1);
   const entry = log.getByRole("treeitem").first();
@@ -275,13 +263,11 @@ test("a percentile roll shows the term as typed with its d100 faces", async ({ p
   expect(results.violations).toEqual([]);
 });
 
-/** Clears the roll log from its menu, as a person does. */
 async function openClear(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Roll log menu" }).click();
   await page.getByRole("menuitem", { name: "Clear roll log" }).click();
 }
 
-/** The roll log as saved in IndexedDB, which is written in the background after a roll. */
 function savedLog(page: import("@playwright/test").Page): Promise<unknown[] | undefined> {
   return page.evaluate(
     () =>
@@ -308,7 +294,6 @@ test("the roll log survives a reload, and Clear empties it for good", async ({ p
   await rollOnce(page, "d6+1");
   const log = page.getByRole("tree", { name: "Roll log" });
   await expect(log).toContainText("d6+1");
-  // The save runs in the background; reloading before it lands would lose the roll.
   await expect.poll(async () => (await savedLog(page))?.length).toBe(1);
 
   await page.reload();
@@ -323,7 +308,6 @@ test("the roll log survives a reload, and Clear empties it for good", async ({ p
   await page.getByRole("button", { name: "Yes, clear" }).click();
   await expect(page.getByText("Rolls will appear here.")).toBeVisible();
 
-  // The delete is saved in the background; wait for it before reloading, as a person would.
   await expect.poll(() => savedLog(page)).toBeUndefined();
 
   await page.reload();
@@ -339,12 +323,10 @@ test("only a roll made now arrives with motion, and never under reduced motion",
   await page.reload();
   const log = page.getByRole("tree", { name: "Roll log" });
   await expect(log).toContainText("d6+1");
-  // History that loads with the page animates nothing.
   await expect(page.locator(".roll-arrive")).toHaveCount(0);
 
   await rollOnce(page, "d8");
   await rollOnce(page, "d4");
-  // Only the newest roll carries the arrival.
   await expect(page.locator(".roll-arrive")).toHaveCount(1);
   await expect(page.locator(".roll-arrive")).toContainText("d4");
   const animation = await page
@@ -416,7 +398,6 @@ test.describe("settings", () => {
     await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/");
     const dark = await bgOf(page);
-    // An old saved choice is ignored and cleared.
     await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
     expect(await page.evaluate(() => localStorage.getItem("rollin-theme"))).toBeNull();
 
@@ -456,7 +437,6 @@ test.describe("global presets", () => {
     const sidebar = page.getByRole("complementary", { name: "Presets" });
     await expect(sidebar).toContainText("No presets yet");
 
-    // Save the current formula as a preset.
     await page.getByLabel("Formula").fill("d20+5");
     await page.getByRole("button", { name: "Save as preset" }).click();
     const dialog = page.getByRole("dialog");
@@ -468,35 +448,28 @@ test.describe("global presets", () => {
     await expect(dialog).toBeHidden();
     await expect(sidebar.getByRole("button", { name: "attack d20+5" })).toBeVisible();
 
-    // Roll it with one click: the log carries the preset's name.
     await sidebar.getByRole("button", { name: "attack d20+5" }).click();
     await expect(log(page)).toContainText("attack · d20+5");
     await expect(log(page)).toContainText("total 12");
     await expect(page.getByRole("status")).toHaveText("Rolled attack (d20+5): total 12");
 
-    // Typing the name rolls it too.
     await page.getByLabel("Formula").fill("ATTACK");
     await page.getByLabel("Formula").press("Enter");
     await expect(log(page)).toContainText("total 17");
     await expect.poll(async () => (await savedLog(page))?.length).toBe(2);
 
-    // Survives a reload.
     await page.reload();
     await expect(sidebar.getByRole("button", { name: "attack d20+5" })).toBeVisible();
 
-    // Edit: rename and change the formula.
     await sidebar.getByRole("button", { name: "Edit attack" }).click();
     await dialog.getByLabel("Name").fill("strike");
     await dialog.getByLabel("Formula").fill("d20+7");
     await dialog.getByRole("button", { name: "Save", exact: true }).click();
     await expect(sidebar.getByRole("button", { name: "strike d20+7" })).toBeVisible();
     await expect(sidebar.getByRole("button", { name: "attack d20+5" })).toHaveCount(0);
-    // The dialog's own Formula field is gone once it has closed.
     await expect(dialog).toBeHidden();
-    // The renamed preset's old Edit button is gone, so focus lands in the formula box.
     await expect(page.getByRole("combobox", { name: "Formula" })).toBeFocused();
 
-    // Delete, after a confirmation.
     await sidebar.getByRole("button", { name: "Edit strike" }).click();
     await dialog.getByRole("button", { name: "Delete", exact: true }).click();
     await dialog.getByRole("button", { name: "Keep it" }).click();
@@ -534,7 +507,6 @@ test.describe("global presets", () => {
     const results = await (await axe(page)).analyze();
     expect(results.violations).toEqual([]);
 
-    // A name that is taken says so and the button says Replace.
     await dialog.getByLabel("Name").fill("ATK");
     await dialog.getByLabel("Formula").fill("d20+9");
     await expect(dialog).toContainText("already exists");
@@ -621,7 +593,6 @@ test.describe("characters and variables", () => {
       "true",
     );
 
-    // The new-character dialog checks the name as it is typed.
     await page.getByRole("button", { name: "New character" }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Name").fill("roll");
@@ -644,7 +615,6 @@ test.describe("characters and variables", () => {
     await page.getByLabel("Formula").press("Enter");
     await expect(log(page)).toContainText("total 13");
 
-    // Switching changes which variables apply, straight away.
     await characters.getByRole("button", { name: /^default/ }).click();
     await expect(variables).toContainText("No variables yet");
     await page.getByLabel("Formula").fill("d20+@str");
@@ -694,7 +664,6 @@ test.describe("characters and variables", () => {
     await page.reload();
     await expect(presets.getByRole("button", { name: "attack d20+7" })).toBeVisible();
 
-    // The other character still sees the global one.
     await page
       .getByRole("complementary", { name: "Characters" })
       .getByRole("button", { name: /^default/ })
@@ -716,7 +685,6 @@ test.describe("characters and variables", () => {
     );
     await expect(b.getByRole("complementary", { name: /^Variables/ })).toContainText("@str");
 
-    // Rename and delete from the second tab.
     await b.getByRole("button", { name: "Edit aria" }).click();
     const dialog = b.getByRole("dialog");
     await dialog.getByLabel("Name").fill("bo");

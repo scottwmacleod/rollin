@@ -36,7 +36,6 @@ export function SettingsDialog({
   onExported: (backup: Backup) => void;
   onImported: (backup: Backup) => Promise<void>;
   onAdded: (incoming: Incoming, choices: Choices) => Promise<AddResult>;
-  /** Lets the command palette open the dialog; without them the dialog manages itself. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {

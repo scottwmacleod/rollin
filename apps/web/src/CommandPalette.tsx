@@ -20,11 +20,6 @@ import {
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
-/**
- * The ⌘K palette (#86, option B): one input over presets, characters and
- * commands. Plain typing searches presets, commands and characters, `@` only
- * characters, `>` only commands. Eight rows show, then the list scrolls.
- */
 export function CommandPalette({
   rows,
   open,
@@ -35,9 +30,7 @@ export function CommandPalette({
   rows: readonly PaletteRow[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Carries out a chosen row. */
   onRun: (row: PaletteRow) => void;
-  /** Where focus goes when the palette closes; see the dialog's `finalFocus`. */
   finalFocus: () => HTMLElement | null;
 }) {
   const [query, setQuery] = useState("");

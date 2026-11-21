@@ -4,19 +4,13 @@ import { Button } from "./ui";
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
-/**
- * Tells the player something went wrong and lets them copy details for a GitHub
- * issue. The details are shown in full so people can see exactly what is shared.
- */
 export function ErrorNotice({
   details,
   onDismiss,
   fatal,
 }: {
   details: string;
-  /** Hides a notice about something the page survived. */
   onDismiss?: () => void;
-  /** The page can't carry on; offers a reload instead of dismissing. */
   fatal?: boolean;
 }) {
   const [copied, setCopied] = useState<"idle" | "done" | "failed">("idle");
@@ -27,7 +21,6 @@ export function ErrorNotice({
       await navigator.clipboard.writeText(details);
       setCopied("done");
     } catch {
-      // No clipboard access: select the text so Ctrl/Cmd+C finishes the job.
       text.current?.focus();
       text.current?.select();
       setCopied("failed");

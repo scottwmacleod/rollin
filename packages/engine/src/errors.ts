@@ -1,7 +1,6 @@
 import { CAP_LIMITS } from "./limits";
 import type { Cap, FormulaError, Hint, Span } from "./types";
 
-/** Thrown inside the engine and caught by `roll`; it never leaves the package. */
 export class FormulaFailure extends Error {
   readonly error: FormulaError;
   constructor(error: FormulaError) {
@@ -41,7 +40,6 @@ export const repeatWithoutDice = (
 export const undefinedVariable = (name: string, span: Span): FormulaFailure =>
   new FormulaFailure({ kind: "undefined_variable", name, span });
 
-/** The byte range of the text an error is about. */
 export function spanOf(error: FormulaError): Span {
   return error.kind === "with_variables" ? spanOf(error.inner) : error.span;
 }
@@ -58,7 +56,6 @@ const CAP_NAMES: Record<Cap, string> = {
   repeat: "repeat",
 };
 
-/** A readable, neutral one-line description of what went wrong. */
 export function messageOf(error: FormulaError): string {
   switch (error.kind) {
     case "syntax":
@@ -83,7 +80,6 @@ export function messageOf(error: FormulaError): string {
     case "with_variables": {
       const values = error.bindings.map(([name, value]) => `@${name} is ${value}`).join(", ");
       const { inner } = error;
-      // `@s is 1 but sides must be between 2 and 10000`
       if (inner.kind === "invalid_dice" && error.bindings.length === 1) {
         return `${values} but ${inner.message}`;
       }
@@ -92,7 +88,6 @@ export function messageOf(error: FormulaError): string {
   }
 }
 
-/** Suggestions for fixing the error, as data. */
 export function hintsOf(error: FormulaError): Hint[] {
   if (error.kind === "with_variables") return hintsOf(error.inner);
   if (error.kind === "repeat_without_dice") {

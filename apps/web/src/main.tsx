@@ -8,15 +8,12 @@ import { ErrorBoundary, UnexpectedErrors } from "./ErrorBoundary";
 import "./index.css";
 import { forgetOldTheme } from "./settings";
 
-// PostHog for experiments (sm-core#21). Its script loads from /_sm once the page is idle;
-// nothing loads under Global Privacy Control or Do Not Track. Masked text keeps formulas out.
 startPostHog({
   token: "phc_rKDLfEFrPFjYd4botU7tS9oy4MsNPHbjwsGqTSr4GLB5",
   product: "rollin",
   options: { mask_all_text: true },
 });
 
-// Light and dark follow the OS only; drop what the old theme switch saved.
 forgetOldTheme();
 
 const root = document.getElementById("root");
@@ -28,9 +25,7 @@ createRoot(root).render(
       <App />
       <UnexpectedErrors />
     </ErrorBoundary>
-    {/* Cookieless page counts (#216). PostHog (above) adds masked autocapture and flags: no cookies, no formulas, no names. */}
     <Analytics />
-    {/* Cookieless web vitals from real visits (#304); its script loads after the app renders. */}
     <SpeedInsights />
   </StrictMode>,
 );

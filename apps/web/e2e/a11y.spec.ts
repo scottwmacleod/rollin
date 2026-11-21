@@ -12,10 +12,6 @@ async function expectClean(page: Page, where: string) {
   ).toEqual([]);
 }
 
-/**
- * Every visible control border (buttons, fields, chips) must reach 3:1 against
- * what's behind it (WCAG 1.4.11). The old `line-strong` borders were 1.64:1.
- */
 async function expectControlBorders(page: Page, where: string) {
   const weak = await page.evaluate(() => {
     type RGBA = [number, number, number, number];
@@ -67,7 +63,6 @@ async function expectControlBorders(page: Page, where: string) {
   expect(weak, `${where}: control borders under 3:1`).toEqual([]);
 }
 
-/** Gives the page something in every region: a character, a variable, presets and rolls. */
 async function populate(page: Page) {
   await page.getByRole("button", { name: "New character" }).click();
   let dialog = page.getByRole("dialog");
@@ -92,7 +87,6 @@ async function populate(page: Page) {
   await page.getByLabel("Formula").fill("2d6+3");
   await page.getByLabel("Formula").press("Enter");
   await expect(log(page)).toContainText("2d6+3");
-  // Axe reads colours as they are now, so let the 150ms arrival finish first.
   await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
 }
 
@@ -106,7 +100,6 @@ for (const scheme of ["light", "dark"] as const) {
     await expectControlBorders(page, "populated page");
 
     const dialog = page.getByRole("dialog");
-    // Each opener, with what to open; Escape must close every one and give focus back.
     const openers: [string, () => Promise<void>][] = [
       ["new preset", () => page.getByRole("button", { name: "New preset" }).click()],
       ["edit preset", () => page.getByRole("button", { name: "Edit attack" }).click()],
@@ -126,14 +119,12 @@ for (const scheme of ["light", "dark"] as const) {
       await expect(page.locator(":focus")).not.toHaveJSProperty("tagName", "BODY");
     }
 
-    // The delete confirmation inside a dialog.
     await page.getByRole("button", { name: "Edit attack" }).click();
     await dialog.getByRole("button", { name: "Delete" }).click();
     await expectClean(page, "confirm delete");
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
 
-    // The command palette, and the inline confirmation it opens for clearing the log.
     await page.getByLabel("Formula").focus();
     await page.keyboard.press("ControlOrMeta+k");
     const search = page.getByRole("combobox", { name: /Search presets/ });
@@ -148,7 +139,6 @@ for (const scheme of ["light", "dark"] as const) {
   });
 }
 
-// Modern Web Guidance `dialog`: a form dialog closes on Esc, not on a press outside (#346).
 test("a press outside a form dialog keeps what was typed; settings still closes", async ({
   page,
 }) => {
@@ -182,7 +172,6 @@ test("the whole page can be tabbed through without a trap, and every stop shows 
       const style = getComputedStyle(el);
       const ring = style.outlineStyle !== "none" && Number.parseFloat(style.outlineWidth) > 0;
       const path = `${el.tagName}:${el.getAttribute("aria-label") ?? el.textContent?.trim().slice(0, 30) ?? ""}`;
-      // The ring is signal-ink: resolve the token to the same colour format as outlineColor.
       const probe = document.createElement("span");
       probe.style.color = "var(--sm-signal-ink)";
       document.body.append(probe);
@@ -193,14 +182,12 @@ test("the whole page can be tabbed through without a trap, and every stop shows 
     });
     if (stop === null) continue;
     expect(stop.matches, `${stop.path} is focus-visible`).toBe(true);
-    // Buttons, links and inputs must draw a ring (the tree rows draw their own highlight).
     if (!/^(DIV|LI):/.test(stop.path)) {
       expect(stop.ring, `${stop.path} shows a focus ring`).toBe(true);
       expect(stop.signal, `${stop.path} rings in signal-ink`).toBe(true);
     }
     seen.add(stop.path);
   }
-  // Tabbing wrapped round the page, so it visited more than a few stops and never got stuck.
   expect(seen.size).toBeGreaterThan(10);
 });
 
@@ -233,7 +220,6 @@ test.describe("unexpected errors", () => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.goto("/");
     await page.getByLabel("Formula").fill("d20+@gorbag");
-    // An error out of our own code, with a message that names something of the player's.
     await page.evaluate((secret) => {
       const error = new Error(`no preset called ${secret}`);
       window.dispatchEvent(
@@ -260,7 +246,6 @@ test.describe("unexpected errors", () => {
       expect(copied.toLowerCase()).not.toContain(forbidden.toLowerCase());
     }
 
-    // The page carries on, and the notice goes away.
     await page.getByRole("button", { name: "Dismiss" }).click();
     await expect(notice).toBeHidden();
     await expect(page.getByLabel("Formula")).toHaveValue("d20+@gorbag");

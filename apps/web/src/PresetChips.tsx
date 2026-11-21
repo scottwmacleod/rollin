@@ -1,10 +1,6 @@
 import type { PresetEntry } from "./presets";
 import { Button } from "./ui";
 
-/**
- * The presets as one row of chips above the formula bar, for screens too narrow
- * for the sidebar. The row scrolls sideways on its own; with no presets it is absent.
- */
 export function PresetChips({
   presets,
   onRoll,

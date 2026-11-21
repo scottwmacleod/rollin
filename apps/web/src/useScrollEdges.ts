@@ -1,12 +1,5 @@
 import { type RefObject, useEffect } from "react";
 
-/**
- * Marks a scroll container with `data-edge-top` and `data-edge-bottom` while
- * there is content past that edge, so CSS (`.scroll-fade`) can fade only the
- * edges that need a hint. It writes the attributes straight to the element, so
- * scrolling never re-renders anything. Pass `mounted` when the element comes
- * and goes, so the listeners follow it.
- */
 export function useScrollEdges(ref: RefObject<HTMLElement | null>, mounted = true) {
   useEffect(() => {
     const el = ref.current;

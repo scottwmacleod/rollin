@@ -29,7 +29,6 @@ async function seed(page: Page) {
   await expect(dialog).toBeHidden();
 }
 
-/** Empties the saved data the way "clear site data" would. */
 async function clearStorage(page: Page) {
   await page.evaluate(
     () =>
@@ -88,7 +87,6 @@ test("export, clear storage, import: the same characters and presets come back",
   );
   await expect(page.getByRole("complementary", { name: /^Variables/ })).toContainText("@str");
 
-  // It was saved, not just shown.
   await page.reload();
   await expect(sidebar(page)).toContainText("fireball");
   await expect(page.getByRole("complementary", { name: /^Variables/ })).toContainText("@str");
@@ -161,7 +159,6 @@ test("a partial file shows its summary, offers no replace and says why", async (
   await expect(sidebar(page)).toContainText("fireball");
 });
 
-/** Writes a partial file and picks it in the open settings dialog. */
 async function pickPartial(
   page: Page,
   testInfo: TestInfo,
@@ -227,7 +224,6 @@ test("add: a full backup offers add and replace", async ({ page }, testInfo) => 
   await dialog.getByLabel("Backup file").setInputFiles(file);
   await expect(dialog.getByRole("button", { name: "Add to my data" })).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Replace my data" })).toBeVisible();
-  // The same data is not a clash: nothing to ask, nothing to add.
   await dialog.getByRole("button", { name: "Add to my data" }).click();
   await expect(dialog.getByRole("status")).toContainText("Nothing to add");
 });
@@ -297,7 +293,6 @@ test("add: same for all applies to the rest of that kind only", async ({ page },
   const first = dialog.getByRole("group", { name: "You already have a character called aria." });
   await first.getByLabel("Do the same for the other 1 character").check();
   await first.getByRole("button", { name: "Keep both" }).click();
-  // The other character is settled, so the next question is about the preset.
   const preset = dialog.getByRole("group", {
     name: "You already have a global preset called fireball.",
   });
@@ -343,7 +338,6 @@ test("add: the clash prompt passes axe and has touch-sized controls on a phone",
 }, testInfo) => {
   await page.goto("/");
   await seed(page);
-  // The sidebar is a slide-over at this width, so seed at full width and then narrow the window.
   await page.setViewportSize({ width: 375, height: 700 });
   const dialog = await pickPartial(page, testInfo, {
     characters: [
@@ -369,7 +363,6 @@ test("the backup reminder shows for old unsaved data and can be dismissed", asyn
   await seed(page);
   await expect(page.getByText("Save a backup file?")).toHaveCount(0);
 
-  // Pretend the unsaved data has been waiting a week.
   await expect
     .poll(() =>
       page.evaluate(
@@ -396,7 +389,6 @@ test("the backup reminder shows for old unsaved data and can be dismissed", asyn
   await expect(reminder).toBeVisible();
   await page.getByRole("button", { name: "Not now" }).click();
   await expect(reminder).toHaveCount(0);
-  // Hidden is not saved: reload only once the dismissal has reached storage.
   await expect
     .poll(() => stored(page, "backupState"))
     .toMatchObject({ dismissedAt: expect.any(Number) });
@@ -448,7 +440,6 @@ test("export one character, clear storage, add the file: it rolls the same", asy
 
   await page.getByRole("button", { name: "Edit grog" }).click();
   dialog = page.getByRole("dialog");
-  // The export is of the saved character, not of what is typed here.
   await dialog.getByLabel("Name").fill("unsaved");
   expect((await (await axe(page)).analyze()).violations).toEqual([]);
   const download = page.waitForEvent("download");

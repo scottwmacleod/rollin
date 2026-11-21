@@ -1,8 +1,3 @@
-/**
- * The engine's one public entry point: `roll`. It knows nothing about React or
- * the browser; randomness comes in through a `DieSource` (ADR-0003).
- */
-
 import { type Role, type RollAst, roleOf } from "./ast";
 import type { DieSource } from "./dice";
 import { FormulaFailure, hintsOf, messageOf } from "./errors";
@@ -28,55 +23,32 @@ export {
 } from "./names";
 export type * from "./types";
 
-/** Unicode White_Space, as Rust's `split_whitespace` sees it. */
 const WHITESPACE = /[\t\n\v\f\r \u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/u;
 
 const USAGE = "roll <formula or preset name>";
 
-/** The name a roll runs under when no character is given. */
 export const DEFAULT_CHARACTER = "default";
 
-/** A game system a character (or the global default) can play under. */
 export type GameSystem = "dnd5e";
 
-/** The lowest crit range a character can have: a natural 1 is always the critical miss. */
 export const MIN_CRIT_RANGE = 2;
-/** The default crit range, and the highest: a natural 20 always crits. */
 export const MAX_CRIT_RANGE = 20;
 
-/** The character a line rolls for: its name, its variables and its own presets. */
 export interface CharacterContext {
   name: string;
-  /** Lowercase name to integer value. */
   vars?: Readonly<Record<string, number>>;
   presets?: Readonly<Record<string, string>>;
-  /** The game system this character plays under; without one the global default applies. */
   system?: GameSystem;
-  /** The lowest kept d20 that is a critical hit (2 to 20, default 20). */
   critRange?: number;
 }
 
-/**
- * What a line runs against. A character's own presets shadow a global preset
- * of the same name, and `@name` in a formula resolves from its variables.
- */
 export interface RollContext {
   globalPresets?: Readonly<Record<string, string>>;
   character?: CharacterContext;
-  /** The game system for a character that names none. */
   defaultSystem?: GameSystem;
 }
 
-/**
- * Pairs attacks with the damage that follows them. Start a new one for each
- * `Nx` repeat. With no game system every roll stands alone.
- *
- * Only an attack can crit, and a d20 check is only an attack when damage
- * follows it before the next check, or when it is marked `atk`. A lone check
- * (a skill check or a save) gets no verdict, though its die is still natural.
- */
 function pairing(system: GameSystem | undefined, critRange: number, rolls: Roll[]) {
-  /** The last check's verdict, waiting for damage to make it an attack. */
   let pending: { at: number; verdict: "hit" | "miss" } | undefined;
   let attack: "hit" | "miss" | undefined;
   const role = (spec: RollAst): Role | undefined => (system ? roleOf(spec) : undefined);
@@ -85,7 +57,6 @@ function pairing(system: GameSystem | undefined, critRange: number, rolls: Roll[
     if (rolled) rolls[at] = { ...rolled, crit: verdict };
   };
   return {
-    /** Whether `spec`'s dice double: by its `crit` suffix, or as damage after a critical hit. */
     doubles(spec: RollAst): boolean {
       if (role(spec) === "damage" && pending) {
         mark(pending.at, pending.verdict);
@@ -93,7 +64,6 @@ function pairing(system: GameSystem | undefined, critRange: number, rolls: Roll[
       }
       return spec.crit === true || (role(spec) === "damage" && attack === "hit");
     },
-    /** Weighs an evaluated check, held at `rolls[at]`; the verdict lands once it proves an attack. */
     judge(spec: RollAst, rolled: Roll, at: number): void {
       if (role(spec) !== "attack") return;
       const die = checkDie(rolled.expr);
@@ -109,7 +79,6 @@ function pairing(system: GameSystem | undefined, critRange: number, rolls: Roll[
   };
 }
 
-/** The first natural 20 or 1 marked on any die of the tree. */
 function findNatural(node: Node): "twenty" | "one" | undefined {
   switch (node.type) {
     case "dice":
@@ -125,7 +94,6 @@ function findNatural(node: Node): "twenty" | "one" | undefined {
   }
 }
 
-/** The text of a roll as it goes to the parser; errors are reported against it. */
 function rollText(
   text: string,
   dice: DieSource,
@@ -195,12 +163,6 @@ function rollText(
   }
 }
 
-/**
- * Rolls what a player typed: a formula such as `2d6+3`, or the name of a saved
- * preset, optionally after the word `roll`. Never throws for a bad formula:
- * that comes back as an error report with its message, the byte span of the
- * offending text and any hints.
- */
 export function roll(line: string, dice: DieSource, context: RollContext = {}): RollReport {
   const words = line.split(WHITESPACE).filter((word) => word !== "");
   const rest = words[0]?.toLowerCase() === "roll" ? words.slice(1) : words;
@@ -210,7 +172,6 @@ export function roll(line: string, dice: DieSource, context: RollContext = {}): 
   const character = context.character ?? { name: DEFAULT_CHARACTER };
   const word = rest[0] as string;
   if (rest.length === 1 && isNameShaped(word.toLowerCase()) && isNotAFormula(word)) {
-    // A lone word that is not a formula may name a saved preset.
     const name = word.toLowerCase();
     const own = character.presets ?? {};
     const global = context.globalPresets ?? {};
@@ -239,7 +200,6 @@ function lookup(presets: Readonly<Record<string, string>>, name: string): string
   return Object.hasOwn(presets, name) ? presets[name] : undefined;
 }
 
-/** Whether `text` fails to parse as a formula with a syntax error (not a bad dice group like `d6dl9`). */
 function isNotAFormula(text: string): boolean {
   try {
     parse(new Source(text));

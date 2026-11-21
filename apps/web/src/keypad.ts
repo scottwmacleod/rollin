@@ -1,7 +1,5 @@
-/** Dice on the keypad, smallest first. */
 export const KEYPAD_DICE = [4, 6, 8, 10, 12, 20, 100] as const;
 
-/** What a keypad key does to the formula. */
 export type Key =
   | { kind: "die"; sides: number }
   | { kind: "digit"; digit: string }
@@ -9,14 +7,6 @@ export type Key =
   | { kind: "back" }
   | { kind: "clear" };
 
-/**
- * The formula after a keypad key. A die after a number joins it (`2` then d6 is
- * `2d6`); a die after nothing, an operator or another die starts a new term
- * (`d6`, then d8, is `d6+d8`), so taps always make a formula the engine accepts.
- *
- * `fresh` means the formula was just rolled. Like a calculator, a digit or die
- * then starts a new formula, while an operator carries on from the old one.
- */
 export function press(formula: string, key: Key, fresh = false): string {
   if (fresh && (key.kind === "digit" || key.kind === "die")) return press("", key);
   switch (key.kind) {

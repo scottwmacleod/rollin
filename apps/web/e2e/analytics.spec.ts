@@ -13,7 +13,6 @@ test("rolls as usual with PostHog blocked, and no error reaches the page", async
     }),
   );
 
-  // The first key press makes the loader ask for PostHog's script, which is blocked.
   const blocked = page.waitForEvent("requestfailed", (r) =>
     r.url().includes("/_sm/static/array.js"),
   );
@@ -44,7 +43,6 @@ test("a roll sends one dice_rolled event with counts only, never the formula or 
   await page.getByLabel("Formula").press("Enter");
   await expect(page.getByRole("tree", { name: "Roll log" })).toContainText("total 20");
 
-  // Until PostHog loads, the loader queues each call as [method, ...args].
   const queued = await page.evaluate(() =>
     (window as unknown as { posthog: unknown[][] }).posthog.filter((c) => c[0] === "capture"),
   );

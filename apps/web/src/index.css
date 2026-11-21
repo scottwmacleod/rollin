@@ -1,15 +1,8 @@
 @import "tailwindcss";
-/* Every colour, font, space, radius and motion token comes from the pinned
-   sm-core copy (vendor/sm-core, checked by verify.mjs). Dark is the default and
-   light follows the OS. ui/tokens.css adds rollin's own --rollin-* sizes. */
 @import "../../../vendor/sm-core/sm-core.css";
 @import "../../../vendor/sm-core/sm-tailwind.css";
 @import "./generated/tokens.css";
 
-/* Geist and Geist Mono: one Latin variable file each (weights 100 to 900).
-   Other scripts fall back to the system font through the sm-core fallback
-   faces, whose metrics keep layout shift at zero. index.html preloads the
-   Geist file. */
 @font-face {
   font-family: Geist;
   font-style: normal;
@@ -38,14 +31,12 @@ body {
   margin: 0;
 }
 
-/* Taps act at once: no double-tap zoom when a key is tapped twice quickly, and no grey flash. */
 button,
 [role="button"] {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* The wordmark has a light and a dark artwork; show the one that matches the OS. */
 .wordmark-light {
   display: none;
 }
@@ -58,8 +49,6 @@ button,
   }
 }
 
-/* Press feedback: Roll, keypad keys and preset chips shrink a touch while held.
-   Transform only, 100ms ease-out, no bounce. */
 @utility press {
   transition: transform 100ms ease-out;
   &:active:not(:disabled) {
@@ -73,7 +62,6 @@ button,
   }
 }
 
-/* A roll made on this page fades in and rises 4px. Opacity and transform only, 150ms. */
 @keyframes roll-arrive {
   from {
     opacity: 0;
@@ -89,12 +77,6 @@ button,
   }
 }
 
-/* Popups move in and out (#329): transform and opacity only, no shadows. CSS
-   transitions reverse from where they are, so a close midway through an open
-   never jumps. ui-sdk sets data-starting-style for the first frame and keeps the
-   popup mounted while data-ending-style runs. */
-
-/* The characters and presets slide-over: in from the left in 200ms, out in 150ms. */
 .slide-over {
   transition: translate var(--sm-duration-move) var(--sm-ease-out);
 }
@@ -106,7 +88,6 @@ button,
   transition-duration: 150ms;
 }
 
-/* Scrims fade with what they sit under. */
 .scrim {
   transition: opacity var(--sm-duration-move) var(--sm-ease-out);
 }
@@ -118,9 +99,6 @@ button,
   transition-duration: 150ms;
 }
 
-/* Menus and the command palette scale up from 0.97 and fade in 150ms, out in
-   120ms. Menus grow from the button that opened them (ui-sdk's
-   --transform-origin); the palette from its top edge. */
 .pop {
   transform-origin: var(--transform-origin, top center);
   transition:
@@ -144,8 +122,6 @@ button,
   }
 }
 
-/* A 16px fade (a mask, no shadow) at the top or bottom of a scroll area, only
-   while there is content past that edge (useScrollEdges sets the attributes). */
 .scroll-fade {
   --fade-top: 0px;
   --fade-bottom: 0px;

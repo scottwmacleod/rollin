@@ -24,7 +24,6 @@ const script = (page: Page, dice: [number, number][]) =>
 
 test.describe("D&D 5e checks and crits", () => {
   test("a natural 20 attack doubles the damage dice that follow", async ({ page }) => {
-    // d20 -> 20, then 1d8 rolled twice (doubled): 6 and 5.
     await script(page, [
       [20, 20],
       [8, 6],

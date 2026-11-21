@@ -4,14 +4,11 @@ import { caretLines } from "./caret";
 import { hintText } from "./hints";
 
 export interface Entry {
-  /** Unique within the session; the roll log's identity for the entry. */
   id: number;
-  /** What the player typed. */
   input: string;
   report: RollReport;
 }
 
-/** What a roll says out loud for the live region: its total, and any crit or doubling. */
 export function spoken(roll: Roll): string {
   const parts = [`total ${roll.total}`];
   if (roll.crit === "hit") parts.push("critical hit");
@@ -20,7 +17,6 @@ export function spoken(roll: Roll): string {
   return parts.join(", ");
 }
 
-/** A critical hit or miss, and doubled damage dice, in visible text so colour is never the only cue. */
 export function CritMarks({ roll }: { roll: Roll }) {
   if (roll.crit === undefined && !roll.doubled) return null;
   return (
@@ -44,7 +40,6 @@ export function CritMarks({ roll }: { roll: Roll }) {
   );
 }
 
-/** A success or failure mark, in visible text so the accessible name matches what is seen. */
 export function Outcome({ outcome }: { outcome?: "success" | "failure" }) {
   if (outcome === "success") return <span> ✓ success</span>;
   if (outcome === "failure") return <span> ✗ failure</span>;
@@ -55,18 +50,11 @@ export function outcomeClass(outcome?: "success" | "failure"): string {
   return outcome === "success" ? "text-signal-ink" : outcome === "failure" ? "text-danger" : "";
 }
 
-/** A critical hit gets a lime edge and a critical miss a red one; the text label stays, so colour is never the only cue. */
 const CRIT_EDGE: Record<string, string> = {
   hit: "border-l-4 border-signal pl-2",
   miss: "border-l-4 border-danger pl-2",
 };
 
-/**
- * How a marked die reads. Dropped and rerolled dice are faded and struck through,
- * an exploded die has a lime edge; none has a word on screen. The word is generated
- * content, which screen readers read in the die's name without it being a second
- * piece of visible text for the name to disagree with.
- */
 const MARKS: Record<Mark, string> = {
   dropped:
     "border-line-strong bg-surface-sunken text-ink-muted line-through opacity-60 after:sr-only after:content-['_dropped']",
@@ -91,7 +79,6 @@ function DieChip({ die }: { die: Shown }) {
   );
 }
 
-/** One roll in one line: its formula, each dice group's term and dice, and the total. */
 export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boolean }) {
   const cells = breakdown(roll);
   return (
@@ -115,11 +102,9 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
           )}
         </span>
       )}
-      {/* Grows from nothing, so the dice wrap among themselves before the total leaves the line. */}
       <span className="flex min-w-[min(100%,10rem)] grow basis-0 flex-wrap items-baseline gap-x-2 gap-y-1.5 font-mono text-sm text-ink">
         {cells.map((cell, i) =>
           cell.type === "text" ? (
-            // The cells are a fixed, ordered rendering of one roll, so the index is the identity.
             <span key={i}>{cell.text} </span>
           ) : (
             <span key={i} data-term="" className="flex flex-wrap items-baseline gap-1">

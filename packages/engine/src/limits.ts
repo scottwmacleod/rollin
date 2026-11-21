@@ -1,4 +1,3 @@
-/** The hard limits (ADR-0006), defined once. Hitting one is an error, never truncation. */
 import type { Cap } from "./types";
 
 export const MAX_DICE_PER_TERM = 1000;
@@ -7,10 +6,8 @@ export const MAX_REROLLS_PER_DIE = 100;
 export const MAX_DICE_PER_ROLL = 10000;
 export const MAX_DEPTH = 32;
 export const MAX_REPEAT = 100;
-/** Most sides on one die. Too many is an invalid-dice error, not a cap. */
 export const MAX_SIDES = 10000;
 
-/** Every number the engine handles stays within JavaScript's safe integers. */
 export const MAX_INT = Number.MAX_SAFE_INTEGER;
 
 export const CAP_LIMITS: Record<Cap, number> = {

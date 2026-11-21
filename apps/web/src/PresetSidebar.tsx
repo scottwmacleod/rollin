@@ -5,10 +5,6 @@ import { Button } from "./ui";
 const BUTTON =
   "whitespace-nowrap rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
-/**
- * The saved presets: click one to roll it, Edit to rename, change or delete it.
- * `presets` is `null` until storage has been read, so the list never flashes empty.
- */
 export function PresetSidebar({
   presets,
   onRoll,

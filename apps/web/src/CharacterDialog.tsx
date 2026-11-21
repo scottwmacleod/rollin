@@ -17,14 +17,8 @@ import {
   Input,
 } from "./ui";
 
-/** What the dialog is doing: making a character, or renaming or deleting one. */
 export type CharacterDialogMode = { kind: "new" } | { kind: "edit"; name: string };
 
-/**
- * The new-character dialog (#86, option A): one name field with a live check,
- * and Create disabled until the name is valid. The same dialog renames a
- * character and, while another exists, deletes it.
- */
 export function CharacterDialog({
   mode,
   roster,
@@ -34,7 +28,6 @@ export function CharacterDialog({
 }: {
   mode: CharacterDialogMode;
   roster: Roster;
-  /** `from` is the name being renamed, if any. Resolves when the change has been stored. */
   onSave: (name: string, from: string | null, rules: Rules) => Promise<void>;
   onDelete: (name: string) => Promise<void>;
   onClose: () => void;
@@ -84,7 +77,6 @@ export function CharacterDialog({
     }
   }
 
-  /** Downloads the saved character as a partial file; unsaved edits in the dialog are not in it. */
   function exportCharacter() {
     if (existing === undefined) return;
     downloadBackup(buildPartial({ characters: [existing] }), characterFilename(existing.name));

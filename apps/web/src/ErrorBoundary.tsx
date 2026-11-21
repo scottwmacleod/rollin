@@ -3,7 +3,6 @@ import { captureException } from "../../../vendor/sm-core/tooling/analytics/sm-p
 import { ErrorNotice } from "./ErrorNotice";
 import { buildReport, currentContext } from "./errorReport";
 
-/** Catches a crash while rendering and replaces the page with the error notice. */
 export class ErrorBoundary extends Component<{ children: ReactNode }, { details: string | null }> {
   state: { details: string | null } = { details: null };
 
@@ -12,7 +11,6 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { details:
     this.setState({ details: buildReport(error, currentContext(), info.componentStack) });
   }
 
-  // Needed so the first failed render has something to show; the details follow in componentDidCatch.
   static getDerivedStateFromError(error: unknown) {
     return { details: buildReport(error, currentContext()) };
   }
@@ -27,10 +25,6 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { details:
   }
 }
 
-/**
- * Only failures in the app's own scripts count. A browser extension's script, or the
- * offline worker failing to load, is not something the player or an issue can fix.
- */
 function ours(error: unknown, filename?: string): boolean {
   const mine = [`${location.origin}/assets/`, `${location.origin}/src/`];
   const within = (text: string) => mine.some((prefix) => text.includes(prefix));
@@ -38,7 +32,6 @@ function ours(error: unknown, filename?: string): boolean {
   return error instanceof Error && within(error.stack ?? "");
 }
 
-/** Shows a dismissible notice for an error the page survived (a rejected promise, an event handler). */
 export function UnexpectedErrors() {
   const [details, setDetails] = useState<string | null>(null);
 

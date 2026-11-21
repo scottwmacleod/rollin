@@ -1,4 +1,3 @@
-/** Class names the app's dialogs share. */
 export const FIELD =
   "h-10 w-full rounded-1 border border-control-line bg-surface px-3 font-mono text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink aria-invalid:border-danger";
 export const SECONDARY =

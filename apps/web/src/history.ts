@@ -1,9 +1,5 @@
-/** Shell-style history for the formula box: Up steps back through past rolls, Down comes forward again. */
-
-/** Where the box is in the history. `null` means the person is typing, not browsing. */
 export type HistoryNav = { at: number; draft: string } | null;
 
-/** Past formulas, newest first, with a repeat of the one just before it dropped. */
 export function pastFormulas(inputs: string[]): string[] {
   const out: string[] = [];
   for (let i = inputs.length - 1; i >= 0; i--) {
@@ -13,12 +9,6 @@ export function pastFormulas(inputs: string[]): string[] {
   return out;
 }
 
-/**
- * One press of Up or Down. Returns the new position and the text to show, or
- * `null` when the key does nothing (no history, already at the oldest, or Down
- * while typing). Down past the newest returns the draft that was typed before
- * Up was first pressed.
- */
 export function stepHistory(
   past: string[],
   nav: HistoryNav,

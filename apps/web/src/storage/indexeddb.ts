@@ -17,12 +17,6 @@ function done(tx: IDBTransaction): Promise<void> {
   });
 }
 
-/**
- * Opens an IndexedDB-backed `Storage`. Rejects if IndexedDB is missing or
- * blocked (some private modes), so the caller can fall back and say so.
- * Saves are announced to other tabs over a BroadcastChannel carrying the new
- * value, so the latest save wins everywhere.
- */
 export async function openIndexedDbStorage(name = "rollin"): Promise<Storage> {
   if (typeof indexedDB === "undefined") throw new Error("IndexedDB is unavailable");
   const open = indexedDB.open(name, 1);
