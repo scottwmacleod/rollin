@@ -1,5 +1,4 @@
-/* sm_ core 26.11.13: generated from tokens.json by scripts/build.mjs. Do not edit. */
-/* Dark is the default; light follows the OS unless [data-theme] forces one. */
+/* sm_ core 26.11.14: generated from tokens.json by scripts/build.mjs. Do not edit. */
 
 :root,
 [data-theme="dark"] {
@@ -175,8 +174,6 @@
   }
 }
 
-/* The mark: a lowercase name in Geist Mono 600 and the lime cursor.
-   <span class="sm-mark">sm<span class="sm-cursor" aria-hidden="true"></span></span> */
 @keyframes sm-blink {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0; }
@@ -201,9 +198,6 @@
   animation: sm-blink var(--sm-duration-blink) steps(1) infinite;
 }
 
-/* The credit:
-   <a class="sm-credit" href="https://scottmacleod.co">shipped by
-     <span class="sm-mark">sm<span class="sm-cursor" aria-hidden="true"></span></span></a> */
 .sm-credit {
   display: inline-flex;
   align-items: center;
@@ -226,8 +220,6 @@
   .sm-credit { border-color: LinkText; }
 }
 
-/* Still on screen under reduced motion, and in print. These come after
-   .sm-cursor so they win. */
 @media (prefers-reduced-motion: reduce) {
   .sm-cursor { animation: none; }
 }

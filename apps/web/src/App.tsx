@@ -788,7 +788,6 @@ export function App() {
                 autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
-                // On a touch screen, focus on load can raise the system keyboard over the keypad.
                 autoFocus={!touch}
                 ref={input}
                 onKeyDown={formulaKeys}

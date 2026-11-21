@@ -1,7 +1,5 @@
 name: dependabot-automerge
 
-# Dependabot minor and patch updates merge once `ci` passes; majors wait for Scott.
-
 on: pull_request
 
 permissions:
@@ -10,4 +8,4 @@ permissions:
 
 jobs:
   dependabot:
-    uses: scottwmacleod/sm-core/.github/workflows/dependabot-automerge.yml@v26.11.13
+    uses: scottwmacleod/sm-core/.github/workflows/dependabot-automerge.yml@v26.11.14

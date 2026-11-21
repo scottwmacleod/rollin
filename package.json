@@ -13,7 +13,7 @@
     "tokens:check": "bun ui/generate-tokens.mjs --check",
     "typecheck": "bun run --workspaces typecheck",
     "typecheck:tsc": "bun run --workspaces typecheck:tsc",
-    "lint": "biome check .",
+    "lint": "biome check . && bun vendor/sm-core/tooling/lint/no-comments.mjs",
     "format": "biome format --write .",
     "test": "bun run --workspaces test",
     "build": "bun run --filter rollin-web build",

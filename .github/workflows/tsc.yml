@@ -1,12 +1,7 @@
 name: tsc fallback
 
-# `bun run typecheck` uses `bun check`. This runs plain `tsc --noEmit` weekly
-# so any gap between the two shows up. Not a required check; a red run here
-# means bun check missed an error tsc found, so file it and compare.
-
 on:
   schedule:
-    # Weekly, Monday 05:51 UTC.
     - cron: "51 5 * * 1"
   workflow_dispatch:
 

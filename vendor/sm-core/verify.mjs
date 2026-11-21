@@ -1,19 +1,9 @@
-// Verifies a synced copy of sm-core against its manifest.
-//
-//   node vendor/sm-core/verify.mjs
-//
-// Fails if any file in the copy was edited, added or removed, or if a shared
-// file installed in the product (GitHub templates, docs/agents/*) no longer
-// matches the copy. Text below the PR template's `<!-- product -->` line is
-// the product's own and isn't checked. To change any of it, change sm-core,
-// cut a release and sync it again; never edit the copy. No dependencies.
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const MARKER = "<!-- product -->";
-// The marker counts only on a line of its own.
 const markerAt = (text) => text.search(/^<!-- product -->$/m);
 const here = dirname(fileURLToPath(import.meta.url));
 const manifest = JSON.parse(readFileSync(join(here, "manifest.json"), "utf8"));
@@ -38,7 +28,6 @@ for (const [file, hash] of Object.entries(manifest.files)) {
 }
 for (const file of present) problems.push(`unexpected ${file}`);
 
-// Shared files installed in the product must match the (verified) copy.
 const productRoot = resolve(here, manifest.root ?? "../..");
 const shared = (text) => (markerAt(text) === -1 ? text : text.slice(0, markerAt(text)));
 for (const [to, from] of Object.entries(manifest.installed ?? {})) {

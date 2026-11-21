@@ -6,7 +6,7 @@ Recorded on 2026-11-21 from the code comments they replace. The e2e specs in `ap
 
 **Formula box keys.** With suggestions open, the arrows move through them, Tab accepts the highlighted one, Enter accepts it only after an arrow chose it (otherwise Enter rolls), and Esc closes them. Without suggestions, Up and Down step through past rolls like a shell, and Esc moves to the newest log entry, which sits above the box. The box keeps focus and keys while the completion list is open; the list is driven by `aria-activedescendant`.
 
-**Keypad.** A die after a number joins it (`2` then d6 is `2d6`). A die after nothing, an operator or another die starts a new term (`d6`, then d8, is `d6+d8`), so taps always make a formula the engine accepts. Like a calculator, once a formula has been rolled, a digit or die starts a new formula and an operator carries on from the old one. Under the Auto setting the keypad shows on touch screens, whatever their width.
+**Keypad.** A die after a number joins it (`2` then d6 is `2d6`). A die after nothing, an operator or another die starts a new term (`d6`, then d8, is `d6+d8`), so taps always make a formula the engine accepts. Like a calculator, once a formula has been rolled, a digit or die starts a new formula and an operator carries on from the old one. Under the Auto setting the keypad shows on touch screens, whatever their width. The formula box takes focus on load except on a touch screen, where focus would raise the system keyboard over the keypad.
 
 **Command palette.** Plain typing searches presets, commands and characters; `@` searches only characters and `>` only commands. Characters and edit rows appear only once something is typed, so the first view stays short.
 
