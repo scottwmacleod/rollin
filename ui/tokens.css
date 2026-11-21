@@ -11,4 +11,9 @@
   --rollin-size-icon: 16px;
   --rollin-size-window-min: 400px;
   --rollin-size-window-min-height: 480px;
+  --rollin-size-palette: min(36rem, calc(100vw - 2rem));
+  --rollin-size-palette-offset: 15vh;
+  --rollin-size-dialog: min(24rem, calc(100vw - 2rem));
+  --rollin-size-slide-over: min(20rem, 88vw);
+  --rollin-size-result-cells: min(100%, 10rem);
 }

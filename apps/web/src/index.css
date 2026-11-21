@@ -3,6 +3,18 @@
 @import "../../../vendor/sm-core/sm-tailwind.css";
 @import "./generated/tokens.css";
 
+@theme inline {
+  --container-palette: var(--rollin-size-palette);
+  --container-dialog: var(--rollin-size-dialog);
+  --container-slide-over: var(--rollin-size-slide-over);
+  --container-result-cells: var(--rollin-size-result-cells);
+  --spacing-palette-offset: var(--rollin-size-palette-offset);
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+}
+
 @font-face {
   font-family: Geist;
   font-style: normal;
