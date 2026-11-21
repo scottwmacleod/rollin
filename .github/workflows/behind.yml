@@ -11,4 +11,4 @@ permissions:
 
 jobs:
   behind:
-    uses: scottwmacleod/sm-core/.github/workflows/behind.yml@v26.11.30
+    uses: scottwmacleod/sm-core/.github/workflows/behind.yml@v26.11.31
