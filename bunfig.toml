@@ -1,0 +1,44 @@
+[lint]
+typeAware = true
+plugins = ["typescript", "react", "jsx-a11y", "unicorn", "import", "vitest", "oxc"]
+ignorePatterns = [
+  "**/dist",
+  "**/dist-e2e",
+  "**/playwright-report",
+  "**/test-results",
+  "apps/web/src/generated",
+  "packages/engine/fixtures",
+  "vendor",
+]
+
+[lint.categories]
+correctness = "error"
+
+[lint.rules]
+"eqeqeq" = ["error", "smart"]
+"no-self-compare" = "error"
+"no-var" = "error"
+"array-callback-return" = "error"
+"typescript/no-non-null-assertion" = "error"
+"typescript/no-explicit-any" = "error"
+"typescript/consistent-type-imports" = "error"
+"typescript/ban-ts-comment" = "error"
+"react/button-has-type" = "error"
+"react/no-danger" = "error"
+"react/jsx-no-useless-fragment" = "error"
+"oxc/no-accumulating-spread" = "error"
+"jsx-a11y/no-static-element-interactions" = "error"
+"jsx-a11y/alt-text" = "error"
+"jsx-a11y/anchor-is-valid" = "error"
+"jsx-a11y/no-autofocus" = "error"
+"jsx-a11y/tabindex-no-positive" = "error"
+"jsx-a11y/label-has-associated-control" = "error"
+"react-hooks/exhaustive-deps" = "off"
+"jsx-a11y/prefer-tag-over-role" = "off"
+"jsx-a11y/no-noninteractive-element-to-interactive-role" = "off"
+"jsx-a11y/click-events-have-key-events" = "off"
+"jsx-a11y/control-has-associated-label" = "off"
+"react/no-array-index-key" = "off"
+
+[fmt]
+printWidth = 100

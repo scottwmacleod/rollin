@@ -15,6 +15,8 @@
     "typecheck:tsc": "bun run --workspaces typecheck:tsc",
     "lint": "biome check . && bun vendor/sm-core/tooling/lint/no-comments.mjs",
     "format": "biome format --write .",
+    "lint:bun": "bun --bun x bun@1.4.5-canary.20261120.1 lint --no-script",
+    "fmt:bun": "bun fmt --no-script --check --ignore-pattern '**/*.md' --ignore-pattern 'vendor/**'",
     "test": "bun run --workspaces test",
     "build": "bun run --filter rollin-web build",
     "e2e": "bun run --filter rollin-web e2e"
