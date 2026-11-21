@@ -21,7 +21,7 @@ jobs:
       checks: bun run tokens:check
       typecheck-command: bun run typecheck
       e2e: true
-      e2e-shards: 2
+      e2e-shards: 3
       skip-paths: '^(docs/|\.claude/|\.github/workflows/(auto-merge|audit|behind|dependabot-automerge|tsc)\.yml$|skills-lock\.json$|LICENSE$|[^/]+\.md$)'
 
   budgets:
