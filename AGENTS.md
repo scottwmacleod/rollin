@@ -10,6 +10,8 @@ The rules every sm_ repo shares are in [`docs/agents/sm-conventions.md`](docs/ag
 
 Bun 1.4.5 is the package manager and the runtime (ADR-0012): `bun install`, `bun run <script>` and `bun --bun x <tool>`, never npm, npx or node. The version lives only in `packageManager` in `package.json`. Lint is `bun lint` from the pinned canary and format is `bun fmt` (ADR-0023); Biome lints only CSS and the few JavaScript rules `bun lint` lacks. Existing findings sit in `oxlint-suppressions.json`, which may only shrink.
 
+`bun lint` also loads `@shadcn/lint` for Tailwind classes: unknown classes, raw palette colours and arbitrary values fail. When no scale step fits, name the size in `ui/tokens.json` and map it in `@theme inline` in `apps/web/src/index.css`; don't allow-list it.
+
 Unit tests run on `bun test --parallel` (ADR-0022): random order, each file in a fresh global, one worker per core. Test files import from `vitest`; Bun maps that to `bun:test`, and `test/setup.ts` adds the `vi` and `expect` helpers Bun lacks (`test/vitest.d.ts` types them). Bun resolves `./foo` to `foo.tsx` when `Foo.tsx` sits beside `foo.ts`, so import such a module with its `.ts` extension.
 
 Typecheck runs `bun check --no-script`. `bun run typecheck:tsc` is the `tsc --noEmit` fallback; the weekly `tsc fallback` workflow runs it so a gap between the two shows up. If `bun check` misbehaves, switch the `typecheck` scripts back to `tsc --noEmit`.

@@ -1,5 +1,6 @@
 {
   "extends": ["./vendor/sm-core/tooling/oxlintrc.base.json"],
+  "jsPlugins": ["@shadcn/lint"],
   "ignorePatterns": [
     "**/dist",
     "**/dist-e2e",
@@ -16,7 +17,10 @@
     "jsx-a11y/prefer-tag-over-role": "off",
     "jsx-a11y/no-noninteractive-element-to-interactive-role": "off",
     "jsx-a11y/interactive-supports-focus": "off",
-    "jsx-a11y/click-events-have-key-events": "off"
+    "jsx-a11y/click-events-have-key-events": "off",
+    "shadcn/no-unknown-classes": "error",
+    "shadcn/no-raw-colors": "error",
+    "shadcn/no-arbitrary-values": "error"
   },
   "overrides": [
     {

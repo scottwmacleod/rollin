@@ -59,7 +59,7 @@ export function CommandPalette({
       <DialogBackdrop className="scrim fixed inset-0 bg-ground/60" />
       <DialogContent
         finalFocus={finalFocus}
-        className="pop fixed top-[15vh] left-1/2 w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 rounded-1 border border-line-strong bg-surface p-3 text-ink"
+        className="pop fixed top-palette-offset left-1/2 w-palette -translate-x-1/2 rounded-1 border border-line-strong bg-surface p-3 text-ink"
       >
         <DialogTitle className="sr-only">Command palette</DialogTitle>
         <Command

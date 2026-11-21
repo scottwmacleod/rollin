@@ -49,7 +49,7 @@ export function SettingsDialog({
         <HeaderLabel label="Settings" hint={hint} icon={<SettingsIcon />} />
       </DialogTrigger>
       <DialogBackdrop className="fixed inset-0 bg-ground/60" />
-      <DialogContent className="fixed top-1/2 left-1/2 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-1 border border-line-strong bg-surface p-5 text-ink">
+      <DialogContent className="fixed top-1/2 left-1/2 w-dialog -translate-x-1/2 -translate-y-1/2 rounded-1 border border-line-strong bg-surface p-5 text-ink">
         <DialogTitle className="m-0 text-lg font-semibold">Settings</DialogTitle>
         <DialogDescription className="mt-1 mb-4 text-sm text-ink-body">
           Kept in this browser only.

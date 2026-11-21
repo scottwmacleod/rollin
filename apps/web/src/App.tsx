@@ -632,7 +632,7 @@ export function App() {
               <DialogBackdrop className="scrim fixed inset-0 bg-ground/60" />
               <DialogContent
                 {...swipe}
-                className="slide-over touch-pan-y fixed inset-y-0 left-0 flex w-[min(20rem,88vw)] flex-col gap-4 overflow-y-auto border-r border-line-strong bg-surface p-4 text-ink"
+                className="slide-over touch-pan-y fixed inset-y-0 left-0 flex w-slide-over flex-col gap-4 overflow-y-auto border-r border-line-strong bg-surface p-4 text-ink"
               >
                 <div className="flex items-center justify-between gap-2">
                   <DialogTitle className="m-0 text-lg font-semibold">

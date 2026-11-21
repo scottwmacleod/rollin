@@ -12,7 +12,7 @@ export function PresetChips({
   return (
     <ul
       aria-label="Preset shortcuts"
-      className="m-0 flex list-none gap-2 overflow-x-auto p-0 py-1 md:py-2 [scrollbar-width:thin]"
+      className="m-0 flex list-none gap-2 overflow-x-auto p-0 py-1 md:py-2 scrollbar-thin"
     >
       {presets.map(({ name, formula }) => (
         <li key={name} className="shrink-0">

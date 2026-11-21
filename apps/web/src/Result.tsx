@@ -103,7 +103,7 @@ export function RollLine({ roll, showFormula }: { roll: Roll; showFormula: boole
           )}
         </span>
       )}
-      <span className="flex min-w-[min(100%,10rem)] grow basis-0 flex-wrap items-baseline gap-x-2 gap-y-1.5 font-mono text-sm text-ink">
+      <span className="flex min-w-result-cells grow basis-0 flex-wrap items-baseline gap-x-2 gap-y-1.5 font-mono text-sm text-ink">
         {cells.map((cell, i) =>
           cell.type === "text" ? (
             <span key={i}>{cell.text} </span>

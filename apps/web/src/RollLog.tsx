@@ -158,7 +158,7 @@ export function RollLog({
               ref={treeRef}
               aria-label="Roll log"
               onKeyDown={onKeyDown}
-              className="flex max-w-[40rem] flex-col divide-y divide-line"
+              className="flex max-w-160 flex-col divide-y divide-line"
             >
               {entries.map((entry) => (
                 <EntryItem key={entry.id} entry={entry} fresh={entry.id === freshId} />
