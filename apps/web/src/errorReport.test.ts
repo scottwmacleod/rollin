@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+
 import { buildReport, componentsOf, errorKind, framesOf } from "./errorReport";
 
 const context = {

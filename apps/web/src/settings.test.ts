@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { DEFAULT_SETTINGS, loadSettings, parseSettings, saveSettings } from "./settings";
 import { memoryStorage } from "./storage";
 

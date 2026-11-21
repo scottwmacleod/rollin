@@ -14,7 +14,7 @@ rollin moves from a Rust library plus a Tauri bridge plus a hand-built DOM front
 
 **Build loops.** The work ships in ten loops, each ending with a production deploy: foundations; first roll; roll log; the full dice language; presets and export/import; characters and 5e; palette and polish; phone-ready web; the desktop swap; phone apps.
 
-**Desktop swap.** *Changed on 2026-11-15 by [ADR-0009](0009-retire-the-desktop-app-and-delete-the-rust.md): the desktop app is retired, not wrapped, and the phone-app loop is dropped.* The original plan was for the Tauri app to load the web app and the TypeScript engine, import existing TOML data once, and carry users across by auto-update.
+**Desktop swap.** _Changed on 2026-11-15 by [ADR-0009](0009-retire-the-desktop-app-and-delete-the-rust.md): the desktop app is retired, not wrapped, and the phone-app loop is dropped._ The original plan was for the Tauri app to load the web app and the TypeScript engine, import existing TOML data once, and carry users across by auto-update.
 
 **Effect on earlier decisions.** [ADR-0001](0001-rewrite-in-rust-in-place.md) (rewrite in Rust), [ADR-0004](0004-toml-data-in-config-dir.md) (TOML in the config dir) and [ADR-0007](0007-tauri-desktop-app-as-workspace-member.md) (Tauri workspace member) are superseded by [ADR-0009](0009-retire-the-desktop-app-and-delete-the-rust.md).
 

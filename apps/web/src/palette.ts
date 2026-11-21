@@ -55,15 +55,13 @@ export function paletteRows(data: PaletteData): PaletteRow[] {
     action: { type: "command", id: id as PaletteCommand },
   }));
   const edits: PaletteRow[] = [
-    ...data.presets.map(
-      (p): PaletteRow => ({
-        value: `edit-preset:${p.name}`,
-        label: `Edit preset ${p.name}`,
-        group: "Commands",
-        searchOnly: true,
-        action: { type: "edit-preset", name: p.name, scope: p.scope },
-      }),
-    ),
+    ...data.presets.map((p): PaletteRow => ({
+      value: `edit-preset:${p.name}`,
+      label: `Edit preset ${p.name}`,
+      group: "Commands",
+      searchOnly: true,
+      action: { type: "edit-preset", name: p.name, scope: p.scope },
+    })),
     {
       value: `edit-character:${data.active.name}`,
       label: `Edit character ${data.active.name}`,
@@ -71,37 +69,31 @@ export function paletteRows(data: PaletteData): PaletteRow[] {
       searchOnly: true,
       action: { type: "edit-character", name: data.active.name },
     },
-    ...sortedVars(data.active).map(
-      ([name, value]): PaletteRow => ({
-        value: `edit-variable:${name}`,
-        label: `Edit variable @${name}`,
-        detail: String(value),
-        group: "Commands",
-        searchOnly: true,
-        action: { type: "edit-variable", name },
-      }),
-    ),
+    ...sortedVars(data.active).map(([name, value]): PaletteRow => ({
+      value: `edit-variable:${name}`,
+      label: `Edit variable @${name}`,
+      detail: String(value),
+      group: "Commands",
+      searchOnly: true,
+      action: { type: "edit-variable", name },
+    })),
   ];
   return [
-    ...data.presets.map(
-      (p): PaletteRow => ({
-        value: `roll:${p.name}`,
-        label: p.name,
-        detail: p.formula,
-        group: "Presets",
-        action: { type: "roll", name: p.name },
-      }),
-    ),
-    ...data.characters.map(
-      (name): PaletteRow => ({
-        value: `switch:${name}`,
-        label: name,
-        detail: name === data.active.name ? "active" : undefined,
-        group: "Characters",
-        searchOnly: true,
-        action: { type: "switch", name },
-      }),
-    ),
+    ...data.presets.map((p): PaletteRow => ({
+      value: `roll:${p.name}`,
+      label: p.name,
+      detail: p.formula,
+      group: "Presets",
+      action: { type: "roll", name: p.name },
+    })),
+    ...data.characters.map((name): PaletteRow => ({
+      value: `switch:${name}`,
+      label: name,
+      detail: name === data.active.name ? "active" : undefined,
+      group: "Characters",
+      searchOnly: true,
+      action: { type: "switch", name },
+    })),
     ...commands,
     ...edits,
   ];

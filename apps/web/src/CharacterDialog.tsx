@@ -1,5 +1,6 @@
 import { type GameSystem, validateCharacterName } from "@rollin/engine";
 import { type FormEvent, useState } from "react";
+
 import { buildPartial, characterFilename, downloadBackup } from "./backup";
 import { GAME_SYSTEMS, isCritRange, type Roster, type Rules } from "./characters";
 import { CONFIRM_NO, CONFIRM_YES, FIELD, OVERLAY, PRIMARY, SECONDARY } from "./dialogStyles";

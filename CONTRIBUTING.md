@@ -44,7 +44,7 @@ Before you open a pull request, run:
 just check
 ```
 
-This runs the same gates as CI: the design-token drift check, typecheck, Biome, the unit and property tests, and the browser tests with axe accessibility checks (`just web-check` is the same thing).
+This runs the same gates as CI: the design-token drift check, typecheck, `bun lint`, Biome (for CSS), `bun fmt`, the unit and property tests, and the browser tests with axe accessibility checks (`just web-check` is the same thing).
 
 If you changed `ui/tokens.json`, run `just tokens` to regenerate `ui/tokens.css`.
 

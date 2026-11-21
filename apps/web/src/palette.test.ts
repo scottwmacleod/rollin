@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+
 import { type PaletteData, paletteRows, paletteView, parseQuery } from "./palette";
 
 const data: PaletteData = {

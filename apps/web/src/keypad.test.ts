@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { type Key, press } from "./keypad";
 
 const run = (keys: Key[]) => keys.reduce((formula, key) => press(formula, key), "");

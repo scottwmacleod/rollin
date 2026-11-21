@@ -1,0 +1,30 @@
+{
+  "extends": ["./vendor/sm-core/tooling/oxlintrc.base.json"],
+  "ignorePatterns": [
+    "**/dist",
+    "**/dist-e2e",
+    "**/playwright-report",
+    "**/test-results",
+    "apps/web/src/generated",
+    "packages/engine/fixtures",
+    "vendor"
+  ],
+  "rules": {
+    "react/no-array-index-key": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "react/exhaustive-effect-dependencies": "off",
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "jsx-a11y/no-noninteractive-element-to-interactive-role": "off",
+    "jsx-a11y/interactive-supports-focus": "off",
+    "jsx-a11y/click-events-have-key-events": "off"
+  },
+  "overrides": [
+    {
+      "files": ["apps/web/e2e/**", "apps/web/playwright.config.ts"],
+      "rules": {
+        "vitest/consistent-test-filename": "off",
+        "vitest/prefer-importing-vitest-globals": "off"
+      }
+    }
+  ]
+}

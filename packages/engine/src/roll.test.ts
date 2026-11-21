@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+
 import { type DieSource, type RollReport, roll, scriptedDice } from "./index";
 
 const always =

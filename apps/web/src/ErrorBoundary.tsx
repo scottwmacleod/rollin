@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from "react";
+
 import { captureException } from "../../../vendor/sm-core/tooling/analytics/sm-posthog.js";
 import { ErrorNotice } from "./ErrorNotice";
 import { buildReport, currentContext } from "./errorReport";

@@ -56,7 +56,11 @@ if (!changed.length) process.exit(0);
 
 const pkg = existsSync("package.json") ? JSON.parse(readFileSync("package.json", "utf8")) : {};
 const scripts = pkg.scripts ?? {};
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+const usesBun = String(pkg.packageManager ?? "").startsWith("bun@") || existsSync("bun.lock");
+const pm = usesBun ? "bun" : "npm";
+const runner = process.platform === "win32" && !usesBun ? "npm.cmd" : pm;
+const runScript = (name, args = []) =>
+  usesBun ? ["run", "--silent", name, ...args] : ["run", name, "--silent", ...(args.length ? ["--", ...args] : [])];
 
 function step(name, cmd, args) {
   const t = Date.now();
@@ -70,10 +74,12 @@ function step(name, cmd, args) {
 }
 
 if (scripts["pre-push"]) {
-  step("npm run pre-push", npm, ["run", "pre-push", "--silent", "--", ...changed]);
+  step(`${pm} run pre-push`, runner, runScript("pre-push", changed));
 } else {
   const biome = join("node_modules", ".bin", process.platform === "win32" ? "biome.cmd" : "biome");
-  if (existsSync(biome)) {
+  if (scripts.lint) {
+    step(`${pm} run lint`, runner, runScript("lint"));
+  } else if (existsSync(biome)) {
     step("biome", biome, [
       "check",
       "--no-errors-on-unmatched",
@@ -82,7 +88,7 @@ if (scripts["pre-push"]) {
     ]);
   }
   if (scripts.typecheck && changed.some((f) => CODE.test(f))) {
-    step("typecheck", npm, ["run", "typecheck", "--silent"]);
+    step("typecheck", runner, runScript("typecheck"));
   }
 }
 console.log(

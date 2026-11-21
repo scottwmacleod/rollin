@@ -2,6 +2,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import type { Plugin } from "vite";
 import { defineConfig } from "vitest/config";
+
 import { offlineWorker } from "./scripts/pwa.ts";
 
 const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev";

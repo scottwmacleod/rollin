@@ -1,5 +1,6 @@
 import { roll, scriptedDice } from "@rollin/engine";
 import { expect, test } from "vitest";
+
 import { breakdown, type Cell } from "./breakdown";
 
 function firstRoll(line: string, faces: { sides: number; face: number }[]) {

@@ -1,4 +1,5 @@
 import { type Roll, type RollReport, spanOf } from "@rollin/engine";
+
 import { breakdown, type Mark, type Shown } from "./breakdown";
 import { caretLines } from "./caret";
 import { hintText } from "./hints";

@@ -8,44 +8,44 @@ Formulas are case-insensitive and spaces are ignored (except that a space
 ends a `@variable` name; see [Variables](#variables)). Every v1 formula means
 the same thing here; arithmetic is an addition on top.
 
-| Formula | Meaning |
-| --- | --- |
-| `d20` | One d20 (`dM` is `1dM`) |
-| `2d6` | Two d6s |
-| `3d8+5`, `2d6-2` | Dice plus or minus a flat number |
-| `4d6dl1` | Drop the lowest 1 |
-| `4d6dh1` | Drop the highest 1 |
-| `4d6dl`, `4d6dh` | Drop count defaults to 1 |
-| `4d6kh3` | Keep the highest 3 |
-| `4d6kl2` | Keep the lowest 2 |
-| `4d6kh` | Keep count defaults to 1 |
-| `2d20kh+8` | Keep clause, then modifier |
-| `3d6!` | Exploding: each die showing its maximum rolls another die, which can explode too |
-| `3d6!>5`, `d10!>=8`, `3d6!<2`, `3d6!<=2`, `3d6!=4` | Explode on a condition instead of the maximum |
-| `3d6!!`, `3d6!!>5` | Compounding: the extra rolls are added into the same die, which shows one combined value |
-| `3d6!p`, `3d6!p>5` | Penetrating: like `!`, but each extra die counts one less than it rolled (a 1 counts 0) |
-| `8d10!>=8>=8`, `4d6!>5>=6` | Explode and count successes: `!` takes the first comparison as its explode condition, so the success clause needs its own (`8d10!>=8` is a sum that explodes on 8+, not a count) |
-| `4d6!dl1`, `4d6!!kh2` | Explode first, then keep/drop applies to the whole resulting pool |
-| `4d6r1`, `4d6r=1` | Reroll any die showing 1, once; the second result stands even if it is also a 1 |
-| `4d6r<2`, `4d6r<=2`, `d20r>5`, `d20r>=19` | Reroll once on a comparison (`<`, `<=`, `>`, `>=`, `=`) instead of equals |
-| `4d6rr1`, `4d6rr<=2` | Reroll repeatedly until the die no longer matches |
-| `4d6r1!dl1` | Order of operations: reroll, then explode, then keep/drop |
-| `6d10>=8`, `6d10>7`, `6d10<=3`, `6d10<3`, `6d10=10` | Success count: the roll is how many dice meet the condition, not a sum |
-| `6d10>=8f1`, `6d10>=8f<=2`, `6d10>=8 f1` | Failure clause: each counting die matching it (and not a success) subtracts 1 |
-| `4d6dl1>=5`, `6d10r1!=10kh4>=8f1` | Order of operations: reroll, explode, keep/drop, then success counting |
-| `d20adv`, `d20dis` | Advantage / disadvantage: roll two d20s and keep the highest / lowest; exactly `2d20kh1` / `2d20kl1` |
-| `d20adv+8`, `(d20dis+3)*2`, `d20r1adv`, `d10adv>=7` | `adv`/`dis` combine with modifiers: reroll and explode go before it, a success clause after |
-| `d%`, `2d%`, `3d%dl1` | Percentile: `d%` is a d100, same results as `d100` under the same seed, and takes the same modifiers |
-| `15` | A bare number is its own total |
-| `2d6+1d4+3`, `d20+d4-2` | Add and subtract any dice groups and numbers |
-| `d20*2`, `10/4` | Multiply and divide; they bind tighter than `+` and `-` |
-| `(d20+5)*2` | Parentheses group |
-| `-d6`, `10 + -2` | Unary minus (unary `+` is accepted and ignored) |
-| `d20+8, d10+5` | Comma-separated list: each item is its own roll on its own line |
-| `6x 4d6dl1`, `6 x 4d6dl1`, `6X 4d6dl1` | Repeat: roll everything after `Nx` N times (1 to 100); the space is optional |
-| `3x d20+8, d10+5` | Repeat a whole list: each iteration rolls every item |
-| `d20+8 # attack` | Label: `#` and the rest of the item is a note shown with that roll |
-| `3x d20+8 # attack, d10+5 # damage` | Repeat and labels together |
+| Formula                                             | Meaning                                                                                                                                                                          |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `d20`                                               | One d20 (`dM` is `1dM`)                                                                                                                                                          |
+| `2d6`                                               | Two d6s                                                                                                                                                                          |
+| `3d8+5`, `2d6-2`                                    | Dice plus or minus a flat number                                                                                                                                                 |
+| `4d6dl1`                                            | Drop the lowest 1                                                                                                                                                                |
+| `4d6dh1`                                            | Drop the highest 1                                                                                                                                                               |
+| `4d6dl`, `4d6dh`                                    | Drop count defaults to 1                                                                                                                                                         |
+| `4d6kh3`                                            | Keep the highest 3                                                                                                                                                               |
+| `4d6kl2`                                            | Keep the lowest 2                                                                                                                                                                |
+| `4d6kh`                                             | Keep count defaults to 1                                                                                                                                                         |
+| `2d20kh+8`                                          | Keep clause, then modifier                                                                                                                                                       |
+| `3d6!`                                              | Exploding: each die showing its maximum rolls another die, which can explode too                                                                                                 |
+| `3d6!>5`, `d10!>=8`, `3d6!<2`, `3d6!<=2`, `3d6!=4`  | Explode on a condition instead of the maximum                                                                                                                                    |
+| `3d6!!`, `3d6!!>5`                                  | Compounding: the extra rolls are added into the same die, which shows one combined value                                                                                         |
+| `3d6!p`, `3d6!p>5`                                  | Penetrating: like `!`, but each extra die counts one less than it rolled (a 1 counts 0)                                                                                          |
+| `8d10!>=8>=8`, `4d6!>5>=6`                          | Explode and count successes: `!` takes the first comparison as its explode condition, so the success clause needs its own (`8d10!>=8` is a sum that explodes on 8+, not a count) |
+| `4d6!dl1`, `4d6!!kh2`                               | Explode first, then keep/drop applies to the whole resulting pool                                                                                                                |
+| `4d6r1`, `4d6r=1`                                   | Reroll any die showing 1, once; the second result stands even if it is also a 1                                                                                                  |
+| `4d6r<2`, `4d6r<=2`, `d20r>5`, `d20r>=19`           | Reroll once on a comparison (`<`, `<=`, `>`, `>=`, `=`) instead of equals                                                                                                        |
+| `4d6rr1`, `4d6rr<=2`                                | Reroll repeatedly until the die no longer matches                                                                                                                                |
+| `4d6r1!dl1`                                         | Order of operations: reroll, then explode, then keep/drop                                                                                                                        |
+| `6d10>=8`, `6d10>7`, `6d10<=3`, `6d10<3`, `6d10=10` | Success count: the roll is how many dice meet the condition, not a sum                                                                                                           |
+| `6d10>=8f1`, `6d10>=8f<=2`, `6d10>=8 f1`            | Failure clause: each counting die matching it (and not a success) subtracts 1                                                                                                    |
+| `4d6dl1>=5`, `6d10r1!=10kh4>=8f1`                   | Order of operations: reroll, explode, keep/drop, then success counting                                                                                                           |
+| `d20adv`, `d20dis`                                  | Advantage / disadvantage: roll two d20s and keep the highest / lowest; exactly `2d20kh1` / `2d20kl1`                                                                             |
+| `d20adv+8`, `(d20dis+3)*2`, `d20r1adv`, `d10adv>=7` | `adv`/`dis` combine with modifiers: reroll and explode go before it, a success clause after                                                                                      |
+| `d%`, `2d%`, `3d%dl1`                               | Percentile: `d%` is a d100, same results as `d100` under the same seed, and takes the same modifiers                                                                             |
+| `15`                                                | A bare number is its own total                                                                                                                                                   |
+| `2d6+1d4+3`, `d20+d4-2`                             | Add and subtract any dice groups and numbers                                                                                                                                     |
+| `d20*2`, `10/4`                                     | Multiply and divide; they bind tighter than `+` and `-`                                                                                                                          |
+| `(d20+5)*2`                                         | Parentheses group                                                                                                                                                                |
+| `-d6`, `10 + -2`                                    | Unary minus (unary `+` is accepted and ignored)                                                                                                                                  |
+| `d20+8, d10+5`                                      | Comma-separated list: each item is its own roll on its own line                                                                                                                  |
+| `6x 4d6dl1`, `6 x 4d6dl1`, `6X 4d6dl1`              | Repeat: roll everything after `Nx` N times (1 to 100); the space is optional                                                                                                     |
+| `3x d20+8, d10+5`                                   | Repeat a whole list: each iteration rolls every item                                                                                                                             |
+| `d20+8 # attack`                                    | Label: `#` and the rest of the item is a note shown with that roll                                                                                                               |
+| `3x d20+8 # attack, d10+5 # damage`                 | Repeat and labels together                                                                                                                                                       |
 
 **Repeat.** A formula is `[N x] item, item, ...`. `Nx` goes at the very start
 and repeats everything after it, the whole comma list, N times; N is an
@@ -132,17 +132,16 @@ Limits: 1 to 1000 dice per term, 2 to 10000 sides, 10000 dice rolled per
 roll (one comma-separated item, explosion dice included), and nesting (parentheses and unary minus)
 32 deep. Dropping or keeping that leaves no dice is an error.
 
-
 ## Variables
 
 A **character** holds named integer **variables**. `@name` (any letter case) can be used anywhere a number can: modifiers, dice count and sides, keep/drop counts, explode, reroll and success thresholds, and the repeat count.
 
-| Formula | With `level = 3`, `sides = 8`, `n = 2`, `keep = 2`, `dc = 8` |
-| --- | --- |
-| `@level d6` | `3d6` |
-| `d@sides` | `d8` |
-| `@n x 4d6kh@keep` | two rolls of `4d6kh2` |
-| `6d10>=@dc` | `6d10>=8` |
+| Formula           | With `level = 3`, `sides = 8`, `n = 2`, `keep = 2`, `dc = 8` |
+| ----------------- | ------------------------------------------------------------ |
+| `@level d6`       | `3d6`                                                        |
+| `d@sides`         | `d8`                                                         |
+| `@n x 4d6kh@keep` | two rolls of `4d6kh2`                                        |
+| `6d10>=@dc`       | `6d10>=8`                                                    |
 
 A variable is replaced by its number before the formula is parsed, so `d20+@str` rolls exactly like `d20+5`. A variable name takes every letter, digit and `_` after the `@`, so **put a space between a variable and a dice letter that follows it**: write `@level d6`, not `@leveld6` (which is the variable `leveld6`). After the `d` the name ends at the next character that cannot be in a name, so `d@sides+1`, `d@sides!` and `(d@sides)` are fine, but `d@sideskh1` is the variable `sideskh1`. A negative variable acts like a typed negative number (`d20+@str` with `str = -1` is `d20-1`), but as a dice count or sides it is an error. `@` alone, or `@` followed by a digit or `_`, is a syntax error.
 
@@ -191,12 +190,12 @@ A check is `1d20`, or `2d20` keeping one die (`adv`, `dis`, `kh1`, `kl1`, `dl1`,
 
 An invalid formula gives an error with the offending part marked, and often a hint:
 
-| Formula | Error |
-| --- | --- |
-| `d20+` | expected a number, a dice group or `(`, found end of input |
-| `d20 / (3-3)` | division by zero |
-| `6d10>=8 + 3` | a success count cannot be used in arithmetic |
-| `2d6+1001d6` | dice per term cap (1000) exceeded by `1001d6` |
-| `2x3` | `x` means repeat, and `3` has no dice to repeat; hint: for multiplication use `*` |
+| Formula       | Error                                                                             |
+| ------------- | --------------------------------------------------------------------------------- |
+| `d20+`        | expected a number, a dice group or `(`, found end of input                        |
+| `d20 / (3-3)` | division by zero                                                                  |
+| `6d10>=8 + 3` | a success count cannot be used in arithmetic                                      |
+| `2d6+1001d6`  | dice per term cap (1000) exceeded by `1001d6`                                     |
+| `2x3`         | `x` means repeat, and `3` has no dice to repeat; hint: for multiplication use `*` |
 
 Exceeding a cap names the cap and the term. Other errors: `unclosed '('`, `number is too large`, `sides must be between 2 and 10000`, and so on.

@@ -1,4 +1,5 @@
 import { validatePresetName } from "@rollin/engine";
+
 import type { Tally } from "./characters";
 import type { Storage } from "./storage";
 
@@ -33,9 +34,11 @@ export interface PresetEntry {
 
 export function effectivePresets(global: PresetMap, own: PresetMap): PresetEntry[] {
   const entries: PresetEntry[] = [
-    ...sortedPresets(own).map(
-      ([name, formula]): PresetEntry => ({ name, formula, scope: "character" }),
-    ),
+    ...sortedPresets(own).map(([name, formula]): PresetEntry => ({
+      name,
+      formula,
+      scope: "character",
+    })),
     ...sortedPresets(global)
       .filter(([name]) => !Object.hasOwn(own, name))
       .map(([name, formula]): PresetEntry => ({ name, formula, scope: "global" })),

@@ -1,5 +1,6 @@
 import { roll } from "@rollin/engine";
 import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+
 import { captureRoll, type RollSource } from "./analytics";
 import {
   applyAdd,
@@ -18,7 +19,6 @@ import {
 } from "./backup";
 import { CharacterDialog, type CharacterDialogMode } from "./CharacterDialog";
 import { CharacterPanel } from "./CharacterPanel";
-import { CommandPalette } from "./CommandPalette";
 import {
   activeCharacter,
   addCharacter,
@@ -37,15 +37,15 @@ import {
   switchCharacter,
   updateRoster,
 } from "./characters";
+import { CommandPalette } from "./CommandPalette";
 import { accept, complete } from "./completion";
 import { dieSource } from "./dice";
 import { CompletionList } from "./FormulaCompletion";
 import { type HistoryNav, pastFormulas, stepHistory } from "./history";
 import { Keypad } from "./Keypad";
+import { type PaletteRow, paletteRows } from "./palette";
 import { PresetChips } from "./PresetChips";
 import { PresetDialog, type PresetDialogMode, type PresetRef } from "./PresetDialog";
-import { PresetSidebar } from "./PresetSidebar";
-import { type PaletteRow, paletteRows } from "./palette";
 import {
   cleanPresets,
   effectivePresets,
@@ -55,11 +55,11 @@ import {
   type PresetScope,
   updatePresets,
 } from "./presets";
+import { PresetSidebar } from "./PresetSidebar";
 import { useUpdate } from "./pwa";
 import { type Entry, spoken } from "./Result";
 import { RollLog } from "./RollLog";
 import { addEntry, cleanLog, loadLog, mergeLoaded, ROLL_LOG_KEY, saveLog } from "./rollLog";
-import { SettingsDialog } from "./SettingsDialog";
 import {
   DEFAULT_SETTINGS,
   loadSettings,
@@ -68,6 +68,7 @@ import {
   type Settings,
   saveSettings,
 } from "./settings";
+import { SettingsDialog } from "./SettingsDialog";
 import { openStorage, type Storage } from "./storage";
 import { useSwipeClose } from "./swipeClose";
 import {

@@ -11,7 +11,8 @@ export function generate(json) {
   const names = new Set();
   let css = `${HEADER}\n:root {\n`;
   for (const t of doc.size.tokens) {
-    if (!/^[a-z][a-z0-9-]*$/.test(t.name)) throw new Error(`tokens.json: bad token name \`${t.name}\``);
+    if (!/^[a-z][a-z0-9-]*$/.test(t.name))
+      throw new Error(`tokens.json: bad token name \`${t.name}\``);
     if (names.has(t.name)) throw new Error(`tokens.json: duplicate token \`${t.name}\``);
     names.add(t.name);
     css += `  --rollin-${t.name}: ${t.value};\n`;
