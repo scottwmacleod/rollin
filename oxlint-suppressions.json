@@ -2224,9 +2224,6 @@
     }
   },
   "test/setup.ts": {
-    "bun/no-side-effects-on-import": {
-      "count": 2
-    },
     "no-await-in-loop": {
       "count": 2
     },
@@ -2243,12 +2240,6 @@
       "count": 2
     },
     "typescript/strict-void-return": {
-      "count": 1
-    },
-    "vitest/require-hook": {
-      "count": 2
-    },
-    "vitest/require-top-level-describe": {
       "count": 1
     }
   },

@@ -25,6 +25,14 @@
         "vitest/consistent-test-filename": "off",
         "vitest/prefer-importing-vitest-globals": "off"
       }
+    },
+    {
+      "files": ["test/setup.ts"],
+      "rules": {
+        "bun/no-side-effects-on-import": "off",
+        "vitest/require-hook": "off",
+        "vitest/require-top-level-describe": "off"
+      }
     }
   ]
 }
