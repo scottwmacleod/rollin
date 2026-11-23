@@ -20,7 +20,8 @@
     "jsx-a11y/click-events-have-key-events": "off",
     "shadcn/no-unknown-classes": "error",
     "shadcn/no-raw-colors": "error",
-    "shadcn/no-arbitrary-values": "error"
+    "shadcn/no-arbitrary-values": "error",
+    "shadcn/no-inline-styles": "error"
   },
   "overrides": [
     {
