@@ -23,6 +23,13 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 - Every behaviour change uses `/tdd`: a failing test comes first.
 - Git hooks run through hk (`hk.pkl`, installed by the `prepare` script): pre-commit formats and lints the staged files, pre-push runs `check`, the same command as CI. Don't bypass them with `--no-verify`; if one fails, fix the cause. Keep the `format` and `lint` scripts accepting file paths.
 
+## After you open a PR
+
+- Before you push, run `/code-review` on the branch and fix the findings that hold up. It reads `CLAUDE.md`, which imports `AGENTS.md`.
+- Look after the PR until it merges: failing checks, merge conflicts and review comments. Follow `.claude/skills/steward/SKILL.md` (sync installs it), including when to stop and hand it back.
+- On Scott's Mac, `/ship` commits, pushes, opens the PR, reviews it and watches it. Commit `.claude/`, `.github/`, `CLAUDE.md` and `AGENTS.md` changes yourself first, because `/ship` won't, and in a public repo it commits nothing. `/steward <n>` watches a PR that's already open. In a cloud session, subscribe to the PR's activity instead.
+- When the same review comment turns up on two PRs, make it a rule in its own PR: shared rules here (through sm-core), product rules in `AGENTS.md`, PR-handling rules in the steward skill. Delete a rule that stops earning its place.
+
 ## Ask Scott first
 
 - Adding a third-party dependency.
