@@ -27,7 +27,7 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 
 - Before you push, run `/code-review` on the branch and fix the findings that hold up. It reads `CLAUDE.md`, which imports `AGENTS.md`.
 - Look after the PR until it merges: failing checks, merge conflicts and review comments. Follow `.claude/skills/steward/SKILL.md` (sync installs it), including when to stop and hand it back.
-- On Scott's Mac, `/ship` commits, pushes, opens the PR, reviews it and watches it. Commit `.claude/`, `.github/`, `CLAUDE.md` and `AGENTS.md` changes yourself first, because `/ship` won't, and in a public repo it commits nothing. `/steward <n>` watches a PR that's already open. In a cloud session, subscribe to the PR's activity instead.
+- The flow, in public and private repos alike: `/tdd` to build, commit, `/code-review`, `/pr` to write and open the PR, then `/steward <n>` to watch it until it merges. In a cloud session, subscribe to the PR's activity instead of `/steward`. Don't use `/ship`: it writes its own PR description instead of `/pr`'s, and in a public repo it commits nothing.
 - When the same review comment turns up on two PRs, make it a rule in its own PR: shared rules here (through sm-core), product rules in `AGENTS.md`, PR-handling rules in the steward skill. Delete a rule that stops earning its place.
 
 ## Ask Scott first
