@@ -3,20 +3,18 @@ import { type FormEvent, useState } from "react";
 
 import { caretLines } from "./caret";
 import type { Character } from "./characters";
-import { CONFIRM_NO, CONFIRM_YES, FIELD, OVERLAY, PRIMARY, SECONDARY } from "./dialogStyles";
 import type { PresetMap, PresetScope } from "./presets";
 import {
   Button,
   Dialog,
-  DialogBackdrop,
   DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
   Field,
   FieldError,
+  FieldInput,
   FieldLabel,
-  Input,
 } from "./ui";
 
 export type PresetDialogMode =
@@ -99,15 +97,12 @@ export function PresetDialog({
   }
 
   return (
-    <Dialog open closeOnOutsidePress={false} onOpenChange={(open) => !open && onClose()}>
-      <DialogBackdrop className="fixed inset-0 bg-ground/60" />
-      <DialogContent className={OVERLAY}>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent onInteractOutside={(event) => event.preventDefault()}>
         <form onSubmit={save} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <DialogTitle className="m-0 text-lg font-semibold">
-              {editing === null ? "New preset" : `Edit ${editing}`}
-            </DialogTitle>
-            <DialogDescription className="m-0 text-sm text-ink-muted">
+          <div className="flex flex-col gap-2">
+            <DialogTitle>{editing === null ? "New preset" : `Edit ${editing}`}</DialogTitle>
+            <DialogDescription>
               Rolls the same formula every time you click it. Variables are read when it rolls.
             </DialogDescription>
           </div>
@@ -117,37 +112,32 @@ export function PresetDialog({
             invalid={nameError === null ? undefined : true}
             className="flex flex-col gap-1"
           >
-            <FieldLabel className="text-sm text-ink-body">Name</FieldLabel>
-            <Input
+            <FieldLabel>Name</FieldLabel>
+            <FieldInput
               value={name}
-              onValueChange={setName}
+              onChange={(e) => setName(e.target.value)}
               placeholder="attack"
               autoComplete="off"
               autoCapitalize="off"
               autoCorrect="off"
               spellCheck={false}
               autoFocus={editing === null}
-              className={FIELD}
             />
-            {nameError !== null && (
-              <FieldError match className="text-sm text-danger">
-                {nameError}
-              </FieldError>
-            )}
+            {nameError !== null && <FieldError match>{nameError}</FieldError>}
             {replaces && (
-              <span className="text-sm text-ink-muted">
+              <span className="text-sm text-muted-foreground">
                 A preset named '{stored}' already exists here. Saving replaces it.
               </span>
             )}
             {shadows && (
-              <span className="text-sm text-ink-muted">
+              <span className="text-sm text-muted-foreground">
                 This character's '{stored}' will be rolled instead of the global one.
               </span>
             )}
           </Field>
 
           <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-            <legend className="mb-1 p-0 text-sm text-ink-body">Scope</legend>
+            <legend className="mb-1 p-0 text-sm text-foreground">Scope</legend>
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="radio"
@@ -175,31 +165,28 @@ export function PresetDialog({
             invalid={formulaProblem === null ? undefined : true}
             className="flex flex-col gap-1"
           >
-            <FieldLabel className="text-sm text-ink-body">Formula</FieldLabel>
-            <Input
+            <FieldLabel>Formula</FieldLabel>
+            <FieldInput
               value={formula}
-              onValueChange={setFormula}
+              onChange={(e) => setFormula(e.target.value)}
               placeholder="d20+5"
               autoComplete="off"
               autoCapitalize="off"
               autoCorrect="off"
               spellCheck={false}
               autoFocus={editing !== null}
-              className={FIELD}
             />
             {formulaProblem !== null && (
-              <FieldError match className="text-sm text-danger">
-                {`error: ${formulaProblem.message}`}
-              </FieldError>
+              <FieldError match>{`error: ${formulaProblem.message}`}</FieldError>
             )}
             {caret && (
               <span
                 aria-hidden="true"
-                className="block overflow-x-auto whitespace-pre font-mono text-sm text-ink-body"
+                className="block overflow-x-auto whitespace-pre font-mono text-sm text-foreground"
               >
                 {caret[0]}
                 {"\n"}
-                <span className="text-danger">{caret[1]}</span>
+                <span className="text-destructive">{caret[1]}</span>
               </span>
             )}
           </Field>
@@ -211,23 +198,38 @@ export function PresetDialog({
               className="flex items-center gap-3 text-sm"
             >
               <span>Delete {editing}?</span>
-              <Button type="button" onClick={remove} disabled={saving} className={CONFIRM_YES}>
+              <Button
+                type="button"
+                onClick={remove}
+                disabled={saving}
+                variant="destructive"
+                size="sm"
+              >
                 Yes, delete
               </Button>
-              <Button type="button" onClick={() => setConfirming(false)} className={CONFIRM_NO}>
+              <Button
+                type="button"
+                onClick={() => setConfirming(false)}
+                variant="outline"
+                size="sm"
+              >
                 Keep it
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               {editing !== null && (
-                <Button type="button" onClick={() => setConfirming(true)} className={SECONDARY}>
+                <Button type="button" onClick={() => setConfirming(true)} variant="outline">
                   Delete
                 </Button>
               )}
               <span className="flex-1" />
-              <DialogClose className={SECONDARY}>Cancel</DialogClose>
-              <Button type="submit" disabled={!ready || saving} className={PRIMARY}>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={!ready || saving}>
                 {replaces ? "Replace" : "Save"}
               </Button>
             </div>

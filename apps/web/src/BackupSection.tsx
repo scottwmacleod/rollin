@@ -28,11 +28,6 @@ import { loadPresets, type PresetMap } from "./presets";
 import type { Storage } from "./storage";
 import { Button } from "./ui";
 
-const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
-const secondary = `h-8 max-md:h-11 rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body ${focusRing}`;
-const primary = `h-8 max-md:h-11 rounded-1 bg-signal px-3 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover ${focusRing}`;
-
 interface Asking {
   incoming: Incoming;
   saved: Saved;
@@ -199,9 +194,9 @@ export function BackupSection({
       : 0;
 
   return (
-    <section className="mt-5 flex flex-col gap-3 border-t border-line pt-4">
-      <h3 className="m-0 text-sm font-medium text-ink-body">Your data</h3>
-      <p className="m-0 text-sm text-ink-muted">
+    <section className="mt-5 flex flex-col gap-3 border-t border-border pt-4">
+      <h3 className="m-0 text-sm font-medium text-foreground">Your data</h3>
+      <p className="m-0 text-sm text-muted-foreground">
         Characters, variables, presets and settings. Browsers can clear their storage, so keep a
         backup file.
       </p>
@@ -210,12 +205,12 @@ export function BackupSection({
           type="checkbox"
           checked={includeLog}
           onChange={(e) => setIncludeLog(e.target.checked)}
-          className="accent-signal"
+          className="accent-primary"
         />
         Include the roll log
       </label>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={() => void exportFile()} className={secondary}>
+        <Button type="button" onClick={() => void exportFile()} variant="outline" size="sm">
           Export backup
         </Button>
         <Button
@@ -223,7 +218,8 @@ export function BackupSection({
           type="button"
           onClick={() => picker.current?.click()}
           disabled={asking !== null}
-          className={`${secondary} disabled:opacity-50`}
+          variant="outline"
+          size="sm"
         >
           Import backup…
         </Button>
@@ -246,23 +242,19 @@ export function BackupSection({
             in only its characters and global presets.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              onClick={() => void startAdd()}
-              disabled={busy}
-              className={primary}
-            >
+            <Button type="button" onClick={() => void startAdd()} disabled={busy} size="sm">
               Add to my data
             </Button>
             <Button
               type="button"
               onClick={() => void replace()}
               disabled={busy}
-              className={secondary}
+              variant="outline"
+              size="sm"
             >
               Replace my data
             </Button>
-            <Button type="button" onClick={() => setPending(null)} className={secondary}>
+            <Button type="button" onClick={() => setPending(null)} variant="outline" size="sm">
               Cancel
             </Button>
           </div>
@@ -273,17 +265,12 @@ export function BackupSection({
           <p className="m-0">
             This is a partial file. It holds {describePartialSummary(pending.data)}.
           </p>
-          <p className="m-0 text-ink-muted">
+          <p className="m-0 text-muted-foreground">
             Add to my data brings them in and leaves everything else as it is. Replace needs a full
             backup, because a partial file can't replace everything you have.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              onClick={() => void startAdd()}
-              disabled={busy}
-              className={primary}
-            >
+            <Button type="button" onClick={() => void startAdd()} disabled={busy} size="sm">
               Add to my data
             </Button>
             <Button
@@ -293,7 +280,8 @@ export function BackupSection({
                 setMessage("");
                 importButton.current?.focus();
               }}
-              className={secondary}
+              variant="outline"
+              size="sm"
             >
               Close
             </Button>
@@ -311,7 +299,7 @@ export function BackupSection({
             You already have {clash.kind === "character" ? "a character" : "a global preset"} called{" "}
             <strong>{clash.name}</strong>.
           </p>
-          <p className="m-0 text-ink-muted">
+          <p className="m-0 text-muted-foreground">
             Yours:{" "}
             {describeContent(clash, asking.saved.roster.characters, asking.saved.globalPresets)}.
             The file's:{" "}
@@ -322,7 +310,8 @@ export function BackupSection({
               type="button"
               onClick={() => answer("keep-mine")}
               disabled={busy}
-              className={secondary}
+              variant="outline"
+              size="sm"
             >
               Keep mine
             </Button>
@@ -330,7 +319,8 @@ export function BackupSection({
               type="button"
               onClick={() => answer("take-theirs")}
               disabled={busy}
-              className={secondary}
+              variant="outline"
+              size="sm"
             >
               Take the file's
             </Button>
@@ -338,7 +328,8 @@ export function BackupSection({
               type="button"
               onClick={() => answer("keep-both")}
               disabled={busy}
-              className={secondary}
+              variant="outline"
+              size="sm"
             >
               Keep both
             </Button>
@@ -349,7 +340,7 @@ export function BackupSection({
                 type="checkbox"
                 checked={sameForAll}
                 onChange={(e) => setSameForAll(e.target.checked)}
-                className="accent-signal"
+                className="accent-primary"
               />
               Do the same for the other {remaining - 1}{" "}
               {clash.kind === "character"
@@ -362,13 +353,13 @@ export function BackupSection({
             </label>
           )}
           <div className="flex gap-2">
-            <Button type="button" onClick={cancelAdd} disabled={busy} className={secondary}>
+            <Button type="button" onClick={cancelAdd} disabled={busy} variant="outline" size="sm">
               Cancel
             </Button>
           </div>
         </div>
       )}
-      <p role="status" className="m-0 min-h-5 text-sm text-ink-body">
+      <p role="status" className="m-0 min-h-5 text-sm text-foreground">
         {message}
       </p>
     </section>

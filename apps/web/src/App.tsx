@@ -1,4 +1,5 @@
 import { roll } from "@rollin/engine";
+import { ChevronDownIcon, EllipsisIcon, Grid3x3Icon } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { captureRoll, type RollSource } from "./analytics";
@@ -74,19 +75,17 @@ import { useSwipeClose } from "./swipeClose";
 import {
   Button,
   Dialog,
-  DialogBackdrop,
   DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
   DialogTrigger,
-  Field,
-  FieldLabel,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Input,
-  Menu,
-  MenuContent,
-  MenuItem,
-  MenuTrigger,
+  Label,
 } from "./ui";
 import { SMALL, TOUCH, useMedia, WIDE } from "./useMedia";
 import { useScrollEdges } from "./useScrollEdges";
@@ -592,8 +591,6 @@ export function App() {
   );
   const saveInMenu = !wide && (keypadOn || touch || small);
   const saveDisabled = presets === null || acting === null;
-  const barButton =
-    "inline-flex h-10 max-md:h-11 items-center justify-center rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden">
@@ -618,31 +615,32 @@ export function App() {
         <div className="ml-auto flex min-w-0 items-center gap-2">
           {!wide && (
             <Dialog open={sideOpen} onOpenChange={setSideOpen}>
-              <DialogTrigger
-                aria-label={
-                  acting === null ? "Characters and presets" : `Character: ${acting.name}`
-                }
-                className="inline-flex h-8 max-md:h-11 min-w-0 max-w-40 items-center gap-2 rounded-1 border border-control-line px-3 text-sm text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
-              >
-                <span className="truncate font-mono">{acting?.name ?? "Characters"}</span>
-                <span aria-hidden="true" className="text-ink-muted">
-                  ▾
-                </span>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label={
+                    acting === null ? "Characters and presets" : `Character: ${acting.name}`
+                  }
+                  className="max-w-40 min-w-0 justify-start"
+                >
+                  <span className="truncate font-mono">{acting?.name ?? "Characters"}</span>
+                  <ChevronDownIcon
+                    aria-hidden="true"
+                    className="ml-auto size-4 text-muted-foreground"
+                  />
+                </Button>
               </DialogTrigger>
-              <DialogBackdrop className="scrim fixed inset-0 bg-ground/60" />
               <DialogContent
                 {...swipe}
-                className="slide-over touch-pan-y fixed inset-y-0 left-0 flex w-slide-over flex-col gap-4 overflow-y-auto border-r border-line-strong bg-surface p-4 text-ink"
+                className="touch-pan-y inset-y-0 left-0 flex w-slide-over max-w-none translate-x-0 translate-y-0 flex-col gap-4 overflow-y-auto rounded-none border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 top-0"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <DialogTitle className="m-0 text-lg font-semibold">
-                    Characters and presets
-                  </DialogTitle>
-                  <DialogClose
-                    render={<Button type="button" />}
-                    className="inline-flex h-8 max-md:h-11 items-center rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
-                  >
-                    Close
+                  <DialogTitle>Characters and presets</DialogTitle>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline" size="sm">
+                      Close
+                    </Button>
                   </DialogClose>
                 </div>
                 <DialogDescription className="sr-only">
@@ -675,14 +673,10 @@ export function App() {
       {update.available && (
         <div
           role="status"
-          className="mx-auto mb-2 flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-3 rounded-1 border border-line-strong bg-surface px-3 py-2 text-sm"
+          className="mx-auto mb-2 flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-3 rounded-md border border-border bg-card px-3 py-2 text-sm"
         >
           <span>A new version of rollin is ready.</span>
-          <Button
-            type="button"
-            onClick={update.reload}
-            className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
-          >
+          <Button type="button" onClick={update.reload} size="sm">
             Reload to update
           </Button>
         </div>
@@ -691,20 +685,17 @@ export function App() {
       {reminderDue(backupState, Date.now()) && (
         <div
           role="status"
-          className="mx-auto mb-2 flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-3 rounded-1 border border-line-strong bg-surface px-3 py-2 text-sm"
+          className="mx-auto mb-2 flex w-full max-w-5xl shrink-0 flex-wrap items-center gap-3 rounded-md border border-border bg-card px-3 py-2 text-sm"
         >
           <span>Your characters and presets live only in this browser. Save a backup file?</span>
-          <Button
-            type="button"
-            onClick={() => void exportNow()}
-            className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
-          >
+          <Button type="button" onClick={() => void exportNow()} size="sm">
             Export backup
           </Button>
           <Button
             type="button"
             onClick={() => changeBackupState({ ...backupState, dismissedAt: Date.now() })}
-            className="h-8 max-md:h-11 rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
+            variant="outline"
+            size="sm"
           >
             Not now
           </Button>
@@ -737,18 +728,14 @@ export function App() {
                   className="flex flex-wrap items-center gap-3 text-sm"
                 >
                   <span>Clear the whole roll log?</span>
-                  <Button
-                    type="button"
-                    ref={confirmYes}
-                    onClick={clearLog}
-                    className="h-8 max-md:h-11 rounded-1 bg-signal px-3 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
-                  >
+                  <Button type="button" ref={confirmYes} onClick={clearLog} size="sm">
                     Yes, clear
                   </Button>
                   <Button
                     type="button"
                     onClick={() => setConfirming(false)}
-                    className="h-8 max-md:h-11 rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
+                    variant="outline"
+                    size="sm"
                   >
                     Cancel
                   </Button>
@@ -758,7 +745,7 @@ export function App() {
           />
 
           {!kept && (
-            <p className="m-0 text-sm text-ink-muted">
+            <p className="m-0 text-sm text-muted-foreground">
               Your browser is blocking storage, so the roll log, your presets and your settings
               won't be kept when you close or reload this page.
             </p>
@@ -776,14 +763,17 @@ export function App() {
         </div>
       )}
 
-      <form onSubmit={submit} className="shrink-0 border-t border-line bg-ground">
+      <form onSubmit={submit} className="shrink-0 border-t border-border bg-background">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 px-4 py-1 md:py-3">
           <div className="flex items-end gap-1 md:gap-2">
-            <Field name="formula" className="relative flex min-w-0 flex-1 flex-col gap-1">
-              <FieldLabel className="text-sm text-ink-body max-md:sr-only">Formula</FieldLabel>
+            <div className="relative flex min-w-0 flex-1 flex-col gap-2">
+              <Label htmlFor="formula" className="max-md:sr-only">
+                Formula
+              </Label>
               <Input
+                id="formula"
                 value={formula}
-                onValueChange={changeFormula}
+                onChange={(event) => changeFormula(event.target.value)}
                 placeholder="2d6+3"
                 autoComplete="off"
                 autoCapitalize="off"
@@ -802,7 +792,7 @@ export function App() {
                 aria-expanded={suggesting}
                 aria-controls={suggesting ? "formula-completions" : undefined}
                 aria-activedescendant={suggesting ? `formula-completions-${current}` : undefined}
-                className="h-10 max-md:h-11 w-full rounded-1 border border-control-line bg-surface px-3 font-mono text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
+                className="font-mono"
               />
               {suggesting && (
                 <CompletionList
@@ -812,68 +802,46 @@ export function App() {
                   onPick={pick}
                 />
               )}
-            </Field>
+            </div>
             <Button
               type="button"
+              variant="outline"
+              size="icon"
               aria-label="Keypad"
               aria-pressed={keypadOn}
               onClick={() => changeSettings({ ...settings, keypad: keypadOn ? "off" : "on" })}
-              className={`${barButton} w-10 max-md:w-11 px-0 aria-pressed:border-signal aria-pressed:bg-signal-tint aria-pressed:text-signal-ink`}
+              className="aria-pressed:bg-accent aria-pressed:text-accent-foreground"
             >
-              <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
-                {[3, 8, 13].flatMap((x) =>
-                  [3, 8, 13].map((y) => (
-                    <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5" fill="currentColor" />
-                  )),
-                )}
-              </svg>
+              <Grid3x3Icon aria-hidden="true" className="size-4" />
             </Button>
             {saveInMenu && (
-              <Menu
-                onAction={(value) => {
-                  if (value === "save") openDialog({ kind: "new", formula: formula.trim() });
-                  if (value === "clear") startClear();
-                }}
-              >
-                <MenuTrigger aria-label="More" className={`${barButton} w-10 max-md:w-11 px-0`}>
-                  <span aria-hidden="true">⋯</span>
-                </MenuTrigger>
-                <MenuContent
-                  side="top"
-                  align="end"
-                  className="pop min-w-44 rounded-1 border border-line-strong bg-surface p-1 font-mono text-ui lowercase text-ink"
-                >
-                  <MenuItem
-                    value="save"
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="outline" size="icon" aria-label="More">
+                    <EllipsisIcon aria-hidden="true" className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="top" align="end" className="min-w-44">
+                  <DropdownMenuItem
                     disabled={saveDisabled}
-                    className="flex min-h-11 cursor-default items-center rounded-0 px-3 data-[highlighted]:bg-surface-hover aria-disabled:text-ink-muted"
+                    onSelect={() => openDialog({ kind: "new", formula: formula.trim() })}
+                    className="max-md:min-h-11"
                   >
                     Save as preset
-                  </MenuItem>
-                  <MenuItem
-                    value="clear"
-                    disabled={entries.length === 0}
-                    className="flex min-h-11 cursor-default items-center rounded-0 px-3 data-[highlighted]:bg-surface-hover aria-disabled:text-ink-muted"
-                  >
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={entries.length === 0} onSelect={startClear}>
                     Clear roll log
-                  </MenuItem>
-                </MenuContent>
-              </Menu>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-            {!keypadOn && (
-              <Button
-                type="submit"
-                className="press inline-flex h-10 max-md:h-11 items-center justify-center rounded-1 bg-signal px-5 font-mono text-ui-strong lowercase text-on-signal hover:bg-signal-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
-              >
-                Roll
-              </Button>
-            )}
+            {!keypadOn && <Button type="submit">Roll</Button>}
             {!saveInMenu && (
               <Button
                 type="button"
+                variant="outline"
                 disabled={saveDisabled}
                 onClick={() => openDialog({ kind: "new", formula: formula.trim() })}
-                className={`${barButton} px-4 disabled:opacity-50`}
               >
                 Save as preset
               </Button>

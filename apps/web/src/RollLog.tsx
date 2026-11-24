@@ -1,3 +1,4 @@
+import { EllipsisIcon } from "lucide-react";
 import {
   type KeyboardEvent,
   type ReactNode,
@@ -11,23 +12,32 @@ import {
 import { type Entry, ErrorBody, RollLine } from "./Result";
 import {
   Button,
-  Menu,
-  MenuContent,
-  MenuItem,
-  MenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Tree,
   TreeItem,
-  TreeItemLabel,
 } from "./ui";
 import { useScrollEdges } from "./useScrollEdges";
 
-function EntryItem({ entry, fresh }: { entry: Entry; fresh: boolean }) {
+function EntryItem({
+  entry,
+  fresh,
+  tabbable,
+  onActive,
+}: {
+  entry: Entry;
+  fresh: boolean;
+  tabbable: boolean;
+  onActive: () => void;
+}) {
   const { report } = entry;
   return (
-    <TreeItem value={`entry-${entry.id}`}>
-      <TreeItemLabel className="block py-3 outline-none data-[highlighted]:outline-2 data-[highlighted]:outline-offset-2">
+    <TreeItem tabbable={tabbable} onActive={onActive} className="block rounded-none py-3">
+      <div>
         <span className={`block${fresh ? " roll-arrive" : ""}`}>
-          <span className="block font-mono text-sm text-ink-muted">
+          <span className="block font-mono text-sm text-muted-foreground">
             {"ok" in report && report.ok.preset !== null
               ? `${report.ok.preset[0]} · ${report.ok.preset[1]}`
               : entry.input}
@@ -42,7 +52,7 @@ function EntryItem({ entry, fresh }: { entry: Entry; fresh: boolean }) {
             <ErrorBody error={report.error} />
           )}
         </span>
-      </TreeItemLabel>
+      </div>
     </TreeItem>
   );
 }
@@ -74,6 +84,8 @@ export function RollLog({
   const count = entries.length;
   const [freshId, setFreshId] = useState<number | null>(null);
   const latestId = entries[entries.length - 1]?.id;
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const tabbableId = entries.some((e) => e.id === activeId) ? activeId : entries[0]?.id;
 
   function toBottom() {
     const el = scroller.current;
@@ -122,26 +134,20 @@ export function RollLog({
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <div
-        className={`min-h-9 items-center justify-between gap-2 border-b border-line px-1 pb-1 ${compact && !confirm ? "hidden" : "flex"}`}
+        className={`min-h-9 items-center justify-between gap-2 border-b border-border px-1 pb-1 ${compact && !confirm ? "hidden" : "flex"}`}
       >
-        {confirm ?? <h2 className="m-0 text-sm font-medium text-ink-body">Roll log</h2>}
+        {confirm ?? <h2 className="m-0 text-sm font-medium text-foreground">Roll log</h2>}
         {!compact && count > 0 && !confirm && (
-          <Menu onAction={(value) => value === "clear" && onClear()}>
-            <MenuTrigger
-              aria-label="Roll log menu"
-              className="inline-flex h-8 max-md:h-11 min-w-8 max-md:min-w-11 items-center justify-center rounded-1 border border-control-line px-2 font-mono text-ui lowercase text-ink-body hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
-            >
-              <span aria-hidden="true">⋯</span>
-            </MenuTrigger>
-            <MenuContent className="pop min-w-40 rounded-1 border border-line-strong bg-surface p-1 font-mono text-ui lowercase text-ink">
-              <MenuItem
-                value="clear"
-                className="flex min-h-9 max-md:min-h-11 cursor-default items-center rounded-0 px-3 data-[highlighted]:bg-surface-hover"
-              >
-                Clear roll log
-              </MenuItem>
-            </MenuContent>
-          </Menu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="icon" aria-label="Roll log menu">
+                <EllipsisIcon aria-hidden="true" className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={onClear}>Clear roll log</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
       <div
@@ -152,16 +158,22 @@ export function RollLog({
       >
         <div ref={content} className="px-1 pt-1">
           {count === 0 ? (
-            <p className="m-0 py-3 text-sm text-ink-muted">Rolls will appear here.</p>
+            <p className="m-0 py-3 text-sm text-muted-foreground">Rolls will appear here.</p>
           ) : (
             <Tree
               ref={treeRef}
               aria-label="Roll log"
               onKeyDown={onKeyDown}
-              className="flex max-w-160 flex-col divide-y divide-line"
+              className="flex max-w-160 flex-col divide-y divide-border"
             >
               {entries.map((entry) => (
-                <EntryItem key={entry.id} entry={entry} fresh={entry.id === freshId} />
+                <EntryItem
+                  key={entry.id}
+                  entry={entry}
+                  fresh={entry.id === freshId}
+                  tabbable={entry.id === tabbableId}
+                  onActive={() => setActiveId(entry.id)}
+                />
               ))}
             </Tree>
           )}
@@ -175,7 +187,8 @@ export function RollLog({
             setAway(false);
             toBottom();
           }}
-          className="absolute right-3 bottom-3 inline-flex h-9 max-md:h-11 items-center rounded-1 border border-control-line bg-surface px-4 font-mono text-ui lowercase text-ink hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
+          variant="outline"
+          className="absolute right-3 bottom-3 shadow-md"
         >
           Jump to newest
         </Button>

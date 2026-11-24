@@ -4,22 +4,20 @@ import { HEADER_ICON_BUTTON, HeaderLabel, SearchIcon } from "./HeaderLabel";
 import { type PaletteGroup, type PaletteRow, paletteView } from "./palette";
 import { useShortcutHint } from "./shortcuts";
 import {
+  Button,
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandGroupLabel,
   CommandInput,
   CommandItem,
   CommandList,
   Dialog,
-  DialogBackdrop,
   DialogContent,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
+  useHotkey,
 } from "./ui";
-
-const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
 
 export function CommandPalette({
   rows,
@@ -37,10 +35,11 @@ export function CommandPalette({
   const [query, setQuery] = useState("");
   const hint = useShortcutHint("k");
   const view = useMemo(() => paletteView(rows, query), [rows, query]);
-  const byValue = useMemo(() => new Map(rows.map((row) => [row.value, row])), [rows]);
   const groups = (["Presets", "Characters", "Commands"] as PaletteGroup[])
     .map((group) => ({ group, rows: view.rows.filter((row) => row.group === group) }))
     .filter((g) => g.rows.length > 0);
+
+  useHotkey("k", () => onOpenChange(true));
 
   return (
     <Dialog
@@ -50,61 +49,57 @@ export function CommandPalette({
         onOpenChange(next);
       }}
     >
-      <DialogTrigger
-        shortcut="mod+k"
-        className={`inline-flex h-8 max-md:h-11 items-center gap-2 rounded-1 border border-control-line px-3 font-mono text-ui lowercase text-ink-body ${HEADER_ICON_BUTTON} ${focusRing}`}
-      >
-        <HeaderLabel label="Commands" hint={hint} icon={<SearchIcon />} />
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className={HEADER_ICON_BUTTON}>
+          <HeaderLabel label="Commands" hint={hint} icon={<SearchIcon />} />
+        </Button>
       </DialogTrigger>
-      <DialogBackdrop className="scrim fixed inset-0 bg-ground/60" />
       <DialogContent
-        finalFocus={finalFocus}
-        className="pop fixed top-palette-offset left-1/2 w-palette -translate-x-1/2 rounded-1 border border-line-strong bg-surface p-3 text-ink"
+        onCloseAutoFocus={(event) => {
+          const target = finalFocus();
+          if (target) {
+            event.preventDefault();
+            target.focus();
+          }
+        }}
+        className="top-palette-offset w-palette max-w-palette translate-y-0 gap-0 p-3"
       >
         <DialogTitle className="sr-only">Command palette</DialogTitle>
-        <Command
-          filter={false}
-          query={query}
-          onQueryChange={setQuery}
-          onAction={(value) => {
-            const row = byValue.get(value);
-            if (row) onRun(row);
-          }}
-        >
+        <DialogDescription className="sr-only">
+          Search presets, characters and commands, then press Enter to run one.
+        </DialogDescription>
+        <Command shouldFilter={false} loop>
           <CommandInput
+            value={query}
+            onValueChange={setQuery}
             aria-label="Search presets, characters and commands"
             placeholder="Search presets, characters and commands"
             autoComplete="off"
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
-            className="h-10 max-md:h-11 w-full rounded-1 border border-control-line bg-surface-sunken px-3 text-ink placeholder:text-ink-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
           />
-          <p className="m-0 mt-2 px-1 text-xs text-ink-muted">
+          <p className="m-0 mt-2 px-1 text-xs text-muted-foreground">
             {view.scope === "characters"
               ? "Characters only. Delete the @ to search everything."
               : view.scope === "commands"
                 ? "Commands only. Delete the > to search everything."
                 : "Type @ for characters or > for commands."}
           </p>
-          <CommandEmpty className="px-1 py-3 text-sm text-ink-muted">Nothing matches.</CommandEmpty>
-          <CommandList className="mt-2 flex max-h-72 flex-col gap-1 overflow-y-auto">
+          <CommandEmpty>Nothing matches.</CommandEmpty>
+          <CommandList>
             {groups.map(({ group, rows: items }) => (
-              <CommandGroup key={group} className="flex flex-col">
-                <CommandGroupLabel className="px-2 py-1 text-xs font-medium text-ink-body">
-                  {group}
-                </CommandGroupLabel>
+              <CommandGroup key={group} heading={group}>
                 {items.map((row) => (
                   <CommandItem
                     key={row.value}
                     value={row.value}
-                    label={row.label}
                     disabled={row.disabled}
-                    className="flex min-h-9 max-md:min-h-11 items-center gap-3 rounded-0 px-2 py-1 text-sm data-[highlighted]:bg-surface-hover data-[highlighted]:outline-2 data-[highlighted]:-outline-offset-2 data-[highlighted]:outline-signal-ink aria-disabled:text-ink-muted"
+                    onSelect={() => onRun(row)}
                   >
                     <span className={group === "Commands" ? "" : "font-mono"}>{row.label}</span>
                     {row.detail !== undefined && (
-                      <span className="ml-auto truncate font-mono text-xs text-ink-muted">
+                      <span className="ml-auto truncate font-mono text-xs text-muted-foreground">
                         {row.detail}
                       </span>
                     )}

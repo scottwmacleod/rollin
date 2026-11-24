@@ -16,7 +16,7 @@
       "count": 1
     },
     "require-unicode-regexp": {
-      "count": 5
+      "count": 4
     },
     "typescript/no-unnecessary-condition": {
       "count": 4
@@ -26,9 +26,6 @@
     },
     "typescript/promise-function-async": {
       "count": 10
-    },
-    "unicorn/consistent-function-scoping": {
-      "count": 1
     },
     "unicorn/no-array-reduce": {
       "count": 1
@@ -46,7 +43,7 @@
       "count": 1
     },
     "vitest/no-conditional-in-test": {
-      "count": 8
+      "count": 9
     },
     "vitest/prefer-each": {
       "count": 1
@@ -225,23 +222,11 @@
     "no-implicit-coercion": {
       "count": 1
     },
-    "no-underscore-dangle": {
-      "count": 3
-    },
-    "oxc/branches-sharing-code": {
-      "count": 1
-    },
     "require-unicode-regexp": {
       "count": 3
     },
     "typescript/consistent-type-imports": {
       "count": 1
-    },
-    "typescript/no-unsafe-type-assertion": {
-      "count": 3
-    },
-    "typescript/promise-function-async": {
-      "count": 3
     },
     "unicorn/consistent-function-scoping": {
       "count": 2
@@ -252,11 +237,8 @@
     "unicorn/no-await-expression-member": {
       "count": 6
     },
-    "unicorn/prefer-global-this": {
-      "count": 4
-    },
     "vitest/no-conditional-in-test": {
-      "count": 8
+      "count": 1
     }
   },
   "apps/web/e2e/offline.spec.ts": {
@@ -569,7 +551,7 @@
       "count": 1
     },
     "typescript/no-confusing-void-expression": {
-      "count": 29
+      "count": 31
     },
     "typescript/no-deprecated": {
       "count": 1
@@ -669,13 +651,13 @@
       "count": 1
     },
     "typescript/no-confusing-void-expression": {
-      "count": 3
+      "count": 4
     },
     "typescript/no-deprecated": {
       "count": 1
     },
     "typescript/no-misused-promises": {
-      "count": 1
+      "count": 2
     },
     "typescript/no-unsafe-type-assertion": {
       "count": 1
@@ -684,7 +666,7 @@
       "count": 1
     },
     "typescript/strict-void-return": {
-      "count": 2
+      "count": 3
     },
     "unicorn/no-nested-ternary": {
       "count": 1
@@ -716,6 +698,9 @@
     },
     "typescript/explicit-module-boundary-types": {
       "count": 1
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 2
     },
     "unicorn/no-nested-ternary": {
       "count": 1
@@ -869,16 +854,16 @@
       "count": 1
     },
     "typescript/no-confusing-void-expression": {
-      "count": 5
+      "count": 8
     },
     "typescript/no-deprecated": {
       "count": 1
     },
     "typescript/no-misused-promises": {
-      "count": 1
+      "count": 2
     },
     "typescript/strict-void-return": {
-      "count": 2
+      "count": 3
     },
     "unicorn/no-nested-ternary": {
       "count": 1
@@ -961,7 +946,7 @@
       "count": 1
     },
     "typescript/no-confusing-void-expression": {
-      "count": 1
+      "count": 2
     }
   },
   "apps/web/src/VariableDialog.tsx": {
@@ -993,16 +978,16 @@
       "count": 1
     },
     "typescript/no-confusing-void-expression": {
-      "count": 3
+      "count": 6
     },
     "typescript/no-deprecated": {
       "count": 1
     },
     "typescript/no-misused-promises": {
-      "count": 1
+      "count": 2
     },
     "typescript/strict-void-return": {
-      "count": 2
+      "count": 3
     },
     "unicorn/no-nested-ternary": {
       "count": 1
@@ -1234,56 +1219,6 @@
       "count": 1
     },
     "unicorn/no-nested-ternary": {
-      "count": 1
-    }
-  },
-  "apps/web/src/contrast.test.ts": {
-    "bun/prefer-url-for-sibling-files": {
-      "count": 1
-    },
-    "import/no-nodejs-modules": {
-      "count": 2
-    },
-    "no-bitwise": {
-      "count": 5
-    },
-    "node/no-sync": {
-      "count": 1
-    },
-    "prefer-named-capture-group": {
-      "count": 7
-    },
-    "require-unicode-regexp": {
-      "count": 4
-    },
-    "typescript/no-unsafe-return": {
-      "count": 1
-    },
-    "typescript/no-unsafe-type-assertion": {
-      "count": 1
-    },
-    "typescript/prefer-regexp-exec": {
-      "count": 2
-    },
-    "typescript/strict-boolean-expressions": {
-      "count": 2
-    },
-    "unicorn/consistent-existence-index-check": {
-      "count": 1
-    },
-    "unicorn/consistent-function-scoping": {
-      "count": 1
-    },
-    "unicorn/import-style": {
-      "count": 1
-    },
-    "unicorn/no-array-sort": {
-      "count": 1
-    },
-    "unicorn/prefer-module": {
-      "count": 1
-    },
-    "unicorn/prefer-string-replace-all": {
       "count": 1
     }
   },
@@ -1686,42 +1621,144 @@
       "count": 1
     }
   },
-  "apps/web/src/ui/ui.test.tsx": {
-    "import/no-nodejs-modules": {
-      "count": 2
-    },
-    "jsx-a11y/control-has-associated-label": {
+  "apps/web/src/ui/button.tsx": {
+    "import/consistent-type-specifier-style": {
       "count": 1
     },
-    "node/no-sync": {
-      "count": 3
-    },
-    "prefer-named-capture-group": {
+    "import/no-namespace": {
       "count": 1
     },
     "react/jsx-filename-extension": {
       "count": 1
     },
-    "require-unicode-regexp": {
+    "react/jsx-props-no-spreading": {
       "count": 1
     },
-    "unicorn/import-style": {
+    "react/only-export-components": {
       "count": 1
     },
-    "unicorn/prefer-module": {
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
+    }
+  },
+  "apps/web/src/ui/command.tsx": {
+    "import/no-namespace": {
       "count": 1
     },
-    "vitest/no-conditional-in-test": {
+    "react/jsx-filename-extension": {
       "count": 1
     },
-    "vitest/prefer-lowercase-title": {
+    "react/jsx-props-no-spreading": {
+      "count": 6
+    },
+    "react/no-multi-comp": {
+      "count": 5
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 6
+    }
+  },
+  "apps/web/src/ui/dialog.tsx": {
+    "import/no-namespace": {
       "count": 1
     },
-    "vitest/prefer-strict-equal": {
+    "react/jsx-filename-extension": {
       "count": 1
     },
-    "vitest/require-top-level-describe": {
+    "react/jsx-props-no-spreading": {
+      "count": 8
+    },
+    "react/no-multi-comp": {
+      "count": 7
+    },
+    "react/only-export-components": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 9
+    },
+    "typescript/no-confusing-void-expression": {
+      "count": 1
+    },
+    "unicorn/prefer-global-this": {
       "count": 2
+    }
+  },
+  "apps/web/src/ui/dropdown-menu.tsx": {
+    "import/no-namespace": {
+      "count": 1
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/jsx-props-no-spreading": {
+      "count": 4
+    },
+    "react/no-multi-comp": {
+      "count": 3
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 4
+    }
+  },
+  "apps/web/src/ui/input.tsx": {
+    "bun/react-no-namespace-hooks": {
+      "count": 4
+    },
+    "import/no-namespace": {
+      "count": 1
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/jsx-no-constructed-context-values": {
+      "count": 1
+    },
+    "react/jsx-props-no-spreading": {
+      "count": 6
+    },
+    "react/no-multi-comp": {
+      "count": 5
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 6
+    },
+    "typescript/strict-boolean-expressions": {
+      "count": 2
+    }
+  },
+  "apps/web/src/ui/tree.tsx": {
+    "import/no-namespace": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 3
+    },
+    "react/jsx-filename-extension": {
+      "count": 1
+    },
+    "react/jsx-props-no-spreading": {
+      "count": 2
+    },
+    "react/no-multi-comp": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 2
+    },
+    "typescript/no-unsafe-type-assertion": {
+      "count": 1
+    },
+    "unicorn/no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "apps/web/src/ui/utils.ts": {
+    "import/consistent-type-specifier-style": {
+      "count": 1
+    },
+    "typescript/explicit-module-boundary-types": {
+      "count": 1
     }
   },
   "apps/web/src/useMedia.ts": {

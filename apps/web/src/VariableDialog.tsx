@@ -2,19 +2,17 @@ import { MAX_INT, validateVariableName } from "@rollin/engine";
 import { type FormEvent, useState } from "react";
 
 import type { Character } from "./characters";
-import { CONFIRM_NO, CONFIRM_YES, FIELD, OVERLAY, PRIMARY, SECONDARY } from "./dialogStyles";
 import {
   Button,
   Dialog,
-  DialogBackdrop,
   DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
   Field,
   FieldError,
+  FieldInput,
   FieldLabel,
-  Input,
 } from "./ui";
 
 export type VariableDialogMode = { kind: "new" } | { kind: "edit"; name: string };
@@ -82,15 +80,12 @@ export function VariableDialog({
   }
 
   return (
-    <Dialog open closeOnOutsidePress={false} onOpenChange={(open) => !open && onClose()}>
-      <DialogBackdrop className="fixed inset-0 bg-ground/60" />
-      <DialogContent className={OVERLAY}>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent onInteractOutside={(event) => event.preventDefault()}>
         <form onSubmit={save} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <DialogTitle className="m-0 text-lg font-semibold">
-              {editing === null ? "New variable" : `Edit @${editing}`}
-            </DialogTitle>
-            <DialogDescription className="m-0 text-sm text-ink-muted">
+          <div className="flex flex-col gap-2">
+            <DialogTitle>{editing === null ? "New variable" : `Edit @${editing}`}</DialogTitle>
+            <DialogDescription>
               A whole number on {character.name}. Use it in a formula as @name, as in d20+@str.
             </DialogDescription>
           </div>
@@ -100,25 +95,20 @@ export function VariableDialog({
             invalid={nameProblem === null ? undefined : true}
             className="flex flex-col gap-1"
           >
-            <FieldLabel className="text-sm text-ink-body">Name</FieldLabel>
-            <Input
+            <FieldLabel>Name</FieldLabel>
+            <FieldInput
               value={name}
-              onValueChange={setName}
+              onChange={(e) => setName(e.target.value)}
               placeholder="str"
               autoComplete="off"
               autoCapitalize="off"
               autoCorrect="off"
               spellCheck={false}
               autoFocus={editing === null}
-              className={FIELD}
             />
-            {nameProblem !== null && (
-              <FieldError match className="text-sm text-danger">
-                {nameProblem}
-              </FieldError>
-            )}
+            {nameProblem !== null && <FieldError match>{nameProblem}</FieldError>}
             {replaces && (
-              <span className="text-sm text-ink-muted">
+              <span className="text-sm text-muted-foreground">
                 @{stored} is already set on {character.name}. Saving replaces it.
               </span>
             )}
@@ -129,22 +119,17 @@ export function VariableDialog({
             invalid={valueProblem === null ? undefined : true}
             className="flex flex-col gap-1"
           >
-            <FieldLabel className="text-sm text-ink-body">Value</FieldLabel>
-            <Input
+            <FieldLabel>Value</FieldLabel>
+            <FieldInput
               value={value}
-              onValueChange={setValue}
+              onChange={(e) => setValue(e.target.value)}
               placeholder="3"
               inputMode="numeric"
               autoComplete="off"
               spellCheck={false}
               autoFocus={editing !== null}
-              className={FIELD}
             />
-            {valueProblem !== null && (
-              <FieldError match className="text-sm text-danger">
-                {valueProblem}
-              </FieldError>
-            )}
+            {valueProblem !== null && <FieldError match>{valueProblem}</FieldError>}
           </Field>
 
           {confirming && editing !== null ? (
@@ -154,23 +139,38 @@ export function VariableDialog({
               className="flex flex-wrap items-center gap-3 text-sm"
             >
               <span>Remove @{editing}?</span>
-              <Button type="button" onClick={remove} disabled={saving} className={CONFIRM_YES}>
+              <Button
+                type="button"
+                onClick={remove}
+                disabled={saving}
+                variant="destructive"
+                size="sm"
+              >
                 Yes, remove
               </Button>
-              <Button type="button" onClick={() => setConfirming(false)} className={CONFIRM_NO}>
+              <Button
+                type="button"
+                onClick={() => setConfirming(false)}
+                variant="outline"
+                size="sm"
+              >
                 Keep it
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               {editing !== null && (
-                <Button type="button" onClick={() => setConfirming(true)} className={SECONDARY}>
+                <Button type="button" onClick={() => setConfirming(true)} variant="outline">
                   Remove
                 </Button>
               )}
               <span className="flex-1" />
-              <DialogClose className={SECONDARY}>Cancel</DialogClose>
-              <Button type="submit" disabled={!ready || saving} className={PRIMARY}>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={!ready || saving}>
                 {replaces ? "Replace" : "Save"}
               </Button>
             </div>

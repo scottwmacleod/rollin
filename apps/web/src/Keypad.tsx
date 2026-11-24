@@ -1,8 +1,7 @@
 import { KEYPAD_DICE, type Key, press } from "./keypad.ts";
 import { Button } from "./ui";
 
-const KEY =
-  "press inline-flex min-h-11 min-w-11 items-center justify-center rounded-1 border border-control-line bg-surface font-mono text-base text-ink active:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink";
+const KEY = "h-auto min-h-11 min-w-11 font-mono text-base";
 
 export function Keypad({
   formula,
@@ -17,7 +16,13 @@ export function Keypad({
 }) {
   const tap = (key: Key) => onChange(press(formula, key, fresh));
   const digit = (d: string) => (
-    <Button key={d} type="button" className={KEY} onClick={() => tap({ kind: "digit", digit: d })}>
+    <Button
+      key={d}
+      type="button"
+      variant="outline"
+      className={KEY}
+      onClick={() => tap({ kind: "digit", digit: d })}
+    >
       {d}
     </Button>
   );
@@ -28,6 +33,7 @@ export function Keypad({
           <Button
             key={sides}
             type="button"
+            variant="outline"
             aria-label={`d${sides}`}
             className={`${KEY} px-0 text-sm`}
             onClick={() => tap({ kind: "die", sides })}
@@ -40,6 +46,7 @@ export function Keypad({
         {["1", "2", "3"].map(digit)}
         <Button
           type="button"
+          variant="outline"
           aria-label="plus"
           className={KEY}
           onClick={() => tap({ kind: "op", op: "+" })}
@@ -48,6 +55,7 @@ export function Keypad({
         </Button>
         <Button
           type="button"
+          variant="outline"
           aria-label="backspace"
           className={KEY}
           onClick={() => tap({ kind: "back" })}
@@ -57,6 +65,7 @@ export function Keypad({
         {["4", "5", "6"].map(digit)}
         <Button
           type="button"
+          variant="outline"
           aria-label="minus"
           className={KEY}
           onClick={() => tap({ kind: "op", op: "-" })}
@@ -65,6 +74,7 @@ export function Keypad({
         </Button>
         <Button
           type="button"
+          variant="outline"
           aria-label="all clear"
           className={KEY}
           onClick={() => tap({ kind: "clear" })}
@@ -75,7 +85,7 @@ export function Keypad({
         <Button
           type="button"
           onClick={onRoll}
-          className="press inline-flex min-h-11 items-center justify-center rounded-1 bg-signal font-mono text-base font-semibold lowercase text-on-signal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
+          className="h-auto min-h-11 font-mono text-base font-semibold"
         >
           Roll
         </Button>

@@ -4,10 +4,12 @@ export function EditButton({ label, onClick }: { label: string; onClick: () => v
   return (
     <Button
       type="button"
+      variant="ghost"
+      size="icon"
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="inline-flex min-h-11 w-11 shrink-0 items-center justify-center rounded-1 text-ink-muted hover:bg-surface-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-ink"
+      className="min-h-11 w-11 shrink-0 text-muted-foreground"
     >
       <svg
         viewBox="0 0 16 16"

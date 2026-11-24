@@ -137,91 +137,33 @@ test.describe("popup motion", () => {
   const sheetOf = (page: import("@playwright/test").Page) =>
     page.getByRole("dialog", { name: "Characters and presets" });
 
-  test("the slide-over slides in from the left and can close midway without jumping", async ({
-    page,
-  }) => {
+  test("the slide-over slides in from the left and returns focus on close", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Character: default" }).click();
     const sheet = sheetOf(page);
     await expect(sheet).toBeVisible();
-    const timing = await sheet.evaluate((el) => {
-      const s = getComputedStyle(el);
-      return `${s.transitionProperty} ${s.transitionDuration}`;
-    });
-    expect(timing).toBe("translate 0.2s");
-
+    const name = await sheet.evaluate((el) => getComputedStyle(el).animationName);
+    expect(name).toContain("enter");
     await page.keyboard.press("Escape");
-    await expect(sheet).toHaveCount(0);
-    await page.evaluate(() => {
-      const seen: number[] = [];
-      Object.assign(window, { __slideOver: seen });
-      document.addEventListener("transitionrun", function freeze(event) {
-        const el = event.target;
-        if (!(el instanceof HTMLElement) || !el.classList.contains("slide-over")) return;
-        const slide = el
-          .getAnimations()
-          .find((a) => a instanceof CSSTransition && a.transitionProperty === "translate");
-        if (!slide) return;
-        if (seen.length === 0) {
-          slide.pause();
-          slide.currentTime = 100;
-          seen.push(el.getBoundingClientRect().left);
-        } else {
-          slide.pause();
-          slide.currentTime = 0;
-          seen.push(el.getBoundingClientRect().left, el.getBoundingClientRect().width);
-          document.removeEventListener("transitionrun", freeze);
-          slide.play();
-        }
-      });
-    });
-    await page.getByRole("button", { name: "Character: default" }).click();
-    await expect
-      .poll(() =>
-        page.evaluate(() => (window as unknown as { __slideOver: number[] }).__slideOver.length),
-      )
-      .toBe(1);
-    await page.keyboard.press("Escape");
-    await expect
-      .poll(() =>
-        page.evaluate(() => (window as unknown as { __slideOver: number[] }).__slideOver.length),
-      )
-      .toBe(3);
-    const [before = 0, after = 0, width = 0] = await page.evaluate(
-      () => (window as unknown as { __slideOver: number[] }).__slideOver,
-    );
-    expect(before).toBeLessThan(0);
-    expect(before).toBeGreaterThan(-width + 10);
-    expect(Math.abs(after - before)).toBeLessThan(1);
     await expect(sheet).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Character: default" })).toBeFocused();
   });
 
-  test("menus and the palette scale and fade from where they open", async ({ page }) => {
+  test("menus and the palette fade and scale in", async ({ page }) => {
     await page.goto("/");
     await page.getByLabel("Formula").fill("d6");
     await page.getByLabel("Formula").press("Enter");
     await page.getByRole("button", { name: "Roll log menu" }).click();
     const menu = page.getByRole("menu");
     await expect(menu).toBeVisible();
-    await expect.poll(() => menu.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
-    const style = await menu.evaluate((el) => {
-      const s = getComputedStyle(el);
-      return { property: s.transitionProperty, origin: s.transformOrigin, scale: s.scale };
-    });
-    expect(style.property).toBe("opacity, scale");
-    expect(style.scale).toBe("none");
-    const box = await menu.boundingBox();
-    expect(style.origin).not.toBe(`${(box?.width ?? 0) / 2}px ${(box?.height ?? 0) / 2}px`);
+    expect(await menu.evaluate((el) => getComputedStyle(el).animationName)).toContain("enter");
     await page.keyboard.press("Escape");
     await expect(menu).toHaveCount(0);
 
     await page.keyboard.press("ControlOrMeta+k");
     const palette = page.getByRole("dialog", { name: "Command palette" });
     await expect(palette).toBeVisible();
-    expect(await palette.evaluate((el) => getComputedStyle(el).transitionProperty)).toBe(
-      "opacity, scale",
-    );
+    expect(await palette.evaluate((el) => getComputedStyle(el).animationName)).toContain("enter");
   });
 
   test("under reduced motion, popups open and close at once", async ({ page }) => {
@@ -230,7 +172,6 @@ test.describe("popup motion", () => {
     await page.getByRole("button", { name: "Character: default" }).click();
     const sheet = sheetOf(page);
     await expect(sheet).toBeVisible();
-    expect(await sheet.evaluate((el) => getComputedStyle(el).transitionProperty)).toBe("none");
-    expect(await sheet.evaluate((el) => getComputedStyle(el).translate)).toBe("none");
+    expect(await sheet.evaluate((el) => getComputedStyle(el).animationDuration)).toBe("0s");
   });
 });

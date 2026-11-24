@@ -25,7 +25,7 @@ export function HeaderLabel({
   return (
     <>
       {label}
-      {hint !== null && <span className="text-ink-muted">{hint}</span>}
+      {hint !== null && <span className="text-muted-foreground">{hint}</span>}
     </>
   );
 }

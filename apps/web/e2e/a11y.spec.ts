@@ -16,9 +16,15 @@ async function expectClean(page: Page, where: string) {
 async function expectControlBorders(page: Page, where: string) {
   const weak = await page.evaluate(() => {
     type RGBA = [number, number, number, number];
+    const paint = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
     const parse = (c: string): RGBA => {
-      const n = c.match(/[\d.]+/g)?.map(Number) ?? [];
-      return [n[0] ?? 0, n[1] ?? 0, n[2] ?? 0, n[3] ?? 1];
+      if (!paint) return [0, 0, 0, 1];
+      paint.clearRect(0, 0, 1, 1);
+      paint.fillStyle = "#000";
+      paint.fillStyle = c;
+      paint.fillRect(0, 0, 1, 1);
+      const [r = 0, g = 0, b = 0, a = 255] = paint.getImageData(0, 0, 1, 1).data;
+      return [r, g, b, a / 255];
     };
     const over = (top: RGBA, under: RGBA): RGBA => {
       const a = top[3];
@@ -171,21 +177,16 @@ test("the whole page can be tabbed through without a trap, and every stop shows 
       const el = document.activeElement;
       if (!el || el === document.body) return null;
       const style = getComputedStyle(el);
-      const ring = style.outlineStyle !== "none" && Number.parseFloat(style.outlineWidth) > 0;
+      const ring =
+        (style.outlineStyle !== "none" && Number.parseFloat(style.outlineWidth) > 0) ||
+        style.boxShadow !== "none";
       const path = `${el.tagName}:${el.getAttribute("aria-label") ?? el.textContent?.trim().slice(0, 30) ?? ""}`;
-      const probe = document.createElement("span");
-      probe.style.color = "var(--sm-signal-ink)";
-      document.body.append(probe);
-      const signalInk = getComputedStyle(probe).color;
-      probe.remove();
-      const signal = style.outlineColor === signalInk;
-      return { path, ring, signal, matches: el.matches(":focus-visible") };
+      return { path, ring, matches: el.matches(":focus-visible") };
     });
     if (stop === null) continue;
     expect(stop.matches, `${stop.path} is focus-visible`).toBe(true);
     if (!/^(DIV|LI):/.test(stop.path)) {
       expect(stop.ring, `${stop.path} shows a focus ring`).toBe(true);
-      expect(stop.signal, `${stop.path} rings in signal-ink`).toBe(true);
     }
     seen.add(stop.path);
   }

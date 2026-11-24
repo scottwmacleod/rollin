@@ -3,19 +3,18 @@ import { type FormEvent, useState } from "react";
 
 import { buildPartial, characterFilename, downloadBackup } from "./backup";
 import { GAME_SYSTEMS, isCritRange, type Roster, type Rules } from "./characters";
-import { CONFIRM_NO, CONFIRM_YES, FIELD, OVERLAY, PRIMARY, SECONDARY } from "./dialogStyles";
 import {
   Button,
   Dialog,
-  DialogBackdrop,
   DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
   Field,
   FieldError,
+  FieldInput,
   FieldLabel,
-  Input,
+  Label,
 } from "./ui";
 
 export type CharacterDialogMode = { kind: "new" } | { kind: "edit"; name: string };
@@ -96,15 +95,12 @@ export function CharacterDialog({
   }
 
   return (
-    <Dialog open closeOnOutsidePress={false} onOpenChange={(open) => !open && onClose()}>
-      <DialogBackdrop className="fixed inset-0 bg-ground/60" />
-      <DialogContent className={OVERLAY}>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent onInteractOutside={(event) => event.preventDefault()}>
         <form onSubmit={save} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <DialogTitle className="m-0 text-lg font-semibold">
-              {editing === null ? "New character" : `Edit ${editing}`}
-            </DialogTitle>
-            <DialogDescription className="m-0 text-sm text-ink-muted">
+          <div className="flex flex-col gap-2">
+            <DialogTitle>{editing === null ? "New character" : `Edit ${editing}`}</DialogTitle>
+            <DialogDescription>
               {editing === null
                 ? "A character keeps its own variables and presets. Creating one switches to it."
                 : "Rename this character, export it to a file, or delete it with its variables and presets."}
@@ -116,11 +112,11 @@ export function CharacterDialog({
             invalid={problem === null ? undefined : true}
             className="flex flex-col gap-1"
           >
-            <FieldLabel className="text-sm text-ink-body">Name</FieldLabel>
-            <Input
+            <FieldLabel>Name</FieldLabel>
+            <FieldInput
               value={name}
-              onValueChange={(v) => {
-                setName(v);
+              onChange={(e) => {
+                setName(e.target.value);
                 setExported(null);
               }}
               placeholder="aria"
@@ -129,27 +125,20 @@ export function CharacterDialog({
               autoCorrect="off"
               spellCheck={false}
               autoFocus
-              className={FIELD}
             />
-            {problem !== null && (
-              <FieldError match className="text-sm text-danger">
-                {problem}
-              </FieldError>
-            )}
+            {problem !== null && <FieldError match>{problem}</FieldError>}
           </Field>
 
           <div className="flex flex-col gap-1">
-            <label htmlFor="game-system" className="text-sm text-ink-body">
-              Game system
-            </label>
+            <Label htmlFor="game-system">Game system</Label>
             <select
               id="game-system"
+              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 max-md:h-11 dark:bg-input/30 dark:*:bg-popover"
               value={system}
               onChange={(e) => {
                 setSystem(e.target.value as GameSystem | "");
                 setExported(null);
               }}
-              className={FIELD}
             >
               <option value="">None</option>
               {GAME_SYSTEMS.map((g) => (
@@ -158,7 +147,7 @@ export function CharacterDialog({
                 </option>
               ))}
             </select>
-            <span className="text-sm text-ink-muted">
+            <span className="text-sm text-muted-foreground">
               Under D&amp;D 5e a natural 20 on an attack (a d20 roll with damage after it) is a
               critical hit and doubles the damage dice. Skill checks and saves never crit.
             </span>
@@ -170,26 +159,21 @@ export function CharacterDialog({
               invalid={critProblem === null ? undefined : true}
               className="flex flex-col gap-1"
             >
-              <FieldLabel className="text-sm text-ink-body">Crit range</FieldLabel>
-              <Input
+              <FieldLabel>Crit range</FieldLabel>
+              <FieldInput
                 value={critText}
-                onValueChange={(v) => {
-                  setCritText(v);
+                onChange={(e) => {
+                  setCritText(e.target.value);
                   setExported(null);
                 }}
                 placeholder="20"
                 inputMode="numeric"
                 autoComplete="off"
-                className={FIELD}
               />
-              <span className="text-sm text-ink-muted">
+              <span className="text-sm text-muted-foreground">
                 The lowest d20 that is a critical hit; 19 means 19 to 20. Leave empty for 20.
               </span>
-              {critProblem !== null && (
-                <FieldError match className="text-sm text-danger">
-                  {critProblem}
-                </FieldError>
-              )}
+              {critProblem !== null && <FieldError match>{critProblem}</FieldError>}
             </Field>
           )}
 
@@ -200,45 +184,55 @@ export function CharacterDialog({
               className="flex flex-wrap items-center gap-3 text-sm"
             >
               <span>Delete {editing}, with its variables and presets?</span>
-              <Button type="button" onClick={remove} disabled={saving} className={CONFIRM_YES}>
+              <Button
+                type="button"
+                onClick={remove}
+                disabled={saving}
+                variant="destructive"
+                size="sm"
+              >
                 Yes, delete
               </Button>
-              <Button type="button" onClick={() => setConfirming(false)} className={CONFIRM_NO}>
+              <Button
+                type="button"
+                onClick={() => setConfirming(false)}
+                variant="outline"
+                size="sm"
+              >
                 Keep it
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               {canDelete && (
-                <Button type="button" onClick={() => setConfirming(true)} className={SECONDARY}>
+                <Button type="button" onClick={() => setConfirming(true)} variant="outline">
                   Delete
                 </Button>
               )}
               {existing !== undefined && (
-                <Button
-                  type="button"
-                  onClick={exportCharacter}
-                  disabled={saving}
-                  className={`${SECONDARY} max-md:h-11`}
-                >
+                <Button type="button" onClick={exportCharacter} disabled={saving} variant="outline">
                   Export
                 </Button>
               )}
               <span className="flex-1" />
-              <DialogClose className={SECONDARY}>Cancel</DialogClose>
-              <Button type="submit" disabled={!ready || saving} className={PRIMARY}>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={!ready || saving}>
                 {editing === null ? "Create" : "Save"}
               </Button>
             </div>
           )}
 
           {existing !== undefined && !confirming && (
-            <div className="flex flex-col gap-1 text-sm text-ink-muted">
+            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
               <span>
                 Export downloads this character as saved, without any unsaved changes here. Add the
                 file from Settings on another device.
               </span>
-              <span role="status" className="min-h-5 text-ink-body">
+              <span role="status" className="min-h-5 text-foreground">
                 {exported}
               </span>
             </div>

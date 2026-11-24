@@ -81,6 +81,7 @@ test("a whole session runs from the keyboard, with the palette and completion", 
   await search.fill("settings");
   await page.keyboard.press("Enter");
   await expect(page.getByRole("dialog", { name: "Settings" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Command palette" })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
