@@ -401,7 +401,9 @@ export function App() {
           case "settings":
           case "import":
             handoff.current = true;
-            setSettingsOpen(true);
+            globalThis.setTimeout(() => {
+              setSettingsOpen(true);
+            }, 250);
             return;
           case "clear-log":
             handoff.current = true;
