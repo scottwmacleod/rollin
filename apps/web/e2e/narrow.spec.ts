@@ -52,6 +52,8 @@ test("the character button opens a slide-over that traps focus and closes three 
   await expect(sheet).toBeHidden();
 
   await button.click();
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "Close" })).toBeFocused();
   await page.mouse.click(690, 400);
   await expect(sheet).toBeHidden();
 });
