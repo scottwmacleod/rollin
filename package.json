@@ -23,7 +23,7 @@
     "pre-push": "bun run tokens:check && bun run typecheck && bun run lint && bun run test && bun run e2e:changed && node vendor/sm-core/verify.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.8",
+    "@biomejs/biome": "2.6.9",
     "@shadcn/lint": "0.2.5",
     "@types/bun": "1.4.5",
     "typescript": "7.0.2"
