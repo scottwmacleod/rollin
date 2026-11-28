@@ -2,11 +2,11 @@
 
 The PR merges itself once the required `ci` check passes. Get it there without changing what it does, or hand it back and say why it can't get there.
 
-Read this when you watch a PR with the built-in `/steward`, or subscribe to a PR's activity in a cloud session. The shared rules are in `docs/agents/sm-conventions.md` (`tooling/agents/sm-conventions.md` in sm-core). The repo's `AGENTS.md` adds its own and wins where the two differ.
+Read this when you watch a PR with the built-in `/steward`, or subscribe to a PR's activity in a cloud session. The shared rules are in `docs/agents/sm-conventions.md` (`tooling/agents/sm-conventions.md` in sm-core). The repo's `CLAUDE.md` adds its own and wins where the two differ.
 
 ## Before you push a fix
 
-- Run the `check` script from the definition of done in `AGENTS.md`. Push only when it passes.
+- Run the `check` script from the definition of done in `CLAUDE.md`. Push only when it passes.
 - Regenerate a lockfile with the package manager (`bun install` or `npm install`). Never edit one by hand.
 - Fix the cause of a red check. No retries, skipped tests, wider timeouts or `continue-on-error`.
 - Never edit `vendor/sm-core` or a file sync installs; `verify.mjs` fails on it. That change belongs in sm-core.
@@ -33,4 +33,4 @@ Stop pushing, comment on the PR with what you tried, and tell Scott when:
 ## Never
 
 - Merge or approve the PR, or turn auto-merge on or off. The `auto-merge` workflow handles it.
-- Change `.github/`, `.claude/`, `CLAUDE.md`, `AGENTS.md` or the git hooks as part of a fix. Those changes get their own PR.
+- Change `.github/`, `.claude/`, `CLAUDE.md` or the git hooks as part of a fix. Those changes get their own PR.
