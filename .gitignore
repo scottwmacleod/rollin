@@ -9,3 +9,5 @@ apps/web/test-results/
 apps/web/public/favicon.svg
 apps/web/public/icons/
 apps/web/public/rollin-wordmark-*.svg
+
+/.agents/

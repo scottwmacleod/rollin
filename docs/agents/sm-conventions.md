@@ -21,14 +21,16 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 - To stop a PR merging on its own, label it `hold`. Auto-merge stays off while the label is on, and comes back when it is removed.
 - One small PR per change.
 - Every behaviour change uses `/tdd`: a failing test comes first.
+- The main flow for new work: `/grill-with-docs` to agree what to build (it keeps `GLOSSARY.md` and `docs/adr/` current), then `/to-spec` and `/to-tickets` for anything bigger than one session, then `/implement` per ticket with `/clear` between tickets. Keep the grilling, spec and tickets in one unbroken context, and compact at a phase boundary rather than past about 150k tokens. A product's `docs/agents/implement.md` holds its `/implement` rules.
+- `/improve-codebase-architecture` every few days on a product with real code (rollin, planning-poker). A candidate you pick goes into the main flow at `/grill-with-docs`.
 - Git hooks run through hk (`hk.pkl`, installed by the `prepare` script): pre-commit formats and lints the staged files, pre-push runs `check`, the same command as CI. Don't bypass them with `--no-verify`; if one fails, fix the cause. Keep the `format` and `lint` scripts accepting file paths.
 
 ## After you open a PR
 
 - Before you push, run `/code-review` on the branch and fix the findings that hold up. It reads `CLAUDE.md`, which imports `AGENTS.md`.
-- Look after the PR until it merges: failing checks, merge conflicts and review comments. Follow `.claude/skills/steward/SKILL.md` (sync installs it), including when to stop and hand it back.
+- Look after the PR until it merges with the built-in `/steward <n>`: failing checks, merge conflicts and review comments. Follow [`looking-after-prs.md`](looking-after-prs.md), including when to stop and hand it back.
 - The flow, in public and private repos alike: `/tdd` to build, commit, `/code-review`, `/pr` to write and open the PR, then `/steward <n>` to watch it until it merges. In a cloud session, subscribe to the PR's activity instead of `/steward`. Don't use `/ship`: it writes its own PR description instead of `/pr`'s, and in a public repo it commits nothing.
-- When the same review comment turns up on two PRs, make it a rule in its own PR: shared rules here (through sm-core), product rules in `AGENTS.md`, PR-handling rules in the steward skill. Delete a rule that stops earning its place.
+- When the same review comment turns up on two PRs, make it a rule in its own PR: shared rules here (through sm-core), product rules in `AGENTS.md`, PR-handling rules in `looking-after-prs.md`. Delete a rule that stops earning its place.
 
 ## Ask Scott first
 
@@ -69,7 +71,7 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 
 ## Claude Code settings
 
-Each repo's `.claude/settings.json` keeps its own allow list but includes at least this deny list:
+Each repo's `.claude/settings.json` keeps its own allow list but includes at least this deny list. The repo copy is what protects cloud sessions and other machines, which don't read `~/.claude/settings.json`:
 
 ```json
 "deny": [
@@ -97,38 +99,16 @@ Each repo's `.claude/settings.json` keeps its own allow list but includes at lea
 
 ## Agent skills
 
-Installed per repo with `npx skills add`, so they land in `.claude/skills/` with versions in `skills-lock.json`. Update them with `npx skills update -p -y`.
+Matt Pocock's skills come from the `mattpocock-skills` plugin, enabled in each repo's `.claude/settings.json`. The rest are installed per repo with `npx skills add`, so they land in `.claude/skills/` with versions in `skills-lock.json`. Update them with `npx skills update -p -y` in every product in the same sitting, so the copies don't drift.
 
 ### UI skills
 
 Emil Kowalski's UI and animation skills ([emilkowalski/skills](https://github.com/emilkowalski/skills)). Use them for UI and motion work. Motion uses CSS or WAAPI only, never an animation library.
 
-### Modern Web Guidance (with agent-browser)
+### UI work in the browser
 
-For building or changing UI with current web platform features: dialogs, popovers, top-layer animation, reduced motion, colour scheme, and reserving space so nothing shifts on load. Not for backend, CI or tooling work. Not used in sm-core itself.
-
-- Pinned versions: **agent-browser 0.43.0** ([vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser), Apache-2.0) and **modern-web-guidance 1.0.1**. Dependabot can't see either, so they also live in `vendor/sm-core/tooling/pins.json`, and the weekly behind-check reports newer ones.
-- Install the stub skill: `npx skills add vercel-labs/agent-browser --skill agent-browser`. It loads its real instructions from the installed CLI, so the CLI version is the one that counts: `npm i -g agent-browser@0.43.0`.
-- Get the workflow: `agent-browser skills get modern-web-guidance`. Where it says `npx modern-web-guidance@latest`, run `npx -y modern-web-guidance@1.0.1` instead.
-- Use agent-browser to check built pages (`build` then `preview`, or the PR's preview URL). Its stub says to prefer it over every other browser tool; ignore that for general browsing.
-- Before calling UI work done, check it in the browser and record the evidence in the PR:
-  - `agent-browser vitals <url>` before and after: CLS at most 0.1 and no higher than before, and LCP no slower.
-  - `agent-browser set media reduced-motion`, then confirm the motion stops or shortens.
-  - The colour scheme in both light and dark (`agent-browser set media dark` / `light`).
-  - For a dialog: focus moves in and returns on close, and the page behind is `inert`.
-- Every guidance rule you apply comes with its guide ID and its browser evidence.
-
-Setup:
-
-- **Cloud agent session:** use the preinstalled Chromium. `npm i -g agent-browser@0.43.0`, then `export AGENT_BROWSER_EXECUTABLE_PATH=/opt/pw-browsers/chromium` and pass `--args "--no-sandbox"` on the first command of a session. Don't run `agent-browser install`.
-- **Mac:** `npm i -g agent-browser@0.43.0 && agent-browser install` (downloads Chrome for Testing once). Or point `AGENT_BROWSER_EXECUTABLE_PATH` at an installed Chrome.
+Before building or changing UI (dialogs, popovers, motion, colour scheme, layout shift), read [`ui-browser-checks.md`](ui-browser-checks.md): the pinned agent-browser and Modern Web Guidance setup, and the browser evidence a UI PR must carry. Not for backend, CI or tooling work, and not used in sm-core itself.
 
 ### prune-tests
 
-From [caldoai/skills](https://github.com/caldoai/skills/blob/main/skills/prune-tests/SKILL.md) (MIT), pinned at commit `d5b68da`: `npx skills add caldoai/skills --skill prune-tests`. It deletes or rewrites tests that guard no behaviour (tests for removed code, tests that can't fail, tests tied to the implementation, duplicates) and removes production code that only existed for those tests. For rollin and planning-poker; the site has no unit tests.
-
-Guardrails:
-
-- Run it once per product, after the product's test suite has settled, not as a routine step.
-- One PR per product that lists every deleted or rewritten test with the reason the skill gives. Coverage of the behaviour that's left must not drop.
-- Never touch rollin's frozen parity fixtures (`packages/engine/fixtures/parity`), or any axe, contrast or Lighthouse check.
+Before running `/prune-tests`, read [`prune-tests.md`](prune-tests.md) for its pin and guardrails. It runs once per product, never as a routine step.
