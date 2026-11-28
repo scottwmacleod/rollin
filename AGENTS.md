@@ -44,6 +44,6 @@ Repo rules for `/implement`: queue, branch, PR and merge mechanics, limits, and 
 
 ### Shared skills
 
-The UI skills, Modern Web Guidance (agent-browser) and prune-tests live in `.claude/skills/`, with versions in `skills-lock.json`. When to use each, the pinned versions and the setup are in `sm-conventions.md`. Update them with `npx skills update -p -y`.
+The UI skills, agent-browser and prune-tests live in `.claude/skills/`, with versions in `skills-lock.json`. When to use each is in `sm-conventions.md`; the browser-check setup is in `docs/agents/ui-browser-checks.md`. Update them with `npx skills update -p -y`, in every product in the same sitting.
 
 For browser checks in rollin, `bun run build && bun run --filter rollin-web preview` serves the built app on port 4173.

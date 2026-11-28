@@ -1,15 +1,8 @@
----
-name: steward
-description: House rules for looking after an open PR in an sm_ repo (failing checks, merge conflicts, review comments). Read by /ship, /steward and any session watching a PR.
-user-invocable: false
-disable-model-invocation: true
----
-
 # Looking after a PR
 
 The PR merges itself once the required `ci` check passes. Get it there without changing what it does, or hand it back and say why it can't get there.
 
-The shared rules are in `docs/agents/sm-conventions.md` (`tooling/agents/sm-conventions.md` in sm-core). The repo's `AGENTS.md` adds its own and wins where the two differ.
+Read this when you watch a PR with the built-in `/steward`, or subscribe to a PR's activity in a cloud session. The shared rules are in `docs/agents/sm-conventions.md` (`tooling/agents/sm-conventions.md` in sm-core). The repo's `AGENTS.md` adds its own and wins where the two differ.
 
 ## Before you push a fix
 
