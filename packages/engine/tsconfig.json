@@ -1,5 +1,5 @@
 {
-  "extends": "../../vendor/sm-core/tooling/tsconfig.base.json",
+  "extends": "../../vendor/base/tooling/tsconfig.base.json",
   "compilerOptions": {
     "types": ["node"]
   },

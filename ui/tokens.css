@@ -1,5 +1,5 @@
 /* rollin: generated from ui/tokens.json. Edit tokens.json, then regenerate. */
-/* Product sizes only; everything else comes from sm-core. */
+/* Product sizes only; everything else comes from vendor/base. */
 
 :root {
   --rollin-size-control: 28px;

@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const BASELINE = "comments-baseline.json";
-const NEVER_SCANNED = ["vendor/sm-core/", "node_modules/"];
+const NEVER_SCANNED = ["vendor/base/", "node_modules/"];
 const GENERATED = /(^|\/)(worker-configuration\.d\.ts|[^/]+\.gen\.[cm]?[jt]sx?)$/;
 
 const JS_DIRECTIVE =

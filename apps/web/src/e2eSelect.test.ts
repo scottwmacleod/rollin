@@ -17,7 +17,7 @@ describe("e2e selection", () => {
       "bun.lock",
       "package.json",
       "apps/web/e2e/helpers.ts",
-      "vendor/sm-core/sm-core.css",
+      "vendor/base/sm-core.css",
       "apps/web/index.html",
     ]) {
       expect(selectE2e([file])).toStrictEqual({ mode: "all", because: file });

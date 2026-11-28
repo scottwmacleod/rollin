@@ -1,0 +1,54 @@
+name: reusable-behind
+
+on:
+  workflow_call:
+    inputs:
+      vendor-dir:
+        type: string
+        default: vendor/base
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  behind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: ${{ inputs.vendor-dir }}
+      - name: Compare with the latest releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VENDOR: ${{ inputs.vendor-dir }}
+        run: |
+          set -euo pipefail
+          title="Pinned agent tools are out of date"
+          lines=()
+          if [ -f "$VENDOR/tooling/pins.json" ]; then
+            for pkg in $(jq -r '.npm | keys[]' "$VENDOR/tooling/pins.json"); do
+              pinned=$(jq -r --arg p "$pkg" '.npm[$p]' "$VENDOR/tooling/pins.json")
+              current=$(npm view "$pkg" version 2>/dev/null || echo "$pinned")
+              if [ "$pinned" != "$current" ]; then
+                lines+=("- **$pkg**: pinned at $pinned, npm has $current. Update the pin in \`$VENDOR/tooling/pins.json\` and \`docs/agents/ui-browser-checks.md\` after checking the changelog.")
+              fi
+            done
+          fi
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+          if [ ${#lines[@]} -eq 0 ]; then
+            echo "Every pinned tool is current."
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment "Every pinned tool is current again."
+            fi
+            exit 0
+          fi
+          body=$(printf '%s\n' "Found by the weekly behind-check on $(date -u +%F)." "" "${lines[@]}")
+          echo "$body"
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          fi

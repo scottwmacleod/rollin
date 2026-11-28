@@ -1,6 +1,6 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
-  "extends": ["./vendor/sm-core/tooling/biome.base.json"],
+  "extends": ["./vendor/base/tooling/biome.base.json"],
   "overrides": [
     {
       "includes": ["**/*.css"],

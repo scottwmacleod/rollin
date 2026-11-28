@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const css = readFileSync(resolve(__dirname, "../../../vendor/sm-core/sm-core.css"), "utf8").replace(
+const css = readFileSync(resolve(__dirname, "../../../vendor/base/sm-core.css"), "utf8").replace(
   /\r\n/g,
   "\n",
 );

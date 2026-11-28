@@ -1,7 +1,7 @@
 import type { Node, Roll } from "@rollin/engine";
 import { useSyncExternalStore } from "react";
 
-import { capture, flag, onFlags } from "../../../vendor/sm-core/tooling/analytics/sm-posthog.js";
+import { capture, flag, onFlags } from "../../../vendor/base/tooling/analytics/sm-posthog.js";
 
 export function useFlag(key: string): string | boolean | undefined {
   return useSyncExternalStore(onFlags, () => flag(key));

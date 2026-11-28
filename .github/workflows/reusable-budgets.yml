@@ -1,0 +1,307 @@
+name: reusable-budgets
+
+on:
+  workflow_call:
+    inputs:
+      workspace:
+        type: string
+        default: "."
+      package-manager:
+        description: >-
+          npm or bun, as in web-ci.yml: with bun, Bun comes from package.json's
+          packageManager (bun-version is the fallback), node_modules is keyed on
+          bun.lock and installed with `bun install --frozen-lockfile`, and the
+          default build becomes `bun run build`.
+        type: string
+        default: npm
+      bun-version:
+        description: Bun for a bun product whose package.json has no `packageManager` of `bun@…`.
+        type: string
+        default: 1.4.5
+      node-version:
+        description: Node version. Empty reads node-version-file.
+        type: string
+        default: ""
+      node-version-file:
+        type: string
+        default: .nvmrc
+      build-command:
+        description: Builds the output. Empty skips the build (a static site served as is).
+        type: string
+        default: npm run build
+      dist-dir:
+        description: Build output, relative to the repo root.
+        type: string
+        required: true
+      size:
+        type: boolean
+        default: true
+      js-kb:
+        description: Limit for all gzipped JS in dist-dir, in kB. 0 reports without a limit.
+        type: number
+        default: 0
+      css-kb:
+        description: Limit for all gzipped CSS in dist-dir, in kB. 0 reports without a limit.
+        type: number
+        default: 0
+      lighthouse:
+        type: boolean
+        default: true
+      lighthouse-url:
+        description: Page to test, e.g. a preview URL. Empty serves dist-dir locally.
+        type: string
+        default: ""
+      lighthouse-runs:
+        description: Runs per URL; the median is asserted. One run is enough once Chrome is warm.
+        type: number
+        default: 1
+      lighthouse-skip-pages:
+        description: >-
+          Paths to leave out when serving dist-dir, space separated (e.g.
+          "/404.html"). Ignored when lighthouse-url is set.
+        type: string
+        default: ""
+      performance:
+        type: number
+        default: 0.9
+      accessibility:
+        type: number
+        default: 0.95
+      best-practices:
+        type: number
+        default: 0.9
+      seo:
+        type: number
+        default: 0.9
+      budget-seconds:
+        type: number
+        default: 60
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: sm-budgets-${{ github.repository }}-${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  budgets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ${{ inputs.workspace }}
+    steps:
+      - name: Start the clock
+        working-directory: .
+        run: echo "SM_STARTED=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Warm Chrome
+        if: inputs.lighthouse
+        working-directory: .
+        run: |
+          chrome="$CHROME_PATH"
+          if [ -z "$chrome" ]; then
+            for c in google-chrome-stable google-chrome chromium-browser chromium; do
+              if command -v "$c" > /dev/null; then chrome=$(command -v "$c"); break; fi
+            done
+          fi
+          if [ -z "$chrome" ]; then
+            echo "::error title=No Chrome::Lighthouse needs Chrome, and none is on this runner."
+            exit 1
+          fi
+          dir=$(dirname "$(readlink -f "$chrome")")
+          bin="$dir/chrome"
+          [ -f "$bin" ] || bin=$(readlink -f "$chrome")
+          echo "Reading $bin into the page cache in the background"
+          nohup sh -c 'cat "$1" > /dev/null; echo $? > "$2"' sh "$bin" "$RUNNER_TEMP/sm-chrome-warm" > /dev/null 2>&1 &
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          filter: blob:none
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: inputs.package-manager != 'bun'
+        id: node
+        with:
+          node-version: ${{ inputs.node-version }}
+          node-version-file: ${{ inputs.node-version == '' && inputs.node-version-file || '' }}
+
+      - name: Bun version
+        id: bun
+        if: inputs.package-manager == 'bun'
+        env:
+          FALLBACK: ${{ inputs.bun-version }}
+        run: |
+          v=""
+          if [ -f package.json ]; then
+            v=$(jq -r '.packageManager // "" | select(startswith("bun@")) | ltrimstr("bun@") | split("+")[0]' package.json)
+          fi
+          [ -n "$v" ] || echo "package.json names no bun@ packageManager; using bun-version"
+          echo "version=${v:-$FALLBACK}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Bun
+        if: steps.bun.outputs.version != ''
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ steps.bun.outputs.version }}
+
+      - name: Restore node_modules
+        if: inputs.build-command != ''
+        id: modules
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ inputs.workspace }}/node_modules
+            ${{ inputs.workspace }}/*/node_modules
+            ${{ inputs.workspace }}/*/*/node_modules
+          key: >-
+            ${{ inputs.package-manager == 'bun'
+              && format('sm-modules-{0}-bun{1}-{2}', runner.os, steps.bun.outputs.version, hashFiles(format('{0}/bun.lock', inputs.workspace)))
+              || format('sm-modules-{0}-node{1}-{2}', runner.os, steps.node.outputs.node-version, hashFiles(format('{0}/package-lock.json', inputs.workspace))) }}
+
+      - name: Install dependencies
+        if: inputs.build-command != '' && steps.modules.outputs.cache-hit != 'true'
+        run: ${{ inputs.package-manager == 'bun' && 'bun install --frozen-lockfile' || 'npm ci --no-audit --no-fund' }}
+
+      - name: Build
+        if: inputs.build-command != ''
+        env:
+          CMD: ${{ inputs.build-command }}
+          PM: ${{ inputs.package-manager }}
+        run: |
+          case "$PM" in
+            npm) ;;
+            bun) if [ "$CMD" = "npm run build" ]; then CMD="bun run build"; fi ;;
+            *) echo "::error::package-manager must be npm or bun, not '$PM'"; exit 1 ;;
+          esac
+          bash -eo pipefail -c "$CMD"
+
+      - name: Restore main's sizes
+        if: inputs.size && github.event_name == 'pull_request'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .sm-size
+          key: sm-size-${{ github.repository }}-${{ github.event.pull_request.base.sha }}
+          restore-keys: sm-size-${{ github.repository }}-
+
+      - name: Measure bundle size
+        if: inputs.size
+        id: size
+        working-directory: .
+        env:
+          DIST: ${{ inputs.dist-dir }}
+        run: |
+          if [ -f .sm-size/size.json ]; then mkdir -p .sm-size-main && cp .sm-size/size.json .sm-size-main/size.json; fi
+          node --input-type=module > size.json <<'EOF'
+          import { readdirSync, readFileSync, statSync } from "node:fs";
+          import { join } from "node:path";
+          import { gzipSync } from "node:zlib";
+          const walk = (d) => readdirSync(d).flatMap((f) => {
+            const p = join(d, f);
+            return statSync(p).isDirectory() ? walk(p) : [p];
+          });
+          const out = { js: 0, css: 0 };
+          for (const f of walk(process.env.DIST)) {
+            const group = /\.(m?js)$/.test(f) ? "js" : /\.css$/.test(f) ? "css" : null;
+            if (group) out[group] += gzipSync(readFileSync(f), { level: 9 }).length;
+          }
+          console.log(JSON.stringify(out));
+          EOF
+          cat size.json
+          mkdir -p .sm-size && cp size.json .sm-size/size.json
+
+      - name: Save main's sizes
+        if: inputs.size && github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .sm-size
+          key: sm-size-${{ github.repository }}-${{ github.sha }}
+
+      - name: Check size limits and report
+        if: inputs.size
+        working-directory: .
+        env:
+          JS_KB: ${{ inputs.js-kb }}
+          CSS_KB: ${{ inputs.css-kb }}
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          before=$( [ -f .sm-size-main/size.json ] && cat .sm-size-main/size.json || echo '{}' )
+          report=$(jq -rn --argjson now "$(cat size.json)" --argjson was "$before" \
+            --argjson js "$JS_KB" --argjson css "$CSS_KB" '
+            def kb: . / 1024 * 10 | round / 10;
+            def row(g; lim):
+              "| \(g | ascii_upcase) | \(if $was[g] then ($was[g] | kb | tostring) + " kB" else "–" end) | \($now[g] | kb) kB | \(if lim > 0 then (lim | tostring) + " kB" else "none" end) | \(if lim > 0 and ($now[g] | kb) > lim then "✗ over" else "✓" end) |";
+            "<!-- sm-size -->\n### Bundle size (gzipped)\n\n| Group | Before (main) | After | Limit | |\n| --- | --- | --- | --- | --- |\n\(row("js"; $js))\n\(row("css"; $css))"')
+          echo "$report" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ -n "$PR" ]; then
+            id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+              --jq '[.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- sm-size -->")))][0].id // empty' | head -n 1)
+            if [ -n "$id" ]; then
+              gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$report" > /dev/null || echo "::warning::couldn't update the size comment"
+            else
+              gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$report" > /dev/null || echo "::warning::couldn't post the size comment (needs pull-requests: write)"
+            fi
+          fi
+          fail=0
+          for g in js css; do
+            if [ "$g" = js ]; then lim=$JS_KB; else lim=$CSS_KB; fi
+            now=$(jq -r --arg g "$g" '.[$g] / 1024 * 10 | round / 10' size.json)
+            if [ "$lim" != 0 ] && awk "BEGIN{exit !($now > $lim)}"; then
+              echo "::error title=Bundle over budget::Gzipped ${g^^} is ${now} kB, over its ${lim} kB limit."
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Lighthouse
+        if: inputs.lighthouse
+        working-directory: .
+        env:
+          DIST: ${{ inputs.dist-dir }}
+          URL: ${{ inputs.lighthouse-url }}
+          RUNS: ${{ inputs.lighthouse-runs }}
+          SKIP: ${{ inputs.lighthouse-skip-pages }}
+          PERF: ${{ inputs.performance }}
+          A11Y: ${{ inputs.accessibility }}
+          BP: ${{ inputs.best-practices }}
+          SEO: ${{ inputs.seo }}
+          PM: ${{ inputs.package-manager }}
+        run: |
+          jq -n --argjson p "$PERF" --argjson a "$A11Y" --argjson b "$BP" --argjson s "$SEO" --argjson runs "$RUNS" \
+            --arg url "$URL" --arg dist "$DIST" --arg skip "$SKIP" '{ci: {
+              collect: ({numberOfRuns: $runs, settings: {chromeFlags: "--no-sandbox --headless=new"}}
+                + (if $url != "" then {url: [$url]} else {staticDistDir: $dist, autodiscoverUrlBlocklist: ($skip | split(" ") | map(select(. != "")))} end)),
+              assert: {aggregationMethod: "median", assertions: {
+                "categories:performance": ["error", {minScore: $p}],
+                "categories:accessibility": ["error", {minScore: $a}],
+                "categories:best-practices": ["error", {minScore: $b}],
+                "categories:seo": ["error", {minScore: $s}]}},
+              upload: {target: "filesystem", outputDir: ".lighthouseci-report"}}}' > .sm-lighthouserc.json
+          if [ "$PM" = bun ]; then lhci="bunx @lhci/cli@0.16.1"; else lhci="npx -y @lhci/cli@0.16.1"; fi
+          until [ -s "$RUNNER_TEMP/sm-chrome-warm" ]; do sleep 0.2; done
+          if [ "$(cat "$RUNNER_TEMP/sm-chrome-warm")" != 0 ]; then
+            echo "::error title=Chrome not warmed::Couldn't read Chrome's binary into the page cache, so the first run would be scored on a cold disk."
+            exit 1
+          fi
+          $lhci collect --config=.sm-lighthouserc.json
+          status=0
+          $lhci assert --config=.sm-lighthouserc.json || status=$?
+          $lhci upload --config=.sm-lighthouserc.json || true
+          exit $status
+
+      - name: Within budget
+        if: always()
+        working-directory: .
+        env:
+          BUDGET: ${{ inputs.budget-seconds }}
+        run: |
+          took=$(( $(date +%s) - SM_STARTED ))
+          echo "budgets took ${took}s (budget ${BUDGET}s)"
+          if [ "$took" -gt "$BUDGET" ]; then
+            echo "::error title=Over budget::budgets took ${took}s, over its ${BUDGET}s budget. Find what got slower; don't raise the budget to hide it."
+            exit 1
+          fi

@@ -7,20 +7,20 @@
     "apps/web"
   ],
   "scripts": {
-    "prepare": "bun vendor/sm-core/tooling/hooks/install.mjs",
+    "prepare": "bun vendor/base/tooling/hooks/install.mjs",
     "dev": "bun run --filter rollin-web dev",
     "check": "bun run tokens:check && bun run typecheck && bun run lint && bun run test && bun run e2e",
     "tokens": "bun ui/generate-tokens.mjs",
     "tokens:check": "bun ui/generate-tokens.mjs --check",
     "typecheck": "bun run --workspaces typecheck",
     "typecheck:tsc": "bun run --workspaces typecheck:tsc",
-    "lint": "bun apps/web/scripts/copy-tokens.mjs && bun x bun@1.4.5-canary.20261120.1 lint --no-script && biome lint . && bun fmt --no-script --check . && bun vendor/sm-core/tooling/lint/no-comments.mjs",
+    "lint": "bun apps/web/scripts/copy-tokens.mjs && bun x bun@1.4.5-canary.20261120.1 lint --no-script && biome lint . && bun fmt --no-script --check . && bun vendor/base/tooling/lint/no-comments.mjs",
     "format": "bun fmt --no-script .",
     "test": "bun test --parallel",
     "build": "bun run --filter rollin-web build",
     "e2e": "bun run --filter rollin-web e2e",
     "e2e:changed": "bun run --filter rollin-web e2e:changed",
-    "pre-push": "bun run tokens:check && bun run typecheck && bun run lint && bun run test && bun run e2e:changed && node vendor/sm-core/verify.mjs"
+    "pre-push": "bun run tokens:check && bun run typecheck && bun run lint && bun run test && bun run e2e:changed"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.9",

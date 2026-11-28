@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import "../../../vendor/sm-core/sm-core.css";
-@import "../../../vendor/sm-core/sm-tailwind.css";
+@import "../../../vendor/base/sm-core.css";
+@import "../../../vendor/base/sm-tailwind.css";
 @import "./generated/tokens.css";
 
 @theme inline {

@@ -7,7 +7,7 @@ description: Audit code comments and clear them out. Use when asked to delete co
 
 Every comment leaves the code. What it knew goes somewhere better first: a name, a test, an ADR, an issue or the README.
 
-Work in the repo root. The check is `tooling/lint/no-comments.mjs` in sm-core and `vendor/sm-core/tooling/lint/no-comments.mjs` in a product; run it with `node`, or `bun` in a Bun product. Scope is the whole repo unless the person names a folder.
+Work in the repo root. The check is `vendor/base/tooling/lint/no-comments.mjs`; run it with `node`, or `bun` in a Bun product. Scope is the whole repo unless the person names a folder.
 
 ## Know the fence before you remove it
 

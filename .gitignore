@@ -5,7 +5,7 @@ dist-e2e/
 apps/web/src/generated/
 apps/web/playwright-report/
 apps/web/test-results/
-# Copied from vendor/sm-core/logos by apps/web/scripts/copy-tokens.mjs
+# Copied from vendor/base/logos by apps/web/scripts/copy-tokens.mjs
 apps/web/public/favicon.svg
 apps/web/public/icons/
 apps/web/public/rollin-wordmark-*.svg
