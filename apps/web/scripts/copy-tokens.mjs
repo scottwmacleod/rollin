@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../../..");
-const logos = resolve(root, "vendor/sm-core/logos");
+const logos = resolve(root, "vendor/base/logos");
 const pub = resolve(here, "../public");
 
 const copies = [
@@ -22,4 +22,4 @@ for (const [from, to] of copies) {
   mkdirSync(dirname(to), { recursive: true });
   copyFileSync(from, to);
 }
-console.log(`copied ${copies.length} assets from ui/ and vendor/sm-core`);
+console.log(`copied ${copies.length} assets from ui/ and vendor/base`);

@@ -1,5 +1,5 @@
 {
-  "extends": ["./vendor/sm-core/tooling/oxlintrc.base.json"],
+  "extends": ["./vendor/base/tooling/oxlintrc.base.json"],
   "jsPlugins": ["@shadcn/lint"],
   "ignorePatterns": [
     "**/dist",

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const HEADER =
   "/* rollin: generated from ui/tokens.json. Edit tokens.json, then regenerate. */\n" +
-  "/* Product sizes only; everything else comes from sm-core. */\n";
+  "/* Product sizes only; everything else comes from vendor/base. */\n";
 
 export function generate(json) {
   const doc = JSON.parse(json);

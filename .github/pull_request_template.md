@@ -1,5 +1,4 @@
 <!-- Shape from the /pr skill (mattpocock/skills). Keep prose brief and use GLOSSARY.md terms. -->
-<!-- Synced from sm-core. Edit sm-core, not this copy. Add product sections below the product marker. -->
 
 ## Summary
 

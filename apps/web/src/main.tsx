@@ -3,7 +3,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { startPostHog } from "../../../vendor/sm-core/tooling/analytics/sm-posthog.js";
+import { startPostHog } from "../../../vendor/base/tooling/analytics/sm-posthog.js";
 import { App } from "./App";
 import { ErrorBoundary, UnexpectedErrors } from "./ErrorBoundary";
 

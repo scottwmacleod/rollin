@@ -1,0 +1,357 @@
+name: reusable-web-ci
+
+on:
+  workflow_call:
+    inputs:
+      workspace:
+        description: Directory holding package.json and the lockfile, relative to the repo root.
+        type: string
+        default: "."
+      package-manager:
+        description: >-
+          npm or bun. With bun, Bun's version comes from package.json's
+          packageManager (bun-version is the fallback), node_modules is keyed on
+          bun.lock and installed with `bun install --frozen-lockfile`, Playwright
+          runs through bunx, and the npm default commands become `bun run lint`,
+          `bun run test`, `bun run build` and `bun run e2e`.
+        type: string
+        default: npm
+      node-version:
+        description: Node version. Empty reads node-version-file.
+        type: string
+        default: ""
+      node-version-file:
+        description: File holding the Node version, relative to the repo root.
+        type: string
+        default: .nvmrc
+      checks:
+        description: Extra commands for the lint job, one per line (e.g. a drift check).
+        type: string
+        default: ""
+      lint-command:
+        description: Format and lint. Runs in the checks job, beside `checks`, typecheck and build.
+        type: string
+        default: npm run lint
+      typecheck-command:
+        description: Typecheck. `bun check --no-script` by default (without --no-script, bun runs a package's `check` script instead of typechecking); pass `npx tsc --noEmit` (or the repo's script) as the fallback. Empty skips it.
+        type: string
+        default: bun check --no-script
+      test-command:
+        description: Unit tests (`bun test` or Vitest, in random order). Empty skips the job.
+        type: string
+        default: npm test
+      build-command:
+        description: Production build. Empty skips it.
+        type: string
+        default: npm run build
+      e2e:
+        description: Run browser tests (Playwright with axe).
+        type: boolean
+        default: false
+      e2e-shards:
+        description: >-
+          Split the browser tests across this many jobs (1-4), each named
+          `e2e k/n`. Each job runs e2e-command with `--shard=k/n` appended
+          (after `--` for npm) and SM_E2E_SHARD=k/n set. The product should prove
+          in a test that the shards together list every test.
+        type: number
+        default: 1
+      e2e-command:
+        type: string
+        default: npm run e2e
+      skip-paths:
+        description: Extended regex. On a PR where every changed file matches, every job is skipped (docs-only PRs). Empty never skips. The caller needs `pull-requests read` permission for this.
+        type: string
+        default: ""
+      bun-version:
+        description: Bun for a `bun …` typecheck in an npm product, and for a bun product whose package.json has no `packageManager` of `bun@…`.
+        type: string
+        default: 1.4.5
+      checks-budget-seconds:
+        description: The checks job (`checks`, lint, typecheck and build in one job), setup included.
+        type: number
+        default: 35
+      lint-budget-seconds:
+        type: number
+        default: 45
+      typecheck-budget-seconds:
+        type: number
+        default: 45
+      test-budget-seconds:
+        type: number
+        default: 90
+      build-budget-seconds:
+        type: number
+        default: 90
+      e2e-budget-seconds:
+        description: Time for the browser tests alone. The clock starts after Playwright's browser setup, so a slow apt mirror doesn't count.
+        type: number
+        default: 120
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sm-web-ci-${{ github.repository }}-${{ github.workflow }}-${{ inputs.workspace }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: ${{ matrix.task }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        task: >-
+          ${{ fromJSON(format('["checks"{0}{1}]',
+            inputs.test-command != '' && ',"test"' || '',
+            inputs.e2e && (
+              inputs.e2e-shards == 2 && ',"e2e 1/2","e2e 2/2"' ||
+              inputs.e2e-shards == 3 && ',"e2e 1/3","e2e 2/3","e2e 3/3"' ||
+              inputs.e2e-shards == 4 && ',"e2e 1/4","e2e 2/4","e2e 3/4","e2e 4/4"' ||
+              ',"e2e"') || '')) }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.workspace }}
+    steps:
+      - name: Start the clock
+        working-directory: .
+        run: echo "SM_STARTED=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Plan
+        id: plan
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          SKIP_PATHS: ${{ inputs.skip-paths }}
+          PM: ${{ inputs.package-manager }}
+          TASK: ${{ matrix.task }}
+          LINT: ${{ inputs.lint-command }}
+          TYPECHECK: ${{ inputs.typecheck-command }}
+          TEST: ${{ inputs.test-command }}
+          BUILD: ${{ inputs.build-command }}
+          E2E: ${{ inputs.e2e-command }}
+          B_CHECKS: ${{ inputs.checks-budget-seconds }}
+          B_TEST: ${{ inputs.test-budget-seconds }}
+          B_E2E: ${{ inputs.e2e-budget-seconds }}
+        run: |
+          case "$PM" in
+            npm) ;;
+            bun)
+              if [ "$LINT" = "npm run lint" ]; then LINT="bun run lint"; fi
+              if [ "$TEST" = "npm test" ]; then TEST="bun run test"; fi
+              if [ "$BUILD" = "npm run build" ]; then BUILD="bun run build"; fi
+              if [ "$E2E" = "npm run e2e" ]; then E2E="bun run e2e"; fi
+              ;;
+            *) echo "::error::package-manager must be npm or bun, not '$PM'"; exit 1 ;;
+          esac
+          skip=false
+          if [ "$EVENT" = pull_request ] && [ -n "$SKIP_PATHS" ]; then
+            if files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename') && [ -n "$files" ]; then
+              if ! echo "$files" | grep -Ev "$SKIP_PATHS" > /dev/null; then skip=true; fi
+            fi
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          [ "$skip" = true ] && echo "Every changed file matches skip-paths; nothing to check."
+          {
+            echo "lint=$LINT"; echo "typecheck=$TYPECHECK"; echo "build=$BUILD"
+            case "$TASK" in
+              checks) echo "budget=$B_CHECKS" ;;
+              test) echo "run=$TEST"; echo "budget=$B_TEST" ;;
+              e2e*) echo "run=$E2E"; echo "budget=$B_E2E"; shard=${TASK#e2e}; echo "shard=${shard# }" ;;
+            esac
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.plan.outputs.skip != 'true'
+        with:
+          filter: blob:none
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        id: node
+        if: steps.plan.outputs.skip != 'true' && inputs.package-manager == 'npm'
+        with:
+          node-version: ${{ inputs.node-version }}
+          node-version-file: ${{ inputs.node-version == '' && inputs.node-version-file || '' }}
+
+      - name: Bun version
+        id: bun
+        if: steps.plan.outputs.skip != 'true' && (inputs.package-manager == 'bun' || (matrix.task == 'checks' && startsWith(inputs.typecheck-command, 'bun ')))
+        env:
+          PM: ${{ inputs.package-manager }}
+          FALLBACK: ${{ inputs.bun-version }}
+        run: |
+          v=""
+          if [ "$PM" = bun ] && [ -f package.json ]; then
+            v=$(jq -r '.packageManager // "" | select(startswith("bun@")) | ltrimstr("bun@") | split("+")[0]' package.json)
+          fi
+          [ -n "$v" ] || echo "package.json names no bun@ packageManager; using bun-version"
+          echo "version=${v:-$FALLBACK}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Bun
+        if: steps.bun.outputs.version != ''
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ steps.bun.outputs.version }}
+
+      - name: Restore node_modules
+        id: modules
+        if: steps.plan.outputs.skip != 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ inputs.workspace }}/node_modules
+            ${{ inputs.workspace }}/*/node_modules
+            ${{ inputs.workspace }}/*/*/node_modules
+          key: >-
+            ${{ inputs.package-manager == 'bun'
+              && format('sm-modules-{0}-bun{1}-{2}', runner.os, steps.bun.outputs.version, hashFiles(format('{0}/bun.lock', inputs.workspace)))
+              || format('sm-modules-{0}-node{1}-{2}', runner.os, steps.node.outputs.node-version, hashFiles(format('{0}/package-lock.json', inputs.workspace))) }}
+
+      - name: Install dependencies
+        if: steps.plan.outputs.skip != 'true' && steps.modules.outputs.cache-hit != 'true'
+        run: ${{ inputs.package-manager == 'bun' && 'bun install --frozen-lockfile' || 'npm ci --no-audit --no-fund' }}
+
+      - name: Save node_modules
+        if: steps.plan.outputs.skip != 'true' && steps.modules.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ inputs.workspace }}/node_modules
+            ${{ inputs.workspace }}/*/node_modules
+            ${{ inputs.workspace }}/*/*/node_modules
+          key: ${{ steps.modules.outputs.cache-primary-key }}
+
+      - name: Restore Bun's package cache
+        if: steps.plan.outputs.skip != 'true' && inputs.package-manager == 'bun'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: sm-bun-cache-${{ runner.os }}-${{ matrix.task == 'checks' && 'checks' || 'run' }}-${{ hashFiles(format('{0}/package.json', inputs.workspace), format('{0}/bun.lock', inputs.workspace)) }}
+          restore-keys: ${{ matrix.task != 'checks' && format('sm-bun-cache-{0}-run-', runner.os) || '' }}
+
+      - name: Checks, lint, typecheck and build
+        if: steps.plan.outputs.skip != 'true' && matrix.task == 'checks'
+        env:
+          PM: ${{ inputs.package-manager }}
+          CHECKS: ${{ inputs.checks }}
+          LINT: ${{ steps.plan.outputs.lint }}
+          TYPECHECK: ${{ steps.plan.outputs.typecheck }}
+          BUILD: ${{ steps.plan.outputs.build }}
+          B_LINT: ${{ inputs.lint-budget-seconds }}
+          B_TYPECHECK: ${{ inputs.typecheck-budget-seconds }}
+          B_BUILD: ${{ inputs.build-budget-seconds }}
+          ROOT: ${{ github.workspace }}
+        run: |
+          failed=()
+          step() {
+            local name=$1 budget=$2 cmd=$3 start took
+            [ -z "$cmd" ] && return 0
+            echo "::group::$name: $cmd"
+            start=$(date +%s)
+            if bash -eo pipefail -c "$cmd"; then took=$(( $(date +%s) - start ))
+            else took=$(( $(date +%s) - start )); failed+=("$name failed: $cmd"); fi
+            echo "::endgroup::"
+            echo "$name took ${took}s"
+            echo "| $name | ${took}s | ${budget:-} |" >> "$GITHUB_STEP_SUMMARY"
+            if [ -n "$budget" ] && [ "$took" -gt "$budget" ]; then
+              failed+=("$name took ${took}s, over its ${budget}s budget")
+            fi
+          }
+          while IFS= read -r cmd; do
+            [ -n "$cmd" ] && step "check" "" "$cmd"
+          done <<< "$CHECKS"
+          step lint "$B_LINT" "$LINT"
+          step typecheck "$B_TYPECHECK" "$TYPECHECK"
+          step build "$B_BUILD" "$BUILD"
+          if [ "${#failed[@]}" -gt 0 ]; then
+            for f in "${failed[@]}"; do echo "::error::$f"; done
+            exit 1
+          fi
+
+      - name: Restore Playwright browsers
+        if: steps.plan.outputs.skip != 'true' && startsWith(matrix.task, 'e2e')
+        id: browsers
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: sm-playwright-debs-${{ runner.os }}-${{ hashFiles(format('{0}/{1}', inputs.workspace, inputs.package-manager == 'bun' && 'bun.lock' || 'package-lock.json')) }}
+
+      - name: Install Playwright browser
+        if: steps.plan.outputs.skip != 'true' && startsWith(matrix.task, 'e2e')
+        env:
+          X: ${{ inputs.package-manager == 'bun' && 'bunx' || 'npx' }}
+          HIT: ${{ steps.browsers.outputs.cache-hit }}
+        run: |
+          debs=~/.cache/ms-playwright/sm-debs
+          missing() {
+            { $X playwright install-deps --dry-run chromium-headless-shell 2> /dev/null || true; } |
+              sed -n 's/^  \([a-z0-9][a-z0-9.+-]*\)$/\1/p'
+          }
+          if [ "$HIT" = true ]; then
+            need=$(missing)
+            if [ -n "$need" ]; then
+              files=()
+              for pkg in $need; do
+                for f in "$debs/${pkg}"_*.deb; do [ -e "$f" ] && files+=("$f"); done
+              done
+              if [ "${#files[@]}" -gt 0 ]; then
+                start=$SECONDS
+                sudo dpkg --force-unsafe-io -i "${files[@]}" > /dev/null || true
+                echo "dpkg installed ${#files[@]} cached packages in $((SECONDS - start)) s"
+              fi
+              $X playwright install-deps --dry-run chromium-headless-shell > /dev/null ||
+                $X playwright install-deps chromium-headless-shell > /dev/null
+            fi
+          else
+            need=$(missing)
+            $X playwright install --with-deps --only-shell chromium
+            if [ -n "$need" ]; then
+              mkdir -p "$debs"
+              (cd "$debs" && apt-get download $need > /dev/null)
+            fi
+          fi
+
+      - name: Save Playwright browsers
+        if: steps.plan.outputs.skip != 'true' && startsWith(matrix.task, 'e2e') && steps.browsers.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ steps.browsers.outputs.cache-primary-key }}
+
+      - name: Restart the clock after browser setup
+        if: steps.plan.outputs.skip != 'true' && startsWith(matrix.task, 'e2e')
+        working-directory: .
+        run: echo "SM_STARTED=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: ${{ matrix.task }}
+        if: steps.plan.outputs.skip != 'true' && matrix.task != 'checks'
+        env:
+          CMD: ${{ steps.plan.outputs.run }}
+          SM_E2E_SHARD: ${{ steps.plan.outputs.shard }}
+          PM: ${{ inputs.package-manager }}
+        run: |
+          if [ -n "$SM_E2E_SHARD" ]; then
+            if [ "$PM" = npm ]; then CMD="$CMD -- --shard=$SM_E2E_SHARD"; else CMD="$CMD --shard=$SM_E2E_SHARD"; fi
+          fi
+          bash -eo pipefail -c "$CMD"
+
+      - name: Within budget
+        if: always()
+        working-directory: .
+        env:
+          TASK: ${{ matrix.task }}
+          BUDGET: ${{ steps.plan.outputs.budget }}
+        run: |
+          took=$(( $(date +%s) - SM_STARTED ))
+          echo "$TASK took ${took}s (budget ${BUDGET}s)"
+          echo "| $TASK job | ${took}s | ${BUDGET}s |" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$took" -gt "$BUDGET" ]; then
+            echo "::error title=Over budget::$TASK took ${took}s, over its ${BUDGET}s budget. Find what got slower; don't raise the budget to hide it."
+            exit 1
+          fi

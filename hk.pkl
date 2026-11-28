@@ -1,4 +1,4 @@
-amends "vendor/sm-core/tooling/hooks/sm.pkl"
+amends "vendor/base/tooling/hooks/sm.pkl"
 
 hooks {
   ["pre-push"] {

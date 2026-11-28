@@ -1,0 +1,53 @@
+name: reusable-auto-merge
+
+on:
+  workflow_call:
+    inputs:
+      hold-label:
+        description: A PR with this label never gets auto-merge.
+        type: string
+        default: hold
+    secrets:
+      merge-token:
+        description: Fine-grained token that turns on auto-merge, so the merge starts workflows on main.
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sm-auto-merge-${{ github.repository }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (
+        (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
+        github.event.label.name == (inputs.hold-label || 'hold')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Hold or auto-merge
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.merge-token || secrets.SM_MERGE_TOKEN || github.token }}
+          HELD: ${{ contains(github.event.pull_request.labels.*.name, inputs.hold-label || 'hold') }}
+          HOLD_LABEL: ${{ inputs.hold-label || 'hold' }}
+        run: |
+          if [ "$HELD" = true ]; then
+            echo "Labelled $HOLD_LABEL: auto-merge stays off."
+            if [ -n "$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest // empty')" ]; then
+              gh pr merge --disable-auto "$PR_URL"
+            fi
+          else
+            gh pr merge --auto --squash "$PR_URL"
+          fi

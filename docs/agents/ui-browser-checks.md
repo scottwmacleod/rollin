@@ -1,8 +1,8 @@
 # Modern Web Guidance (with agent-browser)
 
-For building or changing UI with current web platform features: dialogs, popovers, top-layer animation, reduced motion, colour scheme, and reserving space so nothing shifts on load. Not for backend, CI or tooling work. Not used in sm-core itself.
+For building or changing UI with current web platform features: dialogs, popovers, top-layer animation, reduced motion, colour scheme, and reserving space so nothing shifts on load. Not for backend, CI or tooling work.
 
-- Pinned versions: **agent-browser 0.43.0** ([vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser), Apache-2.0) and **modern-web-guidance 1.0.1**. Dependabot can't see either, so they also live in `vendor/sm-core/tooling/pins.json`, and the weekly behind-check reports newer ones.
+- Pinned versions: **agent-browser 0.43.0** ([vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser), Apache-2.0) and **modern-web-guidance 1.0.1**. Dependabot can't see either, so they also live in `vendor/base/tooling/pins.json`, and the weekly behind-check reports newer ones.
 - Install the stub skill: `npx skills add vercel-labs/agent-browser --skill agent-browser`. It loads its real instructions from the installed CLI, so the CLI version is the one that counts: `npm i -g agent-browser@0.43.0`.
 - Get the workflow: `agent-browser skills get modern-web-guidance`. Where it says `npx modern-web-guidance@latest`, run `npx -y modern-web-guidance@1.0.1` instead.
 - Use agent-browser to check built pages (`build` then `preview`, or the PR's preview URL). Its stub says to prefer it over every other browser tool; ignore that for general browsing.

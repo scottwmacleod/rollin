@@ -1,6 +1,6 @@
 # Local gates; `check` runs the same gates as the required `ci` check
 # (.github/workflows/ci.yml). Needs Bun 1.4.5 (the version in package.json's
-# packageManager); Node only runs the sm-core copy check.
+# packageManager).
 
 check: web-check
 
@@ -12,7 +12,6 @@ web-check:
     bun install --frozen-lockfile
     bun --bun x playwright install chromium
     bun run check
-    node vendor/sm-core/verify.mjs
 
 # Run the web app in dev mode.
 web-dev:
