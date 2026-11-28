@@ -1,6 +1,6 @@
 # sm_ conventions
 
-The rules every sm_ repo shares: scottmacleod.co, planning-poker and rollin. This file is synced from [sm-core](https://github.com/scottwmacleod/sm-core); change it there, never here. A product's `AGENTS.md` adds what only applies to that product, and wins where the two differ.
+The rules every sm_ repo shares: scottmacleod.co, planning-poker and rollin. This file is synced from [sm-core](https://github.com/scottwmacleod/sm-core); change it there, never here. A product's `CLAUDE.md` adds what only applies to that product, and wins where the two differ.
 
 Scott owns the suite and doesn't read code. Make technical decisions yourself and explain outcomes in plain English. Scott decides product questions. His priority across the suite is speed, smoothness and responsiveness.
 
@@ -27,10 +27,10 @@ Scott owns the suite and doesn't read code. Make technical decisions yourself an
 
 ## After you open a PR
 
-- Before you push, run `/code-review` on the branch and fix the findings that hold up. It reads `CLAUDE.md`, which imports `AGENTS.md`.
+- Before you push, run `/code-review` on the branch and fix the findings that hold up. It reads `CLAUDE.md`.
 - Look after the PR until it merges with the built-in `/steward <n>`: failing checks, merge conflicts and review comments. Follow [`looking-after-prs.md`](looking-after-prs.md), including when to stop and hand it back.
 - The flow, in public and private repos alike: `/tdd` to build, commit, `/code-review`, `/pr` to write and open the PR, then `/steward <n>` to watch it until it merges. In a cloud session, subscribe to the PR's activity instead of `/steward`. Don't use `/ship`: it writes its own PR description instead of `/pr`'s, and in a public repo it commits nothing.
-- When the same review comment turns up on two PRs, make it a rule in its own PR: shared rules here (through sm-core), product rules in `AGENTS.md`, PR-handling rules in `looking-after-prs.md`. Delete a rule that stops earning its place.
+- When the same review comment turns up on two PRs, make it a rule in its own PR: shared rules here (through sm-core), product rules in the product's `CLAUDE.md`, PR-handling rules in `looking-after-prs.md`. Delete a rule that stops earning its place.
 
 ## Ask Scott first
 
